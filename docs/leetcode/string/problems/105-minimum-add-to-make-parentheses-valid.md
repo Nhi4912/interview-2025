@@ -7,99 +7,118 @@ tags: [String, Stack, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-add-to-make-parentheses-valid"
 ---
 
-# Minimum Add to Make Parentheses Valid / Minimum Add to Make Parentheses Valid
+# Minimum Add to Make Parentheses Valid / Số Phép Thêm Tối Thiểu Để Ngoặc Hợp Lệ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy Counter
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Remove K Digits](https://leetcode.com/problems/remove-k-digits) | [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+> Giống như kiểm tra số dư tài khoản khi mua hàng — bạn theo dõi số ngoặc mở chưa khớp (`open`) và số ngoặc đóng chưa khớp (`close`). Mỗi ngoặc thừa là một lần thêm cần thiết.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "parentheses validity" + "minimum changes" → **Greedy Counter**
+- Không cần Stack thực sự — chỉ cần 2 biến đếm
+- `close`: gặp `)` mà không có `(` khớp → cần thêm `(`
+- `open`: số `(` chưa khớp sau khi duyệt xong → cần thêm `)`
 
-**Visual — Minimum Add to Make Parentheses Valid example:**
+**Visual:**
 
 ```
-stack = []
+s = "())"   open=0, close=0
+  '(' → open=1
+  ')' → open>0 → open=0 (matched)
+  ')' → open=0 → close=1 (unmatched close)
+result = open + close = 0 + 1 = 1
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+s = "(((" → open=3, close=0 → result=3
 ```
-
----
 
 ## Problem Description
 
-Minimum Add to Make Parentheses Valid. ([LeetCode](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid))
+A parentheses string is valid if every open bracket has a matching close bracket. Given string `s` of `(` and `)`, return the **minimum** number of parentheses to add to make it valid.
 
-Difficulty: Medium | Acceptance: 74.7%
+- **Example 1**: `s = "())"` → `1`
+- **Example 2**: `s = "((("` → `3`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid) for full constraints
-
----
+**Constraints**: `1 <= s.length <= 1000`, `s[i]` is `'('` or `')'`.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: "Có thể thêm ở bất kỳ vị trí nào không?" / Can insert at any position
+2. **Approach**: "Track 2 counters: unmatched `(` và unmatched `)` — sum là đáp án" / Two counters instead of full stack
+3. **Edge cases**: `""` → 0; `"()"` → 0; `")("` → 2 (cần thêm `(` trước và `)` sau)
+4. **Optimize**: "Greedy O(n) time O(1) space — không cần Stack" / Constant space beats stack approach
+5. **Test**: `")("` → 2, `"()()"` → 0, `"((()"` → 2
+6. **Follow-up**: "Minimum removals instead of additions?" / LeetCode 1249 — similar with stack
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Stack — push '(' and count unmatched ')'
+ * Time: O(n) | Space: O(n)
  */
-function minimumAddToMakeParenthesesValidBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumAddToMakeParenthesesValidStack(s: string): number {
+  const stack: string[] = [];
+  let unmatched = 0;
+  for (const c of s) {
+    if (c === "(") {
+      stack.push(c);
+    } else {
+      if (stack.length > 0) stack.pop();
+      else unmatched++; // unmatched ')'
+    }
+  }
+  return stack.length + unmatched; // remaining '(' + unmatched ')'
 }
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Greedy Counters — O(1) space
+ * Time: O(n) | Space: O(1)
  */
-function minimumAddToMakeParenthesesValid(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function minimumAddToMakeParenthesesValid(s: string): number {
+  let open = 0; // unmatched '(' needing ')'
+  let close = 0; // unmatched ')' needing '('
+  for (const c of s) {
+    if (c === "(") {
+      open++;
+    } else {
+      if (open > 0)
+        open--; // match with existing '('
+      else close++; // no '(' available → need to add one
+    }
+  }
+  return open + close;
 }
 
-// === Test Cases ===
-// console.log(minimumAddToMakeParenthesesValid(/* example 1 */)); // expected
-// console.log(minimumAddToMakeParenthesesValid(/* example 2 */)); // expected
-// console.log(minimumAddToMakeParenthesesValid(/* edge case */)); // expected
+/** Solution 3: Balance tracking — track min/max valid open count
+ * Time: O(n) | Space: O(1)
+ */
+function minimumAddBalance(s: string): number {
+  let balance = 0;
+  let additions = 0;
+  for (const c of s) {
+    balance += c === "(" ? 1 : -1;
+    if (balance < 0) {
+      additions++; // need to add '(' before this ')'
+      balance = 0;
+    }
+  }
+  return additions + balance; // balance = remaining unmatched '('
+}
+
+// Test cases
+console.log(minimumAddToMakeParenthesesValid("())")); // 1
+console.log(minimumAddToMakeParenthesesValid("(((")); // 3
+console.log(minimumAddToMakeParenthesesValid("()")); // 0
+console.log(minimumAddToMakeParenthesesValid(")(")); // 2
+console.log(minimumAddToMakeParenthesesValid("(())")); // 0
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — same pattern: Monotonic Stack
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string) — same pattern: Dynamic Programming
-- [Minimum Add to Make Parentheses Valid — LeetCode](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid) — problem page
+| Problem                                                                                                                                  | Relationship                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| [Minimum Remove to Make Valid Parentheses](https://leetcode.com/problems/minimum-remove-to-make-valid-parentheses)                       | Remove instead of add for validity |
+| [Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string)                                                       | Wildcard `*` can be either bracket |
+| [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) | Similar balance-tracking approach  |

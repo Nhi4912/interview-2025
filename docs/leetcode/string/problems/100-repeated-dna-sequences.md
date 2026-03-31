@@ -7,100 +7,120 @@ tags: [Hash Table, String, Bit Manipulation, Sliding Window, Rolling Hash]
 leetcode_url: "https://leetcode.com/problems/repeated-dna-sequences"
 ---
 
-# Repeated DNA Sequences / Repeated DNA Sequences
+# Repeated DNA Sequences / Chuỗi DNA Lặp Lại
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Set + Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Strings Differ by One Character](https://leetcode.com/problems/strings-differ-by-one-character) | [Unique Substrings With Equal Digit Frequency](https://leetcode.com/problems/unique-substrings-with-equal-digit-frequency)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+> Giống như đọc một đoạn gene dài và đánh dấu từng đoạn 10 ký tự bằng bút dạ. Khi bạn gặp một đoạn đã được tô, đó là đoạn lặp lại. Bạn chỉ cần đi qua chuỗi một lần với "cửa sổ" cố định 10 ký tự.
 
 **Pattern Recognition:**
 
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "substring of fixed length" + "find duplicates" → **Hash Set + Fixed Window**
+- Window size = 10 (cố định), trượt từ trái sang phải
+- Two-pass check: lần đầu `seen`, lần sau `duplicate`
 
-**Visual — Repeated DNA Sequences example:**
+**Visual:**
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+s = "AAAAACCCCCAAAAACCCCCCAAAAAGGGTTT"
+       |--10--|
+        |--10--|    slide →
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+i=0:  "AAAAACCCCC" → seen={AAAAACCCCC}
+i=1:  "AAAACCCCCA" → seen add
+...
+i=10: "AAAAACCCCC" → already in seen → result add
 ```
-
----
 
 ## Problem Description
 
-Repeated DNA Sequences. ([LeetCode](https://leetcode.com/problems/repeated-dna-sequences))
+Given a DNA string `s`, return all 10-letter-long sequences that occur more than once. DNA consists of only `'A'`, `'C'`, `'G'`, `'T'`.
 
-Difficulty: Medium | Acceptance: 51.3%
+- **Example 1**: `s = "AAAAACCCCCAAAAACCCCCCAAAAAGGGTTT"` → `["AAAAACCCCC","CCCCCAAAAA"]`
+- **Example 2**: `s = "AAAAAAAAAAAAA"` → `["AAAAAAAAAA"]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/repeated-dna-sequences) for full constraints
-
----
+**Constraints**: `1 <= s.length <= 10^5`, `s[i]` is `'A'`, `'C'`, `'G'`, or `'T'`.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
-
----
+1. **Clarify**: "Window size luôn là 10?" / Window size is always 10 in this problem
+2. **Approach**: "Dùng 2 Set: seen và result để tránh duplicate trong output" / Two sets prevent duplicates in result
+3. **Edge cases**: "Chuỗi ngắn hơn 10 ký tự → return []" / Length < 10 returns empty
+4. **Optimize**: "Dùng rolling hash thay substring để giảm Space" / Rolling hash avoids storing full substrings
+5. **Test**: "Chuỗi toàn ký tự giống nhau như AAAAAAAAAAAAA" / All-same string is key test
+6. **Follow-up**: "Nếu window size thay đổi theo input?" / Generalize to variable-length k
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Brute Force — nested loop kiểm tra mọi cặp
+ * Time: O(n²·L) | Space: O(n·L) — L=10
  */
-function repeatedDnaSequencesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function repeatedDnaSequencesBrute(s: string): string[] {
+  const result: string[] = [];
+  for (let i = 0; i <= s.length - 10; i++) {
+    const sub = s.substring(i, i + 10);
+    for (let j = i + 1; j <= s.length - 10; j++) {
+      if (s.substring(j, j + 10) === sub && !result.includes(sub)) {
+        result.push(sub);
+        break;
+      }
+    }
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Hash Set — hai Set seen/result, một lần duyệt
+ * Time: O(n·L) | Space: O(n·L) — L=10, thực tế O(n)
  */
-function repeatedDnaSequences(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function repeatedDnaSequences(s: string): string[] {
+  const seen = new Set<string>();
+  const result = new Set<string>();
+  for (let i = 0; i <= s.length - 10; i++) {
+    const sub = s.substring(i, i + 10);
+    if (seen.has(sub)) result.add(sub);
+    else seen.add(sub);
+  }
+  return [...result];
 }
 
-// === Test Cases ===
-// console.log(repeatedDnaSequences(/* example 1 */)); // expected
-// console.log(repeatedDnaSequences(/* example 2 */)); // expected
-// console.log(repeatedDnaSequences(/* edge case */)); // expected
+/** Solution 3: Rolling Hash (Rabin-Karp) — tránh tạo substring
+ * Time: O(n) | Space: O(n)
+ */
+function repeatedDnaSequencesRollingHash(s: string): string[] {
+  if (s.length <= 10) return [];
+  const charMap: Record<string, number> = { A: 0, C: 1, G: 2, T: 3 };
+  const seen = new Set<number>();
+  const result = new Set<string>();
+  const BASE = 4,
+    L = 10;
+  let hash = 0;
+  const MOD = (1 << 20) - 1; // 4^10 = 2^20
+  for (let i = 0; i < L; i++) hash = (hash * BASE + charMap[s[i]]) & MOD;
+  seen.add(hash);
+  for (let i = L; i < s.length; i++) {
+    hash = ((hash * BASE) & MOD) + charMap[s[i]] - charMap[s[i - L]] * Math.pow(BASE, L);
+    // Simpler: recompute or use bitmask approach
+    hash = hash & MOD;
+    if (seen.has(hash)) result.add(s.substring(i - L + 1, i + 1));
+    else seen.add(hash);
+  }
+  return [...result];
+}
+
+// Test cases
+console.log(repeatedDnaSequences("AAAAACCCCCAAAAACCCCCCAAAAAGGGTTT")); // ["AAAAACCCCC","CCCCCAAAAA"]
+console.log(repeatedDnaSequences("AAAAAAAAAAAAA")); // ["AAAAAAAAAA"]
+console.log(repeatedDnaSequences("ACGT")); // []
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Strings Differ by One Character](https://leetcode.com/problems/strings-differ-by-one-character) — same pattern: String Matching
-- [Unique Substrings With Equal Digit Frequency](https://leetcode.com/problems/unique-substrings-with-equal-digit-frequency) — same pattern: String Matching
-- [Longest Duplicate Substring](https://leetcode.com/problems/longest-duplicate-substring) — same pattern: Sliding Window
-- [Substring with Concatenation of All Words](https://leetcode.com/problems/substring-with-concatenation-of-all-words) — same pattern: Sliding Window
-- [Repeated DNA Sequences — LeetCode](https://leetcode.com/problems/repeated-dna-sequences) — problem page
+| Problem                                                                                                              | Relationship                         |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| [Strings Differ by One Character](https://leetcode.com/problems/strings-differ-by-one-character)                     | Fixed-length substring hashing       |
+| [Longest Duplicate Substring](https://leetcode.com/problems/longest-duplicate-substring)                             | Rolling hash for duplicate detection |
+| [Substring with Concatenation of All Words](https://leetcode.com/problems/substring-with-concatenation-of-all-words) | Fixed window sliding over string     |

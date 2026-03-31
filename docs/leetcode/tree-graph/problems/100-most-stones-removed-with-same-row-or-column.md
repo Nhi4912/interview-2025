@@ -7,97 +7,161 @@ tags: [Hash Table, Depth-First Search, Union Find, Graph]
 leetcode_url: "https://leetcode.com/problems/most-stones-removed-with-same-row-or-column"
 ---
 
-# Most Stones Removed with Same Row or Column / Most Stones Removed with Same Row or Column
+# Most Stones Removed with Same Row or Column / Xóa Nhiều Đá Nhất Cùng Hàng Hoặc Cột
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Union Find
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Minimize Malware Spread](https://leetcode.com/problems/minimize-malware-spread) | [Minimize Malware Spread II](https://leetcode.com/problems/minimize-malware-spread-ii)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống nhóm bạn — ban đầu ai cũng riêng, khi hai người kết bạn thì nhóm họ gộp lại. Union Find quản lý các nhóm này hiệu quả.
+> **Analogy:** Giống nhóm bạn trong lớp — bạn A và bạn B ở cùng hàng thì cùng nhóm, bạn B và bạn C cùng cột thì cũng cùng nhóm. Cuối cùng mỗi nhóm n người thì xóa được n-1 người. Tổng đá xóa được = tổng đá - số nhóm (components).
 
 **Pattern Recognition:**
 
-- Signal: "group elements" + "connectivity queries" → **Union Find**
-- Bài này thuộc dạng Union Find — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- "Stones share row/column" → connect them → Union Find / DFS
+- Key insight: `stones_removed = total - num_components`
+- Encode rows and cols as separate IDs (col + offset) to union them together
 
-**Visual — Most Stones Removed with Same Row or Column example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Union Find
-// Show one complete example with state at each step
-```
+stones = [[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]
 
----
+Union (0,0)↔(0,1): same row 0  → group {(0,0),(0,1)}
+Union (0,0)↔(1,0): same col 0  → group {(0,0),(0,1),(1,0)}
+Union (1,0)↔(1,2): same row 1  → group {(0,0),(0,1),(1,0),(1,2)}
+Union (1,2)↔(2,2): same col 2  → adds (2,2)
+Union (2,1)↔(2,2): same row 2  → adds (2,1)
+All 6 stones → 1 component → 6 - 1 = 5 ✅
+```
 
 ## Problem Description
 
-Most Stones Removed with Same Row or Column. ([LeetCode](https://leetcode.com/problems/most-stones-removed-with-same-row-or-column))
+On a 2D plane, we place `n` stones at integer coordinate points. A stone can be removed if it shares the same row **or** column with at least one other stone. Return the maximum number of stones that can be removed.
 
-Difficulty: Medium | Acceptance: 62.2%
+**Example 1:** `stones = [[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]` → `5`
+**Example 2:** `stones = [[0,0],[0,2],[1,1],[2,0],[2,2]]` → `3`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/most-stones-removed-with-same-row-or-column) for full constraints
-
----
+**Constraints:** `1 <= stones.length <= 1000`, `0 <= xi, yi <= 10^4`, all stone positions are unique.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Hỏi rõ "xóa" có nghĩa gì? (phải còn ít nhất 1 đá cùng hàng/cột) / Confirm removal condition clearly.
+2. **Approach**: Nhận ra bài này là "đếm components" — Union Find hoặc DFS đều được / Recognize connected-components pattern.
+3. **Edge cases**: 1 viên đá → 0; mọi đá riêng biệt không cùng hàng/cột → 0 / Single stone or no shared rows/cols.
+4. **Optimize**: Union Find với path compression gần O(n); encode col=c+10001 để tránh trùng với row index / Use offset to distinguish row vs col IDs.
+5. **Test**: Kiểm tra từng nhóm riêng lẻ, đảm bảo đếm đúng số roots / Verify root count per component.
+6. **Follow-up**: Nếu cần biết đá nào bị xóa theo thứ tự? / What if we need the actual removal order?
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Union Find (Optimal)
+ * Time: O(n·α(n)) | Space: O(n)
+ * Encode col c as c+10001 so row IDs and col IDs never collide
  */
-function mostStonesRemovedWithSameRowOrColumnBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeStones(stones: number[][]): number {
+  const parent = new Map<number, number>();
+
+  function find(x: number): number {
+    if (!parent.has(x)) parent.set(x, x);
+    if (parent.get(x) !== x) parent.set(x, find(parent.get(x)!));
+    return parent.get(x)!;
+  }
+
+  function union(a: number, b: number): void {
+    const ra = find(a),
+      rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  }
+
+  for (const [r, c] of stones) {
+    union(r, c + 10001);
+  }
+
+  // Count distinct roots among actual stone positions
+  const roots = new Set<number>();
+  for (const [r] of stones) {
+    roots.add(find(r));
+  }
+
+  return stones.length - roots.size;
 }
 
-/**
- * Solution 2: Optimized — Union Find
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: DFS on adjacency (brute force O(n²))
+ * Time: O(n²) | Space: O(n)
  */
-function mostStonesRemovedWithSameRowOrColumn(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Union Find
-  // Hint: Use union-find with path compression and union by rank
-  throw new Error('Not implemented');
+function removeStonesDFS(stones: number[][]): number {
+  const n = stones.length;
+  const visited = new Array(n).fill(false);
+  let components = 0;
+
+  function dfs(i: number): void {
+    visited[i] = true;
+    for (let j = 0; j < n; j++) {
+      if (!visited[j] && (stones[i][0] === stones[j][0] || stones[i][1] === stones[j][1])) {
+        dfs(j);
+      }
+    }
+  }
+
+  for (let i = 0; i < n; i++) {
+    if (!visited[i]) {
+      dfs(i);
+      components++;
+    }
+  }
+
+  return n - components;
 }
 
-// === Test Cases ===
-// console.log(mostStonesRemovedWithSameRowOrColumn(/* example 1 */)); // expected
-// console.log(mostStonesRemovedWithSameRowOrColumn(/* example 2 */)); // expected
-// console.log(mostStonesRemovedWithSameRowOrColumn(/* edge case */)); // expected
+// Test cases
+console.log(
+  removeStones([
+    [0, 0],
+    [0, 1],
+    [1, 0],
+    [1, 2],
+    [2, 1],
+    [2, 2],
+  ]),
+); // 5
+console.log(
+  removeStones([
+    [0, 0],
+    [0, 2],
+    [1, 1],
+    [2, 0],
+    [2, 2],
+  ]),
+); // 3
+console.log(removeStones([[0, 0]])); // 0
+
+console.log(
+  removeStonesDFS([
+    [0, 0],
+    [0, 1],
+    [1, 0],
+    [1, 2],
+    [2, 1],
+    [2, 2],
+  ]),
+); // 5
+console.log(
+  removeStonesDFS([
+    [0, 0],
+    [0, 2],
+    [1, 1],
+    [2, 0],
+    [2, 2],
+  ]),
+); // 3
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Minimize Malware Spread](https://leetcode.com/problems/minimize-malware-spread) — same pattern: Union Find
-- [Minimize Malware Spread II](https://leetcode.com/problems/minimize-malware-spread-ii) — same pattern: Union Find
-- [Reachable Nodes With Restrictions](https://leetcode.com/problems/reachable-nodes-with-restrictions) — same pattern: Union Find
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Most Stones Removed with Same Row or Column — LeetCode](https://leetcode.com/problems/most-stones-removed-with-same-row-or-column) — problem page
+| Problem                                                                          | Relationship                                               |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| [Number of Islands](https://leetcode.com/problems/number-of-islands)             | Đếm thành phần liên thông tương tự                         |
+| [Minimize Malware Spread](https://leetcode.com/problems/minimize-malware-spread) | Union Find để nhóm nodes                                   |
+| [Accounts Merge](https://leetcode.com/problems/accounts-merge)                   | Union Find với string keys, cùng kiểu "group by attribute" |

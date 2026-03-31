@@ -7,100 +7,122 @@ tags: [Array, Binary Search]
 leetcode_url: "https://leetcode.com/problems/kth-missing-positive-number"
 ---
 
-# Kth Missing Positive Number / Kth Missing Positive Number
+# Kth Missing Positive Number / Số Dương Thứ K Bị Thiếu
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Binary Search
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) | [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+> **Analogy:** Tưởng tượng dãy số nguyên dương 1,2,3,4,... giống hàng chờ có đánh số. Một số người vắng mặt. Tại vị trí `i` trong mảng, số người **đáng lẽ** phải có là `i+1`, nhưng thực tế là `arr[i]`. Vậy số người vắng = `arr[i] - (i+1)`. Binary search trên khoảng cách này!
 
 **Pattern Recognition:**
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Sorted array + find k-th missing → Binary search on "how many missing before index i"
+- At index `i`: missing count = `arr[i] - (i+1)`
+- Find smallest `i` where missing count ≥ k, then compute answer
 
-**Visual — Kth Missing Positive Number example:**
+**Visual:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+arr = [2, 3, 4, 7, 11], k = 5
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Index:    0   1   2   3   4
+arr[i]:   2   3   4   7  11
+Missing: 2-1=1 3-2=1 4-3=1 7-4=3 11-5=6
+
+Binary search for first i where arr[i]-(i+1) >= k=5:
+  mid=2: missing=1 < 5 → lo=3
+  mid=3: missing=3 < 5 → lo=4
+  mid=4: missing=6 >= 5 → hi=3
+
+lo=4, answer = lo + k = 4 + 5 = 9 ✅
 ```
-
----
 
 ## Problem Description
 
-Kth Missing Positive Number. ([LeetCode](https://leetcode.com/problems/kth-missing-positive-number))
+Given strictly increasing array `arr` of positive integers and integer `k`, return the **k-th missing positive integer** not in `arr`. Constraints: `1 ≤ arr.length ≤ 1000`, `1 ≤ arr[i] ≤ 1000`, `1 ≤ k ≤ 1000`.
 
-Difficulty: Easy | Acceptance: 62.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/kth-missing-positive-number) for full constraints
-
----
+**Example 1:** `arr = [2,3,4,7,11]`, `k = 5` → `9`
+**Example 2:** `arr = [1,2,3,4]`, `k = 2` → `6`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
-
----
+1. **Clarify**: k-th missing là đếm từ 1 hay từ 0? Từ số dương 1 / Count from positive integer 1 upward
+2. **Approach**: Linear scan O(n) dễ hiểu; binary search O(log n) là tối ưu / Linear is simpler; binary search for O(log n)
+3. **Edge cases**: k lớn hơn tất cả gaps trong arr → answer = arr.last + remaining_k / k may exceed all gaps
+4. **Optimize**: Key insight: missing count tại index i = arr[i] - i - 1 / missing(i) = arr[i] - i - 1
+5. **Test**: `[1,2,3,4]`, k=2 → 6 (không có missing trong arr, answer = 4+2=6) / All present in arr
+6. **Follow-up**: Nếu arr không sorted? → sort first O(n log n) / Unsorted: sort first
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Linear Scan — easy to explain
+ * Time: O(n + k) | Space: O(1)
  */
-function kthMissingPositiveNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findKthPositive1(arr: number[], k: number): number {
+  const set = new Set(arr);
+  let missing = 0;
+  let num = 0;
+  while (missing < k) {
+    num++;
+    if (!set.has(num)) missing++;
+  }
+  return num;
 }
 
-/**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Binary Search — optimal
+ * Key: missing(i) = arr[i] - (i+1) = arr[i] - i - 1
+ * Find smallest index where missing >= k → answer = lo + k
+ * Time: O(log n) | Space: O(1)
  */
-function kthMissingPositiveNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function findKthPositive2(arr: number[], k: number): number {
+  let lo = 0,
+    hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    // missing numbers before arr[mid]: arr[mid] - mid - 1
+    if (arr[mid] - mid - 1 >= k) {
+      hi = mid;
+    } else {
+      lo = mid + 1;
+    }
+  }
+  // lo is the first index where missing >= k
+  // answer = lo + k (lo missing slots before index lo, plus k more)
+  return lo + k;
 }
 
-// === Test Cases ===
-// console.log(kthMissingPositiveNumber(/* example 1 */)); // expected
-// console.log(kthMissingPositiveNumber(/* example 2 */)); // expected
-// console.log(kthMissingPositiveNumber(/* edge case */)); // expected
+/** Solution 3: Walk through arr tracking missing count
+ * Time: O(n) | Space: O(1)
+ */
+function findKthPositive3(arr: number[], k: number): number {
+  let missing = 0;
+  let prev = 0;
+  for (const num of arr) {
+    const gap = num - prev - 1; // missing numbers between prev+1 and num-1
+    if (missing + gap >= k) {
+      return prev + (k - missing);
+    }
+    missing += gap;
+    prev = num;
+  }
+  return prev + (k - missing);
+}
+
+// Test cases
+console.log(findKthPositive1([2, 3, 4, 7, 11], 5)); // 9
+console.log(findKthPositive2([2, 3, 4, 7, 11], 5)); // 9
+console.log(findKthPositive3([2, 3, 4, 7, 11], 5)); // 9
+console.log(findKthPositive2([1, 2, 3, 4], 2)); // 6
+console.log(findKthPositive2([1, 3], 1)); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) — same pattern: Binary Search
-- [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas) — same pattern: Binary Search
-- [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix) — same pattern: Binary Search
-- [Find Peak Element](https://leetcode.com/problems/find-peak-element) — same pattern: Binary Search
-- [Kth Missing Positive Number — LeetCode](https://leetcode.com/problems/kth-missing-positive-number) — problem page
+| Problem                                                                                                                                          | Relationship                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| [Missing Number](https://leetcode.com/problems/missing-number)                                                                                   | Find single missing number in range [0,n]            |
+| [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) | Binary search on sorted array with answer derivation |
+| [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)                                                                         | Binary search on answer space pattern                |

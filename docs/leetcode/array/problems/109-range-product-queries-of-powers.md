@@ -7,97 +7,179 @@ tags: [Array, Bit Manipulation, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/range-product-queries-of-powers"
 ---
 
-# Range Product Queries of Powers / Range Product Queries of Powers
+# Range Product Queries of Powers / Truy Vấn Tích Trong Khoảng Các Lũy Thừa
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Bit Decomposition + Range Query
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [XOR Queries of a Subarray](https://leetcode.com/problems/xor-queries-of-a-subarray) | [Maximum OR](https://leetcode.com/problems/maximum-or)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+> **Analogy:** Tưởng tượng bạn viết số n dưới dạng nhị phân — mỗi bit 1 là một "thành phần lũy thừa của 2". Ví dụ 13 = 1101₂ = 8 + 4 + 1. Gom tất cả thành phần đó vào mảng `powers`. Sau đó với mỗi query `[left, right]`, nhân tất cả `powers[left..right]` lại — vì chúng đều là lũy thừa 2, kết quả cũng là lũy thừa 2.
 
 **Pattern Recognition:**
 
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Tách n thành các bit lũy thừa 2: dùng `n & (-n)` để lấy lowest set bit, rồi XOR/shift
+- Với range product queries trên powers-of-2: tích = 2^(sum of exponents)
+- Dùng prefix XOR product (mod 10^9+7) hoặc trực tiếp nhân
 
-**Visual — Range Product Queries of Powers example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
-```
+n = 15, queries = [[0,1],[2,2],[0,3]]
 
----
+15 = 1111₂ → powers = [1, 2, 4, 8]  (extract each set bit, ascending)
+
+Query [0,1]: powers[0]*powers[1] = 1*2 = 2
+Query [2,2]: powers[2]           = 4
+Query [0,3]: 1*2*4*8             = 64
+
+Output: [2, 4, 64]
+```
 
 ## Problem Description
 
-Range Product Queries of Powers. ([LeetCode](https://leetcode.com/problems/range-product-queries-of-powers))
+Given a positive integer `n` and a 2D array `queries` where `queries[i] = [left, right]`. Let `powers` be the array of powers of 2 that sum to `n` (sorted ascending). For each query, return the product of `powers[left..right]` modulo `10^9 + 7`.
 
-Difficulty: Medium | Acceptance: 41.9%
+**Example 1:** `n=15, queries=[[0,1],[2,2],[0,3]]` → `[2,4,64]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `n=2, queries=[[0,0]]` → `[2]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/range-product-queries-of-powers) for full constraints
-
----
+**Constraints:** `1 <= n <= 10^9`, `1 <= queries.length <= 10^5`, `0 <= queries[i][0] <= queries[i][1] < powers.length`.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Powers sorted ascending or by bit position? — Ascending order (smallest power first).
+2. **Approach**: Tách bits của n → build powers array; then for each query multiply range.
+3. **Edge cases**: n=1 → powers=[1]; query range = single element → return that element.
+4. **Optimize**: Brute range multiply is O(n per query) = O(q\*log n). Prefix product array → O(1) per query but division mod prime needed (use modular inverse).
+5. **Test**: `n=7 = 1+2+4`, powers=[1,2,4]; query[0,2]=1*2*4=8.
+6. **Follow-up**: Range product queries with modular inverse → O(1) using prefix products.
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+const MOD = 1_000_000_007n;
+
+/** Solution 1: Extract bits + brute range multiply
+ * Time: O(log n + q * log n) | Space: O(log n)
  */
-function rangeProductQueriesOfPowersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function productQueries1(n: number, queries: number[][]): number[] {
+  // Extract powers of 2 from n
+  const powers: bigint[] = [];
+  let num = n;
+  while (num > 0) {
+    const lsb = num & -num;
+    powers.push(BigInt(lsb));
+    num ^= lsb;
+  }
+
+  return queries.map(([l, r]) => {
+    let product = 1n;
+    for (let i = l; i <= r; i++) product = (product * powers[i]) % MOD;
+    return Number(product);
+  });
 }
 
-/**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Prefix Products with Modular Inverse — O(1) per query
+ * Time: O(log n + q) | Space: O(log n)
  */
-function rangeProductQueriesOfPowers(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+function productQueries(n: number, queries: number[][]): number[] {
+  // Extract powers of 2 (ascending)
+  const powers: bigint[] = [];
+  let num = n;
+  while (num > 0) {
+    const lsb = num & -num;
+    powers.push(BigInt(lsb));
+    num ^= lsb;
+  }
+
+  // Build prefix products mod MOD
+  const prefix = new Array<bigint>(powers.length + 1).fill(1n);
+  for (let i = 0; i < powers.length; i++) {
+    prefix[i + 1] = (prefix[i] * powers[i]) % MOD;
+  }
+
+  // Modular inverse using Fermat's little theorem: a^(MOD-2) mod MOD
+  const modPow = (base: bigint, exp: bigint, mod: bigint): bigint => {
+    let result = 1n;
+    base %= mod;
+    while (exp > 0n) {
+      if (exp % 2n === 1n) result = (result * base) % mod;
+      exp /= 2n;
+      base = (base * base) % mod;
+    }
+    return result;
+  };
+
+  return queries.map(([l, r]) => {
+    // product[l..r] = prefix[r+1] / prefix[l] = prefix[r+1] * inv(prefix[l])
+    const inv = modPow(prefix[l], MOD - 2n, MOD);
+    return Number((prefix[r + 1] * inv) % MOD);
+  });
 }
 
-// === Test Cases ===
-// console.log(rangeProductQueriesOfPowers(/* example 1 */)); // expected
-// console.log(rangeProductQueriesOfPowers(/* example 2 */)); // expected
-// console.log(rangeProductQueriesOfPowers(/* edge case */)); // expected
+/** Solution 3: Bit shift approach — powers are 2^k, product is 2^(sum of k)
+ * Time: O(log n + q * log n) | Space: O(log n)
+ */
+function productQueries3(n: number, queries: number[][]): number[] {
+  const exponents: number[] = [];
+  for (let bit = 0; bit < 30; bit++) {
+    if (n & (1 << bit)) exponents.push(bit);
+  }
+
+  const modPow = (base: bigint, exp: bigint, mod: bigint): bigint => {
+    let r = 1n;
+    base %= mod;
+    while (exp > 0n) {
+      if (exp & 1n) r = (r * base) % mod;
+      exp >>= 1n;
+      base = (base * base) % mod;
+    }
+    return r;
+  };
+
+  return queries.map(([l, r]) => {
+    let expSum = 0;
+    for (let i = l; i <= r; i++) expSum += exponents[i];
+    return Number(modPow(2n, BigInt(expSum), MOD));
+  });
+}
+
+// Test cases
+console.log(
+  productQueries(15, [
+    [0, 1],
+    [2, 2],
+    [0, 3],
+  ]),
+); // [2, 4, 64]
+console.log(productQueries(2, [[0, 0]])); // [2]
+console.log(
+  productQueries(7, [
+    [0, 2],
+    [0, 1],
+  ]),
+); // [8, 2]
+console.log(
+  productQueries1(15, [
+    [0, 1],
+    [2, 2],
+    [0, 3],
+  ]),
+); // [2, 4, 64]
+console.log(
+  productQueries3(15, [
+    [0, 1],
+    [2, 2],
+    [0, 3],
+  ]),
+); // [2, 4, 64]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [XOR Queries of a Subarray](https://leetcode.com/problems/xor-queries-of-a-subarray) — same pattern: Prefix Sum
-- [Maximum OR](https://leetcode.com/problems/maximum-or) — same pattern: Prefix Sum
-- [Bitwise OR of All Subsequence Sums](https://leetcode.com/problems/bitwise-or-of-all-subsequence-sums) — same pattern: Prefix Sum
-- [Minimum Number of K Consecutive Bit Flips](https://leetcode.com/problems/minimum-number-of-k-consecutive-bit-flips) — same pattern: Sliding Window
-- [Range Product Queries of Powers — LeetCode](https://leetcode.com/problems/range-product-queries-of-powers) — problem page
+| Problem                                                                                    | Relationship                                           |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| [XOR Queries of a Subarray](https://leetcode.com/problems/xor-queries-of-a-subarray)       | Range queries with prefix XOR instead of product       |
+| [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) | Sliding window for range product condition             |
+| [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits)                         | Bit extraction technique used in building powers array |

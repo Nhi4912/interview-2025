@@ -7,100 +7,117 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/unique-email-addresses"
 ---
 
-# Unique Email Addresses / Unique Email Addresses
+# Unique Email Addresses / Địa Chỉ Email Duy Nhất
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Set + String Parsing
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+> Giống như Google coi `alice.z+spam@leetcode.com` và `alicez@leetcode.com` là cùng một hộp thư — bỏ dấu chấm, bỏ phần sau `+`, rồi đếm địa chỉ duy nhất. Bài toán là parse + normalize + count.
 
 **Pattern Recognition:**
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "normalize string" + "count unique" → **String Processing + Hash Set**
+- Tách local/domain bằng `@`, xử lý local theo hai quy tắc
+- Dùng Set để đếm unique tự động
 
-**Visual — Unique Email Addresses example:**
+**Visual:**
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+"alice.z+foo@leetcode.com"
+  local="alice.z+foo"  domain="leetcode.com"
+  1) split at '+' → "alice.z"
+  2) remove dots   → "alicez"
+  normalized = "alicez@leetcode.com"
 
-Key insight: store complement for O(1) lookup
+"alicez@leetcode.com" → "alicez@leetcode.com"  ← same!
+Set size = 1
 ```
-
----
 
 ## Problem Description
 
-Unique Email Addresses. ([LeetCode](https://leetcode.com/problems/unique-email-addresses))
+Each email has a local name and domain separated by `@`. Gmail rules: (1) dots in local name are ignored; (2) everything after `+` in local name is ignored. Return the number of unique email addresses that receive mail.
 
-Difficulty: Easy | Acceptance: 67.6%
+- **Example 1**: `emails = ["test.email+alex@leetcode.com","test.e.mail+bob.cathy@leetcode.com","testemail+david@lee.tcode.com"]` → `2`
+- **Example 2**: `emails = ["a@leetcode.com","b@leetcode.com","c@leetcode.com"]` → `3`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/unique-email-addresses) for full constraints
-
----
+**Constraints**: `1 <= emails.length <= 100`, `1 <= emails[i].length <= 100`, each email is valid.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: "Chỉ có dấu chấm và '+' cần xử lý không? Domain giữ nguyên?" / Only dots and plus sign in local, domain untouched
+2. **Approach**: "Normalize từng email rồi bỏ vào Set" / Normalize each email then insert into Set
+3. **Edge cases**: "Local toàn dấu chấm? '+' ngay đầu?" / All dots in local, '+' at start
+4. **Optimize**: "Dùng regex hay manual parse đều được, O(n·L) là tối ưu" / Regex or manual both fine
+5. **Test**: `["a.b+x@c.d","ab@c.d"]` → `1` (same after normalize)
+6. **Follow-up**: "Nếu có nhiều quy tắc khác nhau theo domain?" / Different rules per domain
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Brute Force — split + replace + Set
+ * Time: O(n·L) | Space: O(n·L)
  */
-function uniqueEmailAddressesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function uniqueEmailAddressesBrute(emails: string[]): number {
+  const unique = new Set<string>();
+  for (const email of emails) {
+    const [local, domain] = email.split("@");
+    const noPlus = local.split("+")[0]; // drop everything after +
+    const noDots = noPlus.split(".").join(""); // remove dots
+    unique.add(noDots + "@" + domain);
+  }
+  return unique.size;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Optimized — manual parse, avoid extra split allocations
+ * Time: O(n·L) | Space: O(n·L)
  */
-function uniqueEmailAddresses(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function uniqueEmailAddresses(emails: string[]): number {
+  const unique = new Set<string>();
+  for (const email of emails) {
+    const atIdx = email.indexOf("@");
+    const domain = email.slice(atIdx + 1);
+    const local = email.slice(0, atIdx);
+    const plusIdx = local.indexOf("+");
+    const effectiveLocal = plusIdx === -1 ? local : local.slice(0, plusIdx);
+    let normalized = "";
+    for (const ch of effectiveLocal) {
+      if (ch !== ".") normalized += ch;
+    }
+    unique.add(normalized + "@" + domain);
+  }
+  return unique.size;
 }
 
-// === Test Cases ===
-// console.log(uniqueEmailAddresses(/* example 1 */)); // expected
-// console.log(uniqueEmailAddresses(/* example 2 */)); // expected
-// console.log(uniqueEmailAddresses(/* edge case */)); // expected
+/** Solution 3: Regex one-liner approach
+ * Time: O(n·L) | Space: O(n·L)
+ */
+function uniqueEmailAddressesRegex(emails: string[]): number {
+  return new Set(
+    emails.map((e) => {
+      const [local, domain] = e.split("@");
+      return local.split("+")[0].replace(/\./g, "") + "@" + domain;
+    }),
+  ).size;
+}
+
+// Test cases
+console.log(
+  uniqueEmailAddresses([
+    "test.email+alex@leetcode.com",
+    "test.e.mail+bob.cathy@leetcode.com",
+    "testemail+david@lee.tcode.com",
+  ]),
+); // 2
+console.log(uniqueEmailAddresses(["a@leetcode.com", "b@leetcode.com", "c@leetcode.com"])); // 3
+console.log(uniqueEmailAddresses(["a.b+x@c.d", "ab@c.d"])); // 1
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Unique Email Addresses — LeetCode](https://leetcode.com/problems/unique-email-addresses) — problem page
+| Problem                                                                          | Relationship                        |
+| -------------------------------------------------------------------------------- | ----------------------------------- |
+| [Defanging an IP Address](https://leetcode.com/problems/defanging-an-ip-address) | String transformation/normalization |
+| [Detect Capital](https://leetcode.com/problems/detect-capital)                   | Simple string rule checking         |
+| [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words)       | Frequency counting with hash map    |

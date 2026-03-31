@@ -7,102 +7,149 @@ tags: [String, Dynamic Programming, Bit Manipulation, Bitmask]
 leetcode_url: "https://leetcode.com/problems/maximize-the-number-of-partitions-after-operations"
 ---
 
-# Maximize the Number of Partitions After Operations / Maximize the Number of Partitions After Operations
+# Maximize the Number of Partitions After Operations / Tối Đa Số Phân Đoạn Sau Thao Tác
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Bitmask DP
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Find the Shortest Superstring](https://leetcode.com/problems/find-the-shortest-superstring) | [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+> **Analogy:** Như chia lớp học thành nhóm — mỗi nhóm tối đa k học sinh khác nhau. Bạn được phép đổi chỗ ngồi của đúng 1 học sinh để tạo ra nhiều nhóm nhất có thể.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "at most one change + maximize count" → DP with boolean `changed` flag
+- Track current-partition distinct chars as a bitmask (26 bits)
+- State: `(index, currentMask, usedChange)` → max partitions from here
 
-**Visual — Maximize the Number of Partitions After Operations example:**
+**Visual:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+s = "abac", k = 2
+No change:    [ab][ac]       = 2 partitions
+Change s[1]b→a: [aa][ac]? → [a][a][ac] = 3 partitions ✓
+mask for 'a'=1, 'b'=2, 'c'=4
+After split, mask resets to just the new char's bit
 ```
-
----
 
 ## Problem Description
 
-Maximize the Number of Partitions After Operations. ([LeetCode](https://leetcode.com/problems/maximize-the-number-of-partitions-after-operations))
+Given string `s` and integer `k`, you may change **at most one** character. Split `s` into maximum partitions where each segment has ≤ k distinct characters.
 
-Difficulty: Hard | Acceptance: 27.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximize-the-number-of-partitions-after-operations) for full constraints
-
----
+- Example 1: `s = "abac"`, `k = 2` → `3`
+- Example 2: `s = "ssss"`, `k = 3` → `1`
+- Constraints: `1 ≤ s.length ≤ 10^4`, `1 ≤ k ≤ 26`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **Clarify**: Thay đổi 1 ký tự ở bất kỳ vị trí nào? / Can we change any single position to any character?
+2. **Approach**: Bitmask DP — track distinct chars in current segment as bitmask / memoize (i, mask, changed)
+3. **Edge cases**: k ≥ 26 → always 1 partition; single character → always 1
+4. **Optimize**: Số mask hợp lệ bị giới hạn bởi popcount ≤ k / valid masks bounded by C(26,k)
+5. **Test**: Verify greedy no-change, then a change that splits one segment into two
+6. **Follow-up**: At most 2 changes? → add dimension to DP state
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Memoized Bitmask DP with change flag
+ * Time: O(n * C(26,k) * 26) | Space: O(n * C(26,k))
  */
-function maximizeTheNumberOfPartitionsAfterOperationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxPartitionsAfterOperations(s: string, k: number): number {
+  const n = s.length;
+  const memo = new Map<string, number>();
+
+  function popcount(x: number): number {
+    let c = 0;
+    while (x) {
+      c += x & 1;
+      x >>>= 1;
+    }
+    return c;
+  }
+
+  function dp(i: number, mask: number, changed: number): number {
+    if (i === n) return 1;
+    const key = `${i},${mask},${changed}`;
+    if (memo.has(key)) return memo.get(key)!;
+
+    const bit = 1 << (s.charCodeAt(i) - 97);
+    let res = 0;
+
+    // Option A: keep s[i] as-is
+    const newMask = mask | bit;
+    if (popcount(newMask) <= k) {
+      res = Math.max(res, dp(i + 1, newMask, changed));
+    } else {
+      res = Math.max(res, 1 + dp(i + 1, bit, changed));
+    }
+
+    // Option B: change s[i] to best character (only if not yet changed)
+    if (changed === 0) {
+      for (let d = 0; d < 26; d++) {
+        const nb = 1 << d;
+        const nm = mask | nb;
+        if (popcount(nm) <= k) {
+          res = Math.max(res, dp(i + 1, nm, 1));
+        } else {
+          res = Math.max(res, 1 + dp(i + 1, nb, 1));
+        }
+      }
+    }
+
+    memo.set(key, res);
+    return res;
+  }
+
+  return dp(0, 0, 0);
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Greedy baseline + brute-force single change (O(n^2))
+ * Time: O(26 * n^2) | Space: O(n)
+ * Good for interviewing to show brute-force first
  */
-function maximizeTheNumberOfPartitionsAfterOperations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function maxPartitionsAfterOperations2(s: string, k: number): number {
+  function countPartitions(arr: string[]): number {
+    let parts = 1;
+    const cur = new Set<string>();
+    for (const c of arr) {
+      if (!cur.has(c) && cur.size === k) {
+        parts++;
+        cur.clear();
+      }
+      cur.add(c);
+    }
+    return parts;
+  }
+
+  const arr = s.split("");
+  let best = countPartitions(arr);
+
+  for (let i = 0; i < s.length; i++) {
+    const orig = arr[i];
+    for (let d = 0; d < 26; d++) {
+      const nc = String.fromCharCode(97 + d);
+      if (nc === orig) continue;
+      arr[i] = nc;
+      best = Math.max(best, countPartitions(arr));
+    }
+    arr[i] = orig;
+  }
+  return best;
 }
 
-// === Test Cases ===
-// console.log(maximizeTheNumberOfPartitionsAfterOperations(/* example 1 */)); // expected
-// console.log(maximizeTheNumberOfPartitionsAfterOperations(/* example 2 */)); // expected
-// console.log(maximizeTheNumberOfPartitionsAfterOperations(/* edge case */)); // expected
+// Tests
+console.log(maxPartitionsAfterOperations("abac", 2)); // 3
+console.log(maxPartitionsAfterOperations("ssss", 3)); // 1
+console.log(maxPartitionsAfterOperations("aa", 1)); // 2
+console.log(maxPartitionsAfterOperations2("abac", 2)); // 3
+console.log(maxPartitionsAfterOperations2("ssss", 3)); // 1
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Find the Shortest Superstring](https://leetcode.com/problems/find-the-shortest-superstring) — same pattern: Dynamic Programming
-- [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word) — same pattern: Backtracking
-- [Maximum Score Words Formed by Letters](https://leetcode.com/problems/maximum-score-words-formed-by-letters) — same pattern: Backtracking
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Maximize the Number of Partitions After Operations — LeetCode](https://leetcode.com/problems/maximize-the-number-of-partitions-after-operations) — problem page
+| Problem                                                                                      | Relationship                |
+| -------------------------------------------------------------------------------------------- | --------------------------- |
+| [Partition Labels](https://leetcode.com/problems/partition-labels)                           | Greedy string partitioning  |
+| [Find the Shortest Superstring](https://leetcode.com/problems/find-the-shortest-superstring) | Bitmask DP on strings       |
+| [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word)               | Bitmask over character sets |

@@ -7,97 +7,137 @@ tags: [Array, Union Find, Sorting]
 leetcode_url: "https://leetcode.com/problems/make-lexicographically-smallest-array-by-swapping-elements"
 ---
 
-# Make Lexicographically Smallest Array by Swapping Elements / Make Lexicographically Smallest Array by Swapping Elements
+# Make Lexicographically Smallest Array by Swapping Elements / Tạo Mảng Nhỏ Nhất Theo Thứ Tự Từ Điển Bằng Cách Hoán Đổi
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Union Find
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sorting + Group Assignment
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Accounts Merge](https://leetcode.com/problems/accounts-merge) | [Rank Transform of a Matrix](https://leetcode.com/problems/rank-transform-of-a-matrix)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống nhóm bạn — ban đầu ai cũng riêng, khi hai người kết bạn thì nhóm họ gộp lại. Union Find quản lý các nhóm này hiệu quả.
+> **Analogy:** Giống nhóm học sinh được phép đổi chỗ cho nhau — nhưng chỉ khi điểm số của hai bạn **chênh nhau không quá limit**. Các bạn có thể "chuyền" giá trị qua nhau trong cùng một nhóm kết nối, vì A↔B và B↔C ngụ ý A↔C (qua trung gian). Bên trong mỗi nhóm, hoán vị tự do để xếp nhỏ nhất.
 
 **Pattern Recognition:**
 
-- Signal: "group elements" + "connectivity queries" → **Union Find**
-- Bài này thuộc dạng Union Find — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Two elements can swap if `|a-b| ≤ limit`; transitive → connected groups
+- Sort by value → consecutive elements within `limit` are in same group
+- Within each group: sort values, sort original indices → assign sorted values to sorted positions
 
-**Visual — Make Lexicographically Smallest Array by Swapping Elements example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Union Find
-// Show one complete example with state at each step
-```
+nums = [1,5,3,9,8], limit = 2
 
----
+Sort by value: [(1,0),(3,2),(5,1),(8,4),(9,3)]
+  1→3: diff=2 ≤ 2 → same group
+  3→5: diff=2 ≤ 2 → same group
+  5→8: diff=3 > 2 → new group
+  8→9: diff=1 ≤ 2 → same group
+
+Groups: {0,1,2} with values {1,3,5}, {3,4} with values {8,9}
+
+Group {0,1,2}: sort indices=[0,1,2], sort values=[1,3,5]
+  → result[0]=1, result[1]=3, result[2]=5
+
+Group {3,4}: sort indices=[3,4], sort values=[8,9]
+  → result[3]=8, result[4]=9
+
+Result: [1,3,5,8,9] ✅
+```
 
 ## Problem Description
 
-Make Lexicographically Smallest Array by Swapping Elements. ([LeetCode](https://leetcode.com/problems/make-lexicographically-smallest-array-by-swapping-elements))
+Given `nums[]` and integer `limit`, you may swap `nums[i]` and `nums[j]` any number of times if `|nums[i] - nums[j]| ≤ limit`. Return the **lexicographically smallest** array after any swaps. `1 ≤ nums.length ≤ 10^5`, `1 ≤ nums[i] ≤ 10^9`, `1 ≤ limit ≤ 10^9`.
 
-Difficulty: Medium | Acceptance: 60.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/make-lexicographically-smallest-array-by-swapping-elements) for full constraints
-
----
+**Example 1:** `nums=[1,5,3,9,8]`, `limit=2` → `[1,3,5,8,9]`
+**Example 2:** `nums=[1,7,6,18,2,1]`, `limit=3` → `[1,6,7,2,1,18]`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Hoán đổi bất kỳ số lần, chỉ cần |a-b| ≤ limit / Unlimited swaps, only constraint is value difference ≤ limit
+2. **Approach**: Sort by value → group consecutive within limit → sort indices in group → assign sorted values / Sort-group-reassign
+3. **Edge cases**: limit rất lớn → tất cả là một nhóm; mảng đã sorted / Large limit → one big group
+4. **Optimize**: Không cần Union-Find thật sự — sort by value, group by gap > limit / No explicit UF needed
+5. **Test**: Trace `[1,7,6,18,2,1]`, limit=3 — nhóm {1,7,6} không hoạt động vì 7-1=6>3 / Check grouping carefully
+6. **Follow-up**: Nếu cần Union-Find thật sự? → standard UF with path compression / When would UF be cleaner?
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Sort by value, group by consecutive diff > limit, reassign
+ * Time: O(n log n) | Space: O(n)
  */
-function makeLexicographicallySmallestArrayBySwappingElementsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function lexicographicallySmallestArray(nums: number[], limit: number): number[] {
+  const n = nums.length;
+  // Pair each value with its original index, sort by value
+  const sorted = nums.map((v, i) => [v, i] as [number, number]);
+  sorted.sort((a, b) => a[0] - b[0]);
+
+  const result = new Array<number>(n);
+
+  let i = 0;
+  while (i < n) {
+    // Find the group: consecutive elements where diff <= limit
+    let j = i + 1;
+    while (j < n && sorted[j][0] - sorted[j - 1][0] <= limit) j++;
+
+    // Group is sorted[i..j-1]
+    // Collect original indices, sort them
+    const groupIndices = sorted.slice(i, j).map(([, idx]) => idx);
+    groupIndices.sort((a, b) => a - b);
+
+    // Values are already sorted (sorted[i..j-1][0])
+    const groupValues = sorted.slice(i, j).map(([val]) => val);
+    // groupValues is sorted ascending since sorted[] is sorted by value
+
+    // Assign sorted values to sorted positions
+    for (let k = 0; k < groupIndices.length; k++) {
+      result[groupIndices[k]] = groupValues[k];
+    }
+
+    i = j;
+  }
+
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Union Find
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Same approach, slightly more explicit
+ * Time: O(n log n) | Space: O(n)
  */
-function makeLexicographicallySmallestArrayBySwappingElements(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Union Find
-  // Hint: Use union-find with path compression and union by rank
-  throw new Error('Not implemented');
+function lexicographicallySmallestArray2(nums: number[], limit: number): number[] {
+  const n = nums.length;
+  const indices = Array.from({ length: n }, (_, i) => i);
+  indices.sort((a, b) => nums[a] - nums[b]);
+
+  const result = new Array<number>(n);
+  let start = 0;
+
+  while (start < n) {
+    let end = start + 1;
+    while (end < n && nums[indices[end]] - nums[indices[end - 1]] <= limit) end++;
+
+    const group = indices.slice(start, end);
+    const sortedPositions = [...group].sort((a, b) => a - b);
+    const sortedValues = group.map((i) => nums[i]); // already value-sorted
+
+    for (let k = 0; k < group.length; k++) {
+      result[sortedPositions[k]] = sortedValues[k];
+    }
+    start = end;
+  }
+
+  return result;
 }
 
-// === Test Cases ===
-// console.log(makeLexicographicallySmallestArrayBySwappingElements(/* example 1 */)); // expected
-// console.log(makeLexicographicallySmallestArrayBySwappingElements(/* example 2 */)); // expected
-// console.log(makeLexicographicallySmallestArrayBySwappingElements(/* edge case */)); // expected
+// Test cases
+console.log(lexicographicallySmallestArray([1, 5, 3, 9, 8], 2)); // [1,3,5,8,9]
+console.log(lexicographicallySmallestArray([1, 7, 6, 18, 2, 1], 3)); // [1,6,7,2,1,18]
+console.log(lexicographicallySmallestArray2([1, 5, 3, 9, 8], 2)); // [1,3,5,8,9]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Accounts Merge](https://leetcode.com/problems/accounts-merge) — same pattern: Union Find
-- [Rank Transform of a Matrix](https://leetcode.com/problems/rank-transform-of-a-matrix) — same pattern: Topological Sort
-- [Maximum Number of Points From Grid Queries](https://leetcode.com/problems/maximum-number-of-points-from-grid-queries) — same pattern: Union Find
-- [Smallest String With Swaps](https://leetcode.com/problems/smallest-string-with-swaps) — same pattern: Union Find
-- [Make Lexicographically Smallest Array by Swapping Elements — LeetCode](https://leetcode.com/problems/make-lexicographically-smallest-array-by-swapping-elements) — problem page
+| Problem                                                                                                                    | Relationship                                           |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [Smallest String With Swaps](https://leetcode.com/problems/smallest-string-with-swaps)                                     | Same pattern: group by connectivity, sort within group |
+| [Accounts Merge](https://leetcode.com/problems/accounts-merge)                                                             | Union-Find to merge connected components               |
+| [Sort Items by Groups Respecting Dependencies](https://leetcode.com/problems/sort-items-by-groups-respecting-dependencies) | Group-based sorting with constraints                   |

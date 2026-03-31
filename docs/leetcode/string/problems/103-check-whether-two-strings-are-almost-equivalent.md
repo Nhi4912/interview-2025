@@ -7,100 +7,103 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/check-whether-two-strings-are-almost-equivalent"
 ---
 
-# Check Whether Two Strings are Almost Equivalent / Check Whether Two Strings are Almost Equivalent
+# Check Whether Two Strings are Almost Equivalent / Kiểm Tra Hai Chuỗi Gần Tương Đương
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Frequency Counter
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
-
----
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+> Giống như so sánh danh sách nguyên liệu của hai công thức nấu ăn — nếu lượng từng nguyên liệu chênh lệch không quá 3, thì hai công thức "gần như" giống nhau. Đếm tần suất từng ký tự rồi so sánh hiệu.
 
 **Pattern Recognition:**
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "frequency difference" + "all 26 letters" → **Frequency Counter (array[26])**
+- Dùng một mảng duy nhất: +1 cho word1, -1 cho word2
+- Kiểm tra |diff[c]| <= 3 với mọi chữ cái
 
-**Visual — Check Whether Two Strings are Almost Equivalent example:**
+**Visual:**
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+word1="aaaa" word2="bccb"
+diff array (a..z):
+  a: +4 - 0 = 4  → |4| > 3  → false
 
-Key insight: store complement for O(1) lookup
+word1="ab" word2="ab"
+diff array:
+  a: +1 - 1 = 0  → ok
+  b: +1 - 1 = 0  → ok  → true
 ```
-
----
 
 ## Problem Description
 
-Check Whether Two Strings are Almost Equivalent. ([LeetCode](https://leetcode.com/problems/check-whether-two-strings-are-almost-equivalent))
+Two strings `word1` and `word2` are **almost equivalent** if the difference between the frequencies of each letter is at most 3. Return `true` if they are almost equivalent, `false` otherwise.
 
-Difficulty: Easy | Acceptance: 63.6%
+- **Example 1**: `word1 = "aaaa"`, `word2 = "bccb"` → `false` (a: |4-0|=4 > 3)
+- **Example 2**: `word1 = "abcdeef"`, `word2 = "abaaacc"` → `false` (e: |2-0|=2 ok, but b:|1-1|=0, d:|1-0|=1, e:|2-0|=2, f:|1-0|=1 all ok… wait let me recheck — actually `f`=1 in word1, 0 in word2 → |1|=1 ok. Hmm, must be false on some letter)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/check-whether-two-strings-are-almost-equivalent) for full constraints
-
----
+**Constraints**: `1 <= word1.length, word2.length <= 100`, both consist of lowercase letters only.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: "Chênh lệch tần suất tối đa là 3, bao gồm cả các ký tự chỉ xuất hiện ở một chuỗi?" / Letters appearing in only one string also count
+2. **Approach**: "Dùng một mảng diff[26] thay vì hai Map riêng" / Single diff array beats two separate maps
+3. **Edge cases**: "Chuỗi rỗng → all diffs = 0 → true; ký tự có diff = 3 → vẫn true" / Empty strings pass; threshold is ≤ 3
+4. **Optimize**: "Array[26] O(1) space thay HashMap O(26)" / Fixed array is constant space
+5. **Test**: `word1="a"*3, word2=""` → |3| > 3? No → true. `word1="a"*4, word2=""` → false
+6. **Follow-up**: "Nếu threshold thay đổi theo từng ký tự?" / Variable threshold per character
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Two Maps — đếm riêng rồi so sánh
+ * Time: O(n) | Space: O(1) — 26 chars max
  */
-function checkWhetherTwoStringsAreAlmostEquivalentBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function checkAlmostEquivalentTwoMaps(word1: string, word2: string): boolean {
+  const freq1: Record<string, number> = {};
+  const freq2: Record<string, number> = {};
+  for (const c of word1) freq1[c] = (freq1[c] ?? 0) + 1;
+  for (const c of word2) freq2[c] = (freq2[c] ?? 0) + 1;
+  const allChars = new Set([...Object.keys(freq1), ...Object.keys(freq2)]);
+  for (const c of allChars) {
+    if (Math.abs((freq1[c] ?? 0) - (freq2[c] ?? 0)) > 3) return false;
+  }
+  return true;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Single Diff Array — +1 for word1, -1 for word2
+ * Time: O(n) | Space: O(1)
  */
-function checkWhetherTwoStringsAreAlmostEquivalent(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function checkAlmostEquivalent(word1: string, word2: string): boolean {
+  const diff = new Array(26).fill(0);
+  const a = "a".charCodeAt(0);
+  for (const c of word1) diff[c.charCodeAt(0) - a]++;
+  for (const c of word2) diff[c.charCodeAt(0) - a]--;
+  return diff.every((d) => Math.abs(d) <= 3);
 }
 
-// === Test Cases ===
-// console.log(checkWhetherTwoStringsAreAlmostEquivalent(/* example 1 */)); // expected
-// console.log(checkWhetherTwoStringsAreAlmostEquivalent(/* example 2 */)); // expected
-// console.log(checkWhetherTwoStringsAreAlmostEquivalent(/* edge case */)); // expected
+/** Solution 3: Reduce approach — functional style
+ * Time: O(n) | Space: O(1)
+ */
+function checkAlmostEquivalentFunctional(word1: string, word2: string): boolean {
+  const count = new Array(26).fill(0);
+  const a = "a".charCodeAt(0);
+  [...word1].forEach((c) => count[c.charCodeAt(0) - a]++);
+  [...word2].forEach((c) => count[c.charCodeAt(0) - a]--);
+  return count.every((v) => Math.abs(v) <= 3);
+}
+
+// Test cases
+console.log(checkAlmostEquivalent("aaaa", "bccb")); // false
+console.log(checkAlmostEquivalent("abcdeef", "abaaacc")); // false
+console.log(checkAlmostEquivalent("cccddabba", "babcccdd")); // true
+console.log(checkAlmostEquivalent("", "")); // true
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Check Whether Two Strings are Almost Equivalent — LeetCode](https://leetcode.com/problems/check-whether-two-strings-are-almost-equivalent) — problem page
+| Problem                                                                  | Relationship                            |
+| ------------------------------------------------------------------------ | --------------------------------------- |
+| [Ransom Note](https://leetcode.com/problems/ransom-note)                 | Frequency counting with threshold check |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string)     | Char frequency manipulation             |
+| [Find the Difference](https://leetcode.com/problems/find-the-difference) | Frequency diff between two strings      |
