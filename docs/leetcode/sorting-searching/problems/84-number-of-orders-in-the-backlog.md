@@ -7,9 +7,9 @@ tags: [Array, Heap (Priority Queue), Simulation]
 leetcode_url: "https://leetcode.com/problems/number-of-orders-in-the-backlog"
 ---
 
-# Number of Orders in the Backlog / Number of Orders in the Backlog
+# Number of Orders in the Backlog / Số Lệnh Trong Hàng Chờ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap / Priority Queue
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap Simulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
 > **See also**: [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers) | [Car Pooling](https://leetcode.com/problems/car-pooling)
 
@@ -17,94 +17,183 @@ leetcode_url: "https://leetcode.com/problems/number-of-orders-in-the-backlog"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
-
-**Pattern Recognition:**
-
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Number of Orders in the Backlog example:**
+**Analogy (VN):** Mô phỏng sàn giao dịch chứng khoán — **buy orders** muốn mua giá cao nhất có thể (max-heap), **sell orders** muốn bán giá thấp nhất có thể (min-heap). Khi giá buy >= giá sell, hai lệnh khớp nhau và số lượng bị trừ đi.
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+orders = [[10,5,0],[15,2,1],[25,1,1],[30,4,0]]
+Buy heap (max): []   Sell heap (min): []
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+[10,5,0] BUY  → no sell match → buy heap: [(10,5)]
+[15,2,1] SELL → buy top=10 < 15 → no match → sell heap: [(15,2)]
+[25,1,1] SELL → buy top=10 < 25 → no match → sell heap: [(15,2),(25,1)]
+[30,4,0] BUY  → sell min=15 <= 30 → match 2 orders, buy_qty=2 left
+              → sell min=25 <= 30 → match 1 order, buy_qty=1 left
+              → sell empty, buy 1 remains → buy heap: [(30,1)]
+
+Total: buy heap (30,1) + sell heap () = 1 → answer = 1 mod 10^9+7
 ```
 
 ---
 
 ## Problem Description
 
-Number of Orders in the Backlog. ([LeetCode](https://leetcode.com/problems/number-of-orders-in-the-backlog))
+Given a list of `orders[i] = [price, amount, orderType]` (0=buy, 1=sell), simulate a stock exchange backlog. Return the total number of orders remaining after all are processed, modulo `10^9 + 7`.
 
-Difficulty: Medium | Acceptance: 52.0%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-orders-in-the-backlog) for full constraints
+- **Example 1:** `orders = [[10,5,0],[15,2,1],[25,1,1],[30,4,0]]` → `6`
+- **Example 2:** `orders = [[7,1000000000,1],[15,3,0],[5,999999995,0],[5,1,1]]` → `999999984`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 📦 **Two heaps:** buy orders → max-heap (highest price first); sell orders → min-heap (lowest price first)
+- 🔄 **Match condition:** `buyHeap.max() >= sellHeap.min()` → khớp lệnh, trừ số lượng nhỏ hơn
+- 🔢 **JS heap:** JS không có built-in heap — implement với array + sift operations, hoặc dùng sorted array
+- 📊 **Complexity:** O(n log n) với heap operations
+- ⚠️ **Modulo:** Tính tổng cuối cùng rồi mới mod `10^9 + 7` — không phải từng bước
+- 💡 **Optimization:** Dùng `[price, qty]` pairs trong heap; xóa entry khi `qty = 0`
 
 ---
 
 ## Solutions
 
+### Solution 1: Simulate with sorted arrays (simple, O(n²) worst case)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Simulate buy/sell matching with sorted arrays
+ * Time: O(n² log n) worst case  Space: O(n)
  */
-function numberOfOrdersInTheBacklogBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function getNumberOfBacklogOrders(orders: number[][]): number {
+  const MOD = 1_000_000_007n;
+  // Buy orders: want highest price → sort desc by price
+  // Sell orders: want lowest price → sort asc by price
+  const buyBacklog: number[][] = []; // [price, qty] max by price
+  const sellBacklog: number[][] = []; // [price, qty] min by price
+
+  for (const [price, amount, type] of orders) {
+    let qty = amount;
+    if (type === 0) {
+      // BUY: match with cheapest sell
+      while (qty > 0 && sellBacklog.length > 0 && sellBacklog[0][0] <= price) {
+        const matched = Math.min(qty, sellBacklog[0][1]);
+        qty -= matched;
+        sellBacklog[0][1] -= matched;
+        if (sellBacklog[0][1] === 0) sellBacklog.shift();
+      }
+      if (qty > 0) {
+        // Insert into buy backlog, maintaining desc order
+        const pos = buyBacklog.findIndex((o) => o[0] < price);
+        if (pos === -1) buyBacklog.push([price, qty]);
+        else buyBacklog.splice(pos, 0, [price, qty]);
+      }
+    } else {
+      // SELL: match with highest buy
+      while (qty > 0 && buyBacklog.length > 0 && buyBacklog[0][0] >= price) {
+        const matched = Math.min(qty, buyBacklog[0][1]);
+        qty -= matched;
+        buyBacklog[0][1] -= matched;
+        if (buyBacklog[0][1] === 0) buyBacklog.shift();
+      }
+      if (qty > 0) {
+        const pos = sellBacklog.findIndex((o) => o[0] > price);
+        if (pos === -1) sellBacklog.push([price, qty]);
+        else sellBacklog.splice(pos, 0, [price, qty]);
+      }
+    }
+  }
+
+  let total = 0n;
+  for (const [, qty] of [...buyBacklog, ...sellBacklog]) total += BigInt(qty);
+  return Number(total % MOD);
 }
 
+console.log(
+  getNumberOfBacklogOrders([
+    [10, 5, 0],
+    [15, 2, 1],
+    [25, 1, 1],
+    [30, 4, 0],
+  ]),
+);
+// 6
+console.log(
+  getNumberOfBacklogOrders([
+    [7, 1000000000, 1],
+    [15, 3, 0],
+    [5, 999999995, 0],
+    [5, 1, 1],
+  ]),
+);
+// 999999984
+```
+
+### Solution 2: Map-based price grouping (efficient for dense prices)
+
+```typescript
 /**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Group orders by price in maps — O(n log n) with sorted key access
+ * Time: O(n log n)  Space: O(n)
  */
-function numberOfOrdersInTheBacklog(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
+function getNumberOfBacklogOrders2(orders: number[][]): number {
+  const MOD = 1_000_000_007;
+  const buyMap = new Map<number, number>(); // price → qty
+  const sellMap = new Map<number, number>(); // price → qty
+
+  for (const [price, amount, type] of orders) {
+    let qty = amount;
+    if (type === 0) {
+      // BUY: match sells with price <= this buy price
+      const sellPrices = [...sellMap.keys()].sort((a, b) => a - b);
+      for (const sp of sellPrices) {
+        if (sp > price || qty === 0) break;
+        const available = sellMap.get(sp)!;
+        const matched = Math.min(qty, available);
+        qty -= matched;
+        if (available === matched) sellMap.delete(sp);
+        else sellMap.set(sp, available - matched);
+      }
+      if (qty > 0) buyMap.set(price, (buyMap.get(price) ?? 0) + qty);
+    } else {
+      // SELL: match buys with price >= this sell price
+      const buyPrices = [...buyMap.keys()].sort((a, b) => b - a);
+      for (const bp of buyPrices) {
+        if (bp < price || qty === 0) break;
+        const available = buyMap.get(bp)!;
+        const matched = Math.min(qty, available);
+        qty -= matched;
+        if (available === matched) buyMap.delete(bp);
+        else buyMap.set(bp, available - matched);
+      }
+      if (qty > 0) sellMap.set(price, (sellMap.get(price) ?? 0) + qty);
+    }
+  }
+
+  let total = 0;
+  for (const qty of [...buyMap.values(), ...sellMap.values()]) {
+    total = (total + qty) % MOD;
+  }
+  return total;
 }
 
-// === Test Cases ===
-// console.log(numberOfOrdersInTheBacklog(/* example 1 */)); // expected
-// console.log(numberOfOrdersInTheBacklog(/* example 2 */)); // expected
-// console.log(numberOfOrdersInTheBacklog(/* edge case */)); // expected
+console.log(
+  getNumberOfBacklogOrders2([
+    [10, 5, 0],
+    [15, 2, 1],
+    [25, 1, 1],
+    [30, 4, 0],
+  ]),
+); // 6
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers) — same pattern: Two Pointers
-- [Car Pooling](https://leetcode.com/problems/car-pooling) — same pattern: Prefix Sum
-- [Mark Elements on Array by Performing Queries](https://leetcode.com/problems/mark-elements-on-array-by-performing-queries) — same pattern: Heap / Priority Queue
-- [Meeting Rooms III](https://leetcode.com/problems/meeting-rooms-iii) — same pattern: Heap / Priority Queue
-- [Number of Orders in the Backlog — LeetCode](https://leetcode.com/problems/number-of-orders-in-the-backlog) — problem page
+| Problem                                                                                       | Difficulty | Connection                 |
+| --------------------------------------------------------------------------------------------- | ---------- | -------------------------- |
+| [Design a Stock Trading System](https://leetcode.com/problems/design-a-stock-trading-system/) | 🟡 Medium  | Full order book simulation |
+| [Meeting Rooms III](https://leetcode.com/problems/meeting-rooms-iii/)                         | 🔴 Hard    | Two-heap simulation        |
+| [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers/)   | 🟡 Medium  | Two-heap greedy selection  |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                               | 🟡 Medium  | Priority queue simulation  |
+| [Stock Price Fluctuation](https://leetcode.com/problems/stock-price-fluctuation/)             | 🟡 Medium  | Order book with sorted set |

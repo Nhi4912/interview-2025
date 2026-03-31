@@ -7,60 +7,50 @@ tags: [Array, Hash Table, Counting]
 leetcode_url: "https://leetcode.com/problems/count-elements-with-maximum-frequency"
 ---
 
-# Count Elements With Maximum Frequency / Count Elements With Maximum Frequency
+# Count Elements With Maximum Frequency / Đếm Phần Tử Có Tần Suất Lớn Nhất
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Majority Element](https://leetcode.com/problems/majority-element) | [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words)
+> **See also**: [Majority Element](https://leetcode.com/problems/majority-element) | [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**Analogy (VN):** Giống kiểm phiếu bầu — đếm phiếu từng ứng viên, tìm người đạt số phiếu cao nhất, rồi cộng tổng phiếu của TẤT CẢ người đạt mức đó (có thể nhiều người cùng cao nhất).
 
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count Elements With Maximum Frequency example:**
+**Visual:**
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+nums = [1, 2, 2, 3, 1, 4]
+freq: {1:2, 2:2, 3:1, 4:1}
+maxFreq = 2
 
-Key insight: store complement for O(1) lookup
+Elements with freq==2: [1, 2]
+Total = 2 + 2 = 4
 ```
 
 ---
 
 ## Problem Description
 
-Count Elements With Maximum Frequency. ([LeetCode](https://leetcode.com/problems/count-elements-with-maximum-frequency))
+Given an array `nums`, return the **total frequencies** of elements with the maximum frequency. In other words: find the highest frequency `f`, then sum up the counts of all elements that appear exactly `f` times.
 
-Difficulty: Easy | Acceptance: 77.9%
+- Example 1: `nums = [1,2,2,3,1,4]` → `4` (both 1 and 2 appear twice: 2+2=4)
+- Example 2: `nums = [1,2,3,4]` → `4` (all appear once: 1+1+1+1=4)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-elements-with-maximum-frequency) for full constraints
+**Constraints:** `1 <= nums.length <= 100`, `1 <= nums[i] <= 100`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Trả về tổng tần suất, không phải số phần tử distinct?" / Return sum of occurrences, not count of distinct values.
+2. **Two-pass**: "Pass 1 đếm freq, pass 2 tính tổng cho maxFreq" / Build frequency map, then scan for max.
+3. **One-pass trick**: "Cập nhật maxFreq và totalSum trong cùng một vòng lặp" / Maintain running max and total count together.
+4. **Edge case**: "Tất cả phần tử giống nhau → freq=n, total=n" / All same: answer equals length.
+5. **Edge case**: "Tất cả phần tử khác nhau → freq=1, total=n" / All unique: answer equals length.
+6. **Complexity**: "O(n) time, O(n) space cho frequency map" / Linear time and space.
 
 ---
 
@@ -68,39 +58,72 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Two-Pass Hash Map
+ * Time: O(n) — one pass to count, one pass over map entries
+ * Space: O(n) — frequency map
  */
-function countElementsWithMaximumFrequencyBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countElementsWithMaxFreqTwoPass(nums: number[]): number {
+  const freq = new Map<number, number>();
+  for (const n of nums) freq.set(n, (freq.get(n) ?? 0) + 1);
+
+  let maxFreq = 0;
+  for (const cnt of freq.values()) {
+    if (cnt > maxFreq) maxFreq = cnt;
+  }
+
+  let total = 0;
+  for (const cnt of freq.values()) {
+    if (cnt === maxFreq) total += cnt;
+  }
+  return total;
 }
+
+console.log(countElementsWithMaxFreqTwoPass([1, 2, 2, 3, 1, 4])); // 4
+console.log(countElementsWithMaxFreqTwoPass([1, 2, 3, 4])); // 4
+console.log(countElementsWithMaxFreqTwoPass([3, 3, 3])); // 3
 
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: One-Pass with Running Max
+ * Time: O(n) — single pass
+ * Space: O(n) — frequency map
+ *
+ * Maintain maxFreq and totalCount as we update frequencies:
+ * - If new freq > maxFreq: reset total to new freq, update maxFreq
+ * - If new freq == maxFreq: add to total
  */
-function countElementsWithMaximumFrequency(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function countElementsWithMaxFrequency(nums: number[]): number {
+  const freq = new Map<number, number>();
+  let maxFreq = 0;
+  let total = 0;
+
+  for (const n of nums) {
+    const f = (freq.get(n) ?? 0) + 1;
+    freq.set(n, f);
+
+    if (f > maxFreq) {
+      maxFreq = f;
+      total = f; // reset: only this element holds the new max
+    } else if (f === maxFreq) {
+      total += f; // another element ties for max
+    }
+  }
+
+  return total;
 }
 
-// === Test Cases ===
-// console.log(countElementsWithMaximumFrequency(/* example 1 */)); // expected
-// console.log(countElementsWithMaximumFrequency(/* example 2 */)); // expected
-// console.log(countElementsWithMaximumFrequency(/* edge case */)); // expected
+console.log(countElementsWithMaxFrequency([1, 2, 2, 3, 1, 4])); // 4
+console.log(countElementsWithMaxFrequency([1, 2, 3, 4])); // 4
+console.log(countElementsWithMaxFrequency([3, 3, 3])); // 3
+console.log(countElementsWithMaxFrequency([1])); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Pairs of Songs With Total Durations Divisible by 60](https://leetcode.com/problems/pairs-of-songs-with-total-durations-divisible-by-60) — same pattern: Hash Map
-- [Count Elements With Maximum Frequency — LeetCode](https://leetcode.com/problems/count-elements-with-maximum-frequency) — problem page
+| Problem                                                                          | Pattern             | Difficulty |
+| -------------------------------------------------------------------------------- | ------------------- | ---------- |
+| [Majority Element](https://leetcode.com/problems/majority-element)               | Boyer-Moore Voting  | Easy       |
+| [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements) | Bucket Sort / Heap  | Medium     |
+| [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words)       | Heap + HashMap      | Medium     |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)                   | Greedy + Freq Count | Medium     |

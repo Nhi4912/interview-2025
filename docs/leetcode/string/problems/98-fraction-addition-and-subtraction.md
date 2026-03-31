@@ -7,7 +7,7 @@ tags: [Math, String, Simulation]
 leetcode_url: "https://leetcode.com/problems/fraction-addition-and-subtraction"
 ---
 
-# Fraction Addition and Subtraction / Fraction Addition and Subtraction
+# Fraction Addition and Subtraction / Cộng và Trừ Phân Số
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,47 +17,45 @@ leetcode_url: "https://leetcode.com/problems/fraction-addition-and-subtraction"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Fraction Addition and Subtraction example:**
+**Analogy (VN):** Như học cộng phân số tiểu học — tìm mẫu số chung, quy đồng, cộng tử số, rút gọn. Chỉ cần parse chuỗi cẩn thận để lấy từng phân số (kể cả dấu âm), rồi tính lũy tiến.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+expression = "-1/2+1/3"
+Parse → [(-1,2), (1,3)]
+
+Step 1: -1/2 + 1/3
+  num = -1*3 + 1*2 = -3 + 2 = -1
+  den = 2*3 = 6
+  gcd(1,6) = 1 → -1/6
+
+Result: "-1/6"
+
+expression = "1/3-1/2"
+  num = 1*2 + (-1)*3 = 2-3 = -1, den = 6 → "-1/6"
 ```
 
 ---
 
 ## Problem Description
 
-Fraction Addition and Subtraction. ([LeetCode](https://leetcode.com/problems/fraction-addition-and-subtraction))
+Given a string `expression` representing fractions combined with `+` and `-`, return the result as an **irreducible fraction** (or `"0/1"` if zero).
 
-Difficulty: Medium | Acceptance: 66.1%
+**Example 1:** `"-1/2+1/3"` → `"-1/6"`
+**Example 2:** `"1/3-1/2"` → `"-1/6"`
+**Example 3:** `"5/3+1/3"` → `"2/1"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/fraction-addition-and-subtraction) for full constraints
+Constraints: input is a valid fraction expression, denominators between 1 and 10.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Kết quả luôn cần rút gọn?" / Always reduce to lowest terms? Yes.
+2. **Parsing / Phân tích**: Dùng regex để tách các phân số có dấu / Use regex to extract signed fractions
+3. **Key math / Toán học**: a/b + c/d = (a*d + c*b) / (b\*d), then divide by gcd(|num|, den)
+4. **Edge cases / Trường hợp đặc biệt**: Kết quả là 0 → return "0/1"; âm/dương đúng dấu
+5. **Overflow / Tràn số**: Den ≤ 10 per fraction, ≤ 10 fractions → max den = 10^10, use Number safely
+6. **Follow-up / Hỏi thêm**: "Nhân và chia phân số thì sao?" / Add multiply/divide operators
 
 ---
 
@@ -65,39 +63,85 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution: Parse fractions with regex, accumulate iteratively
+ * Time: O(n) where n = number of fractions in expression
+ * Space: O(n)
  */
-function fractionAdditionAndSubtractionBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function fractionAddition(expression: string): string {
+  function gcd(a: number, b: number): number {
+    a = Math.abs(a);
+    b = Math.abs(b);
+    return b === 0 ? a : gcd(b, a % b);
+  }
+
+  // Match signed fractions like -1/2, +3/4, 1/3
+  const fractions = expression.match(/[+-]?\d+\/\d+/g) ?? [];
+
+  let numAcc = 0;
+  let denAcc = 1;
+
+  for (const frac of fractions) {
+    const slashIdx = frac.indexOf("/");
+    const num = parseInt(frac.substring(0, slashIdx), 10);
+    const den = parseInt(frac.substring(slashIdx + 1), 10);
+
+    // numAcc/denAcc + num/den = (numAcc*den + num*denAcc) / (denAcc*den)
+    numAcc = numAcc * den + num * denAcc;
+    denAcc = denAcc * den;
+
+    // Reduce
+    const g = gcd(Math.abs(numAcc), denAcc);
+    numAcc /= g;
+    denAcc /= g;
+  }
+
+  return `${numAcc}/${denAcc}`;
 }
+
+console.log(fractionAddition("-1/2+1/3")); // "-1/6"
+console.log(fractionAddition("1/3-1/2")); // "-1/6"
+console.log(fractionAddition("5/3+1/3")); // "2/1"
+console.log(fractionAddition("1/4-5/4")); // "-1/1"
+console.log(fractionAddition("-1/2+1/2")); // "0/1"
 
 /**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Same algorithm, slightly different parsing (split on +/-)
+ * Time: O(n)
+ * Space: O(1) extra
  */
-function fractionAdditionAndSubtraction(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function fractionAdditionV2(expression: string): string {
+  function gcd(a: number, b: number): number {
+    return b === 0 ? a : gcd(b, a % b);
+  }
+
+  // Ensure expression starts with explicit sign for uniform parsing
+  const expr = expression.startsWith("-") ? expression : "+" + expression;
+  const tokens = expr.match(/[+-]\d+\/\d+/g) ?? [];
+
+  let rNum = 0,
+    rDen = 1;
+  for (const t of tokens) {
+    const [n, d] = t.split("/").map(Number);
+    rNum = rNum * d + n * rDen;
+    rDen = rDen * d;
+    const g = gcd(Math.abs(rNum), Math.abs(rDen));
+    rNum /= g;
+    rDen /= g;
+  }
+  return `${rNum}/${rDen}`;
 }
 
-// === Test Cases ===
-// console.log(fractionAdditionAndSubtraction(/* example 1 */)); // expected
-// console.log(fractionAdditionAndSubtraction(/* example 2 */)); // expected
-// console.log(fractionAdditionAndSubtraction(/* edge case */)); // expected
+console.log(fractionAdditionV2("-1/2+1/3")); // "-1/6"
+console.log(fractionAdditionV2("5/3+1/3")); // "2/1"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Add Strings](https://leetcode.com/problems/add-strings) — same pattern: Math
-- [Robot Bounded In Circle](https://leetcode.com/problems/robot-bounded-in-circle) — same pattern: Math
-- [Fraction Addition and Subtraction — LeetCode](https://leetcode.com/problems/fraction-addition-and-subtraction) — problem page
+| Problem                                                            | Pattern          | Difficulty |
+| ------------------------------------------------------------------ | ---------------- | ---------- |
+| [Multiply Strings](https://leetcode.com/problems/multiply-strings) | Math             | Medium     |
+| [Add Strings](https://leetcode.com/problems/add-strings)           | Math             | Easy       |
+| [Add Binary](https://leetcode.com/problems/add-binary)             | Bit Manipulation | Easy       |
+| [Basic Calculator](https://leetcode.com/problems/basic-calculator) | Stack            | Hard       |

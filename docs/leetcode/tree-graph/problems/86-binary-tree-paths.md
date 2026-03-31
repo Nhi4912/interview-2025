@@ -7,104 +7,166 @@ tags: [String, Backtracking, Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/binary-tree-paths"
 ---
 
-# Binary Tree Paths / Binary Tree Paths
+# Binary Tree Paths / Tất Cả Đường Đi Từ Gốc Đến Lá
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Backtracking
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DFS / Backtracking
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) | [Path Sum II](https://leetcode.com/problems/path-sum-ii)
+> **See also**: [Path Sum II](https://leetcode.com/problems/path-sum-ii) | [Smallest String Starting From Leaf](https://leetcode.com/problems/smallest-string-starting-from-leaf)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Như vẽ bản đồ tất cả con đường từ cửa hàng đến các điểm cuối — bắt đầu từ gốc, đi xuống từng nhánh, ghi lại toàn bộ đường khi đến lá. Đây là bài DFS cơ bản nhất trên cây.
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "all root-to-leaf paths" → **DFS với path accumulation**
+- Tại mỗi node: thêm val vào path; nếu là lá → ghi kết quả; nếu không → tiếp tục đệ quy
+- Key insight: string immutable nên truyền bằng value giúp tự động backtrack
 
-**Visual — Binary Tree Paths example:**
+**Visual — DFS path collection:**
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+        1
+       / \
+      2   3
+       \
+        5
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+DFS trace:
+→ visit 1: path="1"
+  → visit 2: path="1->2"
+    → visit 5 (leaf): path="1->2->5" ✅ add
+  → visit 3 (leaf): path="1->3" ✅ add
+
+Result: ["1->2->5", "1->3"]
 ```
 
 ---
 
 ## Problem Description
 
-Binary Tree Paths. ([LeetCode](https://leetcode.com/problems/binary-tree-paths))
+Given the `root` of a binary tree, return all root-to-leaf paths in any order. ([LeetCode #257](https://leetcode.com/problems/binary-tree-paths))
 
-Difficulty: Easy | Acceptance: 66.6%
+A leaf is a node with no children. Each path should be represented as `"node1->node2->...->leafNode"`.
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/binary-tree-paths) for full constraints
+**Example 1:** `root = [1,2,3,null,5]` → `["1->2->5","1->3"]`
+**Example 2:** `root = [1]` → `["1"]`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+1. **Clarify**: "Leaf = node không có con nào; cây có thể rỗng không?" / Leaf has no children; can tree be null?
+2. **Recursive DFS**: "Truyền current path string xuống, khi là lá thì push vào result" / Pass path string down, push at leaves
+3. **Iterative**: "Dùng stack với [node, pathString] — tránh stack overflow với cây sâu" / Iterative with explicit stack
+4. **Backtracking**: "String immutable → `path + "->" + node.val` tự tạo copy mới, không cần undo" / Strings auto-backtrack
+5. **Edge cases**: "Root null → `[]`; single node → `[root.val.toString()]`" / Null root, single node
+6. **Follow-up**: "Path Sum II: tìm paths có tổng = target — tương tự nhưng check sum ở leaf" / Path Sum II variant
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function binaryTreePathsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null = null;
+  right: TreeNode | null = null;
+  constructor(val: number) {
+    this.val = val;
+  }
 }
 
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: DFS Recursive (clean string passing)
+ * Time: O(N * H) — N nodes, each path copy costs O(H)
+ * Space: O(H) — recursion stack height H
  */
-function binaryTreePaths(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function binaryTreePathsRecursive(root: TreeNode | null): string[] {
+  const result: string[] = [];
+
+  function dfs(node: TreeNode | null, path: string): void {
+    if (!node) return;
+    const curr = path ? `${path}->${node.val}` : `${node.val}`;
+    if (!node.left && !node.right) {
+      result.push(curr);
+      return;
+    }
+    dfs(node.left, curr);
+    dfs(node.right, curr);
+  }
+
+  dfs(root, "");
+  return result;
+}
+
+/**
+ * Solution 2: Iterative DFS with explicit stack
+ * Time: O(N * H)
+ * Space: O(N) — stack holds all nodes in worst case (skewed tree)
+ */
+function binaryTreePaths(root: TreeNode | null): string[] {
+  if (!root) return [];
+  const result: string[] = [];
+  const stack: [TreeNode, string][] = [[root, `${root.val}`]];
+
+  while (stack.length > 0) {
+    const [node, path] = stack.pop()!;
+    if (!node.left && !node.right) {
+      result.push(path);
+      continue;
+    }
+    if (node.right) stack.push([node.right, `${path}->${node.right.val}`]);
+    if (node.left) stack.push([node.left, `${path}->${node.left.val}`]);
+  }
+  return result;
+}
+
+/**
+ * Solution 3: Backtracking with array (optimal for large trees)
+ * Time: O(N * H)
+ * Space: O(H) — path array depth H
+ */
+function binaryTreePathsBacktrack(root: TreeNode | null): string[] {
+  const result: string[] = [];
+  const path: number[] = [];
+
+  function dfs(node: TreeNode | null): void {
+    if (!node) return;
+    path.push(node.val);
+    if (!node.left && !node.right) result.push(path.join("->"));
+    else {
+      dfs(node.left);
+      dfs(node.right);
+    }
+    path.pop(); // backtrack
+  }
+
+  dfs(root);
+  return result;
 }
 
 // === Test Cases ===
-// console.log(binaryTreePaths(/* example 1 */)); // expected
-// console.log(binaryTreePaths(/* example 2 */)); // expected
-// console.log(binaryTreePaths(/* edge case */)); // expected
+const root1 = new TreeNode(1);
+root1.left = new TreeNode(2);
+root1.right = new TreeNode(3);
+root1.left.right = new TreeNode(5);
+console.log(binaryTreePaths(root1)); // ["1->2->5","1->3"]
+console.log(binaryTreePathsRecursive(root1)); // ["1->2->5","1->3"]
+console.log(binaryTreePathsBacktrack(root1)); // ["1->2->5","1->3"]
+console.log(binaryTreePaths(new TreeNode(1))); // ["1"]
+console.log(binaryTreePaths(null)); // []
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Path Sum II](https://leetcode.com/problems/path-sum-ii) — same pattern: Backtracking
-- [Step-By-Step Directions From a Binary Tree Node to Another](https://leetcode.com/problems/step-by-step-directions-from-a-binary-tree-node-to-another) — same pattern: DFS
-- [Lowest Common Ancestor of a Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree) — same pattern: DFS
-- [Binary Tree Paths — LeetCode](https://leetcode.com/problems/binary-tree-paths) — problem page
+| Problem                                                                                                | Difficulty | Pattern          |
+| ------------------------------------------------------------------------------------------------------ | ---------- | ---------------- |
+| [Path Sum](https://leetcode.com/problems/path-sum)                                                     | 🟢 Easy    | DFS root-to-leaf |
+| [Path Sum II](https://leetcode.com/problems/path-sum-ii)                                               | 🟡 Medium  | DFS + backtrack  |
+| [Sum Root to Leaf Numbers](https://leetcode.com/problems/sum-root-to-leaf-numbers)                     | 🟡 Medium  | DFS accumulate   |
+| [Smallest String Starting From Leaf](https://leetcode.com/problems/smallest-string-starting-from-leaf) | 🟡 Medium  | DFS + compare    |

@@ -7,7 +7,7 @@ tags: [Hash Table, String, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/palindrome-permutation"
 ---
 
-# Palindrome Permutation / Palindrome Permutation
+# Palindrome Permutation / Hoán Vị Palindrome
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Bit Manipulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,47 +17,42 @@ leetcode_url: "https://leetcode.com/problems/palindrome-permutation"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Làm việc trực tiếp với bit (0/1) — nhanh hơn phép toán thông thường. XOR, AND, OR, shift là các công cụ chính.
-
-**Pattern Recognition:**
-
-- Signal: "binary representation" + "XOR/AND/OR properties" → **Bit Manipulation**
-- Bài này thuộc dạng Bit Manipulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Palindrome Permutation example:**
+**Analogy (VN):** Để xếp gương (palindrome), mỗi ký tự cần xuất hiện chẵn lần (ghép đôi), trừ tối đa 1 ký tự đứng giữa. Dùng XOR bit — mỗi ký tự toggle bit: nếu cuối cùng còn ≤1 bit bật, câu trả lời là true.
 
 ```
-// TODO: Add step-by-step visual for Bit Manipulation
-// Show one complete example with state at each step
+s = "aab"
+a: bit 0 toggled → 1
+a: bit 0 toggled → 0
+b: bit 1 toggled → 1
+
+mask = 0b10 → popcount = 1 ≤ 1 → true ✅
+
+s = "abc"
+mask = 0b111 → popcount = 3 > 1 → false ❌
 ```
 
 ---
 
 ## Problem Description
 
-Palindrome Permutation. ([LeetCode](https://leetcode.com/problems/palindrome-permutation))
+Given a string `s`, return `true` if any permutation of `s` can form a **palindrome**, otherwise return `false`.
 
-Difficulty: Easy | Acceptance: 68.5%
+**Example 1:** `s="aab"` → `true` (permutation "aba" is palindrome)
+**Example 2:** `s="carerac"` → `true` ("racecar")
+**Example 3:** `s="code"` → `false`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/palindrome-permutation) for full constraints
+Constraints: `1 ≤ s.length ≤ 5000`, `s` contains only lowercase English letters.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Chỉ lowercase? Có khoảng trắng không?" / Only lowercase letters? Spaces?
+2. **Key insight / Ý tưởng**: Palindrome cần tối đa 1 ký tự có số lần xuất hiện lẻ
+3. **Brute force / Vét cạn**: Count frequencies, count odds → O(n) time, O(26) space
+4. **Optimize / Tối ưu**: Dùng XOR bitmask để tránh đếm: toggle bit per char, check ≤1 bit set
+5. **Edge cases / Trường hợp đặc biệt**: Chuỗi 1 ký tự → true; chuỗi rỗng → true (empty is palindrome)
+6. **Follow-up / Hỏi thêm**: "Tìm tất cả hoán vị palindrome?" / Generate all palindrome permutations (LeetCode 267)
 
 ---
 
@@ -65,39 +60,65 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Frequency count — count chars with odd frequency
+ * Time: O(n)
+ * Space: O(1) — fixed 26-letter alphabet
  */
-function palindromePermutationBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function canPermutePalindromeFreq(s: string): boolean {
+  const freq = new Array(26).fill(0);
+  for (const ch of s) freq[ch.charCodeAt(0) - 97]++;
+  const odds = freq.filter((f) => f % 2 !== 0).length;
+  return odds <= 1;
 }
+console.log(canPermutePalindromeFreq("aab")); // true
+console.log(canPermutePalindromeFreq("code")); // false
+console.log(canPermutePalindromeFreq("carerac")); // true
 
 /**
- * Solution 2: Optimized — Bit Manipulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Bitmask XOR (Optimal)
+ * Toggle bit for each character; palindrome possible iff at most 1 bit set.
+ * mask & (mask-1) == 0 means exactly 0 or 1 bit set.
+ * Time: O(n)
+ * Space: O(1)
  */
-function palindromePermutation(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Bit Manipulation
-  // Hint: Use XOR, AND, OR, shift operations on bits
-  throw new Error('Not implemented');
+function canPermutePalindrome(s: string): boolean {
+  let mask = 0;
+  for (const ch of s) {
+    mask ^= 1 << (ch.charCodeAt(0) - 97);
+  }
+  // mask has at most 1 bit set ↔ mask is 0 or a power of 2
+  return mask === 0 || (mask & (mask - 1)) === 0;
 }
 
-// === Test Cases ===
-// console.log(palindromePermutation(/* example 1 */)); // expected
-// console.log(palindromePermutation(/* example 2 */)); // expected
-// console.log(palindromePermutation(/* edge case */)); // expected
+console.log(canPermutePalindrome("aab")); // true
+console.log(canPermutePalindrome("code")); // false
+console.log(canPermutePalindrome("carerac")); // true
+console.log(canPermutePalindrome("a")); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Repeated DNA Sequences](https://leetcode.com/problems/repeated-dna-sequences) — same pattern: Sliding Window
-- [Can Make Palindrome from Substring](https://leetcode.com/problems/can-make-palindrome-from-substring) — same pattern: Prefix Sum
-- [Number of Wonderful Substrings](https://leetcode.com/problems/number-of-wonderful-substrings) — same pattern: Prefix Sum
-- [Find Longest Awesome Substring](https://leetcode.com/problems/find-longest-awesome-substring) — same pattern: Bit Manipulation
-- [Palindrome Permutation — LeetCode](https://leetcode.com/problems/palindrome-permutation) — problem page
+| Problem                                                                                                | Pattern          | Difficulty |
+| ------------------------------------------------------------------------------------------------------ | ---------------- | ---------- |
+| [Palindrome Permutation II](https://leetcode.com/problems/palindrome-permutation-ii)                   | Backtracking     | Medium     |
+| [Can Make Palindrome from Substring](https://leetcode.com/problems/can-make-palindrome-from-substring) | Prefix Sum + Bit | Hard       |
+| [Number of Wonderful Substrings](https://leetcode.com/problems/number-of-wonderful-substrings)         | Bitmask          | Medium     |
+| [Valid Anagram](https://leetcode.com/problems/valid-anagram)                                           | Hash Map         | Easy       |
+
+---
+
+## 🔑 Bitmask Trick
+
+For each char: `mask ^= (1 << charIndex)`. After all chars:
+- `mask === 0` → all paired → even-length palindrome
+- `mask & (mask-1) === 0` → exactly one unpaired → odd-length palindrome
+- Otherwise → not possible
+
+## ⏱️ Complexity Summary
+
+| Approach | Time | Space | Notes |
+|----------|------|-------|-------|
+| Frequency count | O(n) | O(26) | Easy to explain |
+| Bitmask XOR | O(n) | O(1) | Elegant, same time |

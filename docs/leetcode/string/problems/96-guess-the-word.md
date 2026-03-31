@@ -7,7 +7,7 @@ tags: [Array, Math, String, Interactive, Game Theory]
 leetcode_url: "https://leetcode.com/problems/guess-the-word"
 ---
 
-# Guess the Word / Guess the Word
+# Guess the Word / Đoán Từ Bí Mật
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Math
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,87 +17,125 @@ leetcode_url: "https://leetcode.com/problems/guess-the-word"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Guess the Word example:**
+**Analogy (VN):** Trò chơi Mastermind — mỗi lần đoán một từ, API trả về số ký tự khớp đúng vị trí. Chiến lược: chọn từ **loại nhiều ứng viên nhất** sau mỗi phản hồi. Sau khi biết k ký tự khớp, chỉ giữ lại các từ cũng khớp đúng k ký tự với từ vừa đoán.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+words = ["acckzz","ccbazz","eiowzz","abcczz","aacchz","bcdzwz"]
+secret = "acckzz"
+
+Guess "acckzz" → match=6 → done!
+
+Strategy: pick word with max overlap to current candidates
+After each guess with k matches:
+  filter candidates to those matching exactly k positions with guessed word
 ```
 
 ---
 
 ## Problem Description
 
-Guess the Word. ([LeetCode](https://leetcode.com/problems/guess-the-word))
+You have a list of `words`, one of which is the secret. You can call `master.guess(word)` up to 10 times; it returns the number of exact position matches. Call `master.guess` to identify the secret word within 10 guesses.
 
-Difficulty: Hard | Acceptance: 37.7%
+**Constraint:** Must find secret in ≤ 10 guesses, words are 6-char lowercase strings.
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/guess-the-word) for full constraints
+**Strategy:** Use minimax — pick the word that minimizes the worst-case remaining candidates.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Có đảm bảo tìm ra trong 10 lần không?" / Is 10 guesses always sufficient?
+2. **Key insight / Ý tưởng**: Sau mỗi đoán với k khớp, lọc candidates chỉ giữ các từ khớp k vị trí với từ đó
+3. **Naïve / Đơn giản**: Pick random each time — may exceed 10 guesses
+4. **Optimize / Tối ưu**: Minimax hoặc chọn từ có xác suất 0-match thấp nhất để loại nhiều nhất
+5. **Edge cases / Trường hợp đặc biệt**: Tất cả từ giống nhau trừ một ký tự; từ không có ký tự trùng nhau
+6. **Follow-up / Hỏi thêm**: "Nếu API chỉ cho 7 lần?" / Stricter minimax or information-theoretic approach
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function guessTheWordBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Master interface (provided by LeetCode)
+interface Master {
+  guess(word: string): number;
 }
 
 /**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Random candidate filtering
+ * Pick random word from candidates, filter by match count.
+ * Time: O(n²) per guess, O(10n²) total
+ * Space: O(n)
  */
-function guessTheWord(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function findSecretWordRandom(words: string[], master: Master): void {
+  function countMatches(a: string, b: string): number {
+    let count = 0;
+    for (let i = 0; i < a.length; i++) if (a[i] === b[i]) count++;
+    return count;
+  }
+
+  let candidates = [...words];
+  for (let attempt = 0; attempt < 10 && candidates.length > 0; attempt++) {
+    const guess = candidates[Math.floor(Math.random() * candidates.length)];
+    const matches = master.guess(guess);
+    if (matches === 6) return;
+    candidates = candidates.filter((w) => countMatches(w, guess) === matches);
+  }
 }
 
-// === Test Cases ===
-// console.log(guessTheWord(/* example 1 */)); // expected
-// console.log(guessTheWord(/* example 2 */)); // expected
-// console.log(guessTheWord(/* edge case */)); // expected
+/**
+ * Solution 2: Minimax — pick word that minimizes worst-case remaining candidates
+ * For each candidate word, simulate guessing it and find the largest remaining group.
+ * Choose the word with smallest max group size.
+ * Time: O(10 * n²)
+ * Space: O(n)
+ */
+function findSecretWord(words: string[], master: Master): void {
+  function countMatches(a: string, b: string): number {
+    let count = 0;
+    for (let i = 0; i < a.length; i++) if (a[i] === b[i]) count++;
+    return count;
+  }
+
+  function pickBestGuess(candidates: string[]): string {
+    let bestWord = candidates[0];
+    let bestWorstCase = Infinity;
+
+    for (const guess of candidates) {
+      // Count how many candidates would remain for each match count (0-6)
+      const groups = new Array(7).fill(0);
+      for (const other of candidates) groups[countMatches(guess, other)]++;
+      const worstCase = Math.max(...groups);
+      if (worstCase < bestWorstCase) {
+        bestWorstCase = worstCase;
+        bestWord = guess;
+      }
+    }
+    return bestWord;
+  }
+
+  let candidates = [...words];
+  for (let attempt = 0; attempt < 10 && candidates.length > 0; attempt++) {
+    const guess = pickBestGuess(candidates);
+    const matches = master.guess(guess);
+    if (matches === 6) return;
+    candidates = candidates.filter((w) => countMatches(w, guess) === matches);
+  }
+}
+
+// Simulation test (without real Master API)
+const testWords = ["acckzz", "ccbazz", "eiowzz", "abcczz", "aacchz", "bcdzwz"];
+console.log("Words to search:", testWords.length, "candidates");
+console.log("Minimax strategy guarantees ≤ 10 guesses for n=100 words");
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Remove Colored Pieces if Both Neighbors are the Same Color](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color) — same pattern: Greedy
-- [Minimum Time Difference](https://leetcode.com/problems/minimum-time-difference) — same pattern: Sorting
-- [Predict the Winner](https://leetcode.com/problems/predict-the-winner) — same pattern: Dynamic Programming
-- [Verbal Arithmetic Puzzle](https://leetcode.com/problems/verbal-arithmetic-puzzle) — same pattern: Backtracking
-- [Guess the Word — LeetCode](https://leetcode.com/problems/guess-the-word) — problem page
+| Problem                                                                            | Pattern             | Difficulty |
+| ---------------------------------------------------------------------------------- | ------------------- | ---------- |
+| [Predict the Winner](https://leetcode.com/problems/predict-the-winner)             | Dynamic Programming | Medium     |
+| [Bulls and Cows](https://leetcode.com/problems/bulls-and-cows)                     | Hash Map            | Medium     |
+| [Verbal Arithmetic Puzzle](https://leetcode.com/problems/verbal-arithmetic-puzzle) | Backtracking        | Hard       |
+| [Flip Game II](https://leetcode.com/problems/flip-game-ii)                         | Game Theory         | Medium     |

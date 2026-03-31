@@ -7,7 +7,7 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/odd-string-difference"
 ---
 
-# Odd String Difference / Odd String Difference
+# Odd String Difference / Chuỗi Khác Biệt Lẻ
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,50 +17,40 @@ leetcode_url: "https://leetcode.com/problems/odd-string-difference"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Odd String Difference example:**
+**Analogy (VN):** Bạn có n bức tranh, (n-1) bức trông giống nhau qua "chữ ký" — khoảng cách giữa các ký tự liên tiếp. Bức còn lại có chữ ký khác biệt. Dùng HashMap để nhóm theo chữ ký, tìm nhóm có đúng 1 phần tử.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+words = ["adc","wzy","abc"]
+Difference arrays:
+  "adc" → [3,-1]   (d-a=3, c-d=-1)
+  "wzy" → [3,-1]   (z-w=3, y-z=-1)
+  "abc" → [1,1]    ← odd one out!
 
-Key insight: store complement for O(1) lookup
+map: "[3,-1]" → ["adc","wzy"]
+     "[1,1]"  → ["abc"]  ← size 1 → answer
 ```
 
 ---
 
 ## Problem Description
 
-Odd String Difference. ([LeetCode](https://leetcode.com/problems/odd-string-difference))
+Given an array of strings `words` where each string has the same length, compute the **difference array** for each word (array of consecutive character code differences). Return the word whose difference array is unique among all words.
 
-Difficulty: Easy | Acceptance: 61.1%
+**Example 1:** `words=["adc","wzy","abc"]` → `"abc"`
+**Example 2:** `words=["aaa","bob","pop","xyz"]` → `"bob"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/odd-string-difference) for full constraints
+Constraints: `3 ≤ words.length ≤ 100`, all words same length `2 ≤ word.length ≤ 20`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Đảm bảo luôn có đúng 1 chuỗi lẻ?" / Guaranteed exactly one odd word out?
+2. **Brute force / Vét cạn**: Compare each word's diff array to all others → O(n² \* L)
+3. **Key insight / Ý tưởng**: Convert diff array to string key, group by key, find group of size 1
+4. **Optimize / Tối ưu**: Single pass O(n\*L) with HashMap keyed on serialized diff array
+5. **Edge cases / Trường hợp đặc biệt**: All same except one; words with same characters in different order
+6. **Follow-up / Hỏi thêm**: "Nếu có k chuỗi lẻ?" / Same approach, find groups with count != majority count
 
 ---
 
@@ -68,39 +58,67 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — compare each pair's difference arrays
+ * Time: O(n² * L)
+ * Space: O(L)
  */
-function oddStringDifferenceBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function oddStringBrute(words: string[]): string {
+  const getDiff = (w: string): number[] =>
+    Array.from({ length: w.length - 1 }, (_, i) => w.charCodeAt(i + 1) - w.charCodeAt(i));
+
+  for (let i = 0; i < words.length; i++) {
+    const di = getDiff(words[i]);
+    let isOdd = true;
+    for (let j = 0; j < words.length; j++) {
+      if (i === j) continue;
+      const dj = getDiff(words[j]);
+      if (di.join(",") === dj.join(",")) {
+        isOdd = false;
+        break;
+      }
+    }
+    if (isOdd) return words[i];
+  }
+  return "";
 }
+console.log(oddStringBrute(["adc", "wzy", "abc"])); // "abc"
 
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: HashMap grouping (Optimal)
+ * Time: O(n * L) — one pass to build map, one to find size-1 group
+ * Space: O(n * L)
  */
-function oddStringDifference(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function oddString(words: string[]): string {
+  const map = new Map<string, string[]>();
+
+  for (const word of words) {
+    const diff: number[] = [];
+    for (let i = 1; i < word.length; i++) {
+      diff.push(word.charCodeAt(i) - word.charCodeAt(i - 1));
+    }
+    const key = diff.join(",");
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(word);
+  }
+
+  for (const [, group] of map) {
+    if (group.length === 1) return group[0];
+  }
+  return "";
 }
 
-// === Test Cases ===
-// console.log(oddStringDifference(/* example 1 */)); // expected
-// console.log(oddStringDifference(/* example 2 */)); // expected
-// console.log(oddStringDifference(/* edge case */)); // expected
+console.log(oddString(["adc", "wzy", "abc"])); // "abc"
+console.log(oddString(["aaa", "bob", "pop", "xyz"])); // "bob"
+console.log(oddString(["abc", "xyz", "def"])); // "abc" or whichever is unique
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Odd String Difference — LeetCode](https://leetcode.com/problems/odd-string-difference) — problem page
+| Problem                                                                  | Pattern          | Difficulty |
+| ------------------------------------------------------------------------ | ---------------- | ---------- |
+| [Find the Difference](https://leetcode.com/problems/find-the-difference) | Hash Map         | Easy       |
+| [Isomorphic Strings](https://leetcode.com/problems/isomorphic-strings)   | Hash Map         | Easy       |
+| [Group Anagrams](https://leetcode.com/problems/group-anagrams)           | Hash Map         | Medium     |
+| [Find the Odd Int](https://leetcode.com/problems/single-number)          | Bit Manipulation | Easy       |

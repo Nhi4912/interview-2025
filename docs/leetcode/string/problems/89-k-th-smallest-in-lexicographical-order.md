@@ -7,7 +7,7 @@ tags: [Trie]
 leetcode_url: "https://leetcode.com/problems/k-th-smallest-in-lexicographical-order"
 ---
 
-# K-th Smallest in Lexicographical Order / K-th Smallest in Lexicographical Order
+# K-th Smallest in Lexicographical Order / Số Thứ K Nhỏ Nhất Theo Thứ Tự Từ Điển
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Trie
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,47 +17,41 @@ leetcode_url: "https://leetcode.com/problems/k-th-smallest-in-lexicographical-or
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống cây thư mục — mỗi ký tự là một cấp. Tìm kiếm prefix cực nhanh O(L) với L là độ dài từ.
-
-**Pattern Recognition:**
-
-- Signal: "prefix search" + "dictionary of words" → **Trie**
-- Bài này thuộc dạng Trie — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — K-th Smallest in Lexicographical Order example:**
+**Analogy (VN):** Tưởng tượng bạn đếm các số trong danh bạ điện thoại theo thứ tự chữ cái — 1, 10, 100, 101, ... 109, 11, 110 ... Số "1" là cha của tất cả số bắt đầu bằng "1". Đếm bao nhiêu số nằm dưới cây con đó để quyết định đi tiếp hay đi sâu.
 
 ```
-// TODO: Add step-by-step visual for Trie
-// Show one complete example with state at each step
+Lexicographic tree rooted at 1 (n=13):
+       1
+     / | \
+   10  11  12
+  /\    |
+100 ...  110
+
+countNodes(cur=1, next=2, n=13) → 5 nodes (1,10,11,12,13)
+k=3 → skip cur=1 (5>=3? yes) → step into 10 → ...
 ```
 
 ---
 
 ## Problem Description
 
-K-th Smallest in Lexicographical Order. ([LeetCode](https://leetcode.com/problems/k-th-smallest-in-lexicographical-order))
+Given two integers `n` and `k`, return the `k`-th lexicographically smallest integer in the range `[1, n]`.
 
-Difficulty: Hard | Acceptance: 45.9%
+**Example 1:** `n=13, k=2` → `10` (order: 1,10,11,12,13,2,3,...,9)
+**Example 2:** `n=1, k=1` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/k-th-smallest-in-lexicographical-order) for full constraints
+Constraints: `1 ≤ k ≤ n ≤ 10^9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Kết quả là số nguyên, không phải chuỗi?" / Result is integer, not string?
+2. **Brute force / Vét cạn**: Generate all numbers, sort lexicographically → O(n log n), TLE for n=10^9
+3. **Optimize / Tối ưu**: Count nodes in trie subtree in O(log n); skip or descend
+4. **Key insight / Ý tưởng chính**: `countSteps(cur, next)` = nodes between prefix `cur` and `next` capped at n
+5. **Edge cases / Trường hợp đặc biệt**: k=1 returns 1; n=10^9 needs BigInt-safe arithmetic
+6. **Follow-up / Hỏi thêm**: "Nếu n rất lớn thì sao?" / Same algo still O(log²n) — handles it
 
 ---
 
@@ -65,39 +59,69 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force (sort lexicographically)
+ * Time: O(n log n) — TLE for large n
+ * Space: O(n)
  */
-function kThSmallestInLexicographicalOrderBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findKthNumberBrute(n: number, k: number): number {
+  const nums: string[] = [];
+  for (let i = 1; i <= n; i++) nums.push(String(i));
+  nums.sort();
+  return parseInt(nums[k - 1]);
 }
+console.log(findKthNumberBrute(13, 2)); // 10
+console.log(findKthNumberBrute(1, 1)); // 1
 
 /**
- * Solution 2: Optimized — Trie
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Trie Prefix Counting (Optimal)
+ * Count how many numbers exist under a given prefix subtree.
+ * Skip entire subtree (k -= count) or step into it (k--, cur*10).
+ * Time: O(log²n) — log n levels, each countSteps is O(log n)
+ * Space: O(1)
  */
-function kThSmallestInLexicographicalOrder(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Trie
-  // Hint: Build trie from dictionary, search by prefix
-  throw new Error('Not implemented');
+function findKthNumber(n: number, k: number): number {
+  // Count integers in [cur, next) that are <= n
+  function countSteps(cur: number, next: number): number {
+    let steps = 0;
+    while (cur <= n) {
+      steps += Math.min(n + 1, next) - cur;
+      cur *= 10;
+      next *= 10;
+    }
+    return steps;
+  }
+
+  let cur = 1;
+  k--; // we're already "at" 1
+
+  while (k > 0) {
+    const steps = countSteps(cur, cur + 1);
+    if (steps <= k) {
+      // Skip this entire subtree, move to sibling
+      k -= steps;
+      cur++;
+    } else {
+      // Descend into this subtree
+      k--;
+      cur *= 10;
+    }
+  }
+  return cur;
 }
 
-// === Test Cases ===
-// console.log(kThSmallestInLexicographicalOrder(/* example 1 */)); // expected
-// console.log(kThSmallestInLexicographicalOrder(/* example 2 */)); // expected
-// console.log(kThSmallestInLexicographicalOrder(/* edge case */)); // expected
+console.log(findKthNumber(13, 2)); // 10
+console.log(findKthNumber(13, 5)); // 13
+console.log(findKthNumber(1, 1)); // 1
+console.log(findKthNumber(100, 10)); // 17
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree) — same pattern: Trie
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [K-th Smallest in Lexicographical Order — LeetCode](https://leetcode.com/problems/k-th-smallest-in-lexicographical-order) — problem page
+| Problem                                                                                    | Pattern       | Difficulty |
+| ------------------------------------------------------------------------------------------ | ------------- | ---------- |
+| [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree)   | Trie          | Medium     |
+| [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system)       | Trie          | Medium     |
+| [Lexicographical Numbers](https://leetcode.com/problems/lexicographical-numbers)           | DFS/Trie      | Medium     |
+| [K-th Smallest Prime Fraction](https://leetcode.com/problems/k-th-smallest-prime-fraction) | Binary Search | Medium     |

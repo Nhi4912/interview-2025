@@ -7,7 +7,7 @@ tags: [Hash Table, String, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters"
 ---
 
-# Longest Substring with At Most Two Distinct Characters / Longest Substring with At Most Two Distinct Characters
+# Longest Substring with At Most Two Distinct Characters / Chuỗi Con Dài Nhất Với Tối Đa Hai Ký Tự Phân Biệt
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,50 +17,44 @@ leetcode_url: "https://leetcode.com/problems/longest-substring-with-at-most-two-
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
-
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Longest Substring with At Most Two Distinct Characters example:**
+**Analogy (VN):** Giống cửa sổ trượt trên bảng ký tự — mở rộng sang phải khi window còn hợp lệ (≤2 ký tự phân biệt), thu hẹp từ trái khi vi phạm. Luôn cập nhật kết quả sau mỗi bước.
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+s = "eceba"
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+L=0  R=0: {e:1}           len=1
+L=0  R=1: {e:1,c:1}       len=2
+L=0  R=2: {e:2,c:1}       len=3
+L=0  R=3: {e:2,c:1,b:1}   size=3! shrink:
+  remove s[0]='e' → {e:1,c:1,b:1} still 3, keep shrinking
+  remove s[1]='c' → {e:1,b:1}     size=2 ✓  L=2
+L=2  R=3: {e:1,b:1}       len=2
+L=2  R=4: {e:1,b:1,a:1}   size=3, shrink...
+
+maxLen = 3 ("ece")
 ```
 
 ---
 
 ## Problem Description
 
-Longest Substring with At Most Two Distinct Characters. ([LeetCode](https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters))
+Given a string `s`, return the length of the **longest substring** that contains **at most two distinct characters**.
 
-Difficulty: Medium | Acceptance: 56.5%
+**Example 1:** `s="eceba"` → `3` (substring `"ece"`)
+**Example 2:** `s="ccaabbb"` → `5` (substring `"aabbb"`)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters) for full constraints
+Constraints: `0 ≤ s.length ≤ 10^5`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+1. **Clarify / Xác nhận**: "At most 2, hay exactly 2?" / At most 2 (includes substrings with 1 distinct char)
+2. **Generalize / Tổng quát hóa**: Bài này là special case của "at most K distinct" — code với K=2 để dễ mở rộng
+3. **Brute force / Vét cạn**: O(n²) check all substrings — optimize to O(n) sliding window
+4. **Key state / Trạng thái**: frequency map + window size; shrink when map.size > 2
+5. **Edge cases / Trường hợp đặc biệt**: Empty string → 0; all same char → n; 1 char → 1
+6. **Follow-up / Hỏi thêm**: "At most K distinct?" / Same code, change `2` to `k` (LeetCode 340)
 
 ---
 
@@ -69,38 +63,65 @@ Constraints:
 ```typescript
 /**
  * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Time: O(n²) — check all substrings
+ * Space: O(1) — fixed alphabet size
  */
-function longestSubstringWithAtMostTwoDistinctCharactersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function lengthOfLongestSubstringTwoDistinctBrute(s: string): number {
+  let maxLen = 0;
+  for (let i = 0; i < s.length; i++) {
+    const seen = new Set<string>();
+    for (let j = i; j < s.length; j++) {
+      seen.add(s[j]);
+      if (seen.size > 2) break;
+      maxLen = Math.max(maxLen, j - i + 1);
+    }
+  }
+  return maxLen;
 }
+console.log(lengthOfLongestSubstringTwoDistinctBrute("eceba")); // 3
+console.log(lengthOfLongestSubstringTwoDistinctBrute("ccaabbb")); // 5
 
 /**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Sliding Window with frequency map (Optimal)
+ * Time: O(n) — each char added/removed at most once
+ * Space: O(1) — at most 3 entries in map before shrinking
  */
-function longestSubstringWithAtMostTwoDistinctCharacters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function lengthOfLongestSubstringTwoDistinct(s: string): number {
+  const freq = new Map<string, number>();
+  let left = 0;
+  let maxLen = 0;
+
+  for (let right = 0; right < s.length; right++) {
+    const ch = s[right];
+    freq.set(ch, (freq.get(ch) ?? 0) + 1);
+
+    // Shrink window until at most 2 distinct characters
+    while (freq.size > 2) {
+      const leftChar = s[left];
+      freq.set(leftChar, freq.get(leftChar)! - 1);
+      if (freq.get(leftChar) === 0) freq.delete(leftChar);
+      left++;
+    }
+
+    maxLen = Math.max(maxLen, right - left + 1);
+  }
+  return maxLen;
 }
 
-// === Test Cases ===
-// console.log(longestSubstringWithAtMostTwoDistinctCharacters(/* example 1 */)); // expected
-// console.log(longestSubstringWithAtMostTwoDistinctCharacters(/* example 2 */)); // expected
-// console.log(longestSubstringWithAtMostTwoDistinctCharacters(/* edge case */)); // expected
+console.log(lengthOfLongestSubstringTwoDistinct("eceba")); // 3
+console.log(lengthOfLongestSubstringTwoDistinct("ccaabbb")); // 5
+console.log(lengthOfLongestSubstringTwoDistinct("")); // 0
+console.log(lengthOfLongestSubstringTwoDistinct("a")); // 1
+console.log(lengthOfLongestSubstringTwoDistinct("abcabcabc")); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Substring with Concatenation of All Words](https://leetcode.com/problems/substring-with-concatenation-of-all-words) — same pattern: Sliding Window
-- [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement) — same pattern: Sliding Window
-- [Find All Anagrams in a String](https://leetcode.com/problems/find-all-anagrams-in-a-string) — same pattern: Sliding Window
-- [Permutation in String](https://leetcode.com/problems/permutation-in-string) — same pattern: Sliding Window
-- [Longest Substring with At Most Two Distinct Characters — LeetCode](https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters) — problem page
+| Problem                                                                                                                                    | Pattern        | Difficulty |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | -------------- | ---------- |
+| [Longest Substring with At Most K Distinct Characters](https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters) | Sliding Window | Medium     |
+| [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters)             | Sliding Window | Medium     |
+| [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement)                           | Sliding Window | Medium     |
+| [Fruit Into Baskets](https://leetcode.com/problems/fruit-into-baskets)                                                                     | Sliding Window | Medium     |

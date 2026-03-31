@@ -7,7 +7,7 @@ tags: [Math, String]
 leetcode_url: "https://leetcode.com/problems/excel-sheet-column-number"
 ---
 
-# Excel Sheet Column Number / Excel Sheet Column Number
+# Excel Sheet Column Number / Số Cột Bảng Tính Excel
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,47 +17,40 @@ leetcode_url: "https://leetcode.com/problems/excel-sheet-column-number"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Excel Sheet Column Number example:**
+**Analogy (VN):** Giống đổi số từ hệ thập phân — nhưng đây là hệ cơ số 26, không có số 0. A=1, B=2, ..., Z=26. "AB" = A×26 + B = 1×26 + 2 = 28. Xử lý từ trái sang phải, nhân cộng dồn.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+columnTitleToNumber("AB"):
+  result = 0
+  'A' → result = 0 * 26 + 1  = 1
+  'B' → result = 1 * 26 + 2  = 28
+
+columnTitleToNumber("ZY"):
+  'Z' → result = 0 * 26 + 26 = 26
+  'Y' → result = 26 * 26 + 25 = 701
 ```
 
 ---
 
 ## Problem Description
 
-Excel Sheet Column Number. ([LeetCode](https://leetcode.com/problems/excel-sheet-column-number))
+Given a string `columnTitle` that represents an Excel column title (A, B, ..., Z, AA, AB, ...), return its corresponding column number.
 
-Difficulty: Easy | Acceptance: 65.8%
+**Example 1:** `"A"` → `1`; `"Z"` → `26`; `"AA"` → `27`
+**Example 2:** `"AB"` → `28`; `"ZY"` → `701`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/excel-sheet-column-number) for full constraints
+Constraints: `1 ≤ columnTitle.length ≤ 7`, `columnTitle` consists of uppercase English letters.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Có phân biệt hoa thường không?" / Case-sensitive input? (always uppercase)
+2. **Brute force / Vét cạn**: Không cần — đây đã là tối ưu O(n) / This is already optimal
+3. **Key insight / Ý tưởng**: Đây là hệ cơ số 26 (base-26), A=1 đến Z=26 / Base-26 where A=1 not 0
+4. **Khác hex / Lưu ý**: Không có chữ số 0 trong hệ này — A là 1, không phải 0
+5. **Edge cases / Trường hợp đặc biệt**: Chuỗi 1 ký tự (A→1, Z→26); chuỗi dài 7 ký tự
+6. **Follow-up / Hỏi thêm**: "Ngược lại — từ số ra chuỗi?" / Reverse: Excel Sheet Column Title (LeetCode 168)
 
 ---
 
@@ -65,39 +58,65 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Iterative base-26 conversion (left to right)
+ * Time: O(n) — one pass through the string
+ * Space: O(1)
  */
-function excelSheetColumnNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function titleToNumber(columnTitle: string): number {
+  let result = 0;
+  for (const ch of columnTitle) {
+    result = result * 26 + (ch.charCodeAt(0) - "A".charCodeAt(0) + 1);
+  }
+  return result;
 }
+
+console.log(titleToNumber("A")); // 1
+console.log(titleToNumber("Z")); // 26
+console.log(titleToNumber("AA")); // 27
+console.log(titleToNumber("AB")); // 28
+console.log(titleToNumber("ZY")); // 701
 
 /**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Using reduce (functional style)
+ * Time: O(n)
+ * Space: O(n) — spread to array, though input is small (≤7 chars)
  */
-function excelSheetColumnNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function titleToNumberFunctional(columnTitle: string): number {
+  return [...columnTitle].reduce((acc, ch) => {
+    return acc * 26 + (ch.charCodeAt(0) - 64); // 'A' = 65, so -64 gives 1
+  }, 0);
 }
 
-// === Test Cases ===
-// console.log(excelSheetColumnNumber(/* example 1 */)); // expected
-// console.log(excelSheetColumnNumber(/* example 2 */)); // expected
-// console.log(excelSheetColumnNumber(/* edge case */)); // expected
+console.log(titleToNumberFunctional("A")); // 1
+console.log(titleToNumberFunctional("ZY")); // 701
+console.log(titleToNumberFunctional("FXSHRXW")); // 2147483647
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Basic Calculator II](https://leetcode.com/problems/basic-calculator-ii) — same pattern: Stack
-- [Integer to English Words](https://leetcode.com/problems/integer-to-english-words) — same pattern: Math
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Basic Calculator](https://leetcode.com/problems/basic-calculator) — same pattern: Stack
-- [Excel Sheet Column Number — LeetCode](https://leetcode.com/problems/excel-sheet-column-number) — problem page
+| Problem                                                                              | Pattern | Difficulty |
+| ------------------------------------------------------------------------------------ | ------- | ---------- |
+| [Excel Sheet Column Title](https://leetcode.com/problems/excel-sheet-column-title)   | Math    | Easy       |
+| [Integer to Roman](https://leetcode.com/problems/integer-to-roman)                   | Math    | Medium     |
+| [Roman to Integer](https://leetcode.com/problems/roman-to-integer)                   | Math    | Easy       |
+| [Encode and Decode Strings](https://leetcode.com/problems/encode-and-decode-strings) | String  | Medium     |
+
+---
+
+## 🔢 Base Conversion Notes
+
+Excel uses **bijective base-26** — no zero digit. A=1, Z=26, AA=27.
+
+```
+"AB" = 1×26 + 2 = 28
+"ZY" = 26×26 + 25 = 701
+```
+
+## ⏱️ Complexity Summary
+
+| Approach | Time | Space | Notes |
+|----------|------|-------|-------|
+| Iterative scan | O(n) | O(1) | n ≤ 7, effectively constant |
+| Functional reduce | O(n) | O(n) | Spreads string to array |

@@ -7,9 +7,9 @@ tags: [Array, Greedy, Sorting, Counting]
 leetcode_url: "https://leetcode.com/problems/minimum-increment-to-make-array-unique"
 ---
 
-# Minimum Increment to Make Array Unique / Minimum Increment to Make Array Unique
+# Minimum Increment to Make Array Unique / Số Lần Tăng Tối Thiểu Để Mảng Unique
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy + Sorting
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
 > **See also**: [Task Scheduler](https://leetcode.com/problems/task-scheduler) | [Least Number of Unique Integers after K Removals](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals)
 
@@ -17,87 +17,134 @@ leetcode_url: "https://leetcode.com/problems/minimum-increment-to-make-array-uni
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Increment to Make Array Unique example:**
+**Analogy (VN):** Hãy tưởng tượng bạn đặt nhiều chiếc ghế có số nhà vào một dãy phố — không có hai nhà cùng số. Khi hai ghế va chạm, bạn đẩy ghế sau ra xa tối thiểu. Sau khi sort, nếu `nums[i] <= nums[i-1]`, bạn phải tăng `nums[i]` lên `nums[i-1] + 1`.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+nums = [3, 2, 1, 2, 1, 7]
+Sort: [1, 1, 2, 2, 3, 7]
+
+i=1: nums[1]=1 <= nums[0]=1 → set to 2, moves += 1
+i=2: nums[2]=2 <= nums[1]=2 → set to 3, moves += 1
+i=3: nums[3]=2 <= nums[2]=3 → set to 4, moves += 2
+i=4: nums[4]=3 <= nums[3]=4 → set to 5, moves += 2
+i=5: nums[5]=7 > nums[4]=5 → OK
+Total moves = 6  ✅
 ```
 
 ---
 
 ## Problem Description
 
-Minimum Increment to Make Array Unique. ([LeetCode](https://leetcode.com/problems/minimum-increment-to-make-array-unique))
+Given an array `nums`, return the **minimum number of increments** (each +1 counts as one move) to make all values unique.
 
-Difficulty: Medium | Acceptance: 60.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-increment-to-make-array-unique) for full constraints
+- **Example 1:** `nums = [1,2,2]` → `1` (change one 2 to 3)
+- **Example 2:** `nums = [3,2,1,2,1,7]` → `6`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔽 **Sort first:** Sau khi sort, xử lý từ trái sang phải — đảm bảo mỗi phần tử lớn hơn phần tử trước
+- 🎯 **Greedy proof:** Tăng lên giá trị nhỏ nhất possible (prev+1) luôn tối ưu vì tránh conflict cascade
+- 🪣 **Counting sort variant:** O(max_val) — đếm frequency, resolve conflicts từ thấp đến cao
+- 📊 **Complexity:** O(n log n) sorting; O(n + max_val) counting sort
+- ⚠️ **Overflow:** `nums[i]` có thể tăng lên `n + max_val` — dùng BigInt nếu sum rất lớn
+- 💡 **Follow-up:** Nếu được phép cả increment và decrement → tối ưu hóa khác hẳn (complex DP)
 
 ---
 
 ## Solutions
 
+### Solution 1: Sort + greedy
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort array, ensure each element is strictly greater than previous
+ * Time: O(n log n)  Space: O(1)
  */
-function minimumIncrementToMakeArrayUniqueBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minIncrementForUnique(nums: number[]): number {
+  nums.sort((a, b) => a - b);
+  let moves = 0;
+  for (let i = 1; i < nums.length; i++) {
+    if (nums[i] <= nums[i - 1]) {
+      moves += nums[i - 1] + 1 - nums[i];
+      nums[i] = nums[i - 1] + 1;
+    }
+  }
+  return moves;
 }
 
+console.log(minIncrementForUnique([1, 2, 2])); // 1
+console.log(minIncrementForUnique([3, 2, 1, 2, 1, 7])); // 6
+console.log(minIncrementForUnique([0, 0, 0])); // 3
+```
+
+### Solution 2: Counting sort — O(n + max_val)
+
+```typescript
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count frequencies, resolve conflicts from lowest to highest value
+ * Time: O(n + max_val)  Space: O(max_val)
  */
-function minimumIncrementToMakeArrayUnique(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function minIncrementForUniqueCounting(nums: number[]): number {
+  const MAX = 100001 + nums.length; // upper bound after all increments
+  const count = new Array(MAX).fill(0);
+  for (const n of nums) count[n]++;
+
+  let moves = 0;
+  for (let i = 0; i < MAX - 1; i++) {
+    if (count[i] > 1) {
+      const overflow = count[i] - 1;
+      count[i + 1] += overflow;
+      moves += overflow;
+      count[i] = 1;
+    }
+  }
+  return moves;
 }
 
-// === Test Cases ===
-// console.log(minimumIncrementToMakeArrayUnique(/* example 1 */)); // expected
-// console.log(minimumIncrementToMakeArrayUnique(/* example 2 */)); // expected
-// console.log(minimumIncrementToMakeArrayUnique(/* edge case */)); // expected
+console.log(minIncrementForUniqueCounting([1, 2, 2])); // 1
+console.log(minIncrementForUniqueCounting([3, 2, 1, 2, 1, 7])); // 6
+```
+
+### Solution 3: Path compression (union-find style)
+
+```typescript
+/**
+ * For each element, find its "next available" slot using memoized search
+ * Time: O(n α(n)) amortized  Space: O(max_val)
+ */
+function minIncrementForUniqueUF(nums: number[]): number {
+  const parent = new Map<number, number>();
+
+  const find = (x: number): number => {
+    if (!parent.has(x)) return x;
+    const root = find(parent.get(x)!);
+    parent.set(x, root);
+    return root;
+  };
+
+  let moves = 0;
+  for (const n of nums) {
+    const slot = find(n);
+    moves += slot - n;
+    parent.set(slot, slot + 1); // mark slot as used, next available is slot+1
+  }
+  return moves;
+}
+
+console.log(minIncrementForUniqueUF([3, 2, 1, 2, 1, 7])); // 6
+console.log(minIncrementForUniqueUF([1, 1, 1, 1])); // 6
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Least Number of Unique Integers after K Removals](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals) — same pattern: Greedy
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Minimum Increment to Make Array Unique — LeetCode](https://leetcode.com/problems/minimum-increment-to-make-array-unique) — problem page
+| Problem                                                                                                                                       | Difficulty | Connection                     |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------ |
+| [First Missing Positive](https://leetcode.com/problems/first-missing-positive/)                                                               | 🔴 Hard    | Find smallest unused positive  |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                                                                               | 🟡 Medium  | Greedy frequency assignment    |
+| [Avoid Conflict Between Adjacent Intervals](https://leetcode.com/problems/remove-interval/)                                                   | 🟡 Medium  | Greedy interval adjustment     |
+| [Minimum Number of Operations to Make Array Continuous](https://leetcode.com/problems/minimum-number-of-operations-to-make-array-continuous/) | 🔴 Hard    | Sliding window on sorted array |
+| [Seat Reservation Manager](https://leetcode.com/problems/seat-reservation-manager/)                                                           | 🟡 Medium  | Find smallest available slot   |

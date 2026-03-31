@@ -7,9 +7,9 @@ tags: [Array, Bit Manipulation, Sorting, Counting]
 leetcode_url: "https://leetcode.com/problems/sort-integers-by-the-number-of-1-bits"
 ---
 
-# Sort Integers by The Number of 1 Bits / Sort Integers by The Number of 1 Bits
+# Sort Integers by The Number of 1 Bits / Sắp Xếp Số Nguyên Theo Số Bit 1
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Sorting
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Sorting + Bit Manipulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
 > **See also**: [Majority Element](https://leetcode.com/problems/majority-element) | [Missing Number](https://leetcode.com/problems/missing-number)
 
@@ -17,87 +17,130 @@ leetcode_url: "https://leetcode.com/problems/sort-integers-by-the-number-of-1-bi
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Sau khi sắp xếp, nhiều bài toán trở nên đơn giản hơn — phần tử giống nhau nằm cạnh nhau, có thể dùng binary search, two pointers.
-
-**Pattern Recognition:**
-
-- Signal: "order matters" + "grouping/dedup" → **Sorting**
-- Bài này thuộc dạng Sorting — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sort Integers by The Number of 1 Bits example:**
+**Analogy (VN):** Tưởng tượng bạn sắp xếp học sinh theo số huy chương đạt được — ai bằng nhau thì xếp theo mã số tăng dần. Đây chính là bài toán: đếm số bit `1` trong mỗi số (huy chương), rồi sort theo tiêu chí kép.
 
 ```
-// TODO: Add step-by-step visual for Sorting
-// Show one complete example with state at each step
+Input: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+Bits:  [0, 1, 1, 2, 1, 2, 2, 3, 1]
+
+Group by bit count, then sort each group:
+0 bits: [0]
+1 bit:  [1, 2, 4, 8]
+2 bits: [3, 5, 6]
+3 bits: [7]
+Result: [0, 1, 2, 4, 8, 3, 5, 6, 7]  ✅
 ```
 
 ---
 
 ## Problem Description
 
-Sort Integers by The Number of 1 Bits. ([LeetCode](https://leetcode.com/problems/sort-integers-by-the-number-of-1-bits))
+Given an integer array `arr`, sort it by the number of `1`s in the binary representation. If two numbers have the same count of `1`s, sort them in ascending order.
 
-Difficulty: Easy | Acceptance: 78.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sort-integers-by-the-number-of-1-bits) for full constraints
+- **Example 1:** `arr = [0,1,2,3,4,5,6,7,8]` → `[0,1,2,4,8,3,5,6,7]`
+- **Example 2:** `arr = [1024,512,256,128,64,32,16,8,4,2,1]` → `[1,2,4,8,16,32,64,128,256,512,1024]`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔢 **Đếm bit 1 / Count bits:** `n.toString(2).split('1').length - 1` — cách nhanh trong JS
+- 🔄 **Comparator kép / Dual comparator:** `(a,b) => popcount(a) - popcount(b) || a - b`
+- ⚡ **Bitwise loop:** `while(n) { count += n & 1; n >>>= 1; }` — chuẩn với unsigned int 32
+- 📊 **Độ phức tạp / Complexity:** O(n log n × log MAX) — log MAX ≈ 30 nên thực tế rất nhanh
+- 🪣 **Counting sort:** Nhóm 0–32 buckets → O(n) nếu cần tối ưu hơn
+- 💡 **Follow-up:** Nếu cần stable sort thì JS V8 đã stable từ Node 12 — không cần workaround
 
 ---
 
 ## Solutions
 
+### Solution 1: Custom sort with popcount helper
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort integers by their bit-1 count, ties broken by value
+ * Time: O(n log n)  Space: O(1)
  */
-function sortIntegersByTheNumberOf1BitsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function sortByBits(arr: number[]): number[] {
+  const popcount = (n: number): number => {
+    let count = 0;
+    while (n > 0) {
+      count += n & 1;
+      n >>>= 1;
+    }
+    return count;
+  };
+  return arr.sort((a, b) => popcount(a) - popcount(b) || a - b);
 }
 
+console.log(sortByBits([0, 1, 2, 3, 4, 5, 6, 7, 8]));
+// [0,1,2,4,8,3,5,6,7]
+console.log(sortByBits([1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1]));
+// [1,2,4,8,16,32,64,128,256,512,1024]
+```
+
+### Solution 2: Memoized popcount (faster for repeated values)
+
+```typescript
 /**
- * Solution 2: Optimized — Sorting
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Pre-compute bit counts to avoid redundant work during sort
+ * Time: O(n log n)  Space: O(n)
  */
-function sortIntegersByTheNumberOf1Bits(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sorting
-  // Hint: Sort first, then use property of sorted order
-  throw new Error('Not implemented');
+function sortByBitsMemo(arr: number[]): number[] {
+  const cache = new Map<number, number>();
+  const popcount = (n: number): number => {
+    if (cache.has(n)) return cache.get(n)!;
+    let c = 0,
+      x = n;
+    while (x > 0) {
+      c += x & 1;
+      x >>>= 1;
+    }
+    cache.set(n, c);
+    return c;
+  };
+  return [...arr].sort((a, b) => popcount(a) - popcount(b) || a - b);
 }
 
-// === Test Cases ===
-// console.log(sortIntegersByTheNumberOf1Bits(/* example 1 */)); // expected
-// console.log(sortIntegersByTheNumberOf1Bits(/* example 2 */)); // expected
-// console.log(sortIntegersByTheNumberOf1Bits(/* edge case */)); // expected
+console.log(sortByBitsMemo([3, 1, 2, 4, 8]));
+// [1,2,4,8,3]  — 1,2,4,8 have 1 bit; 3 has 2 bits
+```
+
+### Solution 3: Bucket sort O(n)
+
+```typescript
+/**
+ * Group into 33 buckets (0–32 bits), sort within buckets
+ * Time: O(n)  Space: O(n)
+ */
+function sortByBitsLinear(arr: number[]): number[] {
+  const buckets: number[][] = Array.from({ length: 33 }, () => []);
+  for (const n of arr) {
+    let bits = 0,
+      x = n;
+    while (x > 0) {
+      bits += x & 1;
+      x >>>= 1;
+    }
+    buckets[bits].push(n);
+  }
+  for (const b of buckets) b.sort((a, z) => a - z);
+  return buckets.flat();
+}
+
+console.log(sortByBitsLinear([0, 1, 2, 3, 4, 5, 6, 7, 8]));
+// [0,1,2,4,8,3,5,6,7]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Sort Integers by The Number of 1 Bits — LeetCode](https://leetcode.com/problems/sort-integers-by-the-number-of-1-bits) — problem page
+| Problem                                                                           | Difficulty | Connection                |
+| --------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits/)               | 🟢 Easy    | Core popcount helper      |
+| [Reverse Bits](https://leetcode.com/problems/reverse-bits/)                       | 🟢 Easy    | Bit manipulation sibling  |
+| [Relative Sort Array](https://leetcode.com/problems/relative-sort-array/)         | 🟢 Easy    | Custom comparator sort    |
+| [Sort Colors](https://leetcode.com/problems/sort-colors/)                         | 🟡 Medium  | Non-standard sort key     |
+| [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) | 🟡 Medium  | Sort by computed property |

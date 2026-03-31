@@ -7,7 +7,7 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/sum-of-beauty-of-all-substrings"
 ---
 
-# Sum of Beauty of All Substrings / Sum of Beauty of All Substrings
+# Sum of Beauty of All Substrings / Tổng Vẻ Đẹp Của Tất Cả Chuỗi Con
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,50 +17,41 @@ leetcode_url: "https://leetcode.com/problems/sum-of-beauty-of-all-substrings"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sum of Beauty of All Substrings example:**
+**Analogy (VN):** "Vẻ đẹp" của chuỗi con = hiệu giữa ký tự xuất hiện nhiều nhất và ít nhất. Với mỗi điểm bắt đầu `i`, mở rộng cửa sổ sang phải, cập nhật frequency map, và cộng `max_freq - min_freq` vào tổng.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
+s = "aabcb"
+Substrings of length ≥ 2:
+  "aa"    → {a:2}          → max=2, min=2 → beauty=0
+  "aab"   → {a:2,b:1}      → max=2, min=1 → beauty=1
+  "aabc"  → {a:2,b:1,c:1}  → max=2, min=1 → beauty=1
+  "aabcb" → {a:2,b:2,c:1}  → max=2, min=1 → beauty=1
+  "ab"    → {a:1,b:1}      → beauty=0
+  ...
+Total beauty = 5
 ```
 
 ---
 
 ## Problem Description
 
-Sum of Beauty of All Substrings. ([LeetCode](https://leetcode.com/problems/sum-of-beauty-of-all-substrings))
+The **beauty** of a substring is defined as the difference between the highest and lowest frequency of any character in it. Return the **sum of beauty** of all substrings of `s`.
 
-Difficulty: Medium | Acceptance: 70.8%
+**Example 1:** `s="aabcb"` → `5`
+**Example 2:** `s="aab"` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sum-of-beauty-of-all-substrings) for full constraints
+Constraints: `1 ≤ s.length ≤ 500`, `s` consists of lowercase letters.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Chuỗi con có độ dài 1 không tính không?" / Single-char substrings have beauty 0, still counted
+2. **Brute force / Vét cạn**: O(n³) — enumerate all substrings and recount frequencies each time
+3. **Optimize / Tối ưu**: Fix left boundary, extend right → O(n²) with incremental frequency update
+4. **Key state / Trạng thái**: freq array[26] + tracking current max/min is the key optimization
+5. **Edge cases / Trường hợp đặc biệt**: All same chars → all beauties = 0; length 1 → 0
+6. **Follow-up / Hỏi thêm**: "Chỉ tính chuỗi con dài ≥ k?" / Same approach, skip when right-left+1 < k
 
 ---
 
@@ -68,39 +59,69 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force O(n³) — recount frequencies for each substring
+ * Time: O(n³)
+ * Space: O(26) = O(1)
  */
-function sumOfBeautyOfAllSubstringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function beautyOfSubstringsBrute(s: string): number {
+  let total = 0;
+  for (let i = 0; i < s.length; i++) {
+    for (let j = i + 1; j <= s.length; j++) {
+      const sub = s.substring(i, j);
+      const freq = new Array(26).fill(0);
+      for (const ch of sub) freq[ch.charCodeAt(0) - 97]++;
+      const active = freq.filter((f) => f > 0);
+      total += Math.max(...active) - Math.min(...active);
+    }
+  }
+  return total;
 }
+console.log(beautyOfSubstringsBrute("aabcb")); // 5
+console.log(beautyOfSubstringsBrute("aab")); // 1
 
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Optimized O(n²) — fix left, extend right with incremental updates
+ * Time: O(n²) — n² iterations, each O(26) to find max/min
+ * Space: O(26) = O(1)
  */
-function sumOfBeautyOfAllSubstrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function beautyOfSubstrings(s: string): number {
+  let total = 0;
+  const n = s.length;
+
+  for (let i = 0; i < n; i++) {
+    const freq = new Array(26).fill(0);
+
+    for (let j = i; j < n; j++) {
+      freq[s.charCodeAt(j) - 97]++;
+
+      // Find max and min among non-zero frequencies
+      let maxF = 0,
+        minF = Infinity;
+      for (const f of freq) {
+        if (f > 0) {
+          if (f > maxF) maxF = f;
+          if (f < minF) minF = f;
+        }
+      }
+      total += maxF - minF;
+    }
+  }
+  return total;
 }
 
-// === Test Cases ===
-// console.log(sumOfBeautyOfAllSubstrings(/* example 1 */)); // expected
-// console.log(sumOfBeautyOfAllSubstrings(/* example 2 */)); // expected
-// console.log(sumOfBeautyOfAllSubstrings(/* edge case */)); // expected
+console.log(beautyOfSubstrings("aabcb")); // 5
+console.log(beautyOfSubstrings("aab")); // 1
+console.log(beautyOfSubstrings("a")); // 0
+console.log(beautyOfSubstrings("abcd")); // 0  (all freq = 1 in each substring)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Sum of Beauty of All Substrings — LeetCode](https://leetcode.com/problems/sum-of-beauty-of-all-substrings) — problem page
+| Problem                                                                                                        | Pattern        | Difficulty |
+| -------------------------------------------------------------------------------------------------------------- | -------------- | ---------- |
+| [Ransom Note](https://leetcode.com/problems/ransom-note)                                                       | Hash Map       | Easy       |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string)                                           | Heap           | Medium     |
+| [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings)                 | Prefix Sum     | Medium     |
+| [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) | Sliding Window | Medium     |

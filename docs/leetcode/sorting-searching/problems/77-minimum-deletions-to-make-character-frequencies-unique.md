@@ -7,9 +7,9 @@ tags: [Hash Table, String, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique"
 ---
 
-# Minimum Deletions to Make Character Frequencies Unique / Minimum Deletions to Make Character Frequencies Unique
+# Minimum Deletions to Make Character Frequencies Unique / Số Lần Xóa Tối Thiểu Để Tần Số Ký Tự Unique
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy + Sorting
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
 > **See also**: [Reorganize String](https://leetcode.com/problems/reorganize-string) | [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations)
 
@@ -17,87 +17,109 @@ leetcode_url: "https://leetcode.com/problems/minimum-deletions-to-make-character
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Deletions to Make Character Frequencies Unique example:**
+**Analogy (VN):** Hãy tưởng tượng bạn có nhiều chồng sách cao bằng nhau — mỗi chồng phải cao khác nhau. Với chồng trùng chiều cao, bạn lấy bớt sách (xóa ký tự) đến khi nó thấp hơn chồng bên cạnh. Chiến lược tham lam: sort giảm dần, xử lý từ cao nhất.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+s = "aabbcc"  → freq: {a:2, b:2, c:2}
+Sort desc: [2, 2, 2]
+
+freq[0]=2 → OK (dùng 2)
+freq[1]=2 → conflict → reduce to 1, deletions+=1
+freq[2]=2 → conflict → reduce to 0, deletions+=2
+Total deletions = 3
 ```
 
 ---
 
 ## Problem Description
 
-Minimum Deletions to Make Character Frequencies Unique. ([LeetCode](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique))
+Given a string `s`, return the minimum number of characters to delete so that no two different characters have the same frequency. Frequency is the number of times a character appears.
 
-Difficulty: Medium | Acceptance: 61.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique) for full constraints
+- **Example 1:** `s = "aab"` → `0` (a=2, b=1 — already unique)
+- **Example 2:** `s = "aaabbbcc"` → `2` (delete 1 b and 1 c → a=3, b=2, c=1)
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 📊 **Count first:** `Map` or 26-length array để đếm tần số — O(n)
+- 🔽 **Sort desc:** Xử lý từ tần số cao nhất → cho phép giảm xuống giá trị available nhỏ nhất
+- 🎯 **Greedy key:** Khi gặp trùng, giảm xuống `prev - 1` (nếu > 0), không cần giảm về 0 ngay
+- 🗂️ **Used set:** Dùng `Set` để track tần số đã dùng — tránh conflict O(1) per lookup
+- ⚠️ **Edge:** Nếu freq giảm xuống 0, không thêm vào used set (0 không valid)
+- 💡 **Follow-up:** "K-special string" là biến thể — min deletions sao cho max_freq - min_freq ≤ k
 
 ---
 
 ## Solutions
 
+### Solution 1: Sort + greedy reduce
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort frequencies descending, reduce conflicts greedily
+ * Time: O(n + 26 log 26) = O(n)  Space: O(26) = O(1)
  */
-function minimumDeletionsToMakeCharacterFrequenciesUniqueBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minDeletions(s: string): number {
+  const freq = new Array(26).fill(0);
+  for (const c of s) freq[c.charCodeAt(0) - 97]++;
+
+  freq.sort((a, b) => b - a);
+  let deletions = 0;
+
+  for (let i = 1; i < 26; i++) {
+    if (freq[i] >= freq[i - 1] && freq[i] > 0) {
+      const newFreq = Math.max(0, freq[i - 1] - 1);
+      deletions += freq[i] - newFreq;
+      freq[i] = newFreq;
+    }
+  }
+  return deletions;
 }
 
+console.log(minDeletions("aab")); // 0
+console.log(minDeletions("aaabbbcc")); // 2
+console.log(minDeletions("ceabaacb")); // 2
+```
+
+### Solution 2: Used-set approach (cleaner logic)
+
+```typescript
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Track used frequencies in a Set, reduce until finding a free slot
+ * Time: O(n + k²) worst case, O(n) average  Space: O(k)
  */
-function minimumDeletionsToMakeCharacterFrequenciesUnique(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function minDeletionsSet(s: string): number {
+  const freq = new Map<string, number>();
+  for (const c of s) freq.set(c, (freq.get(c) ?? 0) + 1);
+
+  const freqs = [...freq.values()].sort((a, b) => b - a);
+  const used = new Set<number>();
+  let deletions = 0;
+
+  for (let f of freqs) {
+    while (f > 0 && used.has(f)) {
+      f--;
+      deletions++;
+    }
+    if (f > 0) used.add(f);
+  }
+  return deletions;
 }
 
-// === Test Cases ===
-// console.log(minimumDeletionsToMakeCharacterFrequenciesUnique(/* example 1 */)); // expected
-// console.log(minimumDeletionsToMakeCharacterFrequenciesUnique(/* example 2 */)); // expected
-// console.log(minimumDeletionsToMakeCharacterFrequenciesUnique(/* edge case */)); // expected
+console.log(minDeletionsSet("aab")); // 0
+console.log(minDeletionsSet("aaabbbcc")); // 2
+console.log(minDeletionsSet("abcabc")); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Minimum Deletions to Make String K-Special](https://leetcode.com/problems/minimum-deletions-to-make-string-k-special) — same pattern: Greedy
-- [Minimum Number of Pushes to Type Word II](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii) — same pattern: Greedy
-- [Minimum Deletions to Make Character Frequencies Unique — LeetCode](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique) — problem page
+| Problem                                                                                                                 | Difficulty | Connection                       |
+| ----------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------- |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string/)                                                   | 🟡 Medium  | Frequency manipulation           |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                                                         | 🟡 Medium  | Greedy on frequencies            |
+| [Minimum Number of Pushes to Type Word II](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii/)     | 🟡 Medium  | Sort freq, greedy assign         |
+| [Minimum Deletions to Make String K-Special](https://leetcode.com/problems/minimum-deletions-to-make-string-k-special/) | 🟡 Medium  | Same pattern, relaxed constraint |
+| [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations/)             | 🟡 Medium  | Frequency greedy sibling         |

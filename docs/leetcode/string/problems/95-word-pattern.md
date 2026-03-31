@@ -7,7 +7,7 @@ tags: [Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/word-pattern"
 ---
 
-# Word Pattern / Word Pattern
+# Word Pattern / Mẫu Từ
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
@@ -17,50 +17,41 @@ leetcode_url: "https://leetcode.com/problems/word-pattern"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Word Pattern example:**
+**Analogy (VN):** Giống dịch mã Caesar — mỗi chữ cái mẫu ánh xạ sang đúng một từ, và mỗi từ chỉ ứng với đúng một chữ cái. Cần ánh xạ **hai chiều** (bijection). Nếu 'a'→"dog" thì không thể 'b'→"dog".
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+pattern = "abba"   s = "dog cat cat dog"
+words   = ["dog","cat","cat","dog"]
 
-Key insight: store complement for O(1) lookup
+Forward map: a→dog, b→cat, b→cat✓, a→dog✓
+Reverse map: dog→a, cat→b, cat→b✓, dog→a✓
+
+If pattern = "abba", s = "dog cat cat fish":
+  a→dog but fish≠dog at index 3 → false ❌
 ```
 
 ---
 
 ## Problem Description
 
-Word Pattern. ([LeetCode](https://leetcode.com/problems/word-pattern))
+Given a `pattern` string and a string `s`, determine if `s` follows the same pattern, where every letter in `pattern` maps **bijectively** to a non-empty word in `s`.
 
-Difficulty: Easy | Acceptance: 43.1%
+**Example 1:** `pattern="abba", s="dog cat cat dog"` → `true`
+**Example 2:** `pattern="abba", s="dog cat cat fish"` → `false`
+**Example 3:** `pattern="aaaa", s="dog cat cat dog"` → `false`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/word-pattern) for full constraints
+Constraints: `1 ≤ pattern.length ≤ 300`, `s` contains only lowercase words separated by spaces.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Số từ và độ dài pattern có bằng nhau không?" / Word count must equal pattern length?
+2. **Key insight / Ý tưởng**: Cần bijection — ánh xạ hai chiều, không chỉ một chiều
+3. **Brute force / Vét cạn**: This IS the optimal approach — O(n) single pass with two maps
+4. **Common mistake / Lỗi thường gặp**: Chỉ map một chiều → sẽ bị "aa" → "dog cat" pass sai
+5. **Edge cases / Trường hợp đặc biệt**: pattern.length ≠ words.length → false immediately
+6. **Follow-up / Hỏi thêm**: "Nếu pattern là chuỗi từ thay vì ký tự?" / Word Pattern II (regex/backtrack)
 
 ---
 
@@ -68,39 +59,69 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Two HashMaps for bijection
+ * Time: O(n) where n = number of words
+ * Space: O(n)
  */
-function wordPatternBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function wordPattern(pattern: string, s: string): boolean {
+  const words = s.split(" ");
+  if (pattern.length !== words.length) return false;
+
+  const charToWord = new Map<string, string>();
+  const wordToChar = new Map<string, string>();
+
+  for (let i = 0; i < pattern.length; i++) {
+    const ch = pattern[i];
+    const word = words[i];
+
+    if (charToWord.has(ch) && charToWord.get(ch) !== word) return false;
+    if (wordToChar.has(word) && wordToChar.get(word) !== ch) return false;
+
+    charToWord.set(ch, word);
+    wordToChar.set(word, ch);
+  }
+  return true;
 }
+
+console.log(wordPattern("abba", "dog cat cat dog")); // true
+console.log(wordPattern("abba", "dog cat cat fish")); // false
+console.log(wordPattern("aaaa", "dog cat cat dog")); // false
+console.log(wordPattern("abba", "dog dog dog dog")); // false
 
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Index normalization — map each sequence to first-seen indices
+ * Both pattern and words must produce the same index sequence.
+ * Time: O(n)
+ * Space: O(n)
  */
-function wordPattern(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function wordPatternIndex(pattern: string, s: string): boolean {
+  const words = s.split(" ");
+  if (pattern.length !== words.length) return false;
+
+  const normalize = (arr: string[]): string => {
+    const map = new Map<string, number>();
+    return arr
+      .map((x) => {
+        if (!map.has(x)) map.set(x, map.size);
+        return map.get(x);
+      })
+      .join(",");
+  };
+
+  return normalize([...pattern]) === normalize(words);
 }
 
-// === Test Cases ===
-// console.log(wordPattern(/* example 1 */)); // expected
-// console.log(wordPattern(/* example 2 */)); // expected
-// console.log(wordPattern(/* edge case */)); // expected
+console.log(wordPatternIndex("abba", "dog cat cat dog")); // true
+console.log(wordPatternIndex("abba", "dog cat cat fish")); // false
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree) — same pattern: Trie
-- [Isomorphic Strings](https://leetcode.com/problems/isomorphic-strings) — same pattern: Hash Map
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Word Pattern — LeetCode](https://leetcode.com/problems/word-pattern) — problem page
+| Problem                                                                            | Pattern      | Difficulty |
+| ---------------------------------------------------------------------------------- | ------------ | ---------- |
+| [Isomorphic Strings](https://leetcode.com/problems/isomorphic-strings)             | Hash Map     | Easy       |
+| [Word Pattern II](https://leetcode.com/problems/word-pattern-ii)                   | Backtracking | Medium     |
+| [Find and Replace Pattern](https://leetcode.com/problems/find-and-replace-pattern) | Hash Map     | Medium     |
+| [Group Anagrams](https://leetcode.com/problems/group-anagrams)                     | Hash Map     | Medium     |

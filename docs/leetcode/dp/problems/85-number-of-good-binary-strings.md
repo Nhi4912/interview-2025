@@ -7,7 +7,7 @@ tags: [Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/number-of-good-binary-strings"
 ---
 
-# Number of Good Binary Strings / Number of Good Binary Strings
+# Number of Good Binary Strings / Số Chuỗi Nhị Phân Tốt
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
@@ -17,52 +17,47 @@ leetcode_url: "https://leetcode.com/problems/number-of-good-binary-strings"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Như xây tường bằng hai loại gạch — gạch loại A dài `zero` đơn vị, gạch loại B dài `one` đơn vị. Đếm số cách xây tường có tổng chiều dài trong `[minLength, maxLength]`. Đây là bài toán "coin change counting" biến thể.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count ways to build length L using blocks of size `zero` or `one`" → **DP unbounded knapsack style**
+- `dp[i]` = số chuỗi nhị phân hợp lệ có độ dài đúng bằng i
+- Transition: `dp[i] += dp[i - zero]` (thêm khối zero 0s) + `dp[i - one]` (thêm khối one 1s)
 
-**Visual — Number of Good Binary Strings example:**
+**Visual — zero=1, one=2, minLen=2, maxLen=3:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+dp[0] = 1  (empty string, base case)
+dp[1] = dp[1-1] + 0 = dp[0] = 1    (appended "0")
+dp[2] = dp[2-1] + dp[2-2] = 1+1=2  (appended "0" or appended "11")
+dp[3] = dp[3-1] + dp[3-2] = 2+1=3  (..."000","011","110")
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Answer = dp[2] + dp[3] = 2+3 = 5
 ```
 
 ---
 
 ## Problem Description
 
-Number of Good Binary Strings. ([LeetCode](https://leetcode.com/problems/number-of-good-binary-strings))
+A binary string is **good** if it can be built by repeatedly appending `zero` zeros or `one` ones. Return the count of good strings with length in `[minLength, maxLength]`, modulo 10^9+7. ([LeetCode 2466](https://leetcode.com/problems/number-of-good-binary-strings))
 
-Difficulty: Medium | Acceptance: 52.5%
+**Example 1:** `minLength=2, maxLength=3, zero=1, one=2` → `5`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `minLength=2, maxLength=3, zero=2, one=3` → `1` (only "00")
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-good-binary-strings) for full constraints
+Constraints: `1 <= minLength <= maxLength <= 10^5`, `1 <= zero, one <= maxLength`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Analogy to coin change**: "Đây là 'coin change – count ways' với coin sizes = {zero, one}" / Equivalent to counting ways to make value L from coins {zero, one}
+2. **Base case**: "dp[0] = 1 (chuỗi rỗng — điểm khởi đầu duy nhất)" / Empty string is the only base; dp[0] must be 1
+3. **Transition**: "dp[i] += dp[i-zero] (nếu i≥zero) và dp[i] += dp[i-one] (nếu i≥one)" / Add both block sizes independently
+4. **Answer accumulation**: "Cộng dp[i] cho mọi i ∈ [minLength, maxLength] — không phải chỉ maxLength" / Sum dp[i] over the valid range, not just the endpoint
+5. **Modular arithmetic**: "Lấy mod ở mỗi bước dp và khi cộng vào answer" / Apply MOD at every addition
+6. **Edge cases**: "zero == one → chỉ multiples của zero hợp lệ; minLength > maxLength → 0" / When zero==one only multiples are reachable
 
 ---
 
@@ -70,39 +65,88 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Top-Down DP (Memoization)
+ * Time: O(maxLength) — each length computed once
+ * Space: O(maxLength) — memo array
  */
-function numberOfGoodBinaryStringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countGoodStringsMemo(
+  minLength: number,
+  maxLength: number,
+  zero: number,
+  one: number,
+): number {
+  const MOD = 1_000_000_007;
+  const memo = new Array(maxLength + 1).fill(-1);
+
+  function dp(len: number): number {
+    if (len > maxLength) return 0;
+    if (memo[len] !== -1) return memo[len];
+    let ways = 0;
+    if (len >= zero) ways = (ways + dp(len - zero)) % MOD;
+    if (len >= one) ways = (ways + dp(len - one)) % MOD;
+    // Note: dp(0) = 1 is the base seed, not computed by recursion — set it directly
+    return (memo[len] = ways);
+  }
+
+  memo[0] = 1; // base: empty string
+
+  let ans = 0;
+  for (let l = minLength; l <= maxLength; l++) {
+    ans = (ans + dp(l)) % MOD;
+  }
+  return ans;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Bottom-Up DP — clean iterative version
+ * Time: O(maxLength) — single forward pass
+ * Space: O(maxLength) — dp array
  */
-function numberOfGoodBinaryStrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function countGoodStrings(minLength: number, maxLength: number, zero: number, one: number): number {
+  const MOD = 1_000_000_007;
+  const dp = new Array(maxLength + 1).fill(0);
+  dp[0] = 1; // base: empty string has exactly 1 way to build (don't append anything)
+
+  for (let i = 1; i <= maxLength; i++) {
+    if (i >= zero) dp[i] = (dp[i] + dp[i - zero]) % MOD; // append block of `zero` 0s
+    if (i >= one) dp[i] = (dp[i] + dp[i - one]) % MOD; // append block of `one` 1s
+  }
+
+  // Sum all valid lengths
+  let ans = 0;
+  for (let i = minLength; i <= maxLength; i++) {
+    ans = (ans + dp[i]) % MOD;
+  }
+  return ans;
+}
+
+/**
+ * Solution 3: Prefix sum optimization for large ranges
+ * Time: O(maxLength) — same, but avoids second loop via running sum
+ * Space: O(maxLength)
+ */
+function countGoodStringsOpt(
+  minLength: number,
+  maxLength: number,
+  zero: number,
+  one: number,
+): number {
+  const MOD = 1_000_000_007;
+  const dp = new Array(maxLength + 1).fill(0);
+  dp[0] = 1;
+
+  let ans = 0;
+  for (let i = 1; i <= maxLength; i++) {
+    if (i >= zero) dp[i] = (dp[i] + dp[i - zero]) % MOD;
+    if (i >= one) dp[i] = (dp[i] + dp[i - one]) % MOD;
+    if (i >= minLength) ans = (ans + dp[i]) % MOD;
+  }
+  return ans;
 }
 
 // === Test Cases ===
-// console.log(numberOfGoodBinaryStrings(/* example 1 */)); // expected
-// console.log(numberOfGoodBinaryStrings(/* example 2 */)); // expected
-// console.log(numberOfGoodBinaryStrings(/* edge case */)); // expected
+console.log(countGoodStrings(2, 3, 1, 2)); // 5
+console.log(countGoodStrings(2, 3, 2, 3)); // 1
+console.log(countGoodStrings(1, 1, 1, 1)); // 2 ("0" or "1")
+console.log(countGoodStrings(5, 5, 2, 3)); // 2 ("00111" or "11100" style)
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Number of Good Binary Strings — LeetCode](https://leetcode.com/problems/number-of-good-binary-strings) — problem page

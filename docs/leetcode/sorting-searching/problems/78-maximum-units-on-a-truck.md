@@ -7,9 +7,9 @@ tags: [Array, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/maximum-units-on-a-truck"
 ---
 
-# Maximum Units on a Truck / Maximum Units on a Truck
+# Maximum Units on a Truck / Số Đơn Vị Tối Đa Trên Xe Tải
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Greedy
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Greedy + Sorting
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
 > **See also**: [Largest Number](https://leetcode.com/problems/largest-number) | [Task Scheduler](https://leetcode.com/problems/task-scheduler)
 
@@ -17,87 +17,126 @@ leetcode_url: "https://leetcode.com/problems/maximum-units-on-a-truck"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Units on a Truck example:**
+**Analogy (VN):** Bạn đang xếp hàng vào xe tải với giới hạn số thùng. Mỗi loại thùng chứa số đơn vị hàng hóa khác nhau. Chiến lược tốt nhất: **xếp loại thùng chứa nhiều nhất trước** cho đến khi xe đầy. Greedy tham lam hoàn toàn tối ưu vì mọi thùng đều chiếm 1 chỗ như nhau.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+boxTypes = [[1,3],[2,2],[3,1]], truckSize = 4
+
+Sort by unitsPerBox desc: [[1,3],[2,2],[3,1]]
+Take 1 box of type [3]: units += 1×3 = 3, remaining = 3
+Take 2 boxes of type [2]: units += 2×2 = 4+3 = 7, remaining = 1
+Take 1 box of type [1]: units += 1×1 = 8, remaining = 0
+Answer: 8  ✅
 ```
 
 ---
 
 ## Problem Description
 
-Maximum Units on a Truck. ([LeetCode](https://leetcode.com/problems/maximum-units-on-a-truck))
+Given `boxTypes[i] = [numberOfBoxes, numberOfUnitsPerBox]` and `truckSize` (max boxes), return the **maximum total units** you can put on the truck.
 
-Difficulty: Easy | Acceptance: 74.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-units-on-a-truck) for full constraints
+- **Example 1:** `boxTypes = [[1,3],[2,2],[3,1]], truckSize = 4` → `8`
+- **Example 2:** `boxTypes = [[5,10],[2,5],[4,7],[3,9]], truckSize = 10` → `91`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🎯 **Greedy proof:** Mọi thùng chiếm đúng 1 chỗ → luôn nên chọn thùng có units/box cao nhất trước
+- 🔽 **Sort key:** Sort theo `numberOfUnitsPerBox` giảm dần — không phải `numberOfBoxes`
+- ✂️ **Partial take:** Có thể lấy ít hơn `numberOfBoxes` nếu xe sắp đầy
+- 📊 **Complexity:** O(n log n) cho sort, O(n) cho greedy scan
+- ⚠️ **Edge cases:** `truckSize >= tổng tất cả boxes` → lấy hết; `truckSize = 0` → return 0
+- 💡 **Follow-up:** Nếu mỗi loại thùng có trọng lượng khác nhau → knapsack DP không còn greedy
 
 ---
 
 ## Solutions
 
+### Solution 1: Sort by units desc, greedy fill
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort by unitsPerBox descending, greedily fill the truck
+ * Time: O(n log n)  Space: O(1)
  */
-function maximumUnitsOnATruckBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximumUnits(boxTypes: number[][], truckSize: number): number {
+  boxTypes.sort((a, b) => b[1] - a[1]);
+  let totalUnits = 0;
+  let remaining = truckSize;
+
+  for (const [count, units] of boxTypes) {
+    if (remaining <= 0) break;
+    const take = Math.min(count, remaining);
+    totalUnits += take * units;
+    remaining -= take;
+  }
+  return totalUnits;
 }
 
+console.log(
+  maximumUnits(
+    [
+      [1, 3],
+      [2, 2],
+      [3, 1],
+    ],
+    4,
+  ),
+); // 8
+console.log(
+  maximumUnits(
+    [
+      [5, 10],
+      [2, 5],
+      [4, 7],
+      [3, 9],
+    ],
+    10,
+  ),
+); // 91
+```
+
+### Solution 2: Reduce pattern (functional style)
+
+```typescript
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Same greedy logic using reduce for accumulation
+ * Time: O(n log n)  Space: O(1)
  */
-function maximumUnitsOnATruck(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function maximumUnits2(boxTypes: number[][], truckSize: number): number {
+  boxTypes.sort((a, b) => b[1] - a[1]);
+
+  return boxTypes.reduce(
+    (acc, [count, units]) => {
+      const take = Math.min(count, acc.cap);
+      return { total: acc.total + take * units, cap: acc.cap - take };
+    },
+    { total: 0, cap: truckSize },
+  ).total;
 }
 
-// === Test Cases ===
-// console.log(maximumUnitsOnATruck(/* example 1 */)); // expected
-// console.log(maximumUnitsOnATruck(/* example 2 */)); // expected
-// console.log(maximumUnitsOnATruck(/* edge case */)); // expected
+console.log(
+  maximumUnits2(
+    [
+      [1, 3],
+      [2, 2],
+      [3, 1],
+    ],
+    4,
+  ),
+); // 8
+console.log(maximumUnits2([[1, 3]], 3)); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [IPO](https://leetcode.com/problems/ipo) — same pattern: Heap / Priority Queue
-- [Maximum Units on a Truck — LeetCode](https://leetcode.com/problems/maximum-units-on-a-truck) — problem page
+| Problem                                                                                         | Difficulty | Connection                         |
+| ----------------------------------------------------------------------------------------------- | ---------- | ---------------------------------- |
+| [Assign Cookies](https://leetcode.com/problems/assign-cookies/)                                 | 🟢 Easy    | Greedy matching with sorted arrays |
+| [IPO](https://leetcode.com/problems/ipo/)                                                       | 🔴 Hard    | Greedy with heap, pick max profit  |
+| [Most Profit Assigning Work](https://leetcode.com/problems/most-profit-assigning-work/)         | 🟡 Medium  | Sort + greedy assignment           |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                                 | 🟡 Medium  | Greedy frequency scheduling        |
+| [Minimum Cost to Hire K Workers](https://leetcode.com/problems/minimum-cost-to-hire-k-workers/) | 🔴 Hard    | Greedy sort with constraint        |

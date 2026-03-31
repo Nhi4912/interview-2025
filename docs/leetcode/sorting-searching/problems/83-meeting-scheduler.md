@@ -7,9 +7,9 @@ tags: [Array, Two Pointers, Sorting]
 leetcode_url: "https://leetcode.com/problems/meeting-scheduler"
 ---
 
-# Meeting Scheduler / Meeting Scheduler
+# Meeting Scheduler / Lịch Họp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers + Interval Intersection
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
 > **See also**: [4Sum](https://leetcode.com/problems/4sum) | [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays)
 
@@ -17,90 +17,148 @@ leetcode_url: "https://leetcode.com/problems/meeting-scheduler"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Meeting Scheduler example:**
+**Analogy (VN):** Hai người A và B cần tìm khoảng thời gian rảnh chung đủ dài cho cuộc họp. Mỗi người có nhiều slot rảnh. Sort cả hai danh sách, rồi dùng hai con trỏ — ai có slot kết thúc sớm hơn thì tiến trước. Khi tìm được overlap đủ dài, trả về ngay.
 
 ```
-arr = [... sorted ...]
- L                 R
+slots1 = [[10,50],[60,120],[140,210]]
+slots2 = [[0,15],[60,70]]
+duration = 8
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Sort both (already sorted)
+i=0,j=0: overlap=[max(10,0),min(50,15)]=[10,15] → len=5 < 8 → advance j
+i=0,j=1: overlap=[max(10,60),min(50,70)]=[60,50] → empty → advance i
+i=1,j=1: overlap=[max(60,60),min(120,70)]=[60,70] → len=10 >= 8 ✅ return [60,68]
 ```
 
 ---
 
 ## Problem Description
 
-Meeting Scheduler. ([LeetCode](https://leetcode.com/problems/meeting-scheduler))
+Given two lists of time slots `slots1` and `slots2` (each `[start, end]`) and a `duration`, find the **earliest** time slot of length `duration` that works for both people. Return `[start, start+duration]` or `[]` if impossible.
 
-Difficulty: Medium | Acceptance: 55.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/meeting-scheduler) for full constraints
+- **Example 1:** `slots1=[[10,50],[60,120],[140,210]], slots2=[[0,15],[60,70]], duration=8` → `[60,68]`
+- **Example 2:** `slots1=[[10,50],[60,120],[140,210]], slots2=[[0,15],[60,70]], duration=12` → `[]`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+- 🔄 **Two pointers:** Sort cả hai, advance pointer của slot kết thúc trước — luôn tìm overlap hợp lệ
+- 📐 **Overlap formula:** `[max(s1,s2), min(e1,e2)]` → valid nếu end - start >= duration
+- 🎯 **Earliest first:** Trả về kết quả đầu tiên thỏa điều kiện (sort đảm bảo đây là sớm nhất)
+- ⚠️ **Advance rule:** Luôn advance slot có end nhỏ hơn — slot đó không thể match bất kỳ slot nào còn lại
+- 📊 **Complexity:** O(m log m + n log n) sort + O(m+n) scan
+- 💡 **Follow-up:** k người thay vì 2 → merge intersections dần từ trái sang phải
 
 ---
 
 ## Solutions
 
+### Solution 1: Sort + two pointers
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort both slot lists, use two pointers to find earliest overlap
+ * Time: O(m log m + n log n)  Space: O(1)
  */
-function meetingSchedulerBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minAvailableDuration(slots1: number[][], slots2: number[][], duration: number): number[] {
+  slots1.sort((a, b) => a[0] - b[0]);
+  slots2.sort((a, b) => a[0] - b[0]);
+
+  let i = 0,
+    j = 0;
+  while (i < slots1.length && j < slots2.length) {
+    const start = Math.max(slots1[i][0], slots2[j][0]);
+    const end = Math.min(slots1[i][1], slots2[j][1]);
+
+    if (end - start >= duration) return [start, start + duration];
+
+    // Advance the pointer whose slot ends earlier
+    if (slots1[i][1] < slots2[j][1]) i++;
+    else j++;
+  }
+  return [];
 }
 
+console.log(
+  minAvailableDuration(
+    [
+      [10, 50],
+      [60, 120],
+      [140, 210],
+    ],
+    [
+      [0, 15],
+      [60, 70],
+    ],
+    8,
+  ),
+);
+// [60, 68]
+console.log(
+  minAvailableDuration(
+    [
+      [10, 50],
+      [60, 120],
+      [140, 210],
+    ],
+    [
+      [0, 15],
+      [60, 70],
+    ],
+    12,
+  ),
+);
+// []
+```
+
+### Solution 2: Merged + sorted single scan
+
+```typescript
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Merge both slot lists, tag each, sort by start — scan for common overlap
+ * Time: O((m+n) log(m+n))  Space: O(m+n)
  */
-function meetingScheduler(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function minAvailableDuration2(slots1: number[][], slots2: number[][], duration: number): number[] {
+  // Tag: 0 = person1, 1 = person2
+  const all = [...slots1.map((s) => [...s, 0]), ...slots2.map((s) => [...s, 1])].sort(
+    (a, b) => a[0] - b[0],
+  );
+
+  for (let i = 0; i < all.length - 1; i++) {
+    if (all[i][2] !== all[i + 1][2]) {
+      const start = Math.max(all[i][0], all[i + 1][0]);
+      const end = Math.min(all[i][1], all[i + 1][1]);
+      if (end - start >= duration) return [start, start + duration];
+    }
+  }
+  return [];
 }
 
-// === Test Cases ===
-// console.log(meetingScheduler(/* example 1 */)); // expected
-// console.log(meetingScheduler(/* example 2 */)); // expected
-// console.log(meetingScheduler(/* edge case */)); // expected
+console.log(
+  minAvailableDuration2(
+    [
+      [10, 50],
+      [60, 120],
+    ],
+    [
+      [0, 15],
+      [60, 70],
+    ],
+    8,
+  ),
+);
+// [60, 68]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [4Sum](https://leetcode.com/problems/4sum) — same pattern: Two Pointers
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [3Sum Closest](https://leetcode.com/problems/3sum-closest) — same pattern: Two Pointers
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Meeting Scheduler — LeetCode](https://leetcode.com/problems/meeting-scheduler) — problem page
+| Problem                                                                                   | Difficulty | Connection                       |
+| ----------------------------------------------------------------------------------------- | ---------- | -------------------------------- |
+| [Merge Intervals](https://leetcode.com/problems/merge-intervals/)                         | 🟡 Medium  | Interval manipulation foundation |
+| [Interval List Intersections](https://leetcode.com/problems/interval-list-intersections/) | 🟡 Medium  | Two-pointer interval overlap     |
+| [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/)                       | 🟡 Medium  | Interval scheduling with heap    |
+| [Employee Free Time](https://leetcode.com/problems/employee-free-time/)                   | 🔴 Hard    | Multi-person free slot finder    |
+| [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays/)   | 🟢 Easy    | Two-pointer intersection pattern |
