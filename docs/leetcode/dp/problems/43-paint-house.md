@@ -7,62 +7,58 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/paint-house"
 ---
 
-# Paint House / Paint House
+# Paint House / Sơn Nhà
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Linear DP (State Machine)
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **See also**: [House Robber](https://leetcode.com/problems/house-robber) | [Paint House II](https://leetcode.com/problems/paint-house-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Như chọn trang phục mỗi ngày — hôm nay không được mặc màu giống hôm qua. Với mỗi ngôi nhà, chi phí tối thiểu phụ thuộc vào màu nhà kế trước.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "min cost" + "adjacent constraint" + "fixed choices per step" → **State Machine DP**
+- `dp[i][c]` = chi phí tối thiểu sơn nhà 0..i với nhà i màu c
+- Key insight: `dp[i][c] = costs[i][c] + min(dp[i-1][c'])` với c' ≠ c
 
-**Visual — Paint House example:**
+**Visual — costs=[[17,2,17],[16,16,5],[14,3,19]]:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+House 0:  R=17   G=2    B=17   (base case)
+House 1:  R=16+min(2,17)=18
+          G=16+min(17,17)=33
+          B= 5+min(17,2) = 7
+House 2:  R=14+min(33,7) =21
+          G= 3+min(18,7) =10
+          B=19+min(18,33)=37
+Answer: min(21, 10, 37) = 10 ✓
 ```
 
 ---
 
 ## Problem Description
 
-Paint House. ([LeetCode](https://leetcode.com/problems/paint-house))
+There are `n` houses in a row, each painted with one of 3 colors (Red, Green, Blue). Adjacent houses must have different colors. Given `costs[i][j]` = cost to paint house `i` with color `j`, return the minimum total painting cost. ([LeetCode 256](https://leetcode.com/problems/paint-house))
 
-Difficulty: Medium | Acceptance: 63.7%
+- Example 1: `costs=[[17,2,17],[16,16,5],[14,3,19]]` → `10`
+- Example 2: `costs=[[7,6,2]]` → `2`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/paint-house) for full constraints
+Constraints: `1 ≤ n ≤ 100`, `1 ≤ costs[i][j] ≤ 20`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Luôn có 3 màu? Có thể extend sang k màu?" / Always 3 colors? Can generalize to k
+2. **Brute force**: "Thử mọi combination — O(3^n)" / All color combinations exponential
+3. **State**: "`dp[i][c]` = min cost ending house i with color c" / Track cost per color per house
+4. **Transition**: "Nhà i màu c → phải chọn màu khác c cho nhà i-1" / 2 choices from previous house
+5. **Space opt**: "Chỉ cần dp[c] của bước trước — dùng 2 mảng size-3 hoặc 6 biến" / O(1) space possible
+6. **Extension**: "Paint House II (k colors): dùng min1/min2 để O(n*k) thay vì O(n*k²)" / Know the k-color variant
 
 ---
 
@@ -70,39 +66,71 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Bottom-Up DP (2D)
+ * Time: O(n)  — n houses, 3 colors = constant factor
+ * Space: O(n) — store all dp rows
  */
-function paintHouseBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minCostDP(costs: number[][]): number {
+  const n = costs.length;
+  if (n === 0) return 0;
+
+  const dp: number[][] = Array.from({ length: n }, () => [0, 0, 0]);
+  dp[0] = [...costs[0]];
+
+  for (let i = 1; i < n; i++) {
+    dp[i][0] = costs[i][0] + Math.min(dp[i - 1][1], dp[i - 1][2]);
+    dp[i][1] = costs[i][1] + Math.min(dp[i - 1][0], dp[i - 1][2]);
+    dp[i][2] = costs[i][2] + Math.min(dp[i - 1][0], dp[i - 1][1]);
+  }
+
+  return Math.min(...dp[n - 1]);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Space-Optimized DP (rolling variables)
+ * Time: O(n)
+ * Space: O(1)
  */
-function paintHouse(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function minCost(costs: number[][]): number {
+  if (costs.length === 0) return 0;
+
+  let [r, g, b] = costs[0]; // previous house costs
+
+  for (let i = 1; i < costs.length; i++) {
+    const [cr, cg, cb] = costs[i];
+    const nr = cr + Math.min(g, b);
+    const ng = cg + Math.min(r, b);
+    const nb = cb + Math.min(r, g);
+    [r, g, b] = [nr, ng, nb];
+  }
+
+  return Math.min(r, g, b);
 }
 
 // === Test Cases ===
-// console.log(paintHouse(/* example 1 */)); // expected
-// console.log(paintHouse(/* example 2 */)); // expected
-// console.log(paintHouse(/* edge case */)); // expected
+console.log(
+  minCost([
+    [17, 2, 17],
+    [16, 16, 5],
+    [14, 3, 19],
+  ]),
+); // 10
+console.log(minCost([[7, 6, 2]])); // 2
+console.log(minCost([[1, 1, 1]])); // 1
+console.log(
+  minCost([
+    [1, 2, 3],
+    [3, 2, 1],
+  ]),
+); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Paint House — LeetCode](https://leetcode.com/problems/paint-house) — problem page
+- [Paint House II](https://leetcode.com/problems/paint-house-ii) — k màu, O(n\*k) với min1/min2 trick
+- [House Robber](https://leetcode.com/problems/house-robber) — adjacent constraint DP
+- [Paint Fence](https://leetcode.com/problems/paint-fence) — k colors, adjacency rule
+- [Non-Adjacent Sum](https://leetcode.com/problems/house-robber) — cùng pattern không chọn liền kề
+- [Student Attendance Record II](https://leetcode.com/problems/student-attendance-record-ii) — state machine DP

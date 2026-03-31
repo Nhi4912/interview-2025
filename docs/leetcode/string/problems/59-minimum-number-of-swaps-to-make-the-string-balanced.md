@@ -7,60 +7,60 @@ tags: [Two Pointers, String, Stack, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced"
 ---
 
-# Minimum Number of Swaps to Make the String Balanced / Minimum Number of Swaps to Make the String Balanced
+# Minimum Number of Swaps to Make the String Balanced / Số Lần Hoán Đổi Tối Thiểu Để Cân Bằng Chuỗi
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy / Stack Simulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) | [Remove K Digits](https://leetcode.com/problems/remove-k-digits)
+> **See also**: [Valid Parentheses](https://leetcode.com/problems/valid-parentheses) | [Minimum Add to Make Parentheses Valid](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy:** Giống cân đối dấu ngoặc — mỗi `]` thừa cần một `[` từ phía sau để hoán đổi. Mỗi lần hoán đổi sửa được 2 dấu ngoặc mất cân bằng, nên số lần = `ceil(unmatched / 2)`.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "balanced brackets" + "minimum swaps" → **Greedy: count unmatched `]`**
+- Dùng stack hoặc counter để đếm `[` thừa; khi gặp `]` mà stack rỗng → unmatched++
+- Key insight: `ceil(unmatched_close / 2)` vì mỗi swap sửa một `]` thừa và một `[` thừa đồng thời
 
-**Visual — Minimum Number of Swaps to Make the String Balanced example:**
+**Visual — s="][]":**
 
 ```
-arr = [... sorted ...]
- L                 R
+i=0 ']': stack=[] → unmatched=1
+i=1 '[': stack=['[']
+i=2 '[': stack=['[','[']
+i=3 ']': stack.pop → stack=['[']
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+unmatched=1 → swaps = ceil(1/2) = 1
+Swap s[0] and s[2]: "[[]]" ✅
 ```
 
 ---
 
 ## Problem Description
 
-Minimum Number of Swaps to Make the String Balanced. ([LeetCode](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced))
-
-Difficulty: Medium | Acceptance: 78.0%
+Given string `s` of `[` and `]` only (even length, equal counts of each), return the minimum number of swaps to make `s` balanced. A swap exchanges any two characters.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: s="]["      → 1  (swap → "[]")
+Example 2: s="]]][[["  → 2
+Example 3: s="[]"      → 0  (already balanced)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) for full constraints
+Constraints: `2 <= s.length <= 10^6`, `s.length` is even, equal `[` and `]` counts.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Clarify**: "Input đảm bảo số `[` = số `]`? Độ dài luôn chẵn?" / Equal bracket counts guaranteed, even length?
+2. **Brute force**: "Simulate stack, collect unmatched positions, pair them" → O(n) nhưng phức tạp hơn / Stack collect then pair
+3. **Greedy insight**: "Đếm `]` thừa (open=0 khi gặp `]`), mỗi swap sửa 2 → ceil(count/2)" / Count-and-halve
+4. **Edge cases**: "Chuỗi đã balanced → 0, `][` → 1, `]][[` → 1" / Already balanced, minimal cases
+5. **Follow-up**: "Minimum insertions để balanced? → khác bài — thêm ký tự thay vì swap" / Insertions vs swaps
+6. **Complexity**: "O(n) time, O(1) space — chỉ cần một biến đếm" / Single counter, no stack needed
 
 ---
 
@@ -68,39 +68,66 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Stack simulation
+ * Time: O(n) — single pass
+ * Space: O(n) — stack
  */
-function minimumNumberOfSwapsToMakeTheStringBalancedBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minSwapsStack(s: string): number {
+  const stack: string[] = [];
+  let unmatched = 0;
+
+  for (const c of s) {
+    if (c === "[") {
+      stack.push(c);
+    } else {
+      if (stack.length > 0) {
+        stack.pop(); // matched
+      } else {
+        unmatched++; // extra ']' with no matching '['
+      }
+    }
+  }
+
+  return Math.ceil(unmatched / 2);
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Greedy counter (O(1) space)
+ * Time: O(n) — single pass
+ * Space: O(1) — just two integers
  */
-function minimumNumberOfSwapsToMakeTheStringBalanced(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function minSwaps(s: string): number {
+  let open = 0; // count of unmatched '['
+  let unmatched = 0; // count of unmatched ']'
+
+  for (const c of s) {
+    if (c === "[") {
+      open++;
+    } else {
+      if (open > 0) {
+        open--; // consume a '['
+      } else {
+        unmatched++; // extra ']'
+      }
+    }
+  }
+
+  // Each swap fixes one unmatched ']' and one unmatched '['
+  return Math.ceil(unmatched / 2);
 }
 
 // === Test Cases ===
-// console.log(minimumNumberOfSwapsToMakeTheStringBalanced(/* example 1 */)); // expected
-// console.log(minimumNumberOfSwapsToMakeTheStringBalanced(/* example 2 */)); // expected
-// console.log(minimumNumberOfSwapsToMakeTheStringBalanced(/* edge case */)); // expected
+console.log(minSwaps("][")); // 1
+console.log(minSwaps("]]][[[")); // 2
+console.log(minSwaps("[]")); // 0
+console.log(minSwaps("]][[")); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — same pattern: Monotonic Stack
-- [Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string) — same pattern: Dynamic Programming
-- [Minimum Number of Swaps to Make the String Balanced — LeetCode](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — problem page
+- [Valid Parentheses](https://leetcode.com/problems/valid-parentheses) — stack-based bracket matching foundation
+- [Minimum Add to Make Parentheses Valid](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid) — insertions instead of swaps
+- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — greedy with stack
+- [Score of Parentheses](https://leetcode.com/problems/score-of-parentheses) — bracket value computation with stack

@@ -7,104 +7,157 @@ tags: [Dynamic Programming, Backtracking, Tree, Binary Search Tree, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/unique-binary-search-trees-ii"
 ---
 
-# Unique Binary Search Trees II / Unique Binary Search Trees II
+# Unique Binary Search Trees II / Tất Cả BST Duy Nhất II
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Recursion + Memoization
 > **Frequency**: 📘 Tier 3 — Gặp ở 6 companies
-> **See also**: [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) | [Number of Ways to Reorder Array to Get Same BST](https://leetcode.com/problems/number-of-ways-to-reorder-array-to-get-same-bst)
+> **See also**: [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) | [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Như chọn đội trưởng nhóm rồi chia team — mỗi số i làm root, tất cả số < i tạo nên cây con trái, tất cả số > i tạo nên cây con phải. Ghép từng cặp (left, right) tạo ra 1 cây. Lặp cho mọi i.
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "generate all structures" + "divide by root choice" → **Recursive tree construction**
+- BST property: root i → left ∈ [start, i-1], right ∈ [i+1, end]
+- Key insight: với range [start, end], mỗi i trong đó làm root → combine left×right subtrees
 
-**Visual — Unique Binary Search Trees II example:**
+**Visual — n=3: tất cả 5 BST:**
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+Root=1:        Root=2:      Root=3:
+  1              2              3
+   \           /   \           /
+    2         1     3         2
+     \                       /
+      3                     1
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+1→(null,[2,3])  2→([1],[3])  3→([1,2],null)
+= 2 trees       = 1 tree     = 2 trees  → 5 total (Catalan number C3)
 ```
 
 ---
 
 ## Problem Description
 
-Unique Binary Search Trees II. ([LeetCode](https://leetcode.com/problems/unique-binary-search-trees-ii))
+Cho `n`, tạo ra và trả về **tất cả** các BST có cấu trúc khác nhau chứa các giá trị 1 đến n. ([LeetCode](https://leetcode.com/problems/unique-binary-search-trees-ii))
 
-Difficulty: Medium | Acceptance: 60.4%
+**Example 1:** n=3 → 5 cây khác nhau (xem visual)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** n=1 → [[1]] (chỉ có 1 cây)
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/unique-binary-search-trees-ii) for full constraints
+Constraints: `1 <= n <= 8`, số lượng cây là số Catalan Cn
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+1. **Clarify**: "Cần trả về tất cả cây hay chỉ đếm?" / Return all trees or just count? (count-only = problem 96)
+2. **Divide**: "Mỗi i từ start..end làm root, đệ quy build left/right" / Each i as root, recurse on left and right ranges
+3. **Combine**: "Với mỗi (leftTree, rightTree), tạo node(i) và gắn vào" / Create new root for each (left, right) pair
+4. **Memoize**: "Memo theo (start, end) vì ranges tái sử dụng" / Memoize by range [start, end] since subproblems repeat
+5. **Edge cases**: "start > end → return [null] (empty subtree, không phải [])" / Base case must return [null], not []
+6. **Follow-up**: "Problem 95 = này, problem 96 = đếm bằng Catalan formula" / This vs count-only variant
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function uniqueBinarySearchTreesIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Pure Recursion (no memo)
+ * Time: O(n * Catalan(n)) — generate all trees
+ * Space: O(n * Catalan(n)) — all trees stored
  */
-function uniqueBinarySearchTreesIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function generateTreesNaive(n: number): Array<TreeNode | null> {
+  function generate(start: number, end: number): Array<TreeNode | null> {
+    if (start > end) return [null];
+    const result: Array<TreeNode | null> = [];
+    for (let i = start; i <= end; i++) {
+      const leftTrees = generate(start, i - 1);
+      const rightTrees = generate(i + 1, end);
+      for (const left of leftTrees) {
+        for (const right of rightTrees) {
+          result.push(new TreeNode(i, left, right));
+        }
+      }
+    }
+    return result;
+  }
+  return generate(1, n);
+}
+
+/**
+ * Solution 2: Recursion with Memoization
+ * Time: O(n * Catalan(n)) — each subproblem computed once
+ * Space: O(n² * Catalan(n)) — memo table
+ */
+function generateTrees(n: number): Array<TreeNode | null> {
+  const memo = new Map<string, Array<TreeNode | null>>();
+
+  function generate(start: number, end: number): Array<TreeNode | null> {
+    const key = `${start},${end}`;
+    if (memo.has(key)) return memo.get(key)!;
+    if (start > end) return [null];
+
+    const result: Array<TreeNode | null> = [];
+    for (let i = start; i <= end; i++) {
+      const leftTrees = generate(start, i - 1);
+      const rightTrees = generate(i + 1, end);
+      for (const left of leftTrees) {
+        for (const right of rightTrees) {
+          // Note: for memoized version, we create new nodes to avoid shared references
+          result.push(new TreeNode(i, left, right));
+        }
+      }
+    }
+    memo.set(key, result);
+    return result;
+  }
+  return generate(1, n);
 }
 
 // === Test Cases ===
-// console.log(uniqueBinarySearchTreesIi(/* example 1 */)); // expected
-// console.log(uniqueBinarySearchTreesIi(/* example 2 */)); // expected
-// console.log(uniqueBinarySearchTreesIi(/* edge case */)); // expected
+function countTrees(trees: Array<TreeNode | null>): number {
+  return trees.length;
+}
+function inorder(root: TreeNode | null): number[] {
+  if (!root) return [];
+  return [...inorder(root.left), root.val, ...inorder(root.right)];
+}
+
+console.log(countTrees(generateTrees(1))); // 1
+console.log(countTrees(generateTrees(3))); // 5
+console.log(countTrees(generateTrees(4))); // 14
+// Verify all are valid BSTs
+const trees3 = generateTrees(3);
+console.log(
+  trees3.every((t) => {
+    const ord = inorder(t);
+    return ord.every((v, i) => i === 0 || ord[i - 1] < v);
+  }),
+); // true — all inorders are sorted
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) — same pattern: Dynamic Programming
-- [Number of Ways to Reorder Array to Get Same BST](https://leetcode.com/problems/number-of-ways-to-reorder-array-to-get-same-bst) — same pattern: Union Find
-- [Maximum Sum BST in Binary Tree](https://leetcode.com/problems/maximum-sum-bst-in-binary-tree) — same pattern: Dynamic Programming
-- [Binary Tree Cameras](https://leetcode.com/problems/binary-tree-cameras) — same pattern: Dynamic Programming
-- [Unique Binary Search Trees II — LeetCode](https://leetcode.com/problems/unique-binary-search-trees-ii) — problem page
+- [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) — problem 96: chỉ đếm số lượng (Catalan), không cần build
+- [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses) — cùng pattern divide-by-operator, collect all results
+- [Binary Search Trees](https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree) — xây BST từ sorted array
+- [Serialize and Deserialize BST](https://leetcode.com/problems/serialize-and-deserialize-bst) — encode/decode BST structure

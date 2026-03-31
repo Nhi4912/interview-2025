@@ -7,60 +7,61 @@ tags: [Hash Table, String, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters"
 ---
 
-# Longest Substring with At Most K Distinct Characters / Longest Substring with At Most K Distinct Characters
+# Longest Substring with At Most K Distinct Characters / Chuỗi Con Dài Nhất Với Tối Đa K Ký Tự Khác Nhau
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Substring with Concatenation of All Words](https://leetcode.com/problems/substring-with-concatenation-of-all-words) | [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement)
+> **See also**: [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters) | [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+**Analogy:** Giống một khung cửa sổ trượt dọc theo chuỗi. Mở rộng cửa sổ sang phải khi còn đủ chỗ (≤ k loại ký tự); thu hẹp từ trái khi vượt quá, xóa ký tự nếu đếm về 0.
 
 **Pattern Recognition:**
 
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "longest substring" + "constraint on distinct chars" → **Sliding Window + HashMap**
+- Khi `map.size > k` → shrink từ trái cho đến khi thỏa mãn
+- Key insight: Map lưu tần suất ký tự; xóa khỏi map khi count = 0
 
-**Visual — Longest Substring with At Most K Distinct Characters example:**
+**Visual — s="eceba", k=2:**
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
-
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+ e c e b a      map={e:1}          len=1
+ e c e b a      map={e:1,c:1}      len=2
+ e c e b a      map={e:2,c:1}      len=3  ✅ max=3
+ e c e b a      map={e:2,c:1,b:1}  size=3 > k=2
+   → shrink: remove 'e'(0→del) map={c:1,b:1}  L=1
+ e c e b a      map={e:1,c:1,b:1}  size=3 > k=2
+   → shrink: remove 'c'(del)   map={e:1,b:1}  L=2
+ [e b a]        map={e:1,b:1,a:1}  size>2 → shrink
 ```
 
 ---
 
 ## Problem Description
 
-Longest Substring with At Most K Distinct Characters. ([LeetCode](https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters))
-
-Difficulty: Medium | Acceptance: 49.5%
+Given string `s` and integer `k`, return the length of the longest substring that contains at most `k` distinct characters.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: s="eceba", k=2  → 3  ("ece")
+Example 2: s="aa", k=1     → 2  ("aa")
+Example 3: s="aabbcc", k=1 → 2  ("aa" or "bb" or "cc")
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters) for full constraints
+Constraints: `1 <= s.length <= 5×10^4`, `0 <= k <= 50`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+1. **Clarify**: "k=0 trả về gì? Tất cả unique thì sao?" / What if k=0 or k >= unique count?
+2. **Brute force**: "Thử mọi substring O(n²) rồi count distinct" → O(n³) tổng / Check all pairs then count
+3. **Optimize**: "Sliding window — expand right, shrink left when map.size > k" / Classic expand-shrink pattern
+4. **Edge cases**: "k=0 → 0, k >= all distinct → full length, empty string" / Zero k, k larger than alphabet
+5. **Follow-up**: "Exactly k distinct? → atMostK(k) - atMostK(k-1)" / Exactly-k trick using difference
+6. **Complexity**: "O(n) time — mỗi ký tự chỉ vào/ra window một lần" / Each char enters/exits once
 
 ---
 
@@ -68,39 +69,64 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — all substrings
+ * Time: O(n^2) — all starting points, linear inner scan
+ * Space: O(k) — frequency set
  */
-function longestSubstringWithAtMostKDistinctCharactersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestKDistinctBrute(s: string, k: number): number {
+  if (k === 0) return 0;
+  let max = 0;
+  for (let i = 0; i < s.length; i++) {
+    const freq = new Map<string, number>();
+    for (let j = i; j < s.length; j++) {
+      freq.set(s[j], (freq.get(s[j]) ?? 0) + 1);
+      if (freq.size > k) break;
+      max = Math.max(max, j - i + 1);
+    }
+  }
+  return max;
 }
 
 /**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Sliding Window with HashMap
+ * Time: O(n) — each char enters and exits the window at most once
+ * Space: O(k) — map holds at most k+1 entries
  */
-function longestSubstringWithAtMostKDistinctCharacters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function lengthOfLongestSubstringKDistinct(s: string, k: number): number {
+  if (k === 0) return 0;
+  const freq = new Map<string, number>();
+  let left = 0;
+  let max = 0;
+
+  for (let right = 0; right < s.length; right++) {
+    // Expand: add right character
+    freq.set(s[right], (freq.get(s[right]) ?? 0) + 1);
+
+    // Shrink: while constraint violated, move left
+    while (freq.size > k) {
+      const lc = s[left++];
+      freq.set(lc, freq.get(lc)! - 1);
+      if (freq.get(lc) === 0) freq.delete(lc);
+    }
+
+    max = Math.max(max, right - left + 1);
+  }
+
+  return max;
 }
 
 // === Test Cases ===
-// console.log(longestSubstringWithAtMostKDistinctCharacters(/* example 1 */)); // expected
-// console.log(longestSubstringWithAtMostKDistinctCharacters(/* example 2 */)); // expected
-// console.log(longestSubstringWithAtMostKDistinctCharacters(/* edge case */)); // expected
+console.log(lengthOfLongestSubstringKDistinct("eceba", 2)); // 3
+console.log(lengthOfLongestSubstringKDistinct("aa", 1)); // 2
+console.log(lengthOfLongestSubstringKDistinct("aabbcc", 1)); // 2
+console.log(lengthOfLongestSubstringKDistinct("abcdef", 0)); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Substring with Concatenation of All Words](https://leetcode.com/problems/substring-with-concatenation-of-all-words) — same pattern: Sliding Window
-- [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement) — same pattern: Sliding Window
-- [Find All Anagrams in a String](https://leetcode.com/problems/find-all-anagrams-in-a-string) — same pattern: Sliding Window
-- [Permutation in String](https://leetcode.com/problems/permutation-in-string) — same pattern: Sliding Window
-- [Longest Substring with At Most K Distinct Characters — LeetCode](https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters) — problem page
+- [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters) — k=all unique, same sliding window
+- [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement) — sliding window with different constraint
+- [Find All Anagrams in a String](https://leetcode.com/problems/find-all-anagrams-in-a-string) — fixed-size sliding window
+- [Subarrays with K Different Integers](https://leetcode.com/problems/subarrays-with-k-different-integers) — exactly-k via atMost trick

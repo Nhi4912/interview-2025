@@ -7,57 +7,62 @@ tags: [Array, Matrix, Simulation]
 leetcode_url: "https://leetcode.com/problems/diagonal-traverse"
 ---
 
-# Diagonal Traverse / Diagonal Traverse
+# Diagonal Traverse / Duyệt Đường Chéo
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Diagonal Traverse" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Analogy:** Hãy tưởng tượng mắt bạn chạy zigzag qua ma trận — lên-phải rồi xuống-trái luân phiên. Mỗi đường chéo được xác định bởi tổng `d = i + j` không đổi. Đường chéo chẵn đi lên, lẻ đi xuống.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "traverse matrix diagonally" → **Simulation** (group by diagonal d = i+j)
+- d chẵn: đi từ dưới-trái lên trên-phải (row giảm, col tăng)
+- d lẻ: đi từ trên-phải xuống dưới-trái (row tăng, col giảm)
+- Key insight: starting point của mỗi đường chéo được clip vào boundary
 
-**Visual — Diagonal Traverse example:**
+**Visual — Diagonal Traversal:**
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+Matrix 3×4:
+d=0(↑): (0,0)
+d=1(↓): (1,0),(0,1)
+d=2(↑): (0,2),(1,1),(2,0)
+d=3(↓): (2,1),(1,2),(0,3)
+d=4(↑): (1,3),(2,2)
+d=5(↓): (2,3)
+
+Even d: r = min(d, m-1),  col = d - r,  r-- until r<0 or c>=n
+Odd d:  c = min(d, n-1),  row = d - c,  c-- until c<0 or r>=m
 ```
 
 ---
 
 ## Problem Description
 
-Diagonal Traverse. ([LeetCode](https://leetcode.com/problems/diagonal-traverse))
+Given an `m×n` matrix `mat`, return all elements in diagonal order (alternating up-right and down-left). ([LeetCode](https://leetcode.com/problems/diagonal-traverse))
 
 Difficulty: Medium | Acceptance: 63.2%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Example 1: `mat=[[1,2,3],[4,5,6],[7,8,9]]` → `[1,2,4,7,5,3,6,8,9]`
+- Example 2: `mat=[[1,2],[3,4]]` → `[1,2,3,4]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/diagonal-traverse) for full constraints
+Constraints: `m == mat.length`, `n == mat[0].length`, `1 ≤ m, n ≤ 10^4`, `1 ≤ m·n ≤ 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Hướng đi: d=0 đi lên hay đi xuống?" / Confirm direction for first diagonal (d=0 goes up-right)
+2. **Key insight**: "d = i+j là số thứ tự của đường chéo, có m+n-1 đường chéo" / d = i+j identifies the diagonal
+3. **Direction**: "d chẵn → đi lên (r--, c++), d lẻ → đi xuống (r++, c--)" / Even d goes up, odd d goes down
+4. **Starting point**: "Clip starting position vào boundary của matrix" / Clip start to matrix bounds
+5. **Alternative**: "Có thể dùng direction vector và đổi hướng khi chạm tường" / Can also simulate with direction flipping
+6. **Edge cases**: "Ma trận 1×1, 1×n, m×1 — đường chéo chỉ có một phần tử" / Single row/column matrices
 
 ---
 
@@ -65,39 +70,108 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Simulate with direction flipping
+ * Time: O(m·n) — visit every cell once
+ * Space: O(m·n) — result array
  */
-function diagonalTraverseBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findDiagonalOrderSim(mat: number[][]): number[] {
+  if (!mat.length || !mat[0].length) return [];
+  const m = mat.length,
+    n = mat[0].length;
+  const result: number[] = [];
+  let r = 0,
+    c = 0,
+    goingUp = true;
+
+  for (let i = 0; i < m * n; i++) {
+    result.push(mat[r][c]);
+    if (goingUp) {
+      if (c === n - 1) {
+        r++;
+        goingUp = false;
+      } else if (r === 0) {
+        c++;
+        goingUp = false;
+      } else {
+        r--;
+        c++;
+      }
+    } else {
+      if (r === m - 1) {
+        c++;
+        goingUp = true;
+      } else if (c === 0) {
+        r++;
+        goingUp = true;
+      } else {
+        r++;
+        c--;
+      }
+    }
+  }
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Group by Diagonal d = i+j
+ * Time: O(m·n) — visit every cell exactly once
+ * Space: O(m·n) — result array (no extra per-diagonal storage)
  */
-function diagonalTraverse(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function findDiagonalOrder(mat: number[][]): number[] {
+  if (!mat.length || !mat[0].length) return [];
+  const m = mat.length,
+    n = mat[0].length;
+  const result: number[] = [];
+
+  for (let d = 0; d < m + n - 1; d++) {
+    if (d % 2 === 0) {
+      // Going up-right: start from bottom of diagonal, go up
+      let r = Math.min(d, m - 1);
+      let c = d - r;
+      while (r >= 0 && c < n) {
+        result.push(mat[r][c]);
+        r--;
+        c++;
+      }
+    } else {
+      // Going down-left: start from right of diagonal, go down
+      let c = Math.min(d, n - 1);
+      let r = d - c;
+      while (c >= 0 && r < m) {
+        result.push(mat[r][c]);
+        r++;
+        c--;
+      }
+    }
+  }
+
+  return result;
 }
 
 // === Test Cases ===
-// console.log(diagonalTraverse(/* example 1 */)); // expected
-// console.log(diagonalTraverse(/* example 2 */)); // expected
-// console.log(diagonalTraverse(/* edge case */)); // expected
+console.log(
+  findDiagonalOrder([
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+  ]),
+); // [1,2,4,7,5,3,6,8,9]
+console.log(
+  findDiagonalOrder([
+    [1, 2],
+    [3, 4],
+  ]),
+); // [1,2,3,4]
+console.log(findDiagonalOrder([[1]])); // [1]
+console.log(findDiagonalOrder([[1, 2, 3, 4]])); // [1,2,3,4]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Game of Life](https://leetcode.com/problems/game-of-life) — same pattern: Matrix / Simulation
-- [Candy Crush](https://leetcode.com/problems/candy-crush) — same pattern: Two Pointers
-- [Diagonal Traverse — LeetCode](https://leetcode.com/problems/diagonal-traverse) — problem page
+- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — traverse matrix in spiral order
+- [Diagonal Traverse II](https://leetcode.com/problems/diagonal-traverse-ii) — diagonal traversal for jagged arrays
+- [Transpose Matrix](https://leetcode.com/problems/transpose-matrix) — matrix transformation
+- [Rotate Image](https://leetcode.com/problems/rotate-image) — 90° rotation simulation
+- [Toeplitz Matrix](https://leetcode.com/problems/toeplitz-matrix) — diagonal property verification

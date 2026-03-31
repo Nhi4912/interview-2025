@@ -7,60 +7,59 @@ tags: [Two Pointers, String]
 leetcode_url: "https://leetcode.com/problems/count-binary-substrings"
 ---
 
-# Count Binary Substrings / Count Binary Substrings
+# Count Binary Substrings / Đếm Chuỗi Con Nhị Phân
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Group Counting / Linear Scan
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) | [String Compression](https://leetcode.com/problems/string-compression)
+> **See also**: [String Compression](https://leetcode.com/problems/string-compression) | [Encode and Decode Strings](https://leetcode.com/problems/encode-and-decode-strings)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy:** Chia chuỗi thành các nhóm liên tiếp cùng ký tự ("000111" → [3,3]). Tại mỗi ranh giới giữa hai nhóm kề nhau, số chuỗi con hợp lệ bằng `min(nhóm trước, nhóm sau)`.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "equal number of 0s and 1s" + "contiguous" → **Count consecutive groups**
+- Không cần sliding window hay DP — chỉ cần track độ dài nhóm hiện tại và nhóm trước
+- Key insight: `min(prev, cur)` là số chuỗi con valid tại ranh giới này
 
-**Visual — Count Binary Substrings example:**
+**Visual — s="00110011":**
 
 ```
-arr = [... sorted ...]
- L                 R
+Groups:  [2, 2, 2, 2]   (00, 11, 00, 11)
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Boundary 0→1: min(2,2)=2  → "01","0011"     count+=2
+Boundary 1→0: min(2,2)=2  → "10","1100"     count+=2
+Boundary 0→1: min(2,2)=2  → "01","0011"     count+=2
+Total = 6 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Count Binary Substrings. ([LeetCode](https://leetcode.com/problems/count-binary-substrings))
-
-Difficulty: Easy | Acceptance: 65.9%
+Given binary string `s`, return the number of non-empty substrings that have the same number of `0`s and `1`s, and all the `0`s and all the `1`s in these substrings are grouped consecutively (e.g., `"0011"`, `"10"` are valid; `"0101"` is not).
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: s="00110011" → 6  ("0011","01","11","1100","10","0011")
+Example 2: s="10101"    → 4  ("10","01","10","01")
+Example 3: s="0"        → 0
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-binary-substrings) for full constraints
+Constraints: `1 <= s.length <= 10^5`, `s[i]` is `'0'` or `'1'`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Clarify**: "Substrings phải có tất cả 0s liền nhau và tất cả 1s liền nhau?" / All same chars must be contiguous?
+2. **Brute force**: "Kiểm tra mọi substring O(n²)" — đếm 0 và 1, validate cấu trúc / Check every pair O(n^2)
+3. **Optimize**: "Chia nhóm liên tiếp, dùng min(prev_group, cur_group)" / Group-count trick, O(n)
+4. **Edge cases**: "Chuỗi chỉ toàn 0s hoặc toàn 1s → 0, chuỗi độ dài 1 → 0" / All-same chars, single char
+5. **Follow-up**: "Nếu cần liệt kê tất cả substrings? O(n) count nhưng O(n²) space" / Enumerate vs count
+6. **Complexity**: "O(n) time, O(1) space — elegant linear scan" / Single pass, constant extra space
 
 ---
 
@@ -68,39 +67,67 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — check all substrings
+ * Time: O(n^2) — all pairs of indices
+ * Space: O(1)
  */
-function countBinarySubstringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countBinarySubstringsBrute(s: string): number {
+  let count = 0;
+  for (let i = 0; i < s.length - 1; i++) {
+    let zeros = 0,
+      ones = 0;
+    for (let j = i; j < s.length; j++) {
+      if (s[j] === "0") zeros++;
+      else ones++;
+      // Valid: equal count AND grouped (all same before crossing)
+      if (zeros === ones) {
+        const half = zeros;
+        const sub = s.slice(i, j + 1);
+        if (/^0+1+$|^1+0+$/.test(sub)) count++;
+      }
+    }
+  }
+  return count;
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Group Counting (Optimal)
+ * Time: O(n) — single pass
+ * Space: O(1) — only two counters
  */
-function countBinarySubstrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function countBinarySubstrings(s: string): number {
+  let prev = 0; // length of previous group
+  let cur = 1; // length of current group
+  let count = 0;
+
+  for (let i = 1; i < s.length; i++) {
+    if (s[i] === s[i - 1]) {
+      cur++;
+    } else {
+      // New group starts — add valid substrings from this boundary
+      count += Math.min(prev, cur);
+      prev = cur;
+      cur = 1;
+    }
+  }
+
+  // Don't forget the last boundary
+  count += Math.min(prev, cur);
+  return count;
 }
 
 // === Test Cases ===
-// console.log(countBinarySubstrings(/* example 1 */)); // expected
-// console.log(countBinarySubstrings(/* example 2 */)); // expected
-// console.log(countBinarySubstrings(/* edge case */)); // expected
+console.log(countBinarySubstrings("00110011")); // 6
+console.log(countBinarySubstrings("10101")); // 4
+console.log(countBinarySubstrings("0")); // 0
+console.log(countBinarySubstrings("0011")); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) — same pattern: Two Pointers
-- [String Compression](https://leetcode.com/problems/string-compression) — same pattern: Two Pointers
-- [Reverse Words in a String](https://leetcode.com/problems/reverse-words-in-a-string) — same pattern: Two Pointers
-- [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings) — same pattern: Two Pointers
-- [Count Binary Substrings — LeetCode](https://leetcode.com/problems/count-binary-substrings) — problem page
+- [String Compression](https://leetcode.com/problems/string-compression) — also groups consecutive chars
+- [Number of Substrings Containing All Three Characters](https://leetcode.com/problems/number-of-substrings-containing-all-three-characters) — substring counting with constraints
+- [Consecutive Characters](https://leetcode.com/problems/consecutive-characters) — max run of same char
+- [Find the Longest Equal Subarray](https://leetcode.com/problems/find-the-longest-equal-subarray) — grouping pattern

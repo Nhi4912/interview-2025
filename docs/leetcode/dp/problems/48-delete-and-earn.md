@@ -7,62 +7,62 @@ tags: [Array, Hash Table, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/delete-and-earn"
 ---
 
-# Delete and Earn / Delete and Earn
+# Delete and Earn / Xóa Và Kiếm Điểm
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Linear DP (House Robber variant)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Longest String Chain](https://leetcode.com/problems/longest-string-chain) | [Word Break II](https://leetcode.com/problems/word-break-ii)
+> **See also**: [House Robber](https://leetcode.com/problems/house-robber) | [Maximum Total Damage With Spell Casting](https://leetcode.com/problems/maximum-total-damage-with-spell-casting)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống ăn trộm — nếu bạn lấy số x, phải bỏ x-1 và x+1. Tổng tất cả x trong mảng có thể gom thành "phần thưởng" tại giá trị x, rồi áp dụng House Robber!
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "pick value x → delete x±1" + "maximize total" → **Reduce to House Robber**
+- Bước 1: `earn[v] = v * count(v)` — tổng điểm nếu chọn tất cả số có giá trị v
+- Bước 2: House Robber trên mảng `earn[0..maxVal]` — không thể lấy hai giá trị liên tiếp
 
-**Visual — Delete and Earn example:**
+**Visual — nums=[2,2,3,3,3,4]:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Step 1 — Build earn[] (index = value):
+  value:  0  1   2   3  4
+  earn:   0  0   4   9  4   (earn[2]=2×2, earn[3]=3×3, earn[4]=4×1)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Step 2 — House Robber on earn[]:
+  dp[1] = earn[1]           = 0
+  dp[2] = max(0, 0+4)       = 4
+  dp[3] = max(4, 0+9)       = 9   ← take all 3s
+  dp[4] = max(9, 4+4)       = 9
+Answer = 9 ✓ (taking all 3s earns 9; deletes 2s and 4s)
 ```
 
 ---
 
 ## Problem Description
 
-Delete and Earn. ([LeetCode](https://leetcode.com/problems/delete-and-earn))
+Given array `nums`, you can pick a number `x` to earn `x` points, but must delete every occurrence of `x-1` and `x+1`. Repeat until no more picks. Return the maximum points. ([LeetCode 740](https://leetcode.com/problems/delete-and-earn))
 
-Difficulty: Medium | Acceptance: 56.7%
+- Example 1: `nums=[3,4,2]` → `6` (take 2 earns 2, deletes 1 and 3; then take 4 earns 4 → total 6)
+- Example 2: `nums=[2,2,3,3,3,4]` → `9` (take all 3s earns 9, deletes all 2s and 4s)
+- Example 3: `nums=[1,1,1,2,4]` → `7` (take all 1s earns 3, skip 2, take 4 earns 4)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/delete-and-earn) for full constraints
+Constraints: `1 ≤ nums.length ≤ 2*10^4`, `1 ≤ nums[i] ≤ 10^4`, total sum ≤ `10^8`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Key reduction**: "Khi lấy x, BẮT BUỘC lấy tất cả x; vậy gom thành earn[x] = x \* freq[x]" / Must take all copies of chosen value
+2. **Insight**: "Sau khi gom, đây là House Robber — hai giá trị liên tiếp không thể cùng lấy" / Adjacent values conflict = House Robber
+3. **Brute force**: "Enumerate tất cả subsets của values rồi check conflicts" / O(2^maxVal) — too slow
+4. **State**: "`dp[v]` = max earn từ values 1..v; `dp[v] = max(dp[v-1], dp[v-2] + earn[v])`" / Same as house robber
+5. **Space opt**: "Chỉ cần prev2 và prev1 — O(1) space sau khi build earn[]" / Roll to 3 variables
+6. **Edge**: "nums[i] có thể trùng, earn[x] = x \* count — đừng count riêng từng phần tử" / Aggregate by value first, then DP
+7. **Complexity**: "O(n + maxVal) time — n để build earn[], maxVal để chạy house robber" / Linear in both n and value range
 
 ---
 
@@ -70,39 +70,61 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Sorted unique values + DP
+ * Time: O(n + m) — n=nums.length, m=maxVal
+ * Space: O(m)
  */
-function deleteAndEarnBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function deleteAndEarnSorted(nums: number[]): number {
+  const maxVal = Math.max(...nums);
+  const earn = new Array(maxVal + 1).fill(0);
+  for (const n of nums) earn[n] += n;
+
+  // House Robber on earn array
+  if (maxVal === 0) return 0;
+  if (maxVal === 1) return earn[1];
+
+  const dp = new Array(maxVal + 1).fill(0);
+  dp[1] = earn[1];
+  for (let v = 2; v <= maxVal; v++) {
+    dp[v] = Math.max(dp[v - 1], dp[v - 2] + earn[v]);
+  }
+  return dp[maxVal];
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Space-Optimized House Robber
+ * Time: O(n + m)
+ * Space: O(m) for earn[], O(1) for DP
  */
-function deleteAndEarn(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function deleteAndEarn(nums: number[]): number {
+  const maxVal = Math.max(...nums);
+  const earn = new Array(maxVal + 1).fill(0);
+  for (const n of nums) earn[n] += n;
+
+  let prev2 = 0;
+  let prev1 = earn[1] || 0;
+  for (let v = 2; v <= maxVal; v++) {
+    const curr = Math.max(prev1, prev2 + earn[v]);
+    prev2 = prev1;
+    prev1 = curr;
+  }
+  return prev1;
 }
 
 // === Test Cases ===
-// console.log(deleteAndEarn(/* example 1 */)); // expected
-// console.log(deleteAndEarn(/* example 2 */)); // expected
-// console.log(deleteAndEarn(/* edge case */)); // expected
+console.log(deleteAndEarn([3, 4, 2])); // 6
+console.log(deleteAndEarn([2, 2, 3, 3, 3, 4])); // 9
+console.log(deleteAndEarn([1])); // 1
+console.log(deleteAndEarn([1, 1, 1, 2, 4])); // 7 (earn[1]=3, earn[2]=2, earn[3]=0, earn[4]=4 → dp: 0,3,3,3,7)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Maximum Total Damage With Spell Casting](https://leetcode.com/problems/maximum-total-damage-with-spell-casting) — same pattern: Two Pointers
-- [Number of Matching Subsequences](https://leetcode.com/problems/number-of-matching-subsequences) — same pattern: Trie
-- [Delete and Earn — LeetCode](https://leetcode.com/problems/delete-and-earn) — problem page
+- [House Robber](https://leetcode.com/problems/house-robber) — cơ sở của bài này — không lấy liền kề
+- [House Robber II](https://leetcode.com/problems/house-robber-ii) — circular house robber
+- [Maximum Total Damage With Spell Casting](https://leetcode.com/problems/maximum-total-damage-with-spell-casting) — generalized variant
+- [Paint House](https://leetcode.com/problems/paint-house) — linear DP với state
+- [Coin Change II](https://leetcode.com/problems/coin-change-2) — knapsack variant
+

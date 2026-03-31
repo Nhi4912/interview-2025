@@ -7,57 +7,62 @@ tags: [Math, String, Greedy, Game Theory]
 leetcode_url: "https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color"
 ---
 
-# Remove Colored Pieces if Both Neighbors are the Same Color / Remove Colored Pieces if Both Neighbors are the Same Color
+# Remove Colored Pieces if Both Neighbors are the Same Color / Xóa Mảnh Màu Nếu Cả Hai Hàng Xóm Cùng Màu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy / Game Theory
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Sum Game](https://leetcode.com/problems/sum-game) | [Guess the Word](https://leetcode.com/problems/guess-the-word)
+> **See also**: [Stone Game](https://leetcode.com/problems/stone-game) | [Nim Game](https://leetcode.com/problems/nim-game)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Analogy:** Alice và Bob chơi trò phá mảnh ghép. Họ chơi độc lập — Alice chỉ xóa `A` (khi cả hai hàng xóm là `A`), Bob chỉ xóa `B`. Hai người không ảnh hưởng lẫn nhau → đếm tổng số nước đi của mỗi người; ai nhiều hơn sẽ thắng.
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "two players, independent moves, who wins" → **Count moves separately, compare**
+- Key insight: Alice và Bob không thể chặn nhau vì họ thao tác trên ký tự khác nhau
+- "AAA" → 1 nước đi cho Alice; "AAAA" → 2 nước đi; run của n 'A' cho `n-2` nước đi (nếu n≥3)
 
-**Visual — Remove Colored Pieces if Both Neighbors are the Same Color example:**
+**Visual — colors="AAABABB":**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+A A A B A B B
+0 1 2 3 4 5 6
+
+Alice can remove index 1 (neighbors 0='A', 2='A') → 1 move (run AAA → n-2=1)
+Bob   can remove index 6? neighbors: 5='B', none → no
+      index 5: neighbors 4='A', 6='B' → no (different)
+Bob   has 0 moves from BB (length 2, n-2=0)
+
+Alice=1 > Bob=0 → Alice wins → true ✅
 ```
 
 ---
 
 ## Problem Description
 
-Remove Colored Pieces if Both Neighbors are the Same Color. ([LeetCode](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color))
-
-Difficulty: Medium | Acceptance: 62.8%
+Alice and Bob take turns (Alice first) removing pieces. Alice removes a piece `'A'` only if both neighbors are `'A'`; Bob removes `'B'` only if both neighbors are `'B'`. The player who cannot move loses. Return `true` if Alice wins assuming optimal play.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: colors="AAABABB"  → true   (Alice 1 move, Bob 0)
+Example 2: colors="AA"       → false  (no valid moves for either)
+Example 3: colors="ABBBBBBBA" → false (Bob has more moves)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color) for full constraints
+Constraints: `1 <= colors.length <= 10^5`, `colors[i]` is `'A'` or `'B'`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Hai người không ảnh hưởng lẫn nhau vì ký tự khác nhau — xác nhận điều này!" / Confirm moves are truly independent
+2. **Key insight**: "Đếm run dài ≥ 3 của 'A' và 'B', cộng (length - 2) cho mỗi run" / Count moves from each run ≥ 3
+3. **Brute force**: "Simulate full game với recursion" → O(n²) worst case / Full game simulation exponential
+4. **Optimize**: "Đếm số nước đi của Alice và Bob độc lập — O(n)" / Count moves independently O(n)
+5. **Edge cases**: "Toàn 'A' hoặc 'B', không có run ≥ 3, chuỗi độ dài 1" / All same color, no valid moves
+6. **Game theory**: "Vì moves độc lập, không cần minimax hay DP — đơn giản hóa đáng kể" / Independence eliminates minimax
 
 ---
 
@@ -65,39 +70,60 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — count moves by scanning for patterns "AAA" / "BBB"
+ * Time: O(n) — single pass (brute here is actually same complexity, just less elegant)
+ * Space: O(1)
  */
-function removeColoredPiecesIfBothNeighborsAreTheSameColorBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function winnerOfGameBrute(colors: string): boolean {
+  let alice = 0,
+    bob = 0;
+  for (let i = 1; i < colors.length - 1; i++) {
+    if (colors[i - 1] === "A" && colors[i] === "A" && colors[i + 1] === "A") alice++;
+    if (colors[i - 1] === "B" && colors[i] === "B" && colors[i + 1] === "B") bob++;
+  }
+  return alice > bob;
 }
 
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Run-Length Encoding (cleaner, same O(n))
+ * Time: O(n) — single pass through string
+ * Space: O(1) — only counters
  */
-function removeColoredPiecesIfBothNeighborsAreTheSameColor(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function winnerOfGame(colors: string): boolean {
+  let alice = 0;
+  let bob = 0;
+  let i = 0;
+
+  while (i < colors.length) {
+    const ch = colors[i];
+    let run = 0;
+    // Count length of current run
+    while (i < colors.length && colors[i] === ch) {
+      i++;
+      run++;
+    }
+    // A run of length n gives (n - 2) moves if n >= 3
+    if (run >= 3) {
+      if (ch === "A") alice += run - 2;
+      else bob += run - 2;
+    }
+  }
+
+  return alice > bob; // Alice wins only if she has strictly more moves
 }
 
 // === Test Cases ===
-// console.log(removeColoredPiecesIfBothNeighborsAreTheSameColor(/* example 1 */)); // expected
-// console.log(removeColoredPiecesIfBothNeighborsAreTheSameColor(/* example 2 */)); // expected
-// console.log(removeColoredPiecesIfBothNeighborsAreTheSameColor(/* edge case */)); // expected
+console.log(winnerOfGame("AAABABB")); // true
+console.log(winnerOfGame("AA")); // false
+console.log(winnerOfGame("ABBBBBBBA")); // false
+console.log(winnerOfGame("AAAA")); // true  (Alice 2 moves, Bob 0)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Sum Game](https://leetcode.com/problems/sum-game) — same pattern: Greedy
-- [Guess the Word](https://leetcode.com/problems/guess-the-word) — same pattern: Math
-- [Stone Game IX](https://leetcode.com/problems/stone-game-ix) — same pattern: Greedy
-- [Minimum Swaps to Make Strings Equal](https://leetcode.com/problems/minimum-swaps-to-make-strings-equal) — same pattern: Greedy
-- [Remove Colored Pieces if Both Neighbors are the Same Color — LeetCode](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color) — problem page
+- [Stone Game](https://leetcode.com/problems/stone-game) — two-player optimal play, math insight
+- [Nim Game](https://leetcode.com/problems/nim-game) — game theory with simple math win condition
+- [Stone Game IX](https://leetcode.com/problems/stone-game-ix) — more complex game theory
+- [Predict the Winner](https://leetcode.com/problems/predict-the-winner) — minimax game where moves DO interact

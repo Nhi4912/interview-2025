@@ -7,9 +7,9 @@ tags: [Array, Hash Table, Binary Search, Sorting, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/number-of-flowers-in-full-bloom"
 ---
 
-# Number of Flowers in Full Bloom / Number of Flowers in Full Bloom
+# Number of Flowers in Full Bloom / Số Hoa Đang Nở
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Prefix Sum
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Binary Search + Events
 > **Frequency**: 📘 Tier 3 — Gặp ở 6 companies
 > **See also**: [Missing Number](https://leetcode.com/problems/missing-number) | [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays)
 
@@ -17,47 +17,54 @@ leetcode_url: "https://leetcode.com/problems/number-of-flowers-in-full-bloom"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+**Analogy:** Đếm số cửa hàng đang mở khi bạn đi qua một con phố vào thời điểm t — cửa hàng "đang mở" nếu giờ mở ≤ t ≤ giờ đóng. Tách thành: đã mở - đã đóng.
 
 **Pattern Recognition:**
 
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count intervals covering point t" → **Sort starts/ends + Binary Search**
+- Flowers blooming at t = count(start ≤ t) - count(end < t)
+- Key insight: tách vấn đề 2D (khoảng thời gian) thành 2 vấn đề 1D (binary search trên mảng đã sort)
 
-**Visual — Number of Flowers in Full Bloom example:**
+**Visual — flowers=[[1,6],[3,7],[9,12],[4,13]], persons=[2,3,7,11]:**
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+starts sorted: [1, 3, 4, 9]
+ends sorted:   [6, 7, 12, 13]
+
+Person at t=2:
+  started ≤ 2: bisect_right([1,3,4,9], 2) = 1   (only flower starting at 1)
+  ended < 2:   bisect_left([6,7,12,13], 2) = 0
+  blooming = 1 - 0 = 1 ✅
+
+Person at t=7:
+  started ≤ 7: 3 (flowers 1,3,4)
+  ended < 7:   1 (flower ending at 6)
+  blooming = 3 - 1 = 2 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Number of Flowers in Full Bloom. ([LeetCode](https://leetcode.com/problems/number-of-flowers-in-full-bloom))
+Cho mảng `flowers[i] = [start_i, end_i]` (hoa nở từ start đến end, cả hai đầu), và mảng `persons[j]` (thời điểm người j đến). Trả về mảng `answer` với `answer[j]` = số hoa đang nở khi người j đến. ([LeetCode](https://leetcode.com/problems/number-of-flowers-in-full-bloom))
 
 Difficulty: Hard | Acceptance: 57.2%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- `flowers=[[1,6],[3,7],[9,12],[4,13]], persons=[2,3,7,11]` → `[1,2,2,2]`
+- `flowers=[[1,10],[3,3]], persons=[3,3,2]` → `[2,2,1]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-flowers-in-full-bloom) for full constraints
+Constraints: `1 <= flowers.length <= 5×10^4`, `1 <= persons.length <= 5×10^4`, `1 <= start ≤ end ≤ 10^9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Hoa nở cả ngày start lẫn end không?" / Inclusive on both endpoints?
+2. **Brute force**: "Với mỗi person, duyệt tất cả flowers — O(nm)" / Per-person linear scan
+3. **Key insight**: "blooming(t) = #{start ≤ t} - #{end < t}" / Count starts minus already-ended
+4. **Binary search**: "Sort starts và ends riêng → upper_bound và lower_bound" / Two sorted arrays + bisect
+5. **Edge cases**: "Person đến trước tất cả hoa nở → 0; person = start = end → 1" / Before any bloom → 0
+6. **Follow-up**: "Nếu persons cũng cần query theo thứ tự → offline sort + two-pointer O(n log n)" / Offline approach
 
 ---
 
@@ -65,39 +72,109 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Binary search helpers
  */
-function numberOfFlowersInFullBloomBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Count of values in sorted array that are <= target (upper bound index)
+function upperBound(arr: number[], target: number): number {
+  let lo = 0,
+    hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (arr[mid] <= target) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+// Count of values in sorted array that are < target (lower bound index)
+function lowerBound(arr: number[], target: number): number {
+  let lo = 0,
+    hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (arr[mid] < target) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
 }
 
 /**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — Check Every Flower per Person
+ * Time: O(n × m) — n flowers, m persons
+ * Space: O(1) — excluding output
  */
-function numberOfFlowersInFullBloom(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+function fullBloomFlowersBrute(flowers: number[][], persons: number[]): number[] {
+  return persons.map((t) => flowers.filter(([s, e]) => s <= t && t <= e).length);
+}
+
+/**
+ * Solution 2: Sort + Binary Search
+ * Time: O((n + m) log n) — sort O(n log n), each query O(log n)
+ * Space: O(n) — two sorted arrays
+ */
+function fullBloomFlowers(flowers: number[][], persons: number[]): number[] {
+  const starts = flowers.map((f) => f[0]).sort((a, b) => a - b);
+  const ends = flowers.map((f) => f[1]).sort((a, b) => a - b);
+
+  return persons.map((t) => {
+    const started = upperBound(starts, t); // #{start <= t}
+    const ended = lowerBound(ends, t); // #{end < t}
+    return started - ended;
+  });
 }
 
 // === Test Cases ===
-// console.log(numberOfFlowersInFullBloom(/* example 1 */)); // expected
-// console.log(numberOfFlowersInFullBloom(/* example 2 */)); // expected
-// console.log(numberOfFlowersInFullBloom(/* edge case */)); // expected
+console.log(
+  fullBloomFlowers(
+    [
+      [1, 6],
+      [3, 7],
+      [9, 12],
+      [4, 13],
+    ],
+    [2, 3, 7, 11],
+  ),
+);
+// [1, 2, 2, 2]
+console.log(
+  fullBloomFlowers(
+    [
+      [1, 10],
+      [3, 3],
+    ],
+    [3, 3, 2],
+  ),
+);
+// [2, 2, 1]
+console.log(
+  fullBloomFlowersBrute(
+    [
+      [1, 6],
+      [3, 7],
+      [9, 12],
+      [4, 13],
+    ],
+    [2, 3, 7, 11],
+  ),
+);
+// [1, 2, 2, 2]
+console.log(
+  fullBloomFlowers(
+    [
+      [1, 3],
+      [2, 4],
+    ],
+    [1, 2, 3, 4],
+  ),
+);
+// [1, 2, 2, 1]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) — same pattern: Sliding Window
-- [Brightest Position on Street](https://leetcode.com/problems/brightest-position-on-street) — same pattern: Prefix Sum
+- [Brightest Position on Street](https://leetcode.com/problems/brightest-position-on-street) — overlap counting with events
+- [Count Positions on Street With Required Brightness](https://leetcode.com/problems/count-positions-on-street-with-required-brightness) — prefix sum on events
+- [My Calendar I](https://leetcode.com/problems/my-calendar-i) — interval overlap detection
+- [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) — sliding window on sorted
 - [Number of Flowers in Full Bloom — LeetCode](https://leetcode.com/problems/number-of-flowers-in-full-bloom) — problem page

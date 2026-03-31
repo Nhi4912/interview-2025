@@ -7,100 +7,195 @@ tags: [Tree, Depth-First Search, Binary Search Tree, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/recover-binary-search-tree"
 ---
 
-# Recover Binary Search Tree / Recover Binary Search Tree
+# Recover Binary Search Tree / Khôi Phục Cây Tìm Kiếm Nhị Phân
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Inorder DFS + Find Violations
 > **Frequency**: 📘 Tier 3 — Gặp ở 6 companies
-> **See also**: [Lowest Common Ancestor of a Binary Search Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree) | [Binary Search Tree to Greater Sum Tree](https://leetcode.com/problems/binary-search-tree-to-greater-sum-tree)
+> **See also**: [Validate Binary Search Tree](https://leetcode.com/problems/validate-binary-search-tree) | [Kth Smallest Element in a BST](https://leetcode.com/problems/kth-smallest-element-in-a-bst)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Analogy:** BST inorder traversal cho dãy tăng dần. Khi 2 node bị hoán đổi, dãy này có 1 hoặc 2 "violation" (chỗ prev > curr). Tìm chúng rồi swap lại — như tìm 2 con bài lộn chỗ trong bộ bài đã sắp xếp.
 
 **Pattern Recognition:**
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "exactly two nodes swapped in BST" → **Inorder + find violations**
+- Adjacent swap: 1 violation → swap prev và curr
+- Non-adjacent swap: 2 violations → swap first violation's prev và last violation's curr
 
-**Visual — Recover Binary Search Tree example:**
+**Visual — Tìm violations trong inorder:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+BST với 3 và 7 bị hoán đổi:
+      3(7)
+     /    \
+  1(1)    7(3)   ← 7 and 3 swapped
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Inorder: [1, 7, 3]  ← dãy đúng phải là [1, 3, 7]
+              ^  ^
+         prev=7 > curr=3 → violation!
+
+first  = node(7)  (prev at violation)
+second = node(3)  (curr at violation)
+→ swap values: 7↔3 → BST recovered ✅
 ```
 
 ---
 
 ## Problem Description
 
-Recover Binary Search Tree. ([LeetCode](https://leetcode.com/problems/recover-binary-search-tree))
+Cho một BST trong đó đúng **2 node** bị hoán đổi giá trị nhầm. Khôi phục cây về BST đúng mà không thay đổi cấu trúc cây. ([LeetCode](https://leetcode.com/problems/recover-binary-search-tree))
 
-Difficulty: Medium | Acceptance: 56.3%
+**Example 1:** root = [1,3,null,null,2] → recovered = [3,1,null,null,2]
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** root = [3,1,4,null,null,2] → recovered = [2,1,4,null,null,3]
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/recover-binary-search-tree) for full constraints
+Constraints: `2 <= n <= 1000`, `-2^31 <= val <= 2^31-1`, exactly two nodes swapped
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+1. **Clarify**: "Chỉ swap values không, không đổi cấu trúc?" / Only swap values, not restructure the tree?
+2. **Key insight**: "Inorder BST = sorted. Tìm chỗ không sorted" / Inorder of valid BST is always sorted
+3. **Two cases**: "Nếu adjacent: 1 violation; nếu non-adjacent: 2 violations" / One or two violations depending on distance
+4. **Morris traversal**: "O(1) space với Morris inorder — follow-up" / O(1) space with Morris traversal
+5. **Edge cases**: "Cây chỉ 2 nodes, swap của root với leaf" / Two-node tree, root swapped with distant leaf
+6. **Follow-up**: "Làm với O(1) space?" / Can you do O(1) space? → Morris inorder traversal
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function recoverBinarySearchTreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Inorder to array, find and swap
+ * Time: O(n) — traverse all nodes
+ * Space: O(n) — store inorder array + node references
  */
-function recoverBinarySearchTree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function recoverTreeNaive(root: TreeNode | null): void {
+  const nodes: TreeNode[] = [];
+  function inorder(node: TreeNode | null): void {
+    if (!node) return;
+    inorder(node.left);
+    nodes.push(node);
+    inorder(node.right);
+  }
+  inorder(root);
+  // Find the two nodes: find from left and right
+  let first = -1,
+    second = -1;
+  for (let i = 0; i < nodes.length - 1; i++)
+    if (nodes[i].val > nodes[i + 1].val) {
+      if (first === -1) first = i;
+      second = i + 1;
+    }
+  if (first !== -1) {
+    const tmp = nodes[first].val;
+    nodes[first].val = nodes[second].val;
+    nodes[second].val = tmp;
+  }
+}
+
+/**
+ * Solution 2: Inorder DFS tracking prev, first, second pointers
+ * Time: O(n) — single inorder traversal
+ * Space: O(h) — recursion stack
+ */
+function recoverTree(root: TreeNode | null): void {
+  let prev: TreeNode | null = null;
+  let first: TreeNode | null = null; // first violation's prev
+  let second: TreeNode | null = null; // most recent violation's curr
+
+  function inorder(node: TreeNode | null): void {
+    if (!node) return;
+    inorder(node.left);
+    // Check violation
+    if (prev !== null && prev.val > node.val) {
+      if (!first) first = prev; // first time: save prev
+      second = node; // always update second to current
+    }
+    prev = node;
+    inorder(node.right);
+  }
+
+  inorder(root);
+  // Swap values of the two misplaced nodes
+  if (first && second) {
+    const tmp = first.val;
+    first.val = second.val;
+    second.val = tmp;
+  }
 }
 
 // === Test Cases ===
-// console.log(recoverBinarySearchTree(/* example 1 */)); // expected
-// console.log(recoverBinarySearchTree(/* example 2 */)); // expected
-// console.log(recoverBinarySearchTree(/* edge case */)); // expected
+function inorderVals(root: TreeNode | null): number[] {
+  const res: number[] = [];
+  function dfs(n: TreeNode | null) {
+    if (!n) return;
+    dfs(n.left);
+    res.push(n.val);
+    dfs(n.right);
+  }
+  dfs(root);
+  return res;
+}
+function build(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length || vals[0] == null) return null;
+  const root = new TreeNode(vals[0]!);
+  const q = [root];
+  let i = 1;
+  while (i < vals.length) {
+    const node = q.shift()!;
+    if (i < vals.length && vals[i] != null) {
+      node.left = new TreeNode(vals[i]!);
+      q.push(node.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] != null) {
+      node.right = new TreeNode(vals[i]!);
+      q.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+
+const t1 = build([1, 3, null, null, 2]);
+recoverTree(t1);
+console.log(inorderVals(t1)); // [1, 2, 3]
+
+const t2 = build([3, 1, 4, null, null, 2]);
+recoverTree(t2);
+console.log(inorderVals(t2)); // [1, 2, 3, 4]
+
+const t3 = build([2, 3, 1]);
+recoverTree(t3);
+console.log(inorderVals(t3)); // [1, 2, 3]
+
+const t4 = build([5, 3, 8, 2, 4, 6, 9, 1, null, null, null, null, 7]);
+recoverTree(t4);
+console.log(inorderVals(t4).join(",")); // 1,2,3,4,5,6,7,8,9
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Lowest Common Ancestor of a Binary Search Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree) — same pattern: Binary Search
-- [Binary Search Tree to Greater Sum Tree](https://leetcode.com/problems/binary-search-tree-to-greater-sum-tree) — same pattern: Binary Search
-- [Two Sum IV - Input is a BST](https://leetcode.com/problems/two-sum-iv-input-is-a-bst) — same pattern: Two Pointers
-- [Closest Binary Search Tree Value II](https://leetcode.com/problems/closest-binary-search-tree-value-ii) — same pattern: Two Pointers
-- [Recover Binary Search Tree — LeetCode](https://leetcode.com/problems/recover-binary-search-tree) — problem page
+- [Validate Binary Search Tree](https://leetcode.com/problems/validate-binary-search-tree) — cùng inorder property của BST
+- [Kth Smallest Element in a BST](https://leetcode.com/problems/kth-smallest-element-in-a-bst) — inorder traversal để access sorted order
+- [Binary Search Tree Iterator](https://leetcode.com/problems/binary-search-tree-iterator) — inorder BST traversal với next/hasNext
+- [Convert BST to Greater Tree](https://leetcode.com/problems/convert-bst-to-greater-tree) — reverse inorder BST traversal

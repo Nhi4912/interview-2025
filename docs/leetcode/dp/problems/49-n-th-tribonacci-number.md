@@ -7,62 +7,58 @@ tags: [Math, Dynamic Programming, Memoization]
 leetcode_url: "https://leetcode.com/problems/n-th-tribonacci-number"
 ---
 
-# N-th Tribonacci Number / N-th Tribonacci Number
+# N-th Tribonacci Number / Số Tribonacci Thứ N
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Linear DP (Rolling Variables)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) | [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses)
+> **See also**: [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) | [Climbing Stairs](https://leetcode.com/problems/climbing-stairs)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống Fibonacci nhưng có 3 bước — để lên bậc thứ n, bạn có thể đến từ bậc n-1, n-2, hoặc n-3. Đếm tổng số cách.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "T(n) = T(n-1) + T(n-2) + T(n-3)" + fixed base cases → **Rolling 3-variable DP**
+- T(0)=0, T(1)=1, T(2)=1, T(3)=2, T(4)=4, T(5)=7, ...
+- Key insight: Chỉ cần 3 biến — không cần mảng
 
-**Visual — N-th Tribonacci Number example:**
+**Visual — Computing T(5):**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+n:    0  1  2  3  4  5
+T(n): 0  1  1  2  4  7
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Step: a=0,b=1,c=1
+  n=3: next=0+1+1=2  → a=1,b=1,c=2
+  n=4: next=1+1+2=4  → a=1,b=2,c=4
+  n=5: next=1+2+4=7  → a=2,b=4,c=7 → return c=7 ✓
 ```
 
 ---
 
 ## Problem Description
 
-N-th Tribonacci Number. ([LeetCode](https://leetcode.com/problems/n-th-tribonacci-number))
+The Tribonacci sequence: T(0)=0, T(1)=1, T(2)=1, and for n≥3: T(n) = T(n-1) + T(n-2) + T(n-3). Given `n`, return T(n). ([LeetCode 1137](https://leetcode.com/problems/n-th-tribonacci-number))
 
-Difficulty: Easy | Acceptance: 63.6%
+- Example 1: `n=4` → `4` (sequence: 0,1,1,2,4)
+- Example 2: `n=25` → `1389537`
+- Example 3: `n=37` → `2082876103` (max constraint)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/n-th-tribonacci-number) for full constraints
+Constraints: `0 ≤ n ≤ 37`, answer fits in 32-bit integer
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Base cases: T(0)=0, T(1)=1, T(2)=1 — nên viết ra ngay" / State all three base cases explicitly
+2. **Recursion**: "Naive recursion O(3^n) — quá chậm" / Exponential without memoization
+3. **Memo**: "Top-down với map/array — O(n) time, O(n) space" / Simple memoization
+4. **Rolling**: "Chỉ cần 3 biến a,b,c — O(1) space" / Best approach: roll 3 variables
+5. **Constraints**: "n≤37 — tất cả approaches đều pass" / Any approach works, rolling is cleanest
+6. **Generalize**: "Nếu k-nacci: rolling array size k, shift left và thêm sum" / k-variable rolling for k-step Fibonacci
 
 ---
 
@@ -70,39 +66,77 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Memoization (Top-Down)
+ * Time: O(n)
+ * Space: O(n)
  */
-function nThTribonacciNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function tribonacciMemo(n: number): number {
+  const memo = new Map<number, number>([
+    [0, 0],
+    [1, 1],
+    [2, 1],
+  ]);
+
+  function dp(k: number): number {
+    if (memo.has(k)) return memo.get(k)!;
+    const val = dp(k - 1) + dp(k - 2) + dp(k - 3);
+    memo.set(k, val);
+    return val;
+  }
+
+  return dp(n);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Bottom-Up with rolling variables
+ * Time: O(n)
+ * Space: O(1)
  */
-function nThTribonacciNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function tribonacci(n: number): number {
+  if (n === 0) return 0;
+  if (n <= 2) return 1;
+
+  let a = 0,
+    b = 1,
+    c = 1; // T(0), T(1), T(2)
+  for (let i = 3; i <= n; i++) {
+    const next = a + b + c;
+    a = b;
+    b = c;
+    c = next;
+  }
+  return c;
+}
+
+/**
+ * Solution 3: Iterative with array (explicit DP table)
+ * Time: O(n)
+ * Space: O(n) — useful when you need to retrieve any T(k) later
+ */
+function tribonacciTable(n: number): number {
+  if (n === 0) return 0;
+  if (n <= 2) return 1;
+  const dp = new Array(n + 1);
+  dp[0] = 0;
+  dp[1] = 1;
+  dp[2] = 1;
+  for (let i = 3; i <= n; i++) dp[i] = dp[i - 1] + dp[i - 2] + dp[i - 3];
+  return dp[n];
 }
 
 // === Test Cases ===
-// console.log(nThTribonacciNumber(/* example 1 */)); // expected
-// console.log(nThTribonacciNumber(/* example 2 */)); // expected
-// console.log(nThTribonacciNumber(/* edge case */)); // expected
+console.log(tribonacci(0)); // 0
+console.log(tribonacci(1)); // 1
+console.log(tribonacci(4)); // 4
+console.log(tribonacci(25)); // 1389537
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — same pattern: Dynamic Programming
-- [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses) — same pattern: Dynamic Programming
-- [The Score of Students Solving Math Expression](https://leetcode.com/problems/the-score-of-students-solving-math-expression) — same pattern: Dynamic Programming
-- [Flip Game II](https://leetcode.com/problems/flip-game-ii) — same pattern: Backtracking
-- [N-th Tribonacci Number — LeetCode](https://leetcode.com/problems/n-th-tribonacci-number) — problem page
+- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — F(n)=F(n-1)+F(n-2) — 2-variable DP
+- [Climbing Stairs](https://leetcode.com/problems/climbing-stairs) — same as Fibonacci: 1 or 2 steps
+- [Min Cost Climbing Stairs](https://leetcode.com/problems/min-cost-climbing-stairs) — cost-weighted Fibonacci
+- [N-th Tribonacci Number Variant](https://leetcode.com/problems/get-maximum-in-generated-array) — generated sequence DP
+- [Decode Ways](https://leetcode.com/problems/decode-ways) — Fibonacci-style with constraints

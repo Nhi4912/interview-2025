@@ -7,62 +7,58 @@ tags: [String, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/scramble-string"
 ---
 
-# Scramble String / Scramble String
+# Scramble String / Chuỗi Xáo Trộn
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: 3D Interval DP
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) | [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses)
+> **See also**: [Interleaving String](https://leetcode.com/problems/interleaving-string) | [Burst Balloons](https://leetcode.com/problems/burst-balloons)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Như chia một tờ giấy thành hai mảnh rồi có thể hoán đổi hoặc giữ nguyên thứ tự — mỗi cách chia tạo ra một cây nhị phân khác nhau. Hai chuỗi là scramble nếu tồn tại một cây như vậy.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "recursive split + optional swap" + two same-length strings → **3D Interval DP**
+- `dp[i][j][len]` = liệu `s1[i..i+len-1]` có thể scramble thành `s2[j..j+len-1]`
+- Key insight: Với mỗi split point k, kiểm tra hai trường hợp (swap/no-swap)
 
-**Visual — Scramble String example:**
+**Visual — s1="great", s2="rgeat":**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Split "great" at k=1: "g" | "reat"
+  No swap:  isScramble("g","r") AND isScramble("reat","geat") → false
+  Swap:     isScramble("g","t") AND isScramble("reat","rgea") → ...
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Split at k=2: "gr" | "eat"
+  Swap:     isScramble("gr","at") AND isScramble("eat","rge") → ...
+  No swap:  isScramble("gr","rg") AND isScramble("eat","eat") → true ✓
 ```
 
 ---
 
 ## Problem Description
 
-Scramble String. ([LeetCode](https://leetcode.com/problems/scramble-string))
+Given strings `s1` and `s2` of the same length, return true if `s2` is a scrambled version of `s1`. A scramble is formed by recursively splitting a string and optionally swapping the two halves. ([LeetCode 87](https://leetcode.com/problems/scramble-string))
 
-Difficulty: Hard | Acceptance: 42.2%
+- Example 1: `s1="great", s2="rgeat"` → `true`
+- Example 2: `s1="abcde", s2="caebd"` → `false`
+- Example 3: `s1="a", s2="a"` → `true`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/scramble-string) for full constraints
+Constraints: `s1.length == s2.length`, `1 ≤ s1.length ≤ 30`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Hai chuỗi luôn cùng độ dài không?" / Always same length? What about empty strings?
+2. **Brute force**: "Recursion: thử mọi split point và 2 cases (swap/no-swap)" / O(n! \* 2^n) — exponential
+3. **Pruning**: "Nếu sorted chars khác nhau → false ngay" / Quick anagram check reduces exponential branches
+4. **State**: "`dp[i][j][len]` = s1 bắt đầu i, s2 bắt đầu j, độ dài len" / 3D boolean DP
+5. **Order**: "Tăng dần len từ 1 → n; len=1 là base case khi s1[i]==s2[j]" / Fill by increasing length
+6. **Complexity**: "O(n⁴) time, O(n³) space — acceptable for n≤30" / State _ transition = n³ _ n = n⁴
 
 ---
 
@@ -70,39 +66,87 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Recursion + Memoization (Top-Down)
+ * Time: O(n⁴) — n³ states, n transitions each
+ * Space: O(n³)
  */
-function scrambleStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function isScrambleMemo(s1: string, s2: string): boolean {
+  const memo = new Map<string, boolean>();
+
+  function dp(a: string, b: string): boolean {
+    if (a === b) return true;
+    if (a.length !== b.length) return false;
+    // Prune: sorted chars must match
+    if ([...a].sort().join("") !== [...b].sort().join("")) return false;
+    const key = `${a}|${b}`;
+    if (memo.has(key)) return memo.get(key)!;
+
+    const n = a.length;
+    let res = false;
+    for (let k = 1; k < n && !res; k++) {
+      // No swap: a[0..k-1] → b[0..k-1], a[k..] → b[k..]
+      if (dp(a.slice(0, k), b.slice(0, k)) && dp(a.slice(k), b.slice(k))) res = true;
+      // Swap: a[0..k-1] → b[n-k..], a[k..] → b[0..n-k-1]
+      if (dp(a.slice(0, k), b.slice(n - k)) && dp(a.slice(k), b.slice(0, n - k))) res = true;
+    }
+    memo.set(key, res);
+    return res;
+  }
+
+  return dp(s1, s2);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Bottom-Up 3D DP
+ * Time: O(n⁴) — O(n³) states × O(n) split points
+ * Space: O(n³)
  */
-function scrambleString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function isScramble(s1: string, s2: string): boolean {
+  const n = s1.length;
+  // dp[len][i][j] = isScramble(s1[i..i+len-1], s2[j..j+len-1])
+  const dp: boolean[][][] = Array.from({ length: n + 1 }, () =>
+    Array.from({ length: n }, () => new Array(n).fill(false)),
+  );
+
+  // Base: length 1
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) dp[1][i][j] = s1[i] === s2[j];
+
+  // Fill by increasing length
+  for (let len = 2; len <= n; len++) {
+    for (let i = 0; i <= n - len; i++) {
+      for (let j = 0; j <= n - len; j++) {
+        for (let k = 1; k < len; k++) {
+          // No swap
+          if (dp[k][i][j] && dp[len - k][i + k][j + k]) {
+            dp[len][i][j] = true;
+            break;
+          }
+          // Swap
+          if (dp[k][i][j + len - k] && dp[len - k][i + k][j]) {
+            dp[len][i][j] = true;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return dp[n][0][0];
 }
 
 // === Test Cases ===
-// console.log(scrambleString(/* example 1 */)); // expected
-// console.log(scrambleString(/* example 2 */)); // expected
-// console.log(scrambleString(/* edge case */)); // expected
+console.log(isScramble("great", "rgeat")); // true
+console.log(isScramble("abcde", "caebd")); // false
+console.log(isScramble("a", "a")); // true
+console.log(isScramble("ab", "ba")); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings) — same pattern: Two Pointers
-- [Interleaving String](https://leetcode.com/problems/interleaving-string) — same pattern: Dynamic Programming
-- [Scramble String — LeetCode](https://leetcode.com/problems/scramble-string) — problem page
+- [Interleaving String](https://leetcode.com/problems/interleaving-string) — 2D DP hai chuỗi hợp nhau
+- [Burst Balloons](https://leetcode.com/problems/burst-balloons) — interval DP với split point
+- [Palindrome Partitioning II](https://leetcode.com/problems/palindrome-partitioning-ii) — interval DP trên string
+- [Strange Printer](https://leetcode.com/problems/strange-printer) — interval DP khó
+- [Zuma Game](https://leetcode.com/problems/zuma-game) — interval DP xóa chuỗi

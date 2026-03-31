@@ -7,59 +7,62 @@ tags: [Array, String, Stack]
 leetcode_url: "https://leetcode.com/problems/crawler-log-folder"
 ---
 
-# Crawler Log Folder / Crawler Log Folder
+# Crawler Log Folder / Thư Mục Log Của Trình Thu Thập
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Stack
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Stack / Counter
 > **Frequency**: 📘 Tier 3 — Gặp ở 4 companies
-> **See also**: [The Score of Students Solving Math Expression](https://leetcode.com/problems/the-score-of-students-solving-math-expression) | [Text Justification](https://leetcode.com/problems/text-justification)
+> **See also**: [Simplify Path](https://leetcode.com/problems/simplify-path) | [Decode String](https://leetcode.com/problems/decode-string)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Analogy:** Giống điều hướng thư mục trong terminal — `cd folder` đi sâu vào, `cd ..` lùi một bước, `cd ./` đứng yên. Chỉ cần theo dõi độ sâu hiện tại (depth counter).
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "navigate file system" + "minimum steps to root" → **Depth counter (không cần Stack thực)**
+- Ba loại lệnh: `"../"` giảm depth (nếu > 0), `"./"` không đổi, `"xxx/"` tăng depth
+- Key insight: kết quả chính là giá trị depth cuối cùng
 
-**Visual — Crawler Log Folder example:**
+**Visual — logs=["d1/","d2/","../","d21/","./"]:**
 
 ```
-stack = []
+Start: depth=0
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+"d1/"  → depth=1   (enter d1)
+"d2/"  → depth=2   (enter d2)
+"../"  → depth=1   (back to d1)
+"d21/" → depth=2   (enter d21)
+"./"   → depth=2   (stay in d21)
+
+Min ops to return to root = depth = 2 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Crawler Log Folder. ([LeetCode](https://leetcode.com/problems/crawler-log-folder))
-
-Difficulty: Easy | Acceptance: 71.6%
+Given a list of filesystem log operations, find the minimum number of operations to go back to the root folder. `"../"` goes up one level (min depth 0), `"./"` stays, `"xxx/"` goes into subfolder `xxx`.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: logs=["d1/","d2/","../","d21/","./"]  → 2
+Example 2: logs=["d1/","d2/","./","d3/","../","d31/"]  → 3
+Example 3: logs=["d1/","../","../","../"]  → 0  (can't go above root)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/crawler-log-folder) for full constraints
+Constraints: `1 <= logs.length <= 10^3`, each log is a valid folder operation string.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Không thể lên trên root (depth không âm)? Kết quả là depth hiện tại?" / Can't go above root, result = current depth?
+2. **Brute force**: "Dùng stack thực sự lưu tên folder" — sau đó trả về `stack.length` / Use actual stack of folder names
+3. **Optimize**: "Không cần lưu tên folder, chỉ cần depth counter" / Counter suffices, O(n) time O(1) space
+4. **Edge cases**: "Toàn `\"../\"` → 0, toàn `\"d/\"` → n, toàn `\"./\"` → 0" / All up, all down, all stay
+5. **Follow-up**: "Simplify Path (LC 71) — tương tự nhưng cần trả về path string thực" / Simplify Path returns the path string
+6. **String match**: "`=== \"../\"`" vs `startsWith` — với format cố định, `===` an toàn hơn / Fixed format means === is safe
 
 ---
 
@@ -67,39 +70,56 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Stack with folder names
+ * Time: O(n) — process each log once
+ * Space: O(n) — stack stores folder names
  */
-function crawlerLogFolderBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minOperationsStack(logs: string[]): number {
+  const stack: string[] = [];
+
+  for (const log of logs) {
+    if (log === "../") {
+      if (stack.length > 0) stack.pop();
+    } else if (log !== "./") {
+      stack.push(log);
+    }
+  }
+
+  return stack.length;
 }
 
 /**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Depth Counter (Optimal)
+ * Time: O(n) — single pass
+ * Space: O(1) — only one integer
  */
-function crawlerLogFolder(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function minOperations(logs: string[]): number {
+  let depth = 0;
+
+  for (const log of logs) {
+    if (log === "../") {
+      depth = Math.max(0, depth - 1); // can't go above root
+    } else if (log !== "./") {
+      depth++; // enter subfolder
+    }
+    // './' → no change
+  }
+
+  return depth;
 }
 
 // === Test Cases ===
-// console.log(crawlerLogFolder(/* example 1 */)); // expected
-// console.log(crawlerLogFolder(/* example 2 */)); // expected
-// console.log(crawlerLogFolder(/* edge case */)); // expected
+console.log(minOperations(["d1/", "d2/", "../", "d21/", "./"])); // 2
+console.log(minOperations(["d1/", "d2/", "./", "d3/", "../", "d31/"])); // 3
+console.log(minOperations(["d1/", "../", "../", "../"])); // 0
+console.log(minOperations(["./", "./", "./"])); // 0  — all stay
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [The Score of Students Solving Math Expression](https://leetcode.com/problems/the-score-of-students-solving-math-expression) — same pattern: Dynamic Programming
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram) — same pattern: Monotonic Stack
-- [Crawler Log Folder — LeetCode](https://leetcode.com/problems/crawler-log-folder) — problem page
+- [Simplify Path](https://leetcode.com/problems/simplify-path) — same navigation logic, returns canonical path string
+- [Decode String](https://leetcode.com/problems/decode-string) — stack for nested structure processing
+- [Remove All Adjacent Duplicates In String](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string) — stack pop/push pattern
+- [Valid Parentheses](https://leetcode.com/problems/valid-parentheses) — stack for matching/nesting

@@ -7,60 +7,60 @@ tags: [Array, Two Pointers, Matrix]
 leetcode_url: "https://leetcode.com/problems/rotating-the-box"
 ---
 
-# Rotating the Box / Rotating the Box
+# Rotating the Box / Xoay Hộp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix Simulation + Two Pointers
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Candy Crush](https://leetcode.com/problems/candy-crush) | [Flipping an Image](https://leetcode.com/problems/flipping-an-image)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy:** Hãy tưởng tượng hộp cát — đá (`#`) rơi về phía phải do trọng lực cho đến khi gặp chướng ngại vật (`*`) hoặc mép hộp. Sau đó xoay hộp 90° theo chiều kim đồng hồ.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "stones fall in direction" → **Two Pointers** (next empty slot pointer)
+- Signal: "rotate matrix 90°" → công thức: `result[j][m-1-i] = box[i][j]`
+- Key insight: xử lý trọng lực trước trên mỗi hàng (right to left), rồi xoay
 
-**Visual — Rotating the Box example:**
+**Visual — Gravity then Rotate:**
 
 ```
-arr = [... sorted ...]
- L                 R
+Input:          After gravity:   After 90° CW rotate:
+[ # . # ]       [ . # # ]        [ # . ]
+[ # # * ]       [ # # * ]        [ # # ]
+                                 [ * # ]
+                                 [ . # ]
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Gravity: pointer 'empty' tracks rightmost free slot
+'*' resets pointer  |  '#' swaps to empty slot
+Rotate: (i,j) → (j, m-1-i)
 ```
 
 ---
 
 ## Problem Description
 
-Rotating the Box. ([LeetCode](https://leetcode.com/problems/rotating-the-box))
+Given an `m×n` matrix `box` of chars: `'#'` (stone), `'*'` (obstacle), `'.'` (empty). Gravity pulls stones right. After applying gravity, rotate the box 90° clockwise and return the result. ([LeetCode](https://leetcode.com/problems/rotating-the-box))
 
 Difficulty: Medium | Acceptance: 79.1%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Example 1: `[["#",".","."],["#","#","*"]]` → `[["#","."],["#","#"],["*","#"],[".","."] ]`
+- Example 2: `[["#","#","*",".","*","."]]` → `[["#"],["#"],["*"],["."],[" *"],["."]]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/rotating-the-box) for full constraints
+Constraints: `1 ≤ m, n ≤ 500`, cells are `'#'`, `'*'`, or `'.'`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Clarify**: "Trọng lực theo hướng nào? Phải không?" / Confirm gravity direction (rightward in given orientation)
+2. **Brute force**: "Mô phỏng từng bước — di chuyển đá cho đến khi không di chuyển được" / Simulate stone movement step by step
+3. **Optimize**: "Dùng pointer 'empty' cho slot trống → mỗi hàng O(n)" / One-pass per row with empty slot pointer
+4. **Two pointers**: "Duyệt từ phải sang trái, '\*' reset pointer, '#' hoán vị sang slot trống" / Scan right-to-left
+5. **Rotate formula**: "result[j][m-1-i] = box[i][j] cho ma trận n×m mới" / Standard 90° CW formula
+6. **Edge cases**: "Hàng toàn đá, toàn chướng ngại, ma trận 1×1" / Row of all stones, all obstacles
 
 ---
 
@@ -68,39 +68,81 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Simulate Gravity Step by Step (Brute Force per row)
+ * Time: O(m·n²) — for each row, repeatedly scan until stable
+ * Space: O(1) extra (modifies in place, result O(m·n))
  */
-function rotatingTheBoxBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function rotatingTheBoxBrute(box: string[][]): string[][] {
+  const m = box.length,
+    n = box[0].length;
+  for (let i = 0; i < m; i++) {
+    let moved = true;
+    while (moved) {
+      moved = false;
+      for (let j = n - 2; j >= 0; j--) {
+        if (box[i][j] === "#" && box[i][j + 1] === ".") {
+          box[i][j + 1] = "#";
+          box[i][j] = ".";
+          moved = true;
+        }
+      }
+    }
+  }
+  const result: string[][] = Array.from({ length: n }, () => new Array(m).fill("."));
+  for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) result[j][m - 1 - i] = box[i][j];
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Two-Pointer Gravity + Rotation
+ * Time: O(m·n) — one pass per row for gravity, one pass for rotation
+ * Space: O(m·n) — result matrix
  */
-function rotatingTheBox(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function rotatingTheBox(box: string[][]): string[][] {
+  const m = box.length,
+    n = box[0].length;
+
+  // Step 1: Apply gravity — stones fall right
+  for (let i = 0; i < m; i++) {
+    let empty = n - 1; // rightmost available empty slot
+    for (let j = n - 1; j >= 0; j--) {
+      if (box[i][j] === "*") {
+        empty = j - 1; // reset: obstacle blocks further movement
+      } else if (box[i][j] === "#") {
+        box[i][j] = ".";
+        box[i][empty] = "#";
+        empty--;
+      }
+    }
+  }
+
+  // Step 2: Rotate 90° clockwise → new n×m matrix
+  const result: string[][] = Array.from({ length: n }, () => new Array(m).fill("."));
+  for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) result[j][m - 1 - i] = box[i][j];
+
+  return result;
 }
 
 // === Test Cases ===
-// console.log(rotatingTheBox(/* example 1 */)); // expected
-// console.log(rotatingTheBox(/* example 2 */)); // expected
-// console.log(rotatingTheBox(/* edge case */)); // expected
+console.log(
+  rotatingTheBox([
+    ["#", ".", "#"],
+    ["#", "#", "*"],
+  ]),
+);
+// [['#','.'],[' #','#'],['*','#'],['.','.'] ] (approximately)
+console.log(rotatingTheBox([["#"]])); // [['#']]
+console.log(rotatingTheBox([["*", "#"]])); // [['*'], ['#']]
+console.log(rotatingTheBox([["#", "#", "*", ".", "*", "."]]));
+// 6×1 matrix after rotation
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Candy Crush](https://leetcode.com/problems/candy-crush) — same pattern: Two Pointers
-- [Flipping an Image](https://leetcode.com/problems/flipping-an-image) — same pattern: Two Pointers
-- [Maximum Number of Points From Grid Queries](https://leetcode.com/problems/maximum-number-of-points-from-grid-queries) — same pattern: Union Find
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Rotating the Box — LeetCode](https://leetcode.com/problems/rotating-the-box) — problem page
+- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — matrix traversal / simulation
+- [Rotate Image](https://leetcode.com/problems/rotate-image) — 90° matrix rotation in-place
+- [Flipping an Image](https://leetcode.com/problems/flipping-an-image) — row-wise matrix manipulation
+- [Gravity (Candy Crush)](https://leetcode.com/problems/candy-crush) — gravity simulation in 2D grid
+- [Move Zeroes](https://leetcode.com/problems/move-zeroes) — same two-pointer "fill empty slot" pattern

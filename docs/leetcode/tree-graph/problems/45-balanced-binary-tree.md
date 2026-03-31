@@ -7,103 +7,150 @@ tags: [Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/balanced-binary-tree"
 ---
 
-# Balanced Binary Tree / Balanced Binary Tree
+# Balanced Binary Tree / Cây Nhị Phân Cân Bằng
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DFS
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DFS Post-order
 > **Frequency**: 📘 Tier 3 — Gặp ở 6 companies
-> **See also**: [Lowest Common Ancestor of a Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree) | [Same Tree](https://leetcode.com/problems/same-tree)
+> **See also**: [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree) | [Diameter of Binary Tree](https://leetcode.com/problems/diameter-of-binary-tree)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống đi trong mê cung — bạn đi sâu hết một ngõ, nếu cụt thì quay lại ngã rẽ gần nhất chưa thử.
+**Analogy:** Kiểm tra cân bằng như kiểm tra thăng bằng trên cân — bạn cần biết trọng lượng hai bên (chiều cao). Thay vì tính chiều cao riêng rồi so sánh (O(n²)), tính chiều cao VÀ kiểm tra cân bằng trong cùng 1 lần DFS.
 
 **Pattern Recognition:**
 
-- Signal: "traverse tree/graph" + "all paths" → **DFS**
-- Bài này thuộc dạng DFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "check property for all nodes in tree" + "depends on subtree result" → **DFS post-order với sentinel**
+- Brute: getHeight(node) gọi đệ quy nhiều lần → O(n log n)
+- Optimal: trả -1 như sentinel "không cân bằng" → O(n) một lần duyệt
 
-**Visual — Balanced Binary Tree example:**
+**Visual — Post-order DFS với sentinel:**
 
 ```
-       root
-      /    \
-     A      B
-    / \      \
-   C   D      E
+Tree:        [3, 9, 20, null, null, 15, 7]
+      3
+     / \
+    9  20
+       / \
+      15   7
 
-DFS: root → A → C → D → B → E
-Use: recursion or explicit stack
+dfs(9)  → height=1 (leaf)
+dfs(15) → height=1 (leaf)
+dfs(7)  → height=1 (leaf)
+dfs(20) → |1-1|=0 ≤ 1 → height=2
+dfs(3)  → |1-2|=1 ≤ 1 → height=3 ✅ balanced
+
+Unbalanced: dfs returns -1 → propagates up immediately
 ```
 
 ---
 
 ## Problem Description
 
-Balanced Binary Tree. ([LeetCode](https://leetcode.com/problems/balanced-binary-tree))
+Cho một cây nhị phân, xác định xem nó có **height-balanced** không — tức là với MỌI node, chiều cao của cây con trái và phải chênh lệch không quá 1. ([LeetCode](https://leetcode.com/problems/balanced-binary-tree))
 
-Difficulty: Easy | Acceptance: 55.3%
+**Example 1:** root = [3,9,20,null,null,15,7] → `true`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** root = [1,2,2,3,3,null,null,4,4] → `false` (node 2 có height(left)=2, height(right)=0)
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/balanced-binary-tree) for full constraints
+Constraints: `0 <= n <= 5000`, `-10^4 <= val <= 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Height-balanced nghĩa là mỗi node, hay chỉ root?" / Height-balanced means EVERY node, not just root
+2. **Brute force**: "Tính height từng node riêng → O(n log n)" → combine → O(n) / Separate height calls vs combined DFS
+3. **Sentinel**: "Dùng -1 làm tín hiệu 'already unbalanced'" / Return -1 as sentinel to short-circuit early
+4. **Post-order**: "Xử lý con trước cha — post-order" / Process children before parent = post-order traversal
+5. **Edge cases**: "Cây rỗng là balanced; cây 1 node là balanced" / Empty tree and single node are balanced
+6. **Follow-up**: "Làm sao chuyển unbalanced tree thành balanced?" / How to rebalance? → sorted inorder → BST construction
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function balancedBinaryTreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — DFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — compute height separately per node
+ * Time: O(n log n) — O(n) per node, O(log n) levels
+ * Space: O(h) — recursion stack
  */
-function balancedBinaryTree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using DFS
-  // Hint: Use recursion or stack, track visited nodes
-  throw new Error('Not implemented');
+function isBalancedBrute(root: TreeNode | null): boolean {
+  function height(node: TreeNode | null): number {
+    if (!node) return 0;
+    return 1 + Math.max(height(node.left), height(node.right));
+  }
+  if (!root) return true;
+  const lh = height(root.left),
+    rh = height(root.right);
+  return Math.abs(lh - rh) <= 1 && isBalancedBrute(root.left) && isBalancedBrute(root.right);
+}
+
+/**
+ * Solution 2: Optimal — DFS post-order with sentinel (-1 = unbalanced)
+ * Time: O(n) — each node visited once
+ * Space: O(h) — recursion stack, O(log n) balanced / O(n) worst
+ */
+function isBalanced(root: TreeNode | null): boolean {
+  // Returns height if balanced, -1 if unbalanced
+  function dfs(node: TreeNode | null): number {
+    if (!node) return 0;
+    const left = dfs(node.left);
+    if (left === -1) return -1; // early exit
+    const right = dfs(node.right);
+    if (right === -1) return -1; // early exit
+    if (Math.abs(left - right) > 1) return -1; // current node unbalanced
+    return Math.max(left, right) + 1;
+  }
+  return dfs(root) !== -1;
 }
 
 // === Test Cases ===
-// console.log(balancedBinaryTree(/* example 1 */)); // expected
-// console.log(balancedBinaryTree(/* example 2 */)); // expected
-// console.log(balancedBinaryTree(/* edge case */)); // expected
+function build(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length || vals[0] == null) return null;
+  const root = new TreeNode(vals[0]!);
+  const q = [root];
+  let i = 1;
+  while (i < vals.length) {
+    const node = q.shift()!;
+    if (i < vals.length && vals[i] != null) {
+      node.left = new TreeNode(vals[i]!);
+      q.push(node.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] != null) {
+      node.right = new TreeNode(vals[i]!);
+      q.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+
+console.log(isBalanced(build([3, 9, 20, null, null, 15, 7]))); // true
+console.log(isBalanced(build([1, 2, 2, 3, 3, null, null, 4, 4]))); // false
+console.log(isBalanced(null)); // true (empty tree)
+console.log(isBalanced(build([1, 2, null, 3, null, 4]))); // false (left-skewed)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Lowest Common Ancestor of a Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree) — same pattern: DFS
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [Balanced Binary Tree — LeetCode](https://leetcode.com/problems/balanced-binary-tree) — problem page
+- [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree) — sub-problem: compute height with DFS
+- [Diameter of Binary Tree](https://leetcode.com/problems/diameter-of-binary-tree) — cùng pattern post-order DFS với thông tin từ subtree
+- [Minimum Depth of Binary Tree](https://leetcode.com/problems/minimum-depth-of-binary-tree) — BFS/DFS tìm min depth
+- [Convert Sorted Array to Binary Search Tree](https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree) — build balanced BST

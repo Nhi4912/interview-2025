@@ -7,57 +7,60 @@ tags: [Array, Hash Table, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/subarray-sums-divisible-by-k"
 ---
 
-# Subarray Sums Divisible by K / Subarray Sums Divisible by K
+# Subarray Sums Divisible by K / Tổng Mảng Con Chia Hết Cho K
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum + Modular Arithmetic
 > **Frequency**: 📘 Tier 3 — Gặp ở 4 companies
-> **See also**: [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) | [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+**Analogy:** Giống đồng hồ — nếu hai cây kim đồng hồ ở cùng vị trí giờ (dù khác vòng), thì khoảng thời gian giữa chúng chia hết cho 12. Tương tự: nếu prefix[i] % k == prefix[j] % k, thì sum(i+1..j) % k == 0.
 
 **Pattern Recognition:**
 
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count subarrays with sum divisible by k" → **Prefix Sum + Frequency Map by Remainder**
+- Công thức: `(prefix[j] - prefix[i]) % k == 0 ↔ prefix[j] % k == prefix[i] % k`
+- Key insight: đếm cặp (i,j) cùng số dư → dùng freq array size k, không cần HashMap
 
-**Visual — Subarray Sums Divisible by K example:**
+**Visual — Remainder Frequency:**
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+nums=[4,5,0,-2,-3,1], k=5
+Remainders of prefix sums (mod 5):
+idx: -1  0  1  2  3  4  5
+rem:  0   4  4  4  2  4  0
+
+freq[0]=2: C(2,2)=1 pair  → 1 subarray
+freq[4]=4: C(4,2)=6 pairs → 6 subarrays
+freq[2]=1: 0 pairs
+Total = 7 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Subarray Sums Divisible by K. ([LeetCode](https://leetcode.com/problems/subarray-sums-divisible-by-k))
+Given integer array `nums` and integer `k`, return the number of non-empty subarrays with sum divisible by `k`. ([LeetCode](https://leetcode.com/problems/subarray-sums-divisible-by-k))
 
 Difficulty: Medium | Acceptance: 55.6%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Example 1: `nums=[4,5,0,-2,-3,1], k=5` → `7`
+- Example 2: `nums=[5], k=9` → `0`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/subarray-sums-divisible-by-k) for full constraints
+Constraints: `1 ≤ nums.length ≤ 3×10^4`, `-10^4 ≤ nums[i] ≤ 10^4`, `2 ≤ k ≤ 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "nums có thể âm không? k dương không?" / Confirm nums can be negative, k is positive
+2. **Brute force**: "2 vòng for kiểm tra mọi subarray O(n²)" / Check all pairs O(n²)
+3. **Key theorem**: "prefix[j]%k == prefix[i]%k → sum(i+1..j) % k == 0" / Same remainder means divisible difference
+4. **Negative mod**: "Dùng `((sum%k)+k)%k` để đảm bảo số dư không âm" / Always non-negative remainder for negative sums
+5. **Counting**: "freq[r]++ trước hay sau? Initialize freq[0]=1 cho subarray bắt đầu từ 0" / Initialize freq[0]=1 for subarrays starting at index 0
+6. **Follow-up**: "Subarray sum bằng đúng k (không phải chia hết) → dùng HashMap thông thường" / For exact k: standard prefix sum HashMap
 
 ---
 
@@ -65,39 +68,64 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — check all subarrays
+ * Time: O(n²) — all pairs
+ * Space: O(1) — running sum
  */
-function subarraySumsDivisibleByKBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function subarraysDivByKBrute(nums: number[], k: number): number {
+  const n = nums.length;
+  let count = 0;
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    for (let j = i; j < n; j++) {
+      sum += nums[j];
+      if (sum % k === 0) count++;
+    }
+  }
+  return count;
 }
 
 /**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Prefix Sum + Remainder Frequency Array
+ * Time: O(n+k) — single pass + initialize freq array
+ * Space: O(k) — frequency array of size k
+ *
+ * Key: if prefix[i] % k == prefix[j] % k, then sum[i..j] is divisible by k.
+ * Count pairs with same remainder using frequency array.
  */
-function subarraySumsDivisibleByK(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+function subarraysDivByK(nums: number[], k: number): number {
+  // freq[r] = number of prefix sums seen so far with remainder r
+  const freq = new Array(k).fill(0);
+  freq[0] = 1; // empty prefix sum has remainder 0
+
+  let sum = 0;
+  let count = 0;
+
+  for (const num of nums) {
+    sum += num;
+    // Normalize to non-negative remainder (handles negative numbers)
+    const rem = ((sum % k) + k) % k;
+    // Each previous prefix with same remainder forms a valid subarray
+    count += freq[rem];
+    freq[rem]++;
+  }
+
+  return count;
 }
 
 // === Test Cases ===
-// console.log(subarraySumsDivisibleByK(/* example 1 */)); // expected
-// console.log(subarraySumsDivisibleByK(/* example 2 */)); // expected
-// console.log(subarraySumsDivisibleByK(/* edge case */)); // expected
+console.log(subarraysDivByK([4, 5, 0, -2, -3, 1], 5)); // 7
+console.log(subarraysDivByK([5], 9)); // 0
+console.log(subarraysDivByK([1, 2, 3], 3)); // 3 ([3],[1,2],[1,2,3])
+console.log(subarraysDivByK([-1, 2, 9], 2)); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom) — same pattern: Prefix Sum
-- [Maximum Good Subarray Sum](https://leetcode.com/problems/maximum-good-subarray-sum) — same pattern: Prefix Sum
-- [Count Subarrays With Median K](https://leetcode.com/problems/count-subarrays-with-median-k) — same pattern: Prefix Sum
-- [Subarray Sums Divisible by K — LeetCode](https://leetcode.com/problems/subarray-sums-divisible-by-k) — problem page
+- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — prefix sum + HashMap (exact sum)
+- [Continuous Subarray Sum](https://leetcode.com/problems/continuous-subarray-sum) — same divisibility trick with length constraint
+- [Find the Longest Subarray by Sum](https://leetcode.com/problems/find-the-longest-subarray-by-sum) — prefix sum for subarray length
+- [Make Sum Divisible by P](https://leetcode.com/problems/make-sum-divisible-by-p) — remove smallest subarray to make divisible
+- [Number of Wonderful Substrings](https://leetcode.com/problems/number-of-wonderful-substrings) — prefix XOR + frequency (same pattern, different op)

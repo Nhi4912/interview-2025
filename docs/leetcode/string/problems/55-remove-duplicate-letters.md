@@ -7,9 +7,9 @@ tags: [String, Stack, Greedy, Monotonic Stack]
 leetcode_url: "https://leetcode.com/problems/remove-duplicate-letters"
 ---
 
-# Remove Duplicate Letters / Remove Duplicate Letters
+# Remove Duplicate Letters / Xóa Ký Tự Trùng Lặp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack + Greedy
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
 > **See also**: [Remove K Digits](https://leetcode.com/problems/remove-k-digits) | [Smallest Subsequence of Distinct Characters](https://leetcode.com/problems/smallest-subsequence-of-distinct-characters)
 
@@ -17,53 +17,55 @@ leetcode_url: "https://leetcode.com/problems/remove-duplicate-letters"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống dãy núi — giữ stack luôn đơn điệu (tăng hoặc giảm). Khi gặp phần tử phá vỡ tính đơn điệu, ta biết ngay đáp án cho các phần tử trước đó.
+**Analogy:** Giống xếp hàng chờ — nếu người đứng trước (ký tự lớn hơn) mà còn có thể xuất hiện lại phía sau, ta đuổi họ ra khỏi hàng và để người nhỏ hơn lên trước.
 
 **Pattern Recognition:**
 
-- Signal: "next greater/smaller element" → **Monotonic Stack**
-- Bài này thuộc dạng Monotonic Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "lexicographically smallest subsequence" + "each char appears exactly once" → **Greedy + Monotonic Stack**
+- Ba điều kiện để pop stack: (1) stack.top > current, (2) current chưa trong stack, (3) stack.top còn xuất hiện sau
+- Key insight: `lastIndex` map cho biết ký tự có còn cơ hội xuất hiện không
 
-**Visual — Remove Duplicate Letters example:**
+**Visual — s="bcabc":**
 
 ```
-arr = [2, 1, 5, 6, 2, 3]
-stack (indices): []
+lastIdx: b=3, c=4, a=2
+inStack: {}
 
-i=0: push 0         stack=[0]          (vals: [2])
-i=1: 1<2 → push     stack=[0,1]        (vals: [2,1])
-i=2: 5>1 → pop, process; 5>2 → pop, process
-     push           stack=[2]          (vals: [5])
-...
+i=0 'b': stack=[]  → push b     stack=[b]  inStack={b}
+i=1 'c': b<c       → push c     stack=[b,c]
+i=2 'a': c>a & lastIdx[c]=4>2 → pop c
+         b>a & lastIdx[b]=3>2 → pop b
+         push a  stack=[a]  inStack={a}
+i=3 'b': a<b → push b  stack=[a,b]
+i=4 'c': b<c → push c  stack=[a,b,c]
+
+Result: "abc" ✅
 ```
 
 ---
 
 ## Problem Description
 
-Remove Duplicate Letters. ([LeetCode](https://leetcode.com/problems/remove-duplicate-letters))
-
-Difficulty: Medium | Acceptance: 51.4%
+Given string `s`, remove duplicate letters so that every letter appears once. Return the result that is the **smallest in lexicographical order** among all possible results.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: s="bcabc"  → "abc"
+Example 2: s="cbacdcbc" → "acdb"
+Example 3: s="abcd"   → "abcd"  (already unique)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-duplicate-letters) for full constraints
+Constraints: `1 <= s.length <= 10^4`, `s` contains lowercase English letters only.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Kết quả là subsequence (không phải substring)? Mỗi ký tự đúng một lần?" / Result is subsequence, each char exactly once
+2. **Brute force**: "Generate all subsequences, filter unique, sort" → O(2^n) không khả thi / Exponential, not viable
+3. **Optimize**: "Greedy stack — pop lớn hơn nếu còn cơ hội sau; không pop nếu ký tự đã trong stack" / Three conditions to pop
+4. **Edge cases**: "Chuỗi đã sorted tăng dần, giảm dần, tất cả giống nhau" / Already sorted, reverse-sorted, all same
+5. **Follow-up**: "Smallest K-length subsequence" — tương tự nhưng cần đủ k ký tự / Generalization with length constraint
+6. **Complexity**: "O(n) vì mỗi ký tự push/pop nhiều nhất một lần, 26 ký tự distinct" / O(n) amortized
 
 ---
 
@@ -71,39 +73,66 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — try all unique-char subsequences
+ * Time: O(2^n) — exponential, impractical
+ * Space: O(n)
  */
-function removeDuplicateLettersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeDuplicateLettersBrute(s: string): string {
+  const chars = [...new Set(s)].sort();
+  if (chars.length === s.length) return s; // already unique
+  for (const c of chars) {
+    const idx = s.indexOf(c);
+    const rest = removeDuplicateLettersBrute(s.slice(idx).replace(new RegExp(c, "g"), ""));
+    return c + rest;
+  }
+  return "";
 }
 
 /**
- * Solution 2: Optimized — Monotonic Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Greedy + Monotonic Stack
+ * Time: O(n) — single pass, each char pushed/popped at most once
+ * Space: O(26) = O(1) — stack and maps bounded by alphabet size
  */
-function removeDuplicateLetters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Monotonic Stack
-  // Hint: Maintain monotonic property, pop when new element breaks it
-  throw new Error('Not implemented');
+function removeDuplicateLetters(s: string): string {
+  // Last occurrence index for each character
+  const lastIndex = new Map<string, number>();
+  for (let i = 0; i < s.length; i++) lastIndex.set(s[i], i);
+
+  const stack: string[] = [];
+  const inStack = new Set<string>();
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStack.has(c)) continue; // already included, skip
+
+    // Pop larger chars that still appear later in s
+    while (
+      stack.length > 0 &&
+      stack[stack.length - 1] > c &&
+      lastIndex.get(stack[stack.length - 1])! > i
+    ) {
+      inStack.delete(stack.pop()!);
+    }
+
+    stack.push(c);
+    inStack.add(c);
+  }
+
+  return stack.join("");
 }
 
 // === Test Cases ===
-// console.log(removeDuplicateLetters(/* example 1 */)); // expected
-// console.log(removeDuplicateLetters(/* example 2 */)); // expected
-// console.log(removeDuplicateLetters(/* edge case */)); // expected
+console.log(removeDuplicateLetters("bcabc")); // "abc"
+console.log(removeDuplicateLetters("cbacdcbc")); // "acdb"
+console.log(removeDuplicateLetters("abcd")); // "abcd"
+console.log(removeDuplicateLetters("bbcaac")); // "bac"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Smallest Subsequence of Distinct Characters](https://leetcode.com/problems/smallest-subsequence-of-distinct-characters) — same pattern: Monotonic Stack
-- [Smallest K-Length Subsequence With Occurrences of a Letter](https://leetcode.com/problems/smallest-k-length-subsequence-with-occurrences-of-a-letter) — same pattern: Monotonic Stack
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Remove Duplicate Letters — LeetCode](https://leetcode.com/problems/remove-duplicate-letters) — problem page
+- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same monotonic stack, remove exactly k digits
+- [Smallest Subsequence of Distinct Characters](https://leetcode.com/problems/smallest-subsequence-of-distinct-characters) — identical problem, different title
+- [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram) — monotonic stack foundation
+- [Daily Temperatures](https://leetcode.com/problems/daily-temperatures) — monotonic stack for next-greater pattern
