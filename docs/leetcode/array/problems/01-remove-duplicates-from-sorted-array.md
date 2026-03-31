@@ -58,12 +58,12 @@ Input:  [1]                        → k=1,  nums=[1]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Two Pointers — Optimal
 - Time: O(n) | Space: O(1)
-  \*/
+  */
   function removeDuplicates(nums: number[]): number {
   if (nums.length === 0) return 0;
 
@@ -79,11 +79,11 @@ nums[slow] = nums[fast];
 return slow + 1;
 }
 
-/\*\*
+/**
 
 - Solution 2: Set — Brute Force (O(n) space, interview contrast only)
 - Time: O(n) | Space: O(n)
-  \*/
+  */
   function removeDuplicatesBrute(nums: number[]): number {
   const unique = [...new Set(nums)];
   for (let i = 0; i < unique.length; i++) nums[i] = unique[i];
@@ -95,7 +95,7 @@ const a1 = [1, 1, 2]; console.log(removeDuplicates(a1) === 2); // true
 const a2 = [0,0,1,1,1,2,2,3,3,4]; console.log(removeDuplicates(a2) === 5); // true
 console.log(removeDuplicates([]) === 0); // true
 console.log(removeDuplicates([1, 2, 3]) === 3); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

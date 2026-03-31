@@ -63,7 +63,7 @@ Example 3: nums = [3,3], target = 6 → [0,1]
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Solution 1: Hash Map — O(n) time, O(n) space ← OPTIMAL for unsorted
 function twoSum(nums: number[], target: number): number[] {
 const map = new Map<number, number>(); // complement → index
@@ -91,7 +91,7 @@ if (nums[i] + nums[j] === target) return [i, j];
 }
 return [];
 }
-{% endraw %}
+```
 
 ---
 

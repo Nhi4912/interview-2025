@@ -70,8 +70,8 @@ Constraints: `-100.0 < x < 100.0`, `-2^31 <= n <= 2^31-1`
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Naive Loop (Brute Force)
 - Time O(n), Space O(1) — TLE for large n
@@ -84,14 +84,14 @@ Constraints: `-100.0 < x < 100.0`, `-2^31 <= n <= 2^31-1`
   return n < 0 ? 1 / result : result;
   }
 
-/\*\*
+/**
 
 - Solution 2: Fast Exponentiation — Iterative (Optimal)
 - Time O(log n), Space O(1)
 -
 - Process each bit of n. When the bit is 1, multiply result
 - by current base. Always square the base for next bit.
-  \*/
+  */
   function myPow(x: number, n: number): number {
   if (n === 0) return 1;
 
@@ -113,7 +113,7 @@ console.log(Math.abs(myPow(2.0, 10) - 1024.0) < 1e-5); // true
 console.log(Math.abs(myPow(2.1, 3) - 9.261) < 1e-3); // true
 console.log(Math.abs(myPow(2.0, -2) - 0.25) < 1e-5); // true
 console.log(myPow(1.0, 2147483647) === 1.0); // true
-{% endraw %}
+```
 
 ---
 

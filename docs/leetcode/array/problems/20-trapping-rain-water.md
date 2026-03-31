@@ -66,14 +66,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force — scan left/right for each position
 - Time: O(n²) — for each of n positions, scan O(n) in each direction
 - Space: O(1)
-  \*/
+  */
   function trapBrute(height: number[]): number {
   let total = 0;
 
@@ -91,14 +91,14 @@ for (let j = 0; j < i; j++) leftMax = Math.max(leftMax, height[j]);
 return total;
 }
 
-/\*\*
+/**
 
 - Solution 2: DP — precompute leftMax and rightMax arrays
 - Time: O(n) — three linear passes
 - Space: O(n) — two auxiliary arrays
 -
 - Good stepping stone: easy to explain before jumping to two pointers.
-  \*/
+  */
   function trapDP(height: number[]): number {
   const n = height.length;
   const leftMax = new Array(n);
@@ -118,7 +118,7 @@ total += Math.max(0, Math.min(leftMax[i], rightMax[i]) - height[i]);
 return total;
 }
 
-/\*\*
+/**
 
 - Solution 3: Two Pointers (Optimal — O(1) space)
 - Time: O(n) — single pass
@@ -127,7 +127,7 @@ return total;
 - Key insight: if height[left] < height[right], we know leftMax < rightMax
 - so water at left = leftMax - height[left] (rightMax doesn't matter, it's ≥ leftMax).
 - Process whichever side has the smaller running max.
-  \*/
+  */
   function trap(height: number[]): number {
   let left = 0;
   let right = height.length - 1;
@@ -162,7 +162,7 @@ console.log(trap([4, 2, 0, 3, 2, 5])); // 9
 console.log(trap([3, 0, 2, 0, 4])); // 7
 console.log(trap([1, 0, 1])); // 1
 
-{% endraw %}
+```
 
 ---
 

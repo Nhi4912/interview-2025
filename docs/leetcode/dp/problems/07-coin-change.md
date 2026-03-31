@@ -65,8 +65,8 @@ Example 3: coins = [1],     amount = 0  → 0
 
 ## Solutions
 
-{% raw %}
-// Solution 1: Bottom-Up DP — O(n \* amount) time, O(amount) space ← OPTIMAL
+```typescript
+// Solution 1: Bottom-Up DP — O(n * amount) time, O(amount) space ← OPTIMAL
 function coinChange(coins: number[], amount: number): number {
 const dp = new Array(amount + 1).fill(Infinity);
 dp[0] = 0;
@@ -82,7 +82,7 @@ dp[i] = dp[i - coin] + 1;
 return dp[amount] === Infinity ? -1 : dp[amount];
 }
 
-// Solution 2: Top-Down Memoization — O(n \* amount) time, O(amount) space
+// Solution 2: Top-Down Memoization — O(n * amount) time, O(amount) space
 function coinChangeMemo(coins: number[], amount: number): number {
 const memo = new Map<number, number>();
 
@@ -105,7 +105,7 @@ if (memo.has(target)) return memo.get(target)!;
 
 return dp(amount);
 }
-{% endraw %}
+```
 
 ---
 

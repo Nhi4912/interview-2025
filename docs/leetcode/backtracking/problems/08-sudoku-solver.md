@@ -54,8 +54,8 @@ Output: board filled in-place with valid solution (guaranteed unique)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Basic Backtracking (isValid scan)
 - Validate by scanning entire row/col/box on each attempt
@@ -67,7 +67,7 @@ Output: board filled in-place with valid solution (guaranteed unique)
   if (board[r][i] === num) return false; // row check
   if (board[i][c] === num) return false; // col check
   const br = Math.floor(r / 3) _ 3 + Math.floor(i / 3);
-  const bc = Math.floor(c / 3) \* 3 + (i % 3);
+  const bc = Math.floor(c / 3) * 3 + (i % 3);
   if (board[br][bc] === num) return false; // box check
   }
   return true;
@@ -94,12 +94,12 @@ return true; // no empty cells left — solved!
 backtrack();
 }
 
-/\*\*
+/**
 
 - Solution 2 — Backtracking + Constraint Sets ✅ Recommended
 - Precompute sets for O(1) validity check; much faster in practice
 - Time: O(9^empty_cells) | Space: O(81) for sets
-  \*/
+  */
   function solveSudokuSets(board: string[][]): void {
   const rows = Array.from({ length: 9 }, () => new Set<string>());
   const cols = Array.from({ length: 9 }, () => new Set<string>());
@@ -110,19 +110,19 @@ for (let r = 0; r < 9; r++) {
 for (let c = 0; c < 9; c++) {
 if (board[r][c] === '.') continue;
 const num = board[r][c];
-const box = Math.floor(r / 3) \* 3 + Math.floor(c / 3);
+const box = Math.floor(r / 3) * 3 + Math.floor(c / 3);
 rows[r].add(num); cols[c].add(num); boxes[box].add(num);
 }
 }
 
 function place(r: number, c: number, num: string): void {
-const box = Math.floor(r / 3) \* 3 + Math.floor(c / 3);
+const box = Math.floor(r / 3) * 3 + Math.floor(c / 3);
 board[r][c] = num;
 rows[r].add(num); cols[c].add(num); boxes[box].add(num);
 }
 
 function remove(r: number, c: number, num: string): void {
-const box = Math.floor(r / 3) \* 3 + Math.floor(c / 3);
+const box = Math.floor(r / 3) * 3 + Math.floor(c / 3);
 board[r][c] = '.';
 rows[r].delete(num); cols[c].delete(num); boxes[box].delete(num);
 }
@@ -131,7 +131,7 @@ function backtrack(): boolean {
 for (let r = 0; r < 9; r++) {
 for (let c = 0; c < 9; c++) {
 if (board[r][c] !== '.') continue;
-const box = Math.floor(r / 3) \* 3 + Math.floor(c / 3);
+const box = Math.floor(r / 3) * 3 + Math.floor(c / 3);
 for (let d = 1; d <= 9; d++) {
 const num = String(d);
 if (rows[r].has(num) || cols[c].has(num) || boxes[box].has(num)) continue;
@@ -155,7 +155,7 @@ backtrack();
 // ];
 // solveSudokuSets(board);
 // board[0][2] → "4" board[0][5] → "8" board[4][4] → "5"
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

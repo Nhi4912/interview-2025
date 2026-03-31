@@ -80,19 +80,19 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 interface ListNode {
 val: number;
 next: ListNode | null;
 }
 
-/\*\*
+/**
 
 - Solution 1: Recursive (Brute Force style)
 - Time: O(n + m) — visit each node once
 - Space: O(n + m) — recursion call stack depth equals total nodes
-  \*/
+  */
   function mergeTwoListsRecursive(
   list1: ListNode | null,
   list2: ListNode | null
@@ -109,12 +109,12 @@ return list2;
 }
 }
 
-/\*\*
+/**
 
 - Solution 2: Iterative with Dummy Node (Optimal)
 - Time: O(n + m) — single pass through both lists
 - Space: O(1) — only dummy node + one tail pointer
-  \*/
+  */
   function mergeTwoLists(
   list1: ListNode | null,
   list2: ListNode | null
@@ -143,7 +143,7 @@ const l2: ListNode = { val: 1, next: { val: 3, next: { val: 4, next: null } } };
 console.log(mergeTwoLists(l1, l2)); // 1→1→2→3→4→4
 console.log(mergeTwoLists(null, null)); // null
 
-{% endraw %}
+```
 
 ---
 

@@ -59,8 +59,8 @@ Chuỗi count-and-say được định nghĩa đệ quy: `countAndSay(1) = "1"`,
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Iterative Scan — Optimal
 - Xây dựng từng bước từ n=1 đến n. Trong mỗi bước, quét chuỗi hiện tại
@@ -68,7 +68,7 @@ Chuỗi count-and-say được định nghĩa đệ quy: `countAndSay(1) = "1"`,
 -
 - @time O(n · L) where L = độ dài chuỗi ở bước n (tăng theo hàm mũ, max ~2^n)
 - @space O(L) — lưu chuỗi hiện tại và chuỗi tiếp theo
-  \*/
+  */
   function countAndSay(n: number): string {
   let s = "1";
 
@@ -97,7 +97,7 @@ return s;
 // countAndSay(4) → "1211"
 // countAndSay(5) → "111221"
 
-/\*\*
+/**
 
 - Solution 2: Regex Replace — Concise (tốt cho whiteboard)
 - Regex `(.)\1*` khớp mỗi nhóm ký tự giống nhau liên tiếp.
@@ -118,7 +118,7 @@ return s;
 // countAndSayRegex(3) → "21"
 // countAndSayRegex(6) → "312211"
 // countAndSayRegex(7) → "13112221"
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

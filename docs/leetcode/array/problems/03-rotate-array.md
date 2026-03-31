@@ -59,12 +59,12 @@ Input:  [1,2,3],         k=4    → [2,3,1]   (k%n=1)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Triple Reverse — Optimal (in-place)
 - Time: O(n) | Space: O(1)
-  \*/
+  */
   function rotate(nums: number[], k: number): void {
   const n = nums.length;
   k %= n;
@@ -82,11 +82,11 @@ reverse(0, k - 1); // reverse first k
 reverse(k, n - 1); // reverse last n-k
 }
 
-/\*\*
+/**
 
 - Solution 2: Extra Array — Simple (O(n) space, good as brute force mention)
 - Time: O(n) | Space: O(n)
-  \*/
+  */
   function rotateBrute(nums: number[], k: number): void {
   const n = nums.length;
   k %= n;
@@ -102,7 +102,7 @@ const r1 = [1,2,3,4,5,6,7]; rotate(r1, 3); console.log(JSON.stringify(r1) === '[
 const r2 = [-1,-100,3,99]; rotate(r2, 2); console.log(JSON.stringify(r2) === '[3,99,-1,-100]'); // true
 const r3 = [1,2,3]; rotate(r3, 4); console.log(JSON.stringify(r3) === '[3,1,2]'); // true
 const r4 = [1]; rotate(r4, 5); console.log(JSON.stringify(r4) === '[1]'); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

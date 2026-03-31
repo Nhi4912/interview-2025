@@ -68,7 +68,7 @@ Example 3: root = []                       → []
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Note: TreeNode class is provided by LeetCode environment
 
 // Solution 1: BFS + Post-level Reverse (Cleanest — interview standard)
@@ -128,7 +128,7 @@ console.log(JSON.stringify(zigzagLevelOrder(t1))); // [[3],[20,9],[15,7]] ✅
 console.log(JSON.stringify(zigzagLevelOrderDeque(t1))); // [[3],[20,9],[15,7]] ✅
 console.log(JSON.stringify(zigzagLevelOrder(null))); // [] ✅
 console.log(JSON.stringify(zigzagLevelOrder(new TreeNode(1)))); // [[1]] ✅
-{% endraw %}
+```
 
 ---
 

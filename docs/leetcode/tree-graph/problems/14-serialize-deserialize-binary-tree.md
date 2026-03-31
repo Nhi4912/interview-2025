@@ -82,7 +82,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 interface TreeNode {
 val: number;
@@ -91,12 +91,12 @@ right: TreeNode | null;
 }
 const newNode = (val: number): TreeNode => ({ val, left: null, right: null });
 
-/\*\*
+/**
 
 - Solution 1: Preorder DFS (Classic — simplest to implement)
 - Time: O(n) — visit each node once each direction
 - Space: O(n) — serialized array + O(h) recursion stack
-  \*/
+  */
   function serialize(root: TreeNode | null): string {
   const parts: string[] = [];
   function dfs(node: TreeNode | null): void {
@@ -122,12 +122,12 @@ return node;
 return build();
 }
 
-/\*\*
+/**
 
 - Solution 2: BFS Level-Order (Matches LeetCode's array format)
 - Time: O(n) — single BFS pass each direction
 - Space: O(n) — queue + serialized output
-  \*/
+  */
   function serializeBFS(root: TreeNode | null): string {
   if (!root) return "";
   const parts: string[] = [];
@@ -167,7 +167,7 @@ console.log(serialize(null)); // "null"
 console.log(serializeBFS(t1)); // "1,2,3,null,null,4,5"
 // Round-trip: deserialize(serialize(t1)) should reconstruct t1 exactly
 
-{% endraw %}
+```
 
 ---
 

@@ -79,14 +79,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Queue (Brute Force — clear interview starting point)
 - Time: O(1) hit, O(n) getHits amortized — each ts evicted at most once
 - Space: O(n) — stores every hit timestamp
-  \*/
+  */
   class HitCounterQueue {
   private queue: number[] = [];
 
@@ -103,12 +103,12 @@ return this.queue.length;
 }
 }
 
-/\*\*
+/**
 
 - Solution 2: Circular Buffer (Optimal)
 - Time: O(1) hit, O(300) = O(1) getHits — fixed loop
 - Space: O(300) = O(1) — independent of total hit count
-  \*/
+  */
   class HitCounter {
   private timestamps = new Array(300).fill(0);
   private counts = new Array(300).fill(0);
@@ -142,7 +142,7 @@ hc.hit(300);
 console.log(hc.getHits(300)); // 4
 console.log(hc.getHits(301)); // 3 (timestamp 1 is now expired)
 
-{% endraw %}
+```
 
 ---
 

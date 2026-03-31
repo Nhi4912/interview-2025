@@ -78,7 +78,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 class TreeNode {
 constructor(
@@ -88,12 +88,12 @@ public right: TreeNode | null = null
 ) {}
 }
 
-/\*\*
+/**
 
 - Solution 1: Recursive Inorder → Array (Brute Force)
 - Time: O(n) — visits all nodes regardless of k
 - Space: O(n) — stores all values in array
-  \*/
+  */
   function kthSmallestBrute(root: TreeNode | null, k: number): number {
   const vals: number[] = [];
 
@@ -108,12 +108,12 @@ inorder(root);
 return vals[k - 1];
 }
 
-/\*\*
+/**
 
 - Solution 2: Iterative Inorder with Early Stop (Optimal)
 - Time: O(h + k) — h = tree height; stops exactly at kth element
 - Space: O(h) — stack holds at most h nodes (not all n)
-  \*/
+  */
   function kthSmallest(root: TreeNode | null, k: number): number {
   const stack: TreeNode[] = [];
   let curr = root;
@@ -142,7 +142,7 @@ console.log(kthSmallest(root, 1)); // 1
 console.log(kthSmallest(new TreeNode(1), 1)); // 1
 console.log(kthSmallest(new TreeNode(3, new TreeNode(1), new TreeNode(4)), 2)); // 3
 
-{% endraw %}
+```
 
 ---
 

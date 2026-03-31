@@ -66,14 +66,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Sort + Merge into result array (Standard)
 - Time: O(n log n) — dominated by sort; merge scan is O(n)
 - Space: O(n) — result array (output space, usually not counted)
-  \*/
+  */
   function merge(intervals: number[][]): number[][] {
   if (intervals.length <= 1) return intervals;
 
@@ -98,12 +98,12 @@ const last = result[result.length - 1];
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Sort + In-place merge with write pointer (Optimal, O(1) extra)
 - Time: O(n log n) — same as above
 - Space: O(1) extra — modifies input in-place, write pointer compacts result
-  \*/
+  */
   function mergeInPlace(intervals: number[][]): number[][] {
   if (intervals.length <= 1) return intervals;
 
@@ -129,7 +129,7 @@ console.log(JSON.stringify(merge([[1,4],[4,5]]))); // [[1,5]]
 console.log(JSON.stringify(merge([[1,4],[2,3]]))); // [[1,4]] (nested)
 console.log(JSON.stringify(mergeInPlace([[2,3],[4,5],[6,7],[8,9],[1,10]]))); // [[1,10]]
 
-{% endraw %}
+```
 
 ---
 

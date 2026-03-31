@@ -60,13 +60,13 @@ Input: haystack = "a",       needle = ""    → Output: 0
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Brute: Naive Sliding Window
 - Time: O(n × m) Space: O(1)
 - For each position, check if needle starts there. Fast enough for most inputs.
-  \*/
+  */
   function strStrBrute(haystack: string, needle: string): number {
   if (needle === "") return 0;
 
@@ -82,14 +82,14 @@ if (j === m) return i;
 return -1;
 }
 
-/\*\*
+/**
 
 - Solution 2 — Optimal: KMP (Knuth-Morris-Pratt)
 - Time: O(n + m) Space: O(m) — for the LPS (failure function) array
 -
 - Key insight: when mismatch at j, don't reset j to 0.
 - Use lps[j-1] to skip already-matched prefix.
-  \*/
+  */
   function strStr(haystack: string, needle: string): number {
   if (needle === "") return 0;
 
@@ -135,7 +135,7 @@ console.assert(strStr("hello", "ll") === 2, "basic: expected 2");
 console.assert(strStr("aaaaa", "bba") === -1, "no match: expected -1");
 console.assert(strStr("sadbutsad", "sad") === 0, "first occurrence: expected 0");
 console.assert(strStr("a", "") === 0, "empty needle: expected 0");
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

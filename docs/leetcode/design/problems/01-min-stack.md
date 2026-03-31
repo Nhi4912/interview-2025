@@ -73,14 +73,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force — Single Stack with O(n) getMin
 - Time: O(1) push/pop/top, O(n) getMin — violates the requirement
 - Space: O(n)
-  \*/
+  */
   class MinStackBrute {
   private stack: number[] = [];
 
@@ -90,12 +90,12 @@ top(): number { return this.stack[this.stack.length - 1]; }
 getMin(): number { return Math.min(...this.stack); } // O(n) ← does NOT meet requirement
 }
 
-/\*\*
+/**
 
 - Solution 2: Two Stacks — Auxiliary Min Tracking (Optimal)
 - Time: O(1) for all operations
 - Space: O(n) — minStack stores at most n elements
-  \*/
+  */
   class MinStack {
   private stack: number[] = [];
   private minStack: number[] = [];
@@ -134,7 +134,7 @@ console.log(ms2.getMin()); // 1 ✅
 ms2.pop();
 console.log(ms2.getMin()); // 1 ✅ (still 1, not undefined)
 
-{% endraw %}
+```
 
 ---
 

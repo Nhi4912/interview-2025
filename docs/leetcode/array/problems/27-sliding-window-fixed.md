@@ -73,15 +73,15 @@ Constraints: `1 <= k <= nums.length <= 10^5`, `-10^4 <= nums[i] <= 10^4`
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Sliding Window — O(n) time, O(1) space ✅ Recommended
 -
 - Phase 1: Build initial window of size k, record its sum.
 - Phase 2: Slide window right — add incoming element, remove outgoing element.
 - Track maximum sum seen across all window positions.
-  \*/
+  */
   function maxSumFixedWindow(nums: number[], k: number): number {
   let windowSum = 0;
   for (let i = 0; i < k; i++) windowSum += nums[i]; // Phase 1: initial window
@@ -96,13 +96,13 @@ maxSum = Math.max(maxSum, windowSum);
 return maxSum;
 }
 
-/\*\*
+/**
 
 - Solution 2: Brute Force — O(n·k) time, O(1) space
 -
 - Recomputes the sum for each window from scratch.
 - Keep for comparison only — shows why sliding window matters.
-  \*/
+  */
   function maxSumBrute(nums: number[], k: number): number {
   let maxSum = -Infinity;
   for (let i = 0; i <= nums.length - k; i++) {
@@ -132,7 +132,7 @@ console.log(maxSumFixedWindow([2, 1, 5, 1, 3, 2], 3)); // 9
 console.log(maxSumFixedWindow([1, 12, -5, -6, 50, 3], 4)); // 51
 console.log(maxSumFixedWindow([-2, -3, 4, -1], 2)); // 3 (4 + -1)
 console.log(maxSumFixedWindow([5], 1)); // 5
-{% endraw %}
+```
 
 ---
 

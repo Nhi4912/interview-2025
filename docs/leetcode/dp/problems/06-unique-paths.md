@@ -71,12 +71,12 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Recursion with Memoization (Top-Down DP)
-- Time: O(m \* n) — each (row, col) cell computed exactly once
+- Time: O(m * n) — each (row, col) cell computed exactly once
 - Space: O(m _ n) — memo map + O(m+n) recursion stack
   _/
   function uniquePathsMemo(m: number, n: number): number {
@@ -94,12 +94,12 @@ return result;
 return dp(m - 1, n - 1);
 }
 
-/\*\*
+/**
 
 - Solution 2: 1D Rolling DP (Optimal)
-- Time: O(m \* n) — two nested loops, each cell processed once
+- Time: O(m * n) — two nested loops, each cell processed once
 - Space: O(n) — single array reused across all rows
-  \*/
+  */
   function uniquePaths(m: number, n: number): number {
   const dp = new Array(n).fill(1); // top row: all 1s (only 1 way to reach each)
 
@@ -118,7 +118,7 @@ console.log(uniquePaths(3, 2)); // 3
 console.log(uniquePaths(1, 1)); // 1
 console.log(uniquePaths(1, 5)); // 1
 
-{% endraw %}
+```
 
 ---
 

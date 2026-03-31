@@ -69,9 +69,9 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Backtracking — in-place marking (Optimal & recommended)
 - Time: O(m × n × 4^L) — L = word.length; prune early when chars mismatch
@@ -79,7 +79,7 @@ Constraints:
 -
 - Trick: mark visited by replacing board[r][c] with '#', restore after backtrack.
 - Avoids allocating a separate visited array.
-  \*/
+  */
   function exist(board: string[][], word: string): boolean {
   const m = board.length;
   const n = board[0].length;
@@ -112,12 +112,12 @@ if (dfs(r, c, 0)) return true;
 return false;
 }
 
-/\*\*
+/**
 
 - Solution 2: Backtracking — separate visited array (Clearer state, no board mutation)
 - Time: O(m × n × 4^L) — same
 - Space: O(m × n + L) — visited grid + recursion stack
-  \*/
+  */
   function existVisited(board: string[][], word: string): boolean {
   const m = board.length;
   const n = board[0].length;
@@ -152,7 +152,7 @@ console.log(exist(board1.map(r => [...r]), "ABCCED")); // true
 console.log(exist(board1.map(r => [...r]), "SEE")); // true
 console.log(exist(board1.map(r => [...r]), "ABCB")); // false
 
-{% endraw %}
+```
 
 ---
 

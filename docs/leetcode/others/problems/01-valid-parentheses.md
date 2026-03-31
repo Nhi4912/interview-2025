@@ -68,14 +68,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force — Regex Pair Removal
 - Time: O(n²) — repeatedly scan and remove innermost pairs
 - Space: O(n) — string copy at each pass
-  \*/
+  */
   function isValidBrute(s: string): boolean {
   let prev = "";
   let current = s;
@@ -88,12 +88,12 @@ current = current.replace(/\(\)|\[\]|\{\}/g, "");
 return current.length === 0;
 }
 
-/\*\*
+/**
 
 - Solution 2: Stack (Optimal)
 - Time: O(n) — single pass through each character
 - Space: O(n) — stack holds at most n/2 open brackets
-  \*/
+  */
   function isValid(s: string): boolean {
   const stack: string[] = [];
   const matchMap: Record<string, string> = {
@@ -122,7 +122,7 @@ console.log(isValid("(]")); // false
 console.log(isValid("{[()]}")); // true
 console.log(isValid("")); // true (edge: empty string)
 
-{% endraw %}
+```
 
 ---
 

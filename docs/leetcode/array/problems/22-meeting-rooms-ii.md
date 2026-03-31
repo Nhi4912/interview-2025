@@ -72,14 +72,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force — Sort + Scan Rooms
 - Time: O(n²) — for each of n meetings, scan up to n existing rooms
 - Space: O(n) — store end times of currently active rooms
-  \*/
+  */
   function minMeetingRoomsBrute(intervals: number[][]): number {
   intervals.sort((a, b) => a[0] - b[0]);
   const roomEndTimes: number[] = [];
@@ -96,12 +96,12 @@ roomEndTimes[freeRoom] = end; // Reuse existing free room
 return roomEndTimes.length;
 }
 
-/\*\*
+/**
 
 - Solution 2: Two Pointers on Sorted Start/End Arrays (Optimal)
 - Time: O(n log n) — sorting dominates; pointer scan is O(n)
 - Space: O(n) — two sorted arrays of size n
-  \*/
+  */
   function minMeetingRooms(intervals: number[][]): number {
   const starts = intervals.map(i => i[0]).sort((a, b) => a - b);
   const ends = intervals.map(i => i[1]).sort((a, b) => a - b);
@@ -126,7 +126,7 @@ console.log(minMeetingRooms([[7,10],[2,4]])); // 1 ✅
 console.log(minMeetingRooms([[9,10],[4,9],[4,17]])); // 2 ✅
 console.log(minMeetingRoomsBrute([[0,30],[5,10],[15,20]])); // 2 ✅
 
-{% endraw %}
+```
 
 ---
 

@@ -59,8 +59,8 @@ getNewsFeed(1) = [5]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Design Twitter — LeetCode #355
 -
@@ -72,9 +72,9 @@ getNewsFeed(1) = [5]
   _/
   class Twitter {
   private time = 0;
-  /\*\* userId → list of [timestamp, tweetId], oldest first _/
+  /** userId → list of [timestamp, tweetId], oldest first _/
   private tweets = new Map<number, [number, number][]>();
-  /\*_ userId → Set of followeeIds _/
+  /*_ userId → Set of followeeIds _/
   private following = new Map<number, Set<number>>();
 
 postTweet(userId: number, tweetId: number): void {
@@ -82,7 +82,7 @@ if (!this.tweets.has(userId)) this.tweets.set(userId, []);
 this.tweets.get(userId)!.push([this.time++, tweetId]);
 }
 
-/\*\*
+/**
 
 - Return 10 most recent tweetIds from user + everyone they follow.
 - Trả về 10 tweet gần nhất của user + người đang follow.
@@ -90,7 +90,7 @@ this.tweets.get(userId)!.push([this.time++, tweetId]);
 - Each user contributes tweets in reverse-chronological order.
 - Simulate max-heap via min-heap on negated timestamps.
 - heap entry: [negTimestamp, tweetId, userId, listIndex]
-  \*/
+  */
   getNewsFeed(userId: number): number[] {
   const candidates = new Set([userId, ...(this.following.get(userId) ?? [])]);
 
@@ -143,7 +143,7 @@ console.assert(tw.getNewsFeed(1).join(',') === '5', 'unfollowed user removed fro
 // User sees own tweets even without explicit follow
 tw.postTweet(1, 9);
 console.assert(tw.getNewsFeed(1)[0] === 9, 'most recent own tweet is first');
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

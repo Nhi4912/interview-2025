@@ -70,14 +70,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Iterative BFS-style Expansion (Brute Force)
 - Time: O(4^n · n) — up to 4^n combos, each n chars long
 - Space: O(4^n) — stores all intermediate combinations
-  \*/
+  */
   function letterCombinationsIterative(digits: string): string[] {
   if (digits.length === 0) return [];
 
@@ -99,12 +99,12 @@ result = next;
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Backtracking (Optimal — interview standard)
 - Time: O(4^n · n) — same asymptotic, avoids building intermediate arrays
 - Space: O(n) — recursion depth equals digits.length
-  \*/
+  */
   function letterCombinations(digits: string): string[] {
   if (digits.length === 0) return [];
 
@@ -135,7 +135,7 @@ console.log(letterCombinations("")); // []
 console.log(letterCombinations("2")); // ["a","b","c"]
 console.log(letterCombinations("9")); // ["w","x","y","z"]
 
-{% endraw %}
+```
 
 ---
 

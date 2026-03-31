@@ -74,7 +74,7 @@ Output: false
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class ListNode {
@@ -140,7 +140,7 @@ console.assert(hasCycleSet(n1) === true, "has cycle set");
 console.assert(hasCycle(null) === false, "null");
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

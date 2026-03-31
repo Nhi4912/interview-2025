@@ -56,8 +56,8 @@ Output: [null,       [3,1,2],  [1,2,3],[1,3,2]]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Shuffle an Array — LeetCode #384
 -
@@ -66,7 +66,7 @@ Output: [null,       [3,1,2],  [1,2,3],[1,3,2]]
 - Each of the n! permutations has equal probability.
 -
 - Time: O(n) shuffle, O(n) reset | Space: O(n) for original copy
-  \*/
+  */
   class Solution {
   private original: number[];
   private current: number[];
@@ -76,17 +76,17 @@ this.original = [...nums];
 this.current = [...nums];
 }
 
-/\*\*
+/**
 
 - Reset to original configuration.
 - Đặt lại về cấu hình ban đầu.
-  \*/
+  */
   reset(): number[] {
   this.current = [...this.original];
   return this.current;
   }
 
-/\*\*
+/**
 
 - Return a uniformly random permutation using Fisher-Yates.
 - Trả về hoán vị ngẫu nhiên đều đặn dùng Fisher-Yates.
@@ -111,7 +111,7 @@ console.assert(sol.reset().join(',') === '1,2,3', 'reset after shuffle still wor
 // Single-element array: shuffle is identity
 const single = new Solution([42]);
 console.assert(single.shuffle().join(',') === '42');
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

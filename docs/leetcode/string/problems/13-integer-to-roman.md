@@ -56,19 +56,19 @@ Input: 1994  → Output: "MCMXCIV"
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Integer to Roman
 - https://leetcode.com/problems/integer-to-roman/
-  \*/
+  */
 
-/\*\*
+/**
 
 - Solution 1: Greedy with Parallel Arrays (Optimal)
 - Iterate values descending; greedily subtract and append symbol.
 - Time O(1) — bounded input [1,3999] | Space O(1)
-  \*/
+  */
   function intToRoman(num: number): string {
   const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
   const symbols = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
@@ -86,12 +86,12 @@ rem -= values[i];
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Functional Reduce (compact alternative)
 - Same greedy logic expressed as a single reduce call.
 - Time O(1) | Space O(1)
-  \*/
+  */
   function intToRomanReduce(num: number): string {
   const pairs: [number, string][] = [
   [1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],
@@ -113,7 +113,7 @@ console.log(intToRoman(3)); // "III"
 console.log(intToRoman(1994)); // "MCMXCIV"
 console.log(intToRomanReduce(58)); // "LVIII"
 console.log(intToRomanReduce(3999)); // "MMMCMXCIX"
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

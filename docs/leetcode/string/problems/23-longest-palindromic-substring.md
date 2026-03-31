@@ -94,7 +94,7 @@ Example 4: s = "ac" → "a"
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 /**
  * Solution 1: Brute Force — Check all substrings
@@ -188,7 +188,7 @@ console.log(longestPalindrome("a"));     // "a"
 console.log(longestPalindrome("ac"));    // "a"
 console.log(longestPalindrome("racecar")); // "racecar"
 
-{% endraw %}
+```
 
 ---
 

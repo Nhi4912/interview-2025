@@ -72,8 +72,8 @@ Constraints: `1 <= n <= 200`, `-10^9 <= nums[i] <= 10^9`, `-10^9 <= target <= 10
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Sort + Two Pointers (Standard)
 -
@@ -82,7 +82,7 @@ Constraints: `1 <= n <= 200`, `-10^9 <= nums[i] <= 10^9`, `-10^9 <= target <= 10
 -
 - Time: O(n³) — O(n log n) sort + O(n³) triple sweep
 - Space: O(1) excluding result
-  \*/
+  */
   function fourSum(nums: number[], target: number): number[][] {
   nums.sort((a, b) => a - b);
   const result: number[][] = [];
@@ -120,7 +120,7 @@ if (nums[i] + nums[n-3] + nums[n-2] + nums[n-1] < target) continue;
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Recursive k-Sum (Generalizable pattern)
 -
@@ -128,7 +128,7 @@ return result;
 - Demonstrates the pattern clearly for follow-up questions.
 -
 - Time: O(n^(k-1)) = O(n³) for k=4, Space: O(k) recursion depth
-  \*/
+  */
   function fourSumGeneral(nums: number[], target: number): number[][] {
   nums.sort((a, b) => a - b);
   return kSum(nums, target, 4, 0);
@@ -166,7 +166,7 @@ console.log(JSON.stringify(fourSum([2, 2, 2, 2, 2], 8)));
 // [[2,2,2,2]]
 console.log(JSON.stringify(fourSum([], 0)));
 // []
-{% endraw %}
+```
 
 ---
 

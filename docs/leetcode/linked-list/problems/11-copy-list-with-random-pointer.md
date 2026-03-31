@@ -70,7 +70,7 @@ Output: [[7,null],[13,0],[11,4],[10,2],[1,0]]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class RandomListNode {
@@ -175,7 +175,7 @@ console.assert(copy2!.val === 7 && copy2!.next!.val === 13, "O1 copy");
 console.assert(copyRandomList(null) === null, "null");
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

@@ -59,13 +59,13 @@ Input: s = "-91283472332"    → Output: -2147483648  (clamped to INT_MIN)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Brute: Regex + parseInt
 - Time: O(n) Space: O(n) — regex match allocates string
 - Concise but relies on JS parseInt overflow behavior (not safe for all edge cases).
-  \*/
+  */
   function myAtoiRegex(s: string): number {
   const match = s.trim().match(/^[+-]?\d+/);
   if (!match) return 0;
@@ -73,12 +73,12 @@ Input: s = "-91283472332"    → Output: -2147483648  (clamped to INT_MIN)
   return Math.max(-2147483648, Math.min(2147483647, num));
   }
 
-/\*\*
+/**
 
 - Solution 2 — Optimal: State Machine
 - Time: O(n) Space: O(1)
 - Single pass: skip whitespace → read sign → read digits with overflow guard → clamp.
-  \*/
+  */
   function myAtoi(s: string): number {
   const INT_MAX = 2147483647;
   const INT_MIN = -2147483648;
@@ -107,7 +107,7 @@ const digit = s[i].charCodeAt(0) - 48;
 
 }
 
-return sign \* result;
+return sign * result;
 }
 
 // Inline tests
@@ -115,7 +115,7 @@ console.assert(myAtoi("42") === 42, "simple positive: expected 42");
 console.assert(myAtoi(" -42") === -42, "negative with spaces: expected -42");
 console.assert(myAtoi("4193 with words") === 4193, "trailing text: expected 4193");
 console.assert(myAtoi("-91283472332") === -2147483648, "overflow neg: expected INT_MIN");
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

@@ -60,14 +60,14 @@ Input: s="catsandog",    wordDict=["cats","dog","sand","and","cat"] → false
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - 139.  Word Break
 - BFS approach: treat indices as graph nodes, edges when s[start..end-1] is a word.
 - Intuitive model — each reachable index represents a valid partial segmentation.
 - Time O(n · |wordDict| · m), Space O(n)
-  \*/
+  */
   function wordBreakBFS(s: string, wordDict: string[]): boolean {
   const n = s.length;
   const queue: number[] = [0];
@@ -89,13 +89,13 @@ Input: s="catsandog",    wordDict=["cats","dog","sand","and","cat"] → false
 
   }
 
-/\*\*
+/**
 
 - Bottom-Up DP — recommended for interviews.
 - dp[i] = true if s[0..i-1] can be segmented using wordDict.
 - Transition: dp[i] = true if ∃ word such that dp[i-word.length] && s matches word.
 - Time O(n · |wordDict| · m), Space O(n)
-  \*/
+  */
   function wordBreak(s: string, wordDict: string[]): boolean {
   const n = s.length;
   const dp = new Array(n + 1).fill(false);
@@ -120,7 +120,7 @@ console.log(wordBreak("leetcode", ["leet", "code"])); // true
 console.log(wordBreak("applepenapple", ["apple", "pen"])); // true
 console.log(wordBreak("catsandog", ["cats", "dog", "sand", "and", "cat"])); // false
 console.log(wordBreakBFS("cars", ["car", "ca", "rs"])); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

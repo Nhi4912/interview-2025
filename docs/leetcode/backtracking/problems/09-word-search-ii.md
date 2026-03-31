@@ -69,18 +69,18 @@ board = [["a","b"],["c","d"]], words = ["abcb"]  → []
 
 ## Solutions
 
-{% raw %}
+```typescript
 class TrieNode {
 children: Map<string, TrieNode> = new Map();
 word: string | null = null;
 }
 
-/\*\*
+/**
 
 - Solution 1 — Brute Force: Search Each Word Separately
 - Run LC#79 Word Search for each word independently
 - Time: O(W × M×N × 4^L) | Space: O(L) recursion
-  \*/
+  */
   function findWordsBrute(board: string[][], words: string[]): string[] {
   const m = board.length, n = board[0].length;
 
@@ -102,12 +102,12 @@ return false;
 return words.filter(w => exists(w));
 }
 
-/\*\*
+/**
 
 - Solution 2 — Trie + DFS Backtracking ✅ Recommended
 - Build Trie once; single DFS pass finds all words simultaneously
 - Time: O(M×N×4^L) where L=max word length | Space: O(W×L) for Trie
-  \*/
+  */
   function findWords(board: string[][], words: string[]): string[] {
   const m = board.length, n = board[0].length;
   const result: string[] = [];
@@ -153,7 +153,7 @@ return result;
 // ["oath","pea","eat","rain"]) → ["eat","oath"] (order may vary)
 // findWords([["a","b"],["c","d"]], ["abcb"]) → []
 // findWords([["a"]], ["a"]) → ["a"]
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

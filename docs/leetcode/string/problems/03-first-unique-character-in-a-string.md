@@ -59,13 +59,13 @@ Input: s = "aabb"         → Output: -1  (all repeated)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Brute: indexOf + lastIndexOf
 - Time: O(n²) Space: O(1)
 - Simple but slow — scans entire string for each character.
-  \*/
+  */
   function firstUniqCharBrute(s: string): number {
   for (let i = 0; i < s.length; i++) {
   if (s.indexOf(s[i]) === s.lastIndexOf(s[i])) return i;
@@ -73,12 +73,12 @@ Input: s = "aabb"         → Output: -1  (all repeated)
   return -1;
   }
 
-/\*\*
+/**
 
 - Solution 2 — Optimal: Frequency Array (two-pass)
 - Time: O(n) Space: O(1) — fixed 26-element array
 - Pass 1: count all chars. Pass 2: find first with count = 1.
-  \*/
+  */
   function firstUniqChar(s: string): number {
   const freq = new Array(26).fill(0);
   const a = "a".charCodeAt(0);
@@ -101,7 +101,7 @@ console.assert(firstUniqChar("leetcode") === 0, "leetcode: expected 0");
 console.assert(firstUniqChar("loveleetcode") === 2, "loveleetcode: expected 2");
 console.assert(firstUniqChar("aabb") === -1, "all repeated: expected -1");
 console.assert(firstUniqChar("z") === 0, "single char: expected 0");
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

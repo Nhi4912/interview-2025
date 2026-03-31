@@ -70,14 +70,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Extra Space Copy (Brute Force)
 - Time: O(n²) — visit every element twice
 - Space: O(n²) — copy matrix for reference
-  \*/
+  */
   function rotateBrute(matrix: number[][]): void {
   const n = matrix.length;
   const copy = matrix.map(row => [...row]);
@@ -88,12 +88,12 @@ Constraints:
   }
   }
 
-/\*\*
+/**
 
 - Solution 2: Transpose + Reverse Each Row (Optimal — In-Place)
 - Time: O(n²) — transpose is n²/2 swaps, reverse is n²/2 swaps
 - Space: O(1) — all swaps done in-place, no extra memory
-  \*/
+  */
   function rotate(matrix: number[][]): void {
   const n = matrix.length;
 
@@ -123,7 +123,7 @@ const m3 = [[1]];
 rotate(m3);
 console.log(m3); // [[1]] (no-op for 1×1)
 
-{% endraw %}
+```
 
 ---
 

@@ -77,7 +77,7 @@ Example: adjList = [[2,4],[1,3],[2,4],[1,3]]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 class GraphNode {
   val: number;
@@ -139,7 +139,7 @@ function cloneGraph(node: GraphNode | null): GraphNode | null {
   return node ? dfs(node) : null;
 }
 
-{% endraw %}
+```
 
 ---
 

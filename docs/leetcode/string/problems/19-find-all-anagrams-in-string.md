@@ -58,13 +58,13 @@ Input: s="baa",        p="aa"  → Output: [1]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - 438.  Find All Anagrams in a String
 - Brute: sort each window and compare. Simple but slow.
 - Time O(n·|p|·log|p|), Space O(|p|)
-  \*/
+  */
   function findAnagramsBrute(s: string, p: string): number[] {
   if (s.length < p.length) return [];
   const result: number[] = [];
@@ -77,13 +77,13 @@ Input: s="baa",        p="aa"  → Output: [1]
   return result;
   }
 
-/\*\*
+/**
 
 - Fixed-size Sliding Window with match counter — optimal.
 - Tracks how many of the 26 char frequencies are currently satisfied.
 - When matched === 26, the window is an anagram.
 - Time O(|s| + |p|), Space O(1)
-  \*/
+  */
   function findAnagrams(s: string, p: string): number[] {
   if (s.length < p.length) return [];
 
@@ -126,7 +126,7 @@ console.log(JSON.stringify(findAnagrams("abab", "ab"))); // [0,1,2]
 console.log(JSON.stringify(findAnagrams("cbaebabacd", "abc"))); // [0,6]
 console.log(JSON.stringify(findAnagrams("baa", "aa"))); // [1]
 console.log(JSON.stringify(findAnagramsBrute("a", "ab"))); // []
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

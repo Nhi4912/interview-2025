@@ -69,7 +69,7 @@ Example 3: nums = [1,2,3,4,5,6,7] → [4,2,6,1,3,5,7]
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Note: TreeNode class is provided by LeetCode environment
 
 // Solution 1: Recursive Divide and Conquer (Optimal — interview standard)
@@ -114,7 +114,7 @@ console.log(sortedArrayToBST([-10,-3,0,5,9])?.val); // 0 ✅ (root is middle)
 console.log(sortedArrayToBST([1,2,3,4,5,6,7])?.val); // 4 ✅
 console.log(sortedArrayToBST([1])); // TreeNode{val:1} ✅
 console.log(sortedArrayToBST([])); // null ✅
-{% endraw %}
+```
 
 ---
 

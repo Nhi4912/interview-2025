@@ -71,25 +71,25 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Filter + Reverse (Brute Force)
 - Time: O(n) — one filter pass + one reverse pass
 - Space: O(n) — allocates a new cleaned string
-  \*/
+  */
   function isPalindromeBrute(s: string): boolean {
   const cleaned = s.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
   return cleaned === cleaned.split("").reverse().join("");
   }
 
-/\*\*
+/**
 
 - Solution 2: Two Pointers (Optimal)
 - Time: O(n) — single pass, each character visited at most once
 - Space: O(1) — only two pointer indices, no extra string
-  \*/
+  */
   function isPalindrome(s: string): boolean {
   let left = 0;
   let right = s.length - 1;
@@ -115,7 +115,7 @@ console.log(isPalindrome("A man, a plan, a canal: Panama")); // true
 console.log(isPalindrome("race a car")); // false
 console.log(isPalindrome(" ")); // true
 
-{% endraw %}
+```
 
 ---
 

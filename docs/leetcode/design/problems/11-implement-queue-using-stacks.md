@@ -58,8 +58,8 @@ Output: [null,     null,  null,  1,     1,    false  ]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Implement Queue using Stacks — LeetCode #232
 -
@@ -67,22 +67,22 @@ Output: [null,     null,  null,  1,     1,    false  ]
 - Each element moves inbox→outbox exactly once across all operations.
 -
 - Time: push O(1), pop/peek O(1) amortized (O(n) worst) | Space: O(n)
-  \*/
+  */
   class MyQueue {
   private inbox: number[] = []; // receives new elements
   private outbox: number[] = []; // serves pop/peek requests
 
-/\*_ Push element to back of queue. / Thêm phần tử vào cuối hàng đợi. _/
+/*_ Push element to back of queue. / Thêm phần tử vào cuối hàng đợi. _/
 push(x: number): void {
 this.inbox.push(x);
 }
 
-/\*\*
+/**
 
 - Move all elements from inbox to outbox, but only when outbox is empty.
 - Chuyển inbox sang outbox, chỉ khi outbox rỗng.
 - Reversal restores FIFO order: bottom of inbox → top of outbox.
-  \*/
+  */
   private transfer(): void {
   if (this.outbox.length === 0) {
   while (this.inbox.length > 0) {
@@ -91,13 +91,13 @@ this.inbox.push(x);
   }
   }
 
-/\*_ Remove and return front element. / Xóa và trả về phần tử đầu hàng. _/
+/*_ Remove and return front element. / Xóa và trả về phần tử đầu hàng. _/
 pop(): number {
 this.transfer();
 return this.outbox.pop()!;
 }
 
-/\*_ Return front element without removing. / Xem phần tử đầu không xóa. _/
+/*_ Return front element without removing. / Xem phần tử đầu không xóa. _/
 peek(): number {
 this.transfer();
 return this.outbox[this.outbox.length - 1];
@@ -127,7 +127,7 @@ q2.push(5);
 console.assert(q2.peek() === 5);
 console.assert(q2.peek() === 5, 'second peek still returns 5');
 console.assert(q2.pop() === 5, 'pop after peek returns same element');
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

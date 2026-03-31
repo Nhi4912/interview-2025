@@ -57,8 +57,8 @@ Cho mảng `nums`, dời tất cả số `0` về cuối, **giữ nguyên thứ 
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Write Pointer — Optimal (tối thiểu số lần ghi)
 - Dùng `write` để ghi các phần tử khác 0 lên đầu, sau đó fill 0 vào phần còn lại.
@@ -66,7 +66,7 @@ Cho mảng `nums`, dời tất cả số `0` về cuối, **giữ nguyên thứ 
 -
 - @time O(n) — một lần duyệt để di chuyển, một lần để fill zeros
 - @space O(1) — in-place hoàn toàn
-  \*/
+  */
   function moveZeroes(nums: number[]): void {
   let write = 0;
 
@@ -84,7 +84,7 @@ while (write < nums.length) nums[write++] = 0;
 // const c = [1,2,3]; moveZeroes(c); // c → [1,2,3]
 // const d = [0,0,1]; moveZeroes(d); // d → [1,0,0]
 
-/\*\*
+/**
 
 - Solution 2: Swap Variant — Minimal Total Operations
 - Swap phần tử khác 0 với vị trí `slow`. Ít swap hơn khi phần lớn là khác 0
@@ -92,7 +92,7 @@ while (write < nums.length) nums[write++] = 0;
 -
 - @time O(n) — một lần duyệt duy nhất
 - @space O(1) — in-place hoàn toàn
-  \*/
+  */
   function moveZeroesSwap(nums: number[]): void {
   let slow = 0;
   for (let fast = 0; fast < nums.length; fast++) {
@@ -105,7 +105,7 @@ while (write < nums.length) nums[write++] = 0;
 
 // const e = [0,1,0,3,12]; moveZeroesSwap(e); // e → [1,3,12,0,0]
 // const f = [4,2,4,0,0]; moveZeroesSwap(f); // f → [4,2,4,0,0]
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

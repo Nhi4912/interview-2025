@@ -59,12 +59,12 @@ s="aab", p="c*a*b" → true (c*="", a*="aa", b="b")
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Top-Down Memoization
 - Time: O(m×n) | Space: O(m×n) memo + O(m+n) stack
-  \*/
+  */
   function isMatch(s: string, p: string): boolean {
   const m = s.length, n = p.length;
   const memo = new Map<string, boolean>();
@@ -92,12 +92,12 @@ if (memo.has(key)) return memo.get(key)!;
 return dp(0, 0);
 }
 
-/\*\*
+/**
 
 - Solution 2 — Bottom-Up DP ✅ Recommended for interviews
 - dp[i][j] = does s[i:] match p[j:]? Fill from (m,n) → (0,0)
 - Time: O(m×n) | Space: O(m×n)
-  \*/
+  */
   function isMatchDP(s: string, p: string): boolean {
   const m = s.length, n = p.length;
   const dp: boolean[][] = Array.from({ length: m + 1 }, () =>
@@ -126,8 +126,8 @@ return dp[0][0];
 // isMatch("aa", "a*") → true
 // isMatch("ab", ".*") → true
 // isMatch("aab", "c*a*b") → true
-// isMatch("mississippi", "mis*is*p\*.") → false
-{% endraw %}
+// isMatch("mississippi", "mis*is*p*.") → false
+```
 
 ## 🔗 Related Problems
 

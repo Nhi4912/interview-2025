@@ -67,7 +67,7 @@ Example 3: strs = ["a"] → [["a"]]
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Solution 1: Sort Key — O(n _ k log k) time, O(n _ k) space ← SIMPLEST, use this
 function groupAnagrams(strs: string[]): string[][] {
 const groups = new Map<string, string[]>();
@@ -98,7 +98,7 @@ const key = count.join("#"); // e.g. "1#0#0#0#1#0#...#1#..."
 
 return Array.from(groups.values());
 }
-{% endraw %}
+```
 
 ---
 

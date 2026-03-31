@@ -74,14 +74,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Backtracking without Pruning (Brute Force)
 - Time: O(N^(T/M)) — N candidates, T target, M min candidate value
 - Space: O(T/M) — max recursion depth = target / smallest candidate
-  \*/
+  */
   function combinationSumBrute(candidates: number[], target: number): number[][] {
   const result: number[][] = [];
 
@@ -101,12 +101,12 @@ backtrack(0, [], 0);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Backtracking with Sort + Early Break (Optimal)
 - Time: O(N^(T/M)) — same big-O, but far fewer branches explored in practice
 - Space: O(T/M) — recursion depth bounded by target / min_candidate
-  \*/
+  */
   function combinationSum(candidates: number[], target: number): number[][] {
   const result: number[][] = [];
   candidates.sort((a, b) => a - b); // enables break when candidate > remaining
@@ -133,7 +133,7 @@ console.log(JSON.stringify(combinationSum([2, 3, 5], 8))); // [[2,2,2,2],[2,3,3]
 console.log(JSON.stringify(combinationSum([2], 1))); // []
 console.log(JSON.stringify(combinationSum([1], 2))); // [[1,1]]
 
-{% endraw %}
+```
 
 ---
 

@@ -63,14 +63,14 @@ release(2)   check(2) → true
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Design Phone Directory — LeetCode #379
 -
 - Set of available numbers: O(n) init, O(1) per get/check/release.
 - Set handles duplicate-release automatically (idempotent add).
-  \*/
+  */
   class PhoneDirectory {
   private available: Set<number>;
   private max: number;
@@ -81,11 +81,11 @@ this.available = new Set<number>();
 for (let i = 0; i < maxNumbers; i++) this.available.add(i);
 }
 
-/\*\*
+/**
 
 - Return any unassigned number, or -1 if none left.
 - Trả về số chưa được cấp phát bất kỳ, hoặc -1 nếu hết.
-  \*/
+  */
   get(): number {
   if (this.available.size === 0) return -1;
   const num = this.available.values().next().value!;
@@ -93,20 +93,20 @@ for (let i = 0; i < maxNumbers; i++) this.available.add(i);
   return num;
   }
 
-/\*\*
+/**
 
 - True if number is still in the available pool.
 - Kiểm tra số có còn trong pool không.
-  \*/
+  */
   check(number: number): boolean {
   return this.available.has(number);
   }
 
-/\*\*
+/**
 
 - Return number to pool; silently ignore out-of-range.
 - Trả số về pool; bỏ qua số ngoài phạm vi.
-  \*/
+  */
   release(number: number): void {
   if (number >= 0 && number < this.max) this.available.add(number);
   }
@@ -137,7 +137,7 @@ dir2.release(0); // double release
 console.assert(dir2.get() === 0, 'double release does not create phantom numbers');
 dir2.get(); // takes 1
 console.assert(dir2.get() === -1, 'only 2 numbers total');
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

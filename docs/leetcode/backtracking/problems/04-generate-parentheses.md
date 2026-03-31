@@ -69,19 +69,19 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force — Generate All, Filter Valid
 - Time: O(2^2n × n) — 2^2n strings generated, O(n) validation each
 - Space: O(2^2n × n) — all strings stored before filtering
-  \*/
+  */
   function generateParenthesisBrute(n: number): string[] {
   const result: string[] = [];
 
 function generate(current: string): void {
-if (current.length === 2 \* n) {
+if (current.length === 2 * n) {
 // Validate by tracking balance; reject if balance ever goes negative
 let balance = 0;
 for (const ch of current) {
@@ -99,17 +99,17 @@ generate('');
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Backtracking with Pruning (Optimal)
 - Time: O(4^n / √n) — Catalan number of valid strings, each of length 2n
 - Space: O(n) — recursion stack depth is 2n at most
-  \*/
+  */
   function generateParenthesis(n: number): string[] {
   const result: string[] = [];
 
 function backtrack(current: string, open: number, close: number): void {
-if (current.length === 2 \* n) {
+if (current.length === 2 * n) {
 result.push(current);
 return;
 }
@@ -129,7 +129,7 @@ console.log(generateParenthesis(2)); // ["(())", "()()"] ✅
 console.log(generateParenthesis(3).length); // 5 ✅
 console.log(generateParenthesisBrute(2)); // ["(())", "()()"] ✅
 
-{% endraw %}
+```
 
 ---
 

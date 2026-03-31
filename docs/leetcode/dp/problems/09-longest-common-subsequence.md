@@ -69,14 +69,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Recursion with Memoization (Top-Down)
 - Time: O(m·n) — each (i,j) pair computed exactly once
 - Space: O(m·n) — memo map + O(m+n) recursion stack
-  \*/
+  */
   function lcsTopDown(text1: string, text2: string): number {
   const memo = new Map<string, number>();
 
@@ -97,12 +97,12 @@ if (memo.has(key)) return memo.get(key)!;
 return dfs(0, 0);
 }
 
-/\*\*
+/**
 
 - Solution 2: DP Bottom-Up 2D Table (Optimal — interview standard)
 - Time: O(m·n) — fill entire table
 - Space: O(m·n) — dp table; reducible to O(n) with rolling 1D array
-  \*/
+  */
   function longestCommonSubsequence(text1: string, text2: string): number {
   const m = text1.length;
   const n = text2.length;
@@ -128,7 +128,7 @@ console.log(longestCommonSubsequence("abc", "abc")); // 3
 console.log(longestCommonSubsequence("abc", "def")); // 0
 console.log(longestCommonSubsequence("bl", "yby")); // 1
 
-{% endraw %}
+```
 
 ---
 

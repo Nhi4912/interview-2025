@@ -76,7 +76,7 @@ Output: [2, 3, 6, 7, 1, 5, 4]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class ListNode {
@@ -167,7 +167,7 @@ console.assert(toArr(oddEvenList(null)).length === 0, "null");
 console.assert(JSON.stringify(toArr(oddEvenListSeparate(mk([1, 2, 3, 4, 5])))) === "[1,3,5,2,4]");
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

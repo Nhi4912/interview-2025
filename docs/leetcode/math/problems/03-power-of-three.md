@@ -69,20 +69,20 @@ Constraints: `-2^31 <= n <= 2^31 - 1`
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Iterative Division
 - Time O(log n), Space O(1)
 - Keep dividing by 3 while divisible; result must be 1.
-  \*/
+  */
   function isPowerOfThreeIter(n: number): boolean {
   if (n <= 0) return false;
   while (n % 3 === 0) n = Math.floor(n / 3);
   return n === 1;
   }
 
-/\*\*
+/**
 
 - Solution 2: Math Trick — O(1) using max power of 3
 - Time O(1), Space O(1)
@@ -90,7 +90,7 @@ Constraints: `-2^31 <= n <= 2^31 - 1`
 - 3^19 = 1162261467 is the largest power of 3 within 32-bit int.
 - Because 3 is prime, all its divisors are also powers of 3.
 - So: n is a power of 3 iff 3^19 % n === 0 (and n > 0).
-  \*/
+  */
   function isPowerOfThree(n: number): boolean {
   // 3^19 = 1162261467 (largest power of 3 in 32-bit signed int)
   return n > 0 && 1162261467 % n === 0;
@@ -102,7 +102,7 @@ console.log(isPowerOfThree(0) === false); // true
 console.log(isPowerOfThree(-1) === false); // true
 console.log(isPowerOfThree(9) === true); // true
 console.log(isPowerOfThree(45) === false); // true (45 = 9×5)
-{% endraw %}
+```
 
 ---
 

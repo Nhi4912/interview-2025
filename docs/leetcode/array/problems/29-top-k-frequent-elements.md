@@ -67,7 +67,7 @@ Example 2: nums = [1], k = 1 → [1]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 /**
  * Solution 1: Sort by Frequency
@@ -136,7 +136,7 @@ console.log(topKFrequent([1,1,1,2,2,3], 2)); // [1,2]
 console.log(topKFrequent([1], 1));            // [1]
 console.log(topKFrequent([4,1,1,1,2,2,3], 2)); // [1,2]
 
-{% endraw %}
+```
 
 ---
 

@@ -77,14 +77,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Extra Boolean Arrays (Brute Force)
-- Time: O(m \* n) — two full scans of the matrix
+- Time: O(m * n) — two full scans of the matrix
 - Space: O(m + n) — one array per dimension to track zero positions
-  \*/
+  */
   function setZeroesBrute(matrix: number[][]): void {
   const m = matrix.length, n = matrix[0].length;
   const zeroRows = new Array(m).fill(false);
@@ -105,12 +105,12 @@ if (zeroRows[i] || zeroCols[j]) matrix[i][j] = 0;
 }
 }
 
-/\*\*
+/**
 
 - Solution 2: First Row/Col as Markers (Optimal — O(1) Space)
 - Time: O(m * n) — four passes but all O(m*n)
 - Space: O(1) — first row and col repurposed as flag storage
-  \*/
+  */
   function setZeroes(matrix: number[][]): void {
   const m = matrix.length, n = matrix[0].length;
 
@@ -153,7 +153,7 @@ const t3 = [[1]];
 setZeroes(t3);
 console.log(t3); // [[1]] (no zeros, no change)
 
-{% endraw %}
+```
 
 ---
 

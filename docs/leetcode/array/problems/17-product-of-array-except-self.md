@@ -71,14 +71,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Explicit Left Array × Right Array (Brute Force / Instructional)
 - Time: O(n) — three passes over the array
 - Space: O(n) — two auxiliary arrays of size n
-  \*/
+  */
   function productExceptSelfBrute(nums: number[]): number[] {
   const n = nums.length;
   const left = new Array(n).fill(1);
@@ -87,22 +87,22 @@ Constraints:
 for (let i = 1; i < n; i++) left[i] = left[i - 1] _ nums[i - 1];
 for (let i = n - 2; i >= 0; i--) right[i] = right[i + 1] _ nums[i + 1];
 
-return left.map((l, i) => l \* right[i]);
+return left.map((l, i) => l * right[i]);
 }
 
-/\*\*
+/**
 
 - Solution 2: Prefix in Output Array + Running Suffix (Optimal)
 - Time: O(n) — two passes
 - Space: O(1) — output array doesn't count; only one scalar `suffix` variable
-  \*/
+  */
   function productExceptSelf(nums: number[]): number[] {
   const n = nums.length;
   const result = new Array(n).fill(1);
 
 // Pass 1: result[i] holds product of nums[0..i-1]
 for (let i = 1; i < n; i++) {
-result[i] = result[i - 1] \* nums[i - 1];
+result[i] = result[i - 1] * nums[i - 1];
 }
 
 // Pass 2: multiply by running product of nums[i+1..n-1]
@@ -119,7 +119,7 @@ return result;
 console.log(productExceptSelf([1, 2, 3, 4])); // [24, 12, 8, 6]
 console.log(productExceptSelf([-1, 1, 0, -3, 3])); // [0, 0, 9, 0, 0]
 
-{% endraw %}
+```
 
 ---
 

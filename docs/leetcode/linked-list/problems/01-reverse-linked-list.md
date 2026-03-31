@@ -79,19 +79,19 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 interface ListNode {
 val: number;
 next: ListNode | null;
 }
 
-/\*\*
+/**
 
 - Solution 1: Stack / Array (Brute Force)
 - Time: O(n) — two passes: collect values then rebuild
 - Space: O(n) — stores all node values in an array
-  \*/
+  */
   function reverseListBrute(head: ListNode | null): ListNode | null {
   const vals: number[] = [];
   let curr = head;
@@ -107,12 +107,12 @@ node = node.next;
 return dummy.next;
 }
 
-/\*\*
+/**
 
 - Solution 2: Iterative with 3 Pointers (Optimal)
 - Time: O(n) — single pass, each node visited once
 - Space: O(1) — only three pointer variables
-  \*/
+  */
   function reverseList(head: ListNode | null): ListNode | null {
   let prev: ListNode | null = null;
   let curr: ListNode | null = head;
@@ -132,7 +132,7 @@ const list1: ListNode = { val: 1, next: { val: 2, next: { val: 3, next: { val: 4
 console.log(reverseList(list1)); // 5→4→3→2→1
 console.log(reverseList(null)); // null
 
-{% endraw %}
+```
 
 ---
 

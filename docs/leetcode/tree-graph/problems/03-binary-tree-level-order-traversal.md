@@ -70,7 +70,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 interface TreeNode {
 val: number;
@@ -78,12 +78,12 @@ left: TreeNode | null;
 right: TreeNode | null;
 }
 
-/\*\*
+/**
 
 - Solution 1: DFS with level index (Brute Force)
 - Time: O(n) — visit every node once
 - Space: O(n) — result array + O(h) recursion stack
-  \*/
+  */
   function levelOrderDFS(root: TreeNode | null): number[][] {
   const result: number[][] = [];
 
@@ -99,12 +99,12 @@ dfs(root, 0);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: BFS with Queue (Optimal)
 - Time: O(n) — each node enqueued/dequeued once
 - Space: O(w) — queue holds at most one full level (max width w)
-  \*/
+  */
   function levelOrder(root: TreeNode | null): number[][] {
   if (!root) return [];
 
@@ -142,7 +142,7 @@ right: { val: 7, left: null, right: null },
 console.log(JSON.stringify(levelOrder(root))); // [[3],[9,20],[15,7]]
 console.log(JSON.stringify(levelOrder(null))); // []
 
-{% endraw %}
+```
 
 ---
 

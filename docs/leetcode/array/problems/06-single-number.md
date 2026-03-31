@@ -63,13 +63,13 @@ Input:  [1]             → 1
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: XOR — Optimal
 - Time: O(n) | Space: O(1)
 - Key insight: a^a=0, 0^a=a → pairs cancel, single survives
-  \*/
+  */
   function singleNumber(nums: number[]): number {
   let result = 0;
 
@@ -80,12 +80,12 @@ result ^= num;
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Set Toggle — Brute Force (O(n) space, no early exit)
 - Time: O(n) | Space: O(n)
 - Good to mention as alternative when space constraint is relaxed
-  \*/
+  */
   function singleNumberSet(nums: number[]): number {
   const seen = new Set<number>();
 
@@ -102,7 +102,7 @@ console.log(singleNumber([2, 2, 1]) === 1); // true
 console.log(singleNumber([4, 1, 2, 1, 2]) === 4); // true
 console.log(singleNumber([1]) === 1); // true
 console.log(singleNumber([-1, -1, -2]) === -2); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

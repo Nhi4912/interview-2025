@@ -58,13 +58,13 @@ Output: [null,    null,  null,  2,   2,    false   ]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Two-Queue Lazy (push O(1), pop O(n))
 - On pop: drain main queue except last element into temp
 - Time: push O(1), pop/top O(n) | Space: O(n)
-  \*/
+  */
   class MyStackLazy {
   private main: number[] = [];
   private temp: number[] = [];
@@ -91,12 +91,12 @@ return val;
 empty(): boolean { return this.main.length === 0; }
 }
 
-/\*\*
+/**
 
 - Solution 2 — Single Queue Rotate on Push (push O(n), pop O(1)) ✅ Recommended
 - After each push, rotate queue so new element is at front
 - Time: push O(n), pop/top O(1) | Space: O(n)
-  \*/
+  */
   class MyStack {
   private queue: number[] = [];
 
@@ -119,7 +119,7 @@ empty(): boolean { return this.queue.length === 0; }
 // s.pop() // → 2
 // s.empty() // → false
 // s.pop(); s.empty() // → true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

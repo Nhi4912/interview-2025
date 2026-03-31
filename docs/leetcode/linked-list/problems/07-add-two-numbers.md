@@ -70,7 +70,7 @@ Output: [8,9,9,9,0,0,0,1]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class ListNode {
@@ -147,7 +147,7 @@ console.assert(
 console.assert(JSON.stringify(toArr(addTwoNumbersRec(mk([2, 4, 3]), mk([5, 6, 4])))) === "[7,0,8]");
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

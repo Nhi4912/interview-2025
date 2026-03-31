@@ -56,13 +56,13 @@ Output: [null,    null,  null,  1,    1,    false  ]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Eager Transfer (push O(n), pop O(1))
 - Brute approach: maintain queue order after every push
 - Time: push O(n), pop/peek O(1) | Space: O(n)
-  \*/
+  */
   class MyQueueEager {
   private stack: number[] = [];
 
@@ -78,12 +78,12 @@ peek(): number { return this.stack[this.stack.length - 1]; }
 empty(): boolean { return this.stack.length === 0; }
 }
 
-/\*\*
+/**
 
 - Solution 2 — Lazy Transfer (all ops amortized O(1)) ✅ Recommended
 - Only transfer from input→output when output is empty
 - Time: push O(1), pop/peek O(1) amortized | Space: O(n)
-  \*/
+  */
   class MyQueue {
   private inputStack: number[] = [];
   private outputStack: number[] = [];
@@ -121,7 +121,7 @@ return this.inputStack.length === 0 && this.outputStack.length === 0;
 // q.pop() // → 1
 // q.empty() // → false
 // q.pop(); q.empty() // → true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

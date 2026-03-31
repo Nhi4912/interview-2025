@@ -80,14 +80,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Dynamic Programming (O(n²))
 - Time: O(n²) — nested loops, j scans all previous positions for each i
 - Space: O(n) — dp array of size n
-  \*/
+  */
   function lengthOfLIS(nums: number[]): number {
   const dp = new Array(nums.length).fill(1); // dp[i] = LIS length ending at i
 
@@ -102,7 +102,7 @@ dp[i] = Math.max(dp[i], dp[j] + 1);
 return Math.max(...dp);
 }
 
-/\*\*
+/**
 
 - Solution 2: Binary Search / Patience Sort (Optimal)
 - Time: O(n log n) — binary search O(log n) for each of n elements
@@ -110,7 +110,7 @@ return Math.max(...dp);
 -
 - Invariant: tails[i] = smallest ending value among all increasing
 - subsequences of length i+1. tails is always strictly sorted.
-  \*/
+  */
   function lengthOfLISOptimal(nums: number[]): number {
   const tails: number[] = [];
 
@@ -133,7 +133,7 @@ console.log(lengthOfLIS([0,1,0,3,2,3])); // 4 ✅
 console.log(lengthOfLIS([7,7,7,7,7])); // 1 ✅
 console.log(lengthOfLISOptimal([10,9,2,5,3,7,101,18])); // 4 ✅
 
-{% endraw %}
+```
 
 ---
 

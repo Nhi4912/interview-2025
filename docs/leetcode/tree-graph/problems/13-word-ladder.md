@@ -76,14 +76,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Standard BFS (Shortest Path)
 - Time: O(M²×N) — M=word length, N=wordList size; try 26 chars per position
 - Space: O(M×N) — wordSet + visited set + queue
-  \*/
+  */
   function ladderLength(beginWord: string, endWord: string, wordList: string[]): number {
   const wordSet = new Set(wordList);
   if (!wordSet.has(endWord)) return 0;
@@ -109,12 +109,12 @@ if (word === endWord) return level;
 return 0;
 }
 
-/\*\*
+/**
 
 - Solution 2: Bidirectional BFS (Optimal)
 - Time: O(M²×N) — same worst case, but practical search space halved
 - Space: O(M×N) — two frontier sets instead of one expanding queue
-  \*/
+  */
   function ladderLengthBidir(beginWord: string, endWord: string, wordList: string[]): number {
   const wordSet = new Set(wordList);
   if (!wordSet.has(endWord)) return 0;
@@ -154,7 +154,7 @@ console.log(ladderLength("hit", "cog", ["hot","dot","dog","lot","log"])); // 0
 console.log(ladderLengthBidir("hot", "dog", ["hot","hog","dog"])); // 3
 console.log(ladderLengthBidir("a", "c", ["a","b","c"])); // 2
 
-{% endraw %}
+```
 
 ---
 

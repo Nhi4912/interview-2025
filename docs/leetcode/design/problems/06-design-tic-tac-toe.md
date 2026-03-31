@@ -54,8 +54,8 @@ Design a Tic-Tac-Toe game on `n × n` board. `move(row, col, player)` returns `0
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Design Tic-Tac-Toe — LeetCode #348
 -
@@ -66,7 +66,7 @@ Design a Tic-Tac-Toe game on `n × n` board. `move(row, col, player)` returns `0
 - cols[p][c] = how many cells player p owns in col c
 - diags[p][0] = main diagonal count for player p
 - diags[p][1] = anti-diagonal count for player p
-  \*/
+  */
   class TicTacToe {
   private n: number;
   private rows: number[][]; // [player 1|2][row index]
@@ -80,11 +80,11 @@ this.rows = [[], new Array(n).fill(0), new Array(n).fill(0)];
     this.diags = [[], [0, 0], [0, 0]];
 }
 
-/\*\*
+/**
 
 - Place player's mark; return winner or 0.
 - Đặt quân cờ; trả về người thắng hoặc 0.
-  \*/
+  */
   move(row: number, col: number, player: number): number {
   this.rows[player][row]++;
   this.cols[player][col]++;
@@ -120,7 +120,7 @@ const g2 = new TicTacToe(3);
 g2.move(0, 0, 1); g2.move(0, 1, 2);
 g2.move(1, 1, 1); g2.move(0, 2, 2);
 console.assert(g2.move(2, 2, 1) === 1, 'Player 1 wins main diagonal');
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

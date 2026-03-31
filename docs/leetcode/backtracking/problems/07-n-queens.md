@@ -73,14 +73,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Backtracking with Board Scan (Simpler to understand)
 - Time: O(n!) — backtracking prunes invalid branches
 - Space: O(n²) — board array storage
-  \*/
+  */
   function solveNQueensBrute(n: number): string[][] {
   const result: string[][] = [];
   const board = Array.from({ length: n }, () => Array(n).fill("."));
@@ -116,12 +116,12 @@ backtrack(0);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Backtracking with Sets (Optimal — O(1) constraint check)
 - Time: O(n!) — same pruning, but constant-time conflict detection
 - Space: O(n) — three sets + O(n) board rows as strings
-  \*/
+  */
   function solveNQueens(n: number): string[][] {
   const result: string[][] = [];
   const cols = new Set<number>();
@@ -152,7 +152,7 @@ console.log(solveNQueens(4).length); // 2
 console.log(solveNQueens(2).length); // 0
 console.log(solveNQueens(8).length); // 92
 
-{% endraw %}
+```
 
 ---
 

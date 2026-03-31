@@ -69,13 +69,13 @@ s = "101023"       → ["1.0.10.23","1.0.102.3","10.1.0.23","10.10.2.3","101.0.2
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Three Nested Loops (Iterative)
 - Explicitly place 3 dots; O(1) since inputs are bounded
 - Time: O(1) — at most 3×3×3=27 dot placements | Space: O(1)
-  \*/
+  */
   function restoreIpAddressesIter(s: string): string[] {
   const n = s.length;
   if (n < 4 || n > 12) return [];
@@ -101,12 +101,12 @@ result.push(`${a}.${b}.${c}.${d}`);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2 — Backtracking with Pruning ✅ Recommended
 - More general; demonstrates the backtracking pattern clearly
 - Time: O(3^4) = O(81) | Space: O(4) recursion depth
-  \*/
+  */
   function restoreIpAddresses(s: string): string[] {
   const n = s.length;
   if (n < 4 || n > 12) return [];
@@ -149,7 +149,7 @@ return result;
 // restoreIpAddresses("0000") → ["0.0.0.0"]
 // restoreIpAddresses("101023") → ["1.0.10.23","1.0.102.3","10.1.0.23","10.10.2.3","101.0.2.3"]
 // restoreIpAddresses("123") → [] (too short)
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

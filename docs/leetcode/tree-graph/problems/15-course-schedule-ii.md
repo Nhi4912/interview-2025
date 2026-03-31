@@ -82,14 +82,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: DFS with 3-Color Cycle Detection (Brute Force)
 - Time: O(V + E) — visit each node and edge once
 - Space: O(V + E) — adjacency list + recursion stack
-  \*/
+  */
   function findOrderDFS(numCourses: number, prerequisites: number[][]): number[] {
   const graph: number[][] = Array.from({ length: numCourses }, () => []);
   for (const [a, b] of prerequisites) graph[b].push(a);
@@ -116,12 +116,12 @@ if (color[i] === WHITE && !dfs(i)) return [];
 return result.reverse(); // post-order is reverse topological
 }
 
-/\*\*
+/**
 
 - Solution 2: Kahn's Algorithm — BFS Topological Sort (Optimal)
 - Time: O(V + E) — each vertex and edge processed exactly once
 - Space: O(V + E) — adjacency list + in-degree array + queue
-  \*/
+  */
   function findOrder(numCourses: number, prerequisites: number[][]): number[] {
   const graph: number[][] = Array.from({ length: numCourses }, () => []);
   const inDegree = new Array(numCourses).fill(0);
@@ -155,7 +155,7 @@ console.log(findOrder(4, [[1,0],[2,0],[3,1],[3,2]])); // [0,1,2,3] (or any valid
 console.log(findOrder(2, [[1, 0],[0, 1]])); // [] (cycle)
 console.log(findOrder(1, [])); // [0]
 
-{% endraw %}
+```
 
 ---
 

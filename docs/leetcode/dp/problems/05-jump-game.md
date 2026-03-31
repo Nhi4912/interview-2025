@@ -77,14 +77,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: DP Bottom-Up (Brute Force)
 - Time: O(n²) — for each index, check all reachable positions
 - Space: O(n) — dp array
-  \*/
+  */
   function canJumpDP(nums: number[]): boolean {
   const n = nums.length;
   const dp = new Array(n).fill(false);
@@ -102,12 +102,12 @@ break;
 return dp[0];
 }
 
-/\*\*
+/**
 
 - Solution 2: Greedy — Track Max Reachable (Optimal)
 - Time: O(n) — single left-to-right pass
 - Space: O(1) — one variable
-  \*/
+  */
   function canJump(nums: number[]): boolean {
   let maxReachable = 0;
 
@@ -125,7 +125,7 @@ console.log(canJump([3, 2, 1, 0, 4])); // false
 console.log(canJump([0])); // true
 console.log(canJump([0, 1])); // false
 
-{% endraw %}
+```
 
 ---
 

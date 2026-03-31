@@ -68,7 +68,7 @@ Output: false
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class ListNode {
@@ -151,7 +151,7 @@ console.assert(isPalindromeArray(make([1, 2, 2, 1])) === true);
 console.assert(isPalindromeArray(make([1, 2])) === false);
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

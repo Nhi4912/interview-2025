@@ -65,20 +65,20 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force — check all pairs
 - Time: O(n²) — try every (i, j) combination
 - Space: O(1)
-  \*/
+  */
   function maxAreaBrute(height: number[]): number {
   let max = 0;
 
 for (let i = 0; i < height.length; i++) {
 for (let j = i + 1; j < height.length; j++) {
-const area = (j - i) \* Math.min(height[i], height[j]);
+const area = (j - i) * Math.min(height[i], height[j]);
 max = Math.max(max, area);
 }
 }
@@ -86,7 +86,7 @@ max = Math.max(max, area);
 return max;
 }
 
-/\*\*
+/**
 
 - Solution 2: Two Pointers (Optimal)
 - Time: O(n) — single pass, each pointer moves at most n times total
@@ -95,14 +95,14 @@ return max;
 - Why move the shorter side?
 - If we move the taller pointer, width shrinks AND height can only stay ≤ current min.
 - So area can only decrease. Moving the shorter pointer gives a chance to find taller wall.
-  \*/
+  */
   function maxArea(height: number[]): number {
   let left = 0;
   let right = height.length - 1;
   let max = 0;
 
 while (left < right) {
-const area = (right - left) \* Math.min(height[left], height[right]);
+const area = (right - left) * Math.min(height[left], height[right]);
 max = Math.max(max, area);
 
     if (height[left] < height[right]) {
@@ -121,7 +121,7 @@ console.log(maxArea([1, 8, 6, 2, 5, 4, 8, 3, 7])); // 49
 console.log(maxArea([1, 1])); // 1
 console.log(maxArea([4, 3, 2, 1, 4])); // 16
 
-{% endraw %}
+```
 
 ---
 

@@ -76,7 +76,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 class TreeNode {
 val: number;
@@ -87,12 +87,12 @@ this.val = val; this.left = left; this.right = right;
 }
 }
 
-/\*\*
+/**
 
 - Solution 1: Path Tracking (Brute Force)
 - Time: O(n) — two full traversals to find paths
 - Space: O(h) — path arrays, h = tree height
-  \*/
+  */
   function lowestCommonAncestorBrute(root: TreeNode | null, p: TreeNode, q: TreeNode): TreeNode | null {
   function findPath(node: TreeNode | null, target: TreeNode, path: TreeNode[]): boolean {
   if (!node) return false;
@@ -115,12 +115,12 @@ else break;
 return lca;
 }
 
-/\*\*
+/**
 
 - Solution 2: Recursive Post-order DFS (Optimal)
 - Time: O(n) — single traversal, each node visited once
 - Space: O(h) — recursion stack depth equals tree height
-  \*/
+  */
   function lowestCommonAncestor(root: TreeNode | null, p: TreeNode, q: TreeNode): TreeNode | null {
   if (!root) return null;
   if (root === p || root === q) return root; // found one target — return it up
@@ -139,7 +139,7 @@ return left || right; // pass up whichever side found something
 // lowestCommonAncestor(root, node(6), node(4)) → node(5)
 // lowestCommonAncestor(root, node(0), node(8)) → node(1)
 
-{% endraw %}
+```
 
 ---
 

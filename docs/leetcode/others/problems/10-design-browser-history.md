@@ -60,12 +60,12 @@ Output: [null,null,null,null,"facebook.com","google.com","facebook.com",null,"li
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Two Stacks (intuitive approach)
 - visit O(1), back/forward O(steps) | Space: O(n)
-  \*/
+  */
   class BrowserHistoryStacks {
   private back: string[] = [];
   private forward: string[] = [];
@@ -98,12 +98,12 @@ return this.current;
 }
 }
 
-/\*\*
+/**
 
 - Solution 2 — Array + Index Pointer ✅ Recommended
 - All ops O(1) (back/forward is pointer move, not loop)
 - Time: visit O(n) amortized (slice), back/forward O(1) | Space: O(n)
-  \*/
+  */
   class BrowserHistory {
   private history: string[];
   private idx: number;
@@ -138,7 +138,7 @@ return this.history[this.idx];
 // bh.forward(1) // → "facebook.com"
 // bh.visit("linkedin.com"); bh.forward(2) // → "linkedin.com" (clamped)
 // bh.back(7) // → "leetcode.com" (clamped at 0)
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

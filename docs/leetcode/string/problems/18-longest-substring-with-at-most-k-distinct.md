@@ -60,13 +60,13 @@ Input: s="abaccc", k=2 → Output: 4  ("accc")
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - 340.  Longest Substring with At Most K Distinct Characters
 - Brute: try every substring and track distinct count.
 - Time O(n²), Space O(k)
-  \*/
+  */
   function lengthOfLongestSubstringKDistinctBrute(s: string, k: number): number {
   if (k === 0) return 0;
   let max = 0;
@@ -81,12 +81,12 @@ Input: s="abaccc", k=2 → Output: 4  ("accc")
   return max;
   }
 
-/\*\*
+/**
 
 - Variable-size Sliding Window with HashMap — optimal.
 - Expand right freely; shrink left until at most k distinct chars remain.
 - Time O(n), Space O(k)
-  \*/
+  */
   function lengthOfLongestSubstringKDistinct(s: string, k: number): number {
   if (k === 0) return 0;
   const count = new Map<string, number>();
@@ -117,7 +117,7 @@ console.log(lengthOfLongestSubstringKDistinct("eceba", 2)); // 3
 console.log(lengthOfLongestSubstringKDistinct("aa", 1)); // 2
 console.log(lengthOfLongestSubstringKDistinct("abaccc", 2)); // 4
 console.log(lengthOfLongestSubstringKDistinctBrute("abcdef", 3)); // 3
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

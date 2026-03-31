@@ -58,8 +58,8 @@ Xác định xem bảng Sudoku 9×9 có hợp lệ hay không. Chỉ cần kiể
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Single-Pass — Three Sets in Parallel (Readable)
 - Duyệt 81 ô một lần. Mỗi iteration i kiểm tra hàng i, cột i và box i song song.
@@ -67,7 +67,7 @@ Xác định xem bảng Sudoku 9×9 có hợp lệ hay không. Chỉ cần kiể
 -
 - @time O(81) = O(1) — fixed 9×9 board
 - @space O(27) = O(1) — 3 Sets × tối đa 9 phần tử mỗi Set
-  \*/
+  */
   function isValidSudoku(board: string[][]): boolean {
   for (let i = 0; i < 9; i++) {
   const rowSet = new Set<string>();
@@ -102,7 +102,7 @@ Xác định xem bảng Sudoku 9×9 có hợp lệ hay không. Chỉ cần kiể
 // isValidSudoku(invalidBoard) → false (duplicate in row/col/box)
 // isValidSudoku(emptyBoard) → true (all ".")
 
-/\*\*
+/**
 
 - Solution 2: Single-Pass — Bit Manipulation (Memory-Optimal)
 - Thay Set bằng integer bit mask: bit k = số (k) đã xuất hiện hay chưa.
@@ -110,7 +110,7 @@ Xác định xem bảng Sudoku 9×9 có hợp lệ hay không. Chỉ cần kiể
 -
 - @time O(81) = O(1)
 - @space O(27) = O(1) — 3 arrays × 9 integers, không allocate Set objects
-  \*/
+  */
   function isValidSudokuBits(board: string[][]): boolean {
   const rows = new Int32Array(9);
   const cols = new Int32Array(9);
@@ -136,7 +136,7 @@ return true;
 
 // isValidSudokuBits(validBoard) → true
 // isValidSudokuBits(invalidBoard) → false
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

@@ -70,8 +70,8 @@ Constraints: `3 <= nums.length <= 500`, `-1000 <= nums[i] <= 1000`, `-10^4 <= ta
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Two Pointers (Optimal)
 -
@@ -80,7 +80,7 @@ Constraints: `3 <= nums.length <= 500`, `-1000 <= nums[i] <= 1000`, `-10^4 <= ta
 -
 - Time: O(n²) — O(n log n) sort + O(n²) two-pointer sweep
 - Space: O(1)
-  \*/
+  */
   function threeSumClosest(nums: number[], target: number): number {
   nums.sort((a, b) => a - b);
   let closest = nums[0] + nums[1] + nums[2];
@@ -106,7 +106,7 @@ let right = nums.length - 1;
 return closest;
 }
 
-/\*\*
+/**
 
 - Solution 2: Two Pointers with Early Termination
 -
@@ -115,7 +115,7 @@ return closest;
 - - If max possible sum for this i < target and diff ≥ current best → continue
 -
 - Time: O(n²), Space: O(1)
-  \*/
+  */
   function threeSumClosestOpt(nums: number[], target: number): number {
   nums.sort((a, b) => a - b);
   const n = nums.length;
@@ -154,7 +154,7 @@ console.log(threeSumClosest([0, 0, 0], 1)); // 0
 console.log(threeSumClosest([1, 1, 1, 0], -100)); // 2
 console.log(threeSumClosest([1, 2, 3], 6)); // 6
 console.log(threeSumClosest([1, 6, 9, 14, 16, 70], 81)); // 80
-{% endraw %}
+```
 
 ---
 

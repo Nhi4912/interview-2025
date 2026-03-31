@@ -80,7 +80,7 @@ Example 2: root = [5,3,6,2,4], p = 6  → null  (6 is the maximum)
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Note: TreeNode class is provided by LeetCode environment
 
 // Solution 1: BST Property — O(h) time, O(1) space (Optimal)
@@ -133,7 +133,7 @@ const p6 = bst.right!; // node with val=6 (max)
 console.log(inorderSuccessor(bst, p3)?.val); // 4 ✅ (leftmost in right subtree of 3)
 console.log(inorderSuccessor(bst, p4)?.val); // 5 ✅ (first ancestor where we went left)
 console.log(inorderSuccessor(bst, p6)); // null ✅ (no successor for max node)
-{% endraw %}
+```
 
 ---
 

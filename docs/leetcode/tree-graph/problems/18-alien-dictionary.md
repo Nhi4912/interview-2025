@@ -70,7 +70,7 @@ Example 4: words = ["abc","ab"]                      → ""  (invalid: longer wo
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Solution 1: Kahn's Algorithm — BFS Topological Sort (Interview preferred)
 // Time: O(C) — C = total chars across all words (graph build + BFS)
 // Space: O(U + E) — U = unique chars, E = ordering edges
@@ -158,7 +158,7 @@ console.log(alienOrder(["wrt","wrf","er","ett","rftt"])); // "wertf" ✅
 console.log(alienOrder(["z","x"])); // "zx" ✅
 console.log(alienOrder(["z","x","z"])); // "" ✅ (cycle)
 console.log(alienOrder(["abc","ab"])); // "" ✅ (invalid prefix)
-{% endraw %}
+```
 
 ---
 

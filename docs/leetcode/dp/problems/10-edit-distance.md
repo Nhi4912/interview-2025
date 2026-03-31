@@ -78,14 +78,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: 2D DP Bottom-Up (Classic)
 - Time: O(m×n) — fill entire m×n table
 - Space: O(m×n) — 2D dp array
-  \*/
+  */
   function minDistance(word1: string, word2: string): number {
   const m = word1.length, n = word2.length;
   // dp[i][0]=i (delete all), dp[0][j]=j (insert all)
@@ -103,18 +103,18 @@ dp[i][j] = word1[i - 1] === word2[j - 1]
 return dp[m][n];
 }
 
-/\*\*
+/**
 
 - Solution 2: Space-Optimized 1D Rolling Array (Optimal)
 - Time: O(m×n) — same computation
 - Space: O(min(m,n)) — single row, reused each iteration
-  \*/
+  */
   function minDistanceOptimal(word1: string, word2: string): number {
   // Iterate over longer string; store shorter in array dimension
   if (word1.length < word2.length) [word1, word2] = [word2, word1];
   const m = word1.length, n = word2.length;
 
-let prev = Array.from({ length: n + 1 }, (\_, j) => j);
+let prev = Array.from({ length: n + 1 }, (_, j) => j);
 
 for (let i = 1; i <= m; i++) {
 const curr: number[] = [i];
@@ -134,7 +134,7 @@ console.log(minDistance("intention", "execution")); // 5
 console.log(minDistance("", "abc")); // 3
 console.log(minDistanceOptimal("abc", "abc")); // 0
 
-{% endraw %}
+```
 
 ---
 

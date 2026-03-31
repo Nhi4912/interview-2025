@@ -69,14 +69,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Backtracking (Recommended for interviews)
 - Time: O(2^n × n) — 2^n subsets, each copy costs O(n)
 - Space: O(n) — recursion stack depth at most n
-  \*/
+  */
   function subsets(nums: number[]): number[][] {
   const result: number[][] = [];
 
@@ -95,7 +95,7 @@ backtrack(0, []);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Iterative — cascade / BFS style
 - Time: O(2^n × n) — same asymptotically
@@ -106,7 +106,7 @@ return result;
 - add 1: [[], [1]]
 - add 2: [[], [1], [2], [1,2]]
 - add 3: [[], [1], [2], [1,2], [3], [1,3], [2,3], [1,2,3]]
-  \*/
+  */
   function subsetsIterative(nums: number[]): number[][] {
   const result: number[][] = [[]];
 
@@ -128,7 +128,7 @@ console.log(JSON.stringify(subsets([0])));
 console.log(JSON.stringify(subsetsIterative([1, 2, 3])));
 // same 8 subsets (different order)
 
-{% endraw %}
+```
 
 ---
 

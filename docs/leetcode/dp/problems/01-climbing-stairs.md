@@ -69,25 +69,25 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force Recursion
 - Time: O(2^n) — recomputes overlapping subproblems exponentially
 - Space: O(n) — recursion call stack depth
-  \*/
+  */
   function climbStairsBrute(n: number): number {
   if (n <= 1) return 1;
   return climbStairsBrute(n - 1) + climbStairsBrute(n - 2);
   }
 
-/\*\*
+/**
 
 - Solution 2: Space-Optimized DP (Optimal)
 - Time: O(n) — single pass through n steps
 - Space: O(1) — only two rolling variables needed
-  \*/
+  */
   function climbStairs(n: number): number {
   if (n <= 1) return 1;
 
@@ -109,7 +109,7 @@ console.log(climbStairs(2)); // 2
 console.log(climbStairs(5)); // 8
 console.log(climbStairs(0)); // 1 (edge)
 
-{% endraw %}
+```
 
 ---
 

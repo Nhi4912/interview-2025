@@ -74,7 +74,7 @@ Example 2: preorder=[−1], inorder=[−1]                    → [−1]
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Note: TreeNode class is provided by LeetCode environment
 
 // Solution 1: HashMap + Index-based Recursion (Optimal — O(n))
@@ -117,7 +117,7 @@ console.log(tree1?.val); // 3 ✅ (root)
 console.log(tree1?.right?.val); // 20 ✅
 console.log(buildTree([-1], [-1])?.val); // -1 ✅
 console.log(buildTree([], [])); // null ✅
-{% endraw %}
+```
 
 ---
 

@@ -55,13 +55,13 @@ Input: nums=[9,11],               k=2 → Output: [11]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - 239.  Sliding Window Maximum
 - Brute: scan every element in each window independently.
 - Time O(n·k), Space O(1)
-  \*/
+  */
   function maxSlidingWindowBrute(nums: number[], k: number): number[] {
   const result: number[] = [];
   for (let i = 0; i <= nums.length - k; i++) {
@@ -72,14 +72,14 @@ Input: nums=[9,11],               k=2 → Output: [11]
   return result;
   }
 
-/\*\*
+/**
 
 - Monotonic Deque — optimal solution.
 - Deque stores indices in decreasing-value order.
 - Front always points to the current window's maximum.
 - Each element is pushed and popped at most once → amortized O(1) per element.
 - Time O(n), Space O(k)
-  \*/
+  */
   function maxSlidingWindow(nums: number[], k: number): number[] {
   const result: number[] = [];
   const deque: number[] = []; // indices
@@ -106,7 +106,7 @@ console.log(JSON.stringify(maxSlidingWindow([1,3,-1,-3,5,3,6,7], 3))); // [3,3,5
 console.log(JSON.stringify(maxSlidingWindow([1], 1))); // [1]
 console.log(JSON.stringify(maxSlidingWindowBrute([9,11], 2))); // [11]
 console.log(JSON.stringify(maxSlidingWindow([4,-2,-1,3,1,2], 2))); // [4,-1,3,3,2]
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

@@ -66,7 +66,7 @@ Output: [4,5,9]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class ListNode {
@@ -133,7 +133,7 @@ deleteNodeClear(node1);
 console.assert(JSON.stringify(toArr(list2)) === JSON.stringify([4, 5, 9]), "delete 1");
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

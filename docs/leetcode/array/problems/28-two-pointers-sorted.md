@@ -73,8 +73,8 @@ Constraints: `2 <= n <= 3×10^4`, sorted ascending, exactly one valid answer, mu
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Two Pointers (Optimal) ✅ Recommended
 -
@@ -84,7 +84,7 @@ Constraints: `2 <= n <= 3×10^4`, sorted ascending, exactly one valid answer, mu
 -
 - Time: O(n) — each pointer moves at most n steps total
 - Space: O(1) — two pointer variables only
-  \*/
+  */
   function twoSumSorted(numbers: number[], target: number): number[] {
   let left = 0;
   let right = numbers.length - 1;
@@ -99,7 +99,7 @@ else right--; // need smaller value — retreat right
 return []; // unreachable: problem guarantees exactly one solution
 }
 
-/\*\*
+/**
 
 - Solution 2: Binary Search (for contrast)
 -
@@ -107,7 +107,7 @@ return []; // unreachable: problem guarantees exactly one solution
 - O(n log n) vs O(n) two pointers — useful if sorted constraint is removed later.
 -
 - Time: O(n log n), Space: O(1)
-  \*/
+  */
   function twoSumBinarySearch(numbers: number[], target: number): number[] {
   for (let i = 0; i < numbers.length; i++) {
   const complement = target - numbers[i];
@@ -138,7 +138,7 @@ console.log(twoSumSorted([2, 7, 11, 15], 9)); // [1, 2]
 console.log(twoSumSorted([2, 3, 4], 6)); // [1, 3]
 console.log(twoSumSorted([-1, 0], -1)); // [1, 2]
 console.log(twoSumSorted([3, 3], 6)); // [1, 2]
-{% endraw %}
+```
 
 ---
 

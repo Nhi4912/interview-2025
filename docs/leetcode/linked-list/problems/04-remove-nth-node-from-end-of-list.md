@@ -75,7 +75,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 class ListNode {
 val: number;
@@ -85,12 +85,12 @@ this.val = val; this.next = next;
 }
 }
 
-/\*\*
+/**
 
 - Solution 1: Two Pass — Count Length First (Brute Force)
 - Time: O(n) — two full passes through the list
 - Space: O(1) — only pointer variables
-  \*/
+  */
   function removeNthFromEndTwoPass(head: ListNode | null, n: number): ListNode | null {
   let length = 0;
   let curr: ListNode | null = head;
@@ -104,12 +104,12 @@ curr!.next = curr!.next!.next; // skip the nth-from-end node
 return dummy.next;
 }
 
-/\*\*
+/**
 
 - Solution 2: Two Pointers with N+1 Gap (Optimal — One Pass)
 - Time: O(n) — single traversal of the list
 - Space: O(1) — two pointer variables only
-  \*/
+  */
   function removeNthFromEnd(head: ListNode | null, n: number): ListNode | null {
   const dummy = new ListNode(0, head);
   let slow: ListNode = dummy;
@@ -136,7 +136,7 @@ return dummy.next;
 // removeNthFromEnd(list([1,2]), 1) → [1]
 // removeNthFromEnd(list([1,2,3,4,5]), 5) → [2,3,4,5] (remove head)
 
-{% endraw %}
+```
 
 ---
 

@@ -68,13 +68,13 @@ Example 3: n=15 → ["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11"
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Simple If-Else (Most Readable)
 - Time O(n), Space O(n) for output
 - Check FizzBuzz first to avoid missing combined case.
-  \*/
+  */
   function fizzBuzzSimple(n: number): string[] {
   const result: string[] = [];
   for (let i = 1; i <= n; i++) {
@@ -86,14 +86,14 @@ Example 3: n=15 → ["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11"
   return result;
   }
 
-/\*\*
+/**
 
 - Solution 2: String Concatenation (Scalable / Optimal)
 - Time O(n), Space O(n)
 -
 - Advantage: adding a new rule (e.g. 7→"Jazz") only needs
 - one extra line — no restructuring of if-else chain needed.
-  \*/
+  */
   function fizzBuzz(n: number): string[] {
   const result: string[] = [];
   for (let i = 1; i <= n; i++) {
@@ -110,7 +110,7 @@ console.log(JSON.stringify(fizzBuzz(3)) === '["1","2","Fizz"]'); // true
 console.log(JSON.stringify(fizzBuzz(5)) === '["1","2","Fizz","4","Buzz"]'); // true
 console.log(fizzBuzz(15)[14] === "FizzBuzz"); // true
 console.log(fizzBuzz(1)[0] === "1"); // true
-{% endraw %}
+```
 
 ---
 

@@ -83,16 +83,16 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 // Note: TreeNode class is provided by LeetCode environment
 
-/\*\*
+/**
 
 - Solution 1: Recursive DFS (Optimal — interview standard)
 - Time: O(n) — visit each node once
 - Space: O(h) — recursion stack depth equals tree height
-  \*/
+  */
   function isSymmetric(root: TreeNode | null): boolean {
   function isMirror(left: TreeNode | null, right: TreeNode | null): boolean {
   if (!left && !right) return true;
@@ -106,12 +106,12 @@ Constraints:
   return isMirror(root?.left ?? null, root?.right ?? null);
   }
 
-/\*\*
+/**
 
 - Solution 2: Iterative BFS with Queue (Non-recursive alternative)
 - Time: O(n) — visit each node once
 - Space: O(n) — queue holds up to n/2 node pairs at peak
-  \*/
+  */
   function isSymmetricIterative(root: TreeNode | null): boolean {
   if (!root) return true;
   const queue: [TreeNode | null, TreeNode | null][] = [[root.left, root.right]];
@@ -140,7 +140,7 @@ new TreeNode(2, null, new TreeNode(3))
 );
 console.log(isSymmetricIterative(asym)); // false ✅
 
-{% endraw %}
+```
 
 ---
 

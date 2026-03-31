@@ -76,7 +76,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 interface TreeNode {
 val: number;
@@ -84,12 +84,12 @@ left: TreeNode | null;
 right: TreeNode | null;
 }
 
-/\*\*
+/**
 
 - Solution 1: Recursive DFS with Global Max (Classic)
 - Time: O(n) — visit each node exactly once
 - Space: O(h) — recursion stack where h = tree height
-  \*/
+  */
   function maxPathSum(root: TreeNode | null): number {
   let maxSum = -Infinity;
 
@@ -112,12 +112,12 @@ dfs(root);
 return maxSum;
 }
 
-/\*\*
+/**
 
 - Solution 2: Iterative Post-order (Avoids deep recursion stack)
 - Time: O(n) — same logic, no recursion
 - Space: O(n) — explicit stack + gain map
-  \*/
+  */
   function maxPathSumIterative(root: TreeNode | null): number {
   if (!root) return -Infinity;
 
@@ -154,7 +154,7 @@ console.log(maxPathSum(n(-10, n(9), n(20, n(15), n(7))))); // 42
 console.log(maxPathSum(n(-3))); // -3
 console.log(maxPathSumIterative(n(1, n(-2), n(3)))); // 4
 
-{% endraw %}
+```
 
 ---
 

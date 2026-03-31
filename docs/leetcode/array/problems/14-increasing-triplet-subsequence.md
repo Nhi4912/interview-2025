@@ -53,8 +53,8 @@ Cho mảng `nums`, trả về `true` nếu tồn tại chỉ số `i < j < k` sa
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Two Sentinels — Optimal (Greedy)
 - Duy trì `first` = số nhỏ nhất và `second` = số nhỏ nhất mà > first.
@@ -62,7 +62,7 @@ Cho mảng `nums`, trả về `true` nếu tồn tại chỉ số `i < j < k` sa
 -
 - @time O(n) — một lần duyệt duy nhất
 - @space O(1) — chỉ hai biến phụ
-  \*/
+  */
   function increasingTriplet(nums: number[]): boolean {
   let first = Infinity;
   let second = Infinity;
@@ -85,7 +85,7 @@ return false;
 // increasingTriplet([2,1,5,0,4,6]) → true (1<5<6)
 // increasingTriplet([1,1,1,1,1]) → false (bằng nhau, cần strictly increasing)
 
-/\*\*
+/**
 
 - Solution 2: Brute Force — O(n³) (chỉ dùng để giải thích ý tưởng ban đầu)
 - Kiểm tra mọi bộ ba (i, j, k) với i < j < k.
@@ -93,7 +93,7 @@ return false;
 -
 - @time O(n³) — ba vòng lặp lồng nhau
 - @space O(1)
-  \*/
+  */
   function increasingTripletBrute(nums: number[]): boolean {
   const n = nums.length;
   for (let i = 0; i < n - 2; i++)
@@ -106,7 +106,7 @@ return false;
 // increasingTripletBrute([1,2,3]) → true
 // increasingTripletBrute([3,2,1]) → false
 // increasingTripletBrute([1,1,2]) → false (không strictly increasing)
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

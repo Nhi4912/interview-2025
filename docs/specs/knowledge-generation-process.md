@@ -26,14 +26,15 @@ This repo uses a 5-phase pipeline to add new knowledge content:
 **Skill to use**: `/discovery-interview`
 
 **What to extract from discovery:**
+
 ```yaml
-topic_request:       "What exactly do you want to learn?"
-track:               shared | fe-track | be-track
-difficulty_target:   junior | mid | senior | all
-company_context:     google | grab | axon | all
-learner_background:  "What do you already know?"
-urgency:             "Preparing for interview when?"
-gaps_identified:     ["List of specific sub-topics missing"]
+topic_request: "What exactly do you want to learn?"
+track: shared | fe-track | be-track
+difficulty_target: junior | mid | senior | all
+company_context: google | grab | axon | all
+learner_background: "What do you already know?"
+urgency: "Preparing for interview when?"
+gaps_identified: ["List of specific sub-topics missing"]
 ```
 
 **Discovery output format** → create `docs/specs/pending/YYYY-MM-DD-{topic}.spec.md`
@@ -45,10 +46,12 @@ gaps_identified:     ["List of specific sub-topics missing"]
 **File**: `docs/specs/pending/{topic}.spec.md`
 
 **Template**:
+
 ```markdown
 # Content Spec: {Topic Name}
 
 ## Identity
+
 - **Topic**: {name}
 - **Track**: shared | fe-track | be-track
 - **Target file**: `docs/{track}/{section}/{filename}.md`
@@ -56,20 +59,25 @@ gaps_identified:     ["List of specific sub-topics missing"]
 - **Format**: Theory + Q&A | Q&A only | Practice/Coding
 
 ## Scope
+
 - **Why needed**: (gap identified in discovery)
 - **Audience**: (who is this for — junior dev? senior?)
 - **Company relevance**: (Google? Grab? All?)
 
 ## Prerequisites
+
 - [ ] `docs/shared/01-cs-fundamentals/...`
 - [ ] `docs/fe-track/01-javascript/...`
 
 ## Cross-References (bidirectional)
+
 - Must reference: [file that should link TO this]
 - Will reference: [files this doc will link FROM]
 
 ## Content Outline
+
 ### Q&A pairs planned (by difficulty):
+
 - 🟢 Junior: Q1 — {question}
 - 🟢 Junior: Q2 — {question}
 - 🟡 Mid: Q3 — {question}
@@ -78,10 +86,12 @@ gaps_identified:     ["List of specific sub-topics missing"]
 - 🔴 Senior: Q6 — {question}
 
 ## Bilingual Notes
+
 - Key terms to keep in English: [...list technical terms...]
 - Sections requiring deeper VI explanation: [...complex concepts...]
 
 ## Success Criteria
+
 - [ ] Covers all planned Q&A pairs
 - [ ] Each answer has English explanation + Vietnamese reinforcement
 - [ ] All difficulty levels represented
@@ -98,6 +108,7 @@ gaps_identified:     ["List of specific sub-topics missing"]
 **What to design before writing:**
 
 1. **Competency Map**: What does "knowing this topic" mean at each level?
+
    ```
    Junior: Can define + basic usage
    Mid: Understands internals + trade-offs
@@ -105,6 +116,7 @@ gaps_identified:     ["List of specific sub-topics missing"]
    ```
 
 2. **Question Bank Structure** (following interview-system-designer pattern):
+
    ```
    Round 1 — Foundations:    Define, explain basics, simple code example
    Round 2 — Mechanism:      How it works internally, why it behaves this way
@@ -152,6 +164,7 @@ gaps_identified:     ["List of specific sub-topics missing"]
 {Table, diagram, or bullet points showing key insight}
 
 **Tại sao phải học topic này?**
+
 - {Reason 1: interview frequency / practical impact}
 - {Reason 2: connects to X which enables Y}
 - {Reason 3: prevents common bugs/mistakes}
@@ -159,16 +172,19 @@ gaps_identified:     ["List of specific sub-topics missing"]
 ---
 
 ## Concept Map / Bản Đồ Khái Niệm
-
 ```
+
 {ASCII diagram showing:
-  [prerequisites] → [THIS TOPIC] → [what it enables]
-  Plus key sub-concepts branching from the center}
+[prerequisites] → [THIS TOPIC] → [what it enables]
+Plus key sub-concepts branching from the center}
+
 ```
 
 **Bạn đang ở đây trong lộ trình học:**
 ```
+
 {Learning path: prior concept → [THIS] → next concept}
+
 ```
 
 ---
@@ -199,7 +215,9 @@ gaps_identified:     ["List of specific sub-topics missing"]
 {Technical: internals, algorithm, data structure involved.}
 
 ```
+
 [VISUAL: ASCII diagram, comparison table, or memory sketch — MANDATORY]
+
 ```
 
 #### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
@@ -284,6 +302,7 @@ gaps_identified:     ["List of specific sub-topics missing"]
 ```
 
 **Generation rules:**
+
 1. **Motivation before definition** — file MUST start with Real-World Scenario, not a definition (Harvard Case Method)
 2. **Feynman-first** — "What & Why" section uses analogy/metaphor, technical precision comes in Core Concepts
 3. **Root-cause tracing** — every Core Concept starts with "Why does this exist?" — 2+ levels of why before defining
@@ -320,23 +339,27 @@ Before marking a spec as done, verify:
 ## Quality Gate
 
 ### Format
+
 - [ ] File header has: Track, Difficulty, Prerequisites, See also
 - [ ] Title is bilingual: `# English / Tiếng Việt`
 - [ ] All H2/H3 section headings are bilingual
 
 ### Content Completeness
+
 - [ ] All planned Q&A pairs from spec are written
 - [ ] No placeholder content (no "Tactic N", no "TODO", no stub bullets)
 - [ ] Code examples are real and runnable (tested mentally)
 - [ ] All difficulty levels covered (🟢🟡🔴)
 
 ### Pedagogy — Intro Sections (Phase 1)
+
 - [ ] File starts with Real-World Scenario (not a definition) — Harvard Case Method
 - [ ] "What & Why" section uses analogy/metaphor a non-programmer understands — Feynman check
 - [ ] Concept Map (ASCII diagram) shows learning path context
 - [ ] No generic overview text (test: could this paragraph appear identically in another file?)
 
 ### Pedagogy — Deep Content (Phase 2)
+
 - [ ] Each Core Concept has Memory Hook (🧠 killer sentence / mnemonic / visual sketch)
 - [ ] Each Core Concept has "Why does this exist?" with 2+ levels of "why" — First Principles
 - [ ] Each Core Concept has a visual (ASCII / table / diagram) — Dual Coding mandatory
@@ -355,12 +378,14 @@ Before marking a spec as done, verify:
 - [ ] Study Cases name a real company/system/incident (not generic "example:")
 
 ### Bilingual
+
 - [ ] Every Q has both EN and VI phrasing
 - [ ] Every A has both EN explanation and VI reinforcement
 - [ ] Technical terms kept in English, Vietnamese explanations alongside
 - [ ] Company-specific interview tips are bilingual
 
 ### L5 Readiness
+
 - [ ] L5 Competency mapping in header: `> **L5 Competencies**: Technical Mastery (20pts), ...` (Rule 19)
 - [ ] Cross-track links present if topic is relevant to both FE and BE (Rule 20)
 - [ ] LeetCode cross-references for algorithm/data-structure content (Rule 21)
@@ -368,6 +393,7 @@ Before marking a spec as done, verify:
 - [ ] ≥1 Study Case involves L5-level decision-making (architectural choice, team-level impact)
 
 ### Integration
+
 - [ ] File added to `docs/00-table-of-contents.md`
 - [ ] Cross-references ADDED to this new file
 - [ ] Cross-references UPDATED in related files (bidirectional linking)
@@ -378,14 +404,14 @@ Before marking a spec as done, verify:
 
 ## Workflow Triggers / Khi Nào Dùng Gì
 
-| User says... | Action |
-|-------------|--------|
-| "Add content on {topic}" | → Phase 1: Run `/discovery-interview` |
-| "I need to understand {X} for interview" | → Phase 1: Run `/discovery-interview` |
-| "Write Q&A about {specific topic}" | → Phase 2: Create spec directly (skip discovery) |
-| "Review this content" | → Phase 5: Run review checklist |
-| "Design interview questions for {topic}" | → Phase 3: Use `/interview-system-designer` approach |
-| "What's missing in the knowledge base?" | → Audit `docs/00-table-of-contents.md` + run gap analysis |
+| User says...                             | Action                                                    |
+| ---------------------------------------- | --------------------------------------------------------- |
+| "Add content on {topic}"                 | → Phase 1: Run `/discovery-interview`                     |
+| "I need to understand {X} for interview" | → Phase 1: Run `/discovery-interview`                     |
+| "Write Q&A about {specific topic}"       | → Phase 2: Create spec directly (skip discovery)          |
+| "Review this content"                    | → Phase 5: Run review checklist                           |
+| "Design interview questions for {topic}" | → Phase 3: Use `/interview-system-designer` approach      |
+| "What's missing in the knowledge base?"  | → Audit `docs/00-table-of-contents.md` + run gap analysis |
 
 ---
 
@@ -394,6 +420,7 @@ Before marking a spec as done, verify:
 Tracked here so discovery always knows what to prioritize:
 
 ### High Priority
+
 - [ ] FE: Frontend Testing (Jest, RTL, Cypress) — no dedicated section
 - [x] Shared: Load Balancing theory → `shared/02-system-design/06-load-balancing.md`
 - [x] Shared: Message Queues / Event Streaming → `shared/02-system-design/05-message-queues.md`
@@ -401,15 +428,105 @@ Tracked here so discovery always knows what to prioritize:
 - [ ] FE: Web Performance — Bundle analysis deep dive
 
 ### Medium Priority
+
 - [x] Shared: Database — Sharding patterns → `shared/03-database/04-sharding-and-transactions.md`
 - [x] Shared: Database — Transaction isolation levels → included in `04-sharding-and-transactions.md`
 - [ ] BE: Kubernetes and container orchestration (06-devops is thin)
 - [ ] FE: CSS — CSS-in-JS vs CSS Modules vs Tailwind comparison
 
 ### Low Priority
-- [ ] LeetCode: Add bilingual explanations to problem solutions
+
+- [x] LeetCode: Add bilingual explanations to problem solutions → 130 hand-crafted problems with full Vietnamese + English
 - [x] FE: Advanced TypeScript — Mapped Types, Template Literal Types → `fe-track/02-typescript/02-advanced-types.md` (785 lines, comprehensive)
 - [ ] Shared: AI — Evaluation and testing AI systems
+
+### Completed (2026-03-31)
+
+- [x] LeetCode: Company-wise problem index — 463 companies with frequency data → `leetcode/company-wise/`
+- [x] LeetCode: Problem skeletons — 1,707 problem files generated from company interview data
+- [x] LeetCode: Markdown rendering fix — removed `{% raw %}` tags, fixed escaped characters in 124 hand-crafted files
+- [x] LeetCode: Category index rebuild — all 10 categories updated with accurate problem counts
+
+---
+
+## LeetCode Company-Wise Data Pipeline
+
+> **Added 2026-03-31**: Automated pipeline for importing company interview problem data.
+
+### Source Data
+
+Located at `docs/interview-company-wise-problems/{Company}/5. All.csv`
+
+- **470 companies**, each with CSV files containing problems asked in interviews
+- CSV format: `Difficulty,Title,Frequency,Acceptance Rate,Link,Topics`
+- Topics field is quoted, comma-separated (e.g., `"Array, Hash Table, Sorting"`)
+
+### Generation Scripts
+
+| Script                                  | Purpose                                   | Output                                             |
+| --------------------------------------- | ----------------------------------------- | -------------------------------------------------- |
+| `scripts/generate-company-problems.mjs` | Parse CSVs → company index files          | `docs/leetcode/company-wise/problems/{company}.md` |
+| `scripts/generate-problem-files.mjs`    | Parse CSVs → individual problem skeletons | `docs/leetcode/{category}/problems/{NN}-{slug}.md` |
+| `scripts/fix-handcrafted-md.mjs`        | Fix `{% raw %}` tags and escaped chars    | Fixes in-place                                     |
+| `scripts/update-category-indexes.mjs`   | Rebuild category index files              | `docs/leetcode/{category}/index.md` + `README.md`  |
+
+### Problem Categorization
+
+Problems are assigned to categories based on their Topics field:
+
+| Primary Topic                       | Category          |
+| ----------------------------------- | ----------------- |
+| Tree, Graph, BFS, DFS, Trie         | tree-graph        |
+| Dynamic Programming                 | dp                |
+| Backtracking, Recursion             | backtracking      |
+| Linked List                         | linked-list       |
+| Design, Data Stream                 | design            |
+| Binary Search, Sort, Heap           | sorting-searching |
+| Math, Bit Manipulation, Geometry    | math              |
+| String (no overlap with others)     | string            |
+| Stack, Queue, Monotonic             | others            |
+| Array, Hash Table, Matrix (default) | array             |
+
+### Output Summary
+
+```
+Total: 1,837 problem files (130 hand-crafted + 1,707 generated skeletons)
+Company indexes: 463 files in company-wise/
+Category indexes: 10 categories × 2 files (index.md + README.md)
+
+By difficulty: 🟢 419 Easy | 🟡 1,019 Medium | 🔴 399 Hard
+By category:
+├── Array:              342 (28 crafted)
+├── String:             275 (21 crafted)
+├── Tree & Graph:       295 (19 crafted)
+├── Dynamic Programming:269 (12 crafted)
+├── Backtracking:        36 (11 crafted)
+├── Linked List:         46 (11 crafted)
+├── Design:              70 (10 crafted)
+├── Sorting & Searching:328  (6 crafted)
+├── Math:                70  (5 crafted)
+└── Others:             106  (7 crafted)
+```
+
+### Skeleton File Format
+
+Generated skeletons follow RULES.md format with:
+
+- Complete YAML frontmatter (title, difficulty, category, tags, leetcode_url)
+- Bilingual title placeholder
+- Metadata line with pattern, frequency tier, related problems
+- 🧠 Intuition section (Vietnamese analogy + pattern recognition + visual TODO)
+- Problem description with LeetCode link
+- 📝 Interview tips (3 bilingual bullets)
+- Solutions section with 2 placeholder functions (brute + optimal)
+- 🔗 Related problems (2-3 links from same-topic pool)
+
+### Quality Tiers
+
+| Tier         | Description                                                                        | Count |
+| ------------ | ---------------------------------------------------------------------------------- | ----- |
+| **Full**     | Hand-crafted: complete solutions, Vietnamese analogies, ASCII visuals, tested code | 130   |
+| **Skeleton** | Auto-generated: structure + metadata + placeholders, ready for implementation      | 1,707 |
 
 ---
 

@@ -64,6 +64,7 @@ docs/
     ├── 00-patterns-index.md      ★ Pattern-based problem grouping
     ├── array/, string/, tree-graph/, dp/, backtracking/
     ├── linked-list/, design/, sorting-searching/, math/, others/
+    ├── company-wise/             ★ 463 company problem indexes
     └── index.md
 ```
 
@@ -75,18 +76,18 @@ docs/
 
 This KB is structured around the **10 competencies** that L5 interviews evaluate:
 
-| # | Competency | Weight | Coverage |
-|---|-----------|--------|----------|
-| 1 | Scope & Impact | 15pts | [Scope & Impact](docs/shared/08-l5-competencies/01-scope-and-impact.md) |
-| 2 | Problem-Solving | 15pts | [Problem-Solving Frameworks](docs/shared/08-l5-competencies/02-problem-solving-frameworks.md) + [LeetCode Patterns](docs/leetcode/00-patterns-index.md) |
-| 3 | Technical Mastery | 20pts | FE track (JS/TS/React/Next.js) + BE track (Go) + Shared CS |
-| 4 | Communication | 10pts | [STAR Method](docs/shared/09-behavioral/01-star-method.md) + [Storytelling](docs/shared/09-behavioral/04-storytelling.md) |
-| 5 | Leadership | 10pts | [Leadership Principles](docs/shared/09-behavioral/02-leadership-principles.md) |
-| 6 | Ownership & Execution | 10pts | [Self-Assessment](docs/shared/08-l5-competencies/00-l5-self-assessment.md) |
-| 7 | Quality & Risk | 10pts | [Testing Strategy](docs/fe-track/06-browser-performance/06-frontend-testing-strategy.md) + [Observability](docs/fe-track/08-fe-system-design/07-frontend-quality-and-observability.md) |
-| 8 | Team Multiplier | 5pts | [Design Patterns](docs/shared/05-software-engineering/01-solid-and-design-patterns.md) |
-| 9 | Behaviour | 3pts | [Common Questions](docs/shared/09-behavioral/03-common-questions.md) |
-| 10 | Business Awareness | 2pts | [Company Guides](docs/shared/07-company-guides/) |
+| #   | Competency            | Weight | Coverage                                                                                                                                                                               |
+| --- | --------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Scope & Impact        | 15pts  | [Scope & Impact](docs/shared/08-l5-competencies/01-scope-and-impact.md)                                                                                                                |
+| 2   | Problem-Solving       | 15pts  | [Problem-Solving Frameworks](docs/shared/08-l5-competencies/02-problem-solving-frameworks.md) + [LeetCode Patterns](docs/leetcode/00-patterns-index.md)                                |
+| 3   | Technical Mastery     | 20pts  | FE track (JS/TS/React/Next.js) + BE track (Go) + Shared CS                                                                                                                             |
+| 4   | Communication         | 10pts  | [STAR Method](docs/shared/09-behavioral/01-star-method.md) + [Storytelling](docs/shared/09-behavioral/04-storytelling.md)                                                              |
+| 5   | Leadership            | 10pts  | [Leadership Principles](docs/shared/09-behavioral/02-leadership-principles.md)                                                                                                         |
+| 6   | Ownership & Execution | 10pts  | [Self-Assessment](docs/shared/08-l5-competencies/00-l5-self-assessment.md)                                                                                                             |
+| 7   | Quality & Risk        | 10pts  | [Testing Strategy](docs/fe-track/06-browser-performance/06-frontend-testing-strategy.md) + [Observability](docs/fe-track/08-fe-system-design/07-frontend-quality-and-observability.md) |
+| 8   | Team Multiplier       | 5pts   | [Design Patterns](docs/shared/05-software-engineering/01-solid-and-design-patterns.md)                                                                                                 |
+| 9   | Behaviour             | 3pts   | [Common Questions](docs/shared/09-behavioral/03-common-questions.md)                                                                                                                   |
+| 10  | Business Awareness    | 2pts   | [Company Guides](docs/shared/07-company-guides/)                                                                                                                                       |
 
 **Target**: ≥ 70/100. Use the [L5 Self-Assessment](docs/shared/08-l5-competencies/00-l5-self-assessment.md) to find your gaps.
 
@@ -118,34 +119,34 @@ Every content file follows research-backed learning techniques:
 
 ## Coverage / Phạm Vi
 
-| Section | Files | Topics |
-|---------|-------|--------|
-| Shared Fundamentals | ~45 | CS, System Design, DB, Security, SE, AI, L5 Competencies, Behavioral |
-| Frontend Track | ~200+ | JS, TS, React, Next.js, Browser, Performance, Testing, Security |
-| Backend Track | ~27 | Go, Backend, DB, System Design, DevOps |
-| LeetCode | ~156 | Arrays, Strings, Trees, DP, Backtracking, Design (12 patterns) |
+| Section             | Files  | Topics                                                                                |
+| ------------------- | ------ | ------------------------------------------------------------------------------------- |
+| Shared Fundamentals | ~45    | CS, System Design, DB, Security, SE, AI, L5 Competencies, Behavioral                  |
+| Frontend Track      | ~200+  | JS, TS, React, Next.js, Browser, Performance, Testing, Security                       |
+| Backend Track       | ~27    | Go, Backend, DB, System Design, DevOps                                                |
+| LeetCode            | ~1,837 | Arrays, Strings, Trees, DP, Backtracking, Design, + 463 company indexes (12 patterns) |
 
 ---
 
 ## Company Targets / Công Ty Mục Tiêu
 
-| Company | Level | Primary Focus | Guide |
-|---------|-------|---------------|-------|
-| Google | L4–L6 | Hard DSA, System Design, Behavioral | [Google](docs/shared/07-company-guides/01-google.md) |
-| Microsoft | SDE2–SDE3 | Domain knowledge, medium DSA | [Microsoft](docs/shared/07-company-guides/02-microsoft.md) |
-| Grab | SWE2–SWE3 | Go backend, SEA-scale system design | [Grab](docs/shared/07-company-guides/03-grab.md) |
-| Axon | SWE | Practical engineering, mission-driven | [Axon](docs/shared/07-company-guides/04-axon.md) |
-| Employment Hero | SWE | Product thinking, async collaboration | [EH](docs/shared/07-company-guides/05-employment-hero.md) |
-| Zalo/VNG | Mid–Senior | Go + React, messaging at scale | [Zalo](docs/shared/07-company-guides/06-zalo-vng.md) |
+| Company         | Level      | Primary Focus                         | Guide                                                      |
+| --------------- | ---------- | ------------------------------------- | ---------------------------------------------------------- |
+| Google          | L4–L6      | Hard DSA, System Design, Behavioral   | [Google](docs/shared/07-company-guides/01-google.md)       |
+| Microsoft       | SDE2–SDE3  | Domain knowledge, medium DSA          | [Microsoft](docs/shared/07-company-guides/02-microsoft.md) |
+| Grab            | SWE2–SWE3  | Go backend, SEA-scale system design   | [Grab](docs/shared/07-company-guides/03-grab.md)           |
+| Axon            | SWE        | Practical engineering, mission-driven | [Axon](docs/shared/07-company-guides/04-axon.md)           |
+| Employment Hero | SWE        | Product thinking, async collaboration | [EH](docs/shared/07-company-guides/05-employment-hero.md)  |
+| Zalo/VNG        | Mid–Senior | Go + React, messaging at scale        | [Zalo](docs/shared/07-company-guides/06-zalo-vng.md)       |
 
 ---
 
 ## Study Path by Level / Lộ Trình Theo Level
 
-| Level | Target | Focus |
-|-------|--------|-------|
-| **L3 Junior** | Pass Easy-Medium coding | JS/TS basics, React fundamentals, LeetCode Easy |
-| **L4 Mid** | Pass Medium coding + domain | Advanced JS/TS, React patterns, Performance, Security |
+| Level         | Target                                 | Focus                                                    |
+| ------------- | -------------------------------------- | -------------------------------------------------------- |
+| **L3 Junior** | Pass Easy-Medium coding                | JS/TS basics, React fundamentals, LeetCode Easy          |
+| **L4 Mid**    | Pass Medium coding + domain            | Advanced JS/TS, React patterns, Performance, Security    |
 | **L5 Senior** | Pass Hard + System Design + Behavioral | Architecture, L5 Competencies, Leadership, LeetCode Hard |
 
 See [Level Guide](docs/00-level-guide.md) for the complete file-to-level mapping.

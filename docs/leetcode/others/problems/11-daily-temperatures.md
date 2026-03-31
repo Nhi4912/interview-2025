@@ -75,7 +75,7 @@ Example 3: temperatures = [30,60,90] → [1,1,0]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 /**
  * Solution 1: Brute Force
@@ -127,7 +127,7 @@ console.log(dailyTemperatures([30,40,50,60]));              // [1,1,1,0]
 console.log(dailyTemperatures([30,60,90]));                 // [1,1,0]
 console.log(dailyTemperatures([90,80,70,60]));              // [0,0,0,0] — all decreasing
 
-{% endraw %}
+```
 
 ---
 

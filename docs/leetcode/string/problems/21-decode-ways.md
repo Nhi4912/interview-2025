@@ -60,9 +60,9 @@ Input: s = "06"   → 0   (leading zero — invalid)
 
 ## Solutions
 
-{% raw %}
-/\*\* \* 91. Decode Ways — Recursive + Memoization (Top-Down DP) \* At each index, try decoding 1 digit then 2 digits; cache results. \* Time O(n), Space O(n) — memo map + call stack
-\*/
+```typescript
+/** * 91. Decode Ways — Recursive + Memoization (Top-Down DP) * At each index, try decoding 1 digit then 2 digits; cache results. * Time O(n), Space O(n) — memo map + call stack
+*/
 function numDecodingsMemo(s: string): number {
 const memo = new Map<number, number>();
 
@@ -85,8 +85,8 @@ const memo = new Map<number, number>();
 
 }
 
-/\*\* \* Bottom-Up DP — space-optimized, recommended for interviews. \* dp[i] = ways to decode s[0..i-1]; only prev1/prev2 needed at each step. \* Transition: if s[i-1]≠'0' → curr += prev1; if 10≤two≤26 → curr += prev2. \* Time O(n), Space O(1)
-\*/
+/** * Bottom-Up DP — space-optimized, recommended for interviews. * dp[i] = ways to decode s[0..i-1]; only prev1/prev2 needed at each step. * Transition: if s[i-1]≠'0' → curr += prev1; if 10≤two≤26 → curr += prev2. * Time O(n), Space O(1)
+*/
 function numDecodings(s: string): number {
 if (s[0] === '0') return 0;
 const n = s.length;
@@ -111,7 +111,7 @@ console.log(numDecodings("12")); // 2 ("AB" or "L")
 console.log(numDecodings("226")); // 3 ("BBF", "BZ", "VF")
 console.log(numDecodings("06")); // 0 (leading zero)
 console.log(numDecodings("10")); // 1 ("J" only, "0" alone invalid)
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

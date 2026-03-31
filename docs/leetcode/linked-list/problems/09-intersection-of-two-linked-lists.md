@@ -70,7 +70,7 @@ Output: null
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class ListNode {
@@ -136,7 +136,7 @@ console.assert(getIntersectionNode(la, lb) === null, "no intersection");
 console.assert(getIntersectionNodeSet(la, lb) === null, "set: no intersection");
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

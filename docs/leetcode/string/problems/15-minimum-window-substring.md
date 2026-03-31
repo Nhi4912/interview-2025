@@ -66,19 +66,19 @@ Input: s="a",             t="aa"  → Output: ""
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Minimum Window Substring
 - https://leetcode.com/problems/minimum-window-substring/
-  \*/
+  */
 
-/\*\*
+/**
 
 - Solution 1: Sliding Window with HashMap (Clear & Standard)
 - Expand right pointer; shrink left when window satisfies t.
 - Time O(m+n) | Space O(m+n)
-  \*/
+  */
   function minWindow(s: string, t: string): string {
   if (s.length < t.length) return "";
 
@@ -117,12 +117,12 @@ windowCount.set(ch, (windowCount.get(ch) || 0) + 1);
 return minLen === Infinity ? "" : s.substring(minStart, minStart + minLen);
 }
 
-/\*\*
+/**
 
 - Solution 2: Sliding Window with ASCII Array (Optimized Space)
 - Replace HashMap with fixed-size number[128] for O(1) lookups.
 - Time O(m+n) | Space O(1) — array size is constant
-  \*/
+  */
   function minWindowArray(s: string, t: string): string {
   if (s.length < t.length) return "";
 
@@ -165,7 +165,7 @@ console.log(minWindow("ADOBECODEBANC", "ABC")); // "BANC"
 console.log(minWindow("a", "a")); // "a"
 console.log(minWindowArray("a", "aa")); // ""
 console.log(minWindowArray("bba", "ab")); // "ba"
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

@@ -70,14 +70,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Backtracking with visited array (Clearest for interviews)
 - Time: O(n × n!) — n! permutations, each costs O(n) to copy
 - Space: O(n) — recursion stack + visited array
-  \*/
+  */
   function permute(nums: number[]): number[][] {
   const result: number[][] = [];
   const visited = new Array(nums.length).fill(false);
@@ -104,7 +104,7 @@ backtrack([]);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Swap-based backtracking (Space optimal)
 - Time: O(n × n!) — same
@@ -112,7 +112,7 @@ return result;
 -
 - Key idea: at position `start`, swap each nums[i] (i >= start) into that slot,
 - recurse on the rest, then swap back.
-  \*/
+  */
   function permuteSwap(nums: number[]): number[][] {
   const result: number[][] = [];
 
@@ -142,7 +142,7 @@ console.log(JSON.stringify(permute([0, 1])));
 console.log(JSON.stringify(permuteSwap([1, 2, 3])));
 // same 6 permutations (different order)
 
-{% endraw %}
+```
 
 ---
 

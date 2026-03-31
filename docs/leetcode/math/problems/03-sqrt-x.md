@@ -68,8 +68,8 @@ Constraints: `0 <= x <= 2^31 - 1`
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Newton's Method (Babylonian)
 - Time O(log x), Space O(1)
@@ -85,14 +85,14 @@ Constraints: `0 <= x <= 2^31 - 1`
   return guess;
   }
 
-/\*\*
+/**
 
 - Solution 2: Binary Search on Answer (Optimal / Canonical)
 - Time O(log x), Space O(1)
 -
-- Find the largest integer `mid` such that mid \* mid <= x.
+- Find the largest integer `mid` such that mid * mid <= x.
 - When loop ends, `right` holds that largest valid value.
-  \*/
+  */
   function mySqrt(x: number): number {
   if (x < 2) return x;
 
@@ -101,7 +101,7 @@ let hi = Math.floor(x / 2); // sqrt(x) <= x/2 for x >= 4
 
 while (lo <= hi) {
 const mid = lo + Math.floor((hi - lo) / 2);
-const sq = mid \* mid;
+const sq = mid * mid;
 
     if (sq === x)      return mid;        // perfect square
     else if (sq < x)   lo = mid + 1;     // mid too small
@@ -117,7 +117,7 @@ console.log(mySqrt(4) === 2); // true
 console.log(mySqrt(8) === 2); // true
 console.log(mySqrt(0) === 0); // true
 console.log(mySqrt(1) === 1); // true
-{% endraw %}
+```
 
 ---
 

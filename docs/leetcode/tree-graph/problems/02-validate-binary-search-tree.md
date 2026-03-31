@@ -69,7 +69,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 interface TreeNode {
 val: number;
@@ -77,13 +77,13 @@ left: TreeNode | null;
 right: TreeNode | null;
 }
 
-/\*\*
+/**
 
 - Solution 1: Recursive with Range (Brute Force style)
 - Time: O(n) — visit every node once
 - Space: O(h) — recursion stack depth = tree height
 - Intuition: pass valid range [min, max] to each node
-  \*/
+  */
   function isValidBSTRange(root: TreeNode | null): boolean {
   function validate(node: TreeNode | null, min: number | null, max: number | null): boolean {
   if (!node) return true;
@@ -94,13 +94,13 @@ right: TreeNode | null;
   return validate(root, null, null);
   }
 
-/\*\*
+/**
 
 - Solution 2: In-order with prev pointer (Optimal)
 - Time: O(n) — visit every node once
 - Space: O(h) — recursion stack; no extra array needed
 - Intuition: valid BST ↔ in-order yields strictly increasing sequence
-  \*/
+  */
   function isValidBST(root: TreeNode | null): boolean {
   let prev: number | null = null;
 
@@ -136,7 +136,7 @@ right: { val: 6, left: null, right: null },
 };
 console.log(isValidBST(t2)); // false
 
-{% endraw %}
+```
 
 ---
 

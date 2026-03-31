@@ -55,8 +55,8 @@ Output: [null,            1,     2,     3,     true,     true,     4,     false]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Flatten 2D Vector — LeetCode #251
 -
@@ -64,7 +64,7 @@ Output: [null,            1,     2,     3,     true,     true,     4,     false]
 - Time: O(1) amortized per next()/hasNext() | Space: O(1) extra
 -
 - Key: advance() skips empty rows; called in constructor and after next().
-  \*/
+  */
   class Vector2D {
   private vec: number[][];
   private row = 0;
@@ -75,11 +75,11 @@ this.vec = vec;
 this.advance();
 }
 
-/\*\*
+/**
 
 - Skip past any empty rows to land on the next valid element.
 - Bỏ qua các hàng rỗng đến phần tử hợp lệ kế tiếp.
-  \*/
+  */
   private advance(): void {
   while (this.row < this.vec.length && this.col >= this.vec[this.row].length) {
   this.row++;
@@ -121,7 +121,7 @@ const v2 = new Vector2D([[5]]);
 console.assert(v2.hasNext() === true);
 console.assert(v2.hasNext() === true, 'hasNext twice should not advance state');
 console.assert(v2.next() === 5);
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

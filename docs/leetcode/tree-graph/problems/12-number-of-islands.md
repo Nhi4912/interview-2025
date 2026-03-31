@@ -67,14 +67,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: DFS Flood Fill (Standard)
 - Time: O(m × n) — each cell visited at most once
 - Space: O(m × n) — recursion stack in worst case (all land, thin snake)
-  \*/
+  */
   function numIslands(grid: string[][]): number {
   if (!grid || grid.length === 0) return 0;
 
@@ -103,12 +103,12 @@ dfs(i, j);
 return count;
 }
 
-/\*\*
+/**
 
 - Solution 2: BFS Flood Fill (Optimal for large grids — no recursion stack risk)
 - Time: O(m × n) — each cell enqueued at most once
 - Space: O(min(m, n)) — queue size bounded by diagonal length
-  \*/
+  */
   function numIslandsBFS(grid: string[][]): number {
   if (!grid || grid.length === 0) return 0;
 
@@ -160,7 +160,7 @@ const grid2 = [
 ];
 console.log(numIslandsBFS(grid2)); // 3
 
-{% endraw %}
+```
 
 ---
 

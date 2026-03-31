@@ -67,7 +67,7 @@ Output: [1,1,2,3,4,4,5,6]
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 ```typescript
 class ListNode {
@@ -169,7 +169,7 @@ console.assert(
 );
 ```
 
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

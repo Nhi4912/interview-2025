@@ -62,8 +62,8 @@ Cho mảng số nguyên `nums` đã sort, và khoảng `[lower, upper]`. Trả v
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Boundary Padding — Clean, No Edge Cases
 - Thêm (lower-1) và (upper+1) như sentinels, rồi quét tất cả cặp liên tiếp.
@@ -71,7 +71,7 @@ Cho mảng số nguyên `nums` đã sort, và khoảng `[lower, upper]`. Trả v
 -
 - @time O(n) — linear scan qua extended array
 - @space O(n) — extended array; output list không tính
-  \*/
+  */
   function findMissingRanges(nums: number[], lower: number, upper: number): string[] {
   const fmt = (a: number, b: number): string => a === b ? `${a}` : `${a}->${b}`;
   const result: string[] = [];
@@ -91,7 +91,7 @@ return result;
 // findMissingRanges([], 1, 5) → ["1->5"]
 // findMissingRanges([1,3,5,7], 0, 9) → ["0","2","4","6","8->9"]
 
-/\*\*
+/**
 
 - Solution 2: Explicit Linear Scan (Không dùng spread, tường minh hơn)
 - Kiểm tra từng khoảng: trước nums[0], giữa các phần tử liên tiếp, sau nums[last].
@@ -99,7 +99,7 @@ return result;
 -
 - @time O(n) — ba đoạn quét nhưng tổng vẫn O(n)
 - @space O(1) — không dùng mảng phụ (ngoài output)
-  \*/
+  */
   function findMissingRangesExplicit(nums: number[], lower: number, upper: number): string[] {
   const fmt = (a: number, b: number): string => a === b ? `${a}` : `${a}->${b}`;
   const result: string[] = [];
@@ -119,7 +119,7 @@ return result;
 
 // findMissingRangesExplicit([0,1,3,50,75], 0, 99) → ["2","4->49","51->74","76->99"]
 // findMissingRangesExplicit([], -3, -1) → ["-3->-1"]
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

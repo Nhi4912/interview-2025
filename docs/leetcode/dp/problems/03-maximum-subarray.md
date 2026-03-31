@@ -67,14 +67,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force
 - Time: O(n²) — enumerate all subarrays
 - Space: O(1) — no extra memory
-  \*/
+  */
   function maxSubArrayBrute(nums: number[]): number {
   let maxSum = -Infinity;
 
@@ -89,12 +89,12 @@ maxSum = Math.max(maxSum, currentSum);
 return maxSum;
 }
 
-/\*\*
+/**
 
 - Solution 2: Kadane's Algorithm (Optimal)
 - Time: O(n) — single pass, one decision per element
 - Space: O(1) — two variables: currentSum and maxSum
-  \*/
+  */
   function maxSubArray(nums: number[]): number {
   let currentSum = nums[0];
   let maxSum = nums[0];
@@ -113,7 +113,7 @@ console.log(maxSubArray([-2, 1, -3, 4, -1, 2, 1, -5, 4])); // 6
 console.log(maxSubArray([1])); // 1
 console.log(maxSubArray([-1, -2, -3])); // -1 (edge: all negative)
 
-{% endraw %}
+```
 
 ---
 

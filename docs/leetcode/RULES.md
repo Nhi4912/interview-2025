@@ -291,35 +291,33 @@ Constraints:
 
 ### 3.7 Solutions
 
-```markdown
+````markdown
 ## Solutions
 
-{% raw %}
-
-/\*\*
-
-- Solution 1: {Name} ({Brute Force / Sub-optimal / Optimal})
-- Time: O(...), Space: O(...)
-  \*/
-  function solutionName(params: types): returnType {
+```typescript
+/**
+ * Solution 1: {Name} ({Brute Force / Sub-optimal / Optimal})
+ * Time: O(...), Space: O(...)
+ */
+function solutionName(params: types): returnType {
   // implementation
-  }
+}
 
-/\*\*
-
-- Solution 2: {Name} (Optimal)
-- Time: O(...), Space: O(...)
-  \*/
-  function solutionNameOptimal(params: types): returnType {
+/**
+ * Solution 2: {Name} (Optimal)
+ * Time: O(...), Space: O(...)
+ */
+function solutionNameOptimal(params: types): returnType {
   // implementation
-  }
+}
 
 // === Test Cases ===
 console.log(solutionName(example1)); // expected output
 console.log(solutionName(example2)); // expected output
-
-{% endraw %}
 ```
+````
+
+````
 
 **Rules:**
 
@@ -329,7 +327,7 @@ console.log(solutionName(example2)); // expected output
 | **Min solutions**     | 2 (always show brute + optimal progression)       |
 | **JSDoc header**      | Every solution MUST have name, Time, Space        |
 | **Language**          | TypeScript only                                   |
-| **Wrapping**          | Must use `{% raw %}` / `{% endraw %}`             |
+| **Wrapping**          | Use fenced ` ```typescript ` code blocks          |
 | **Test cases**        | 3-4 test cases with expected output in comments   |
 | **Naming**            | Use descriptive function names, not `solution1`   |
 | **Comments**          | Inline comments for non-obvious logic only        |
@@ -339,11 +337,13 @@ console.log(solutionName(example2)); // expected output
 
 **Solution progression pattern:**
 
-```
-Solution 1: Brute Force   — O(n²) or worse  — "naive approach"
-Solution 2: Optimized      — O(n log n)      — "better approach" (optional)
-Solution 3: Optimal        — O(n) or O(log n) — "interview answer"
-```
+````
+
+Solution 1: Brute Force — O(n²) or worse — "naive approach"
+Solution 2: Optimized — O(n log n) — "better approach" (optional)
+Solution 3: Optimal — O(n) or O(log n) — "interview answer"
+
+````
 
 ### 3.8 🔗 Related Problems
 
@@ -352,7 +352,7 @@ Solution 3: Optimal        — O(n) or O(log n) — "interview answer"
 
 - [{Problem Name}]({relative-path}) — {why it's related, 3-8 words}
 - [{Problem Name}]({url-if-not-in-repo}) — {relationship}
-```
+````
 
 **Rules:**
 
@@ -642,7 +642,7 @@ Example 1: {input} → {output}
 Example 2: {input} → {output}
 Example 3: {input} → {output}
 
-```
+````
 
 Constraints:
 - {size constraint}
@@ -662,8 +662,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
-
+```typescript
 /**
  * Solution 1: {Name} (Brute Force)
  * Time: O(...) — {explanation}
@@ -686,8 +685,7 @@ function solutionOptimal(params: types): returnType {
 console.log(solutionOptimal(example1)); // expected
 console.log(solutionOptimal(example2)); // expected
 console.log(solutionOptimal(edge));     // expected
-
-{% endraw %}
+````
 
 ---
 
@@ -696,7 +694,8 @@ console.log(solutionOptimal(edge));     // expected
 - [{Problem}]({path}) — {relationship}
 - [{Problem}]({path}) — {relationship}
 - [{Problem}]({url}) — {relationship}
-```
+
+````
 
 ---
 
@@ -734,7 +733,7 @@ function subsetsFunctional(nums: number[]): number[][] { ... }
 function subsets_bruteForce(nums: number[]): number[][] { ... }    // O(2^n) recursive
 function subsets_backtracking(nums: number[]): number[][] { ... }  // O(2^n) optimal
 function subsets_bitwise(nums: number[]): number[][] { ... }       // O(2^n) alternative
-```
+````
 
 ---
 

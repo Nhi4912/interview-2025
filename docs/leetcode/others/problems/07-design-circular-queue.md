@@ -57,12 +57,12 @@ Output: [null,            true,     true,     true,     false,    3,    true,   
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Design Circular Queue — Array with Front/Rear Pointers + Size
 - Time: O(1) all operations | Space: O(k)
-  \*/
+  */
   class MyCircularQueue {
   private queue: number[];
   private front: number = 0;
@@ -103,7 +103,7 @@ isFull(): boolean { return this.size === this.capacity; }
 // q.Rear() // → 3
 // q.deQueue(); q.enQueue(4) // true, true
 // q.Rear() // → 4
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

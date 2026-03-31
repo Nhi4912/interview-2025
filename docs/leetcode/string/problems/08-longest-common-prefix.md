@@ -60,19 +60,19 @@ Input: ["interspecies","interstellar"]  → Output: "inters"
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Longest Common Prefix
 - https://leetcode.com/problems/longest-common-prefix/
-  \*/
+  */
 
-/\*\*
+/**
 
 - Solution 1: Horizontal Scanning
 - Start with strs[0] as prefix; shrink it until it matches each string's start.
 - Time O(S) — S = total chars across all strings | Space O(1)
-  \*/
+  */
   function longestCommonPrefix(strs: string[]): string {
   if (strs.length === 0) return "";
   let prefix = strs[0];
@@ -87,12 +87,12 @@ if (prefix === "") return "";
 return prefix;
 }
 
-/\*\*
+/**
 
 - Solution 2: Vertical Scanning (optimal early-exit)
 - Compare column-by-column across all strings; return on first mismatch.
 - Time O(S) | Space O(1) — exits as soon as any string diverges
-  \*/
+  */
   function longestCommonPrefixVertical(strs: string[]): string {
   if (strs.length === 0) return "";
   const first = strs[0];
@@ -114,7 +114,7 @@ console.log(longestCommonPrefix(["flower", "flow", "flight"])); // "fl"
 console.log(longestCommonPrefix(["dog", "racecar", "car"])); // ""
 console.log(longestCommonPrefixVertical(["interspecies", "interstellar"])); // "inters"
 console.log(longestCommonPrefixVertical(["a"])); // "a"
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

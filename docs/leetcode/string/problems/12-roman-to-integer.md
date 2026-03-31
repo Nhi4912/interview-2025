@@ -58,19 +58,19 @@ Input: "MCMXCIV"  → Output: 1994 (M=1000, CM=900, XC=90, IV=4)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Roman to Integer
 - https://leetcode.com/problems/roman-to-integer/
-  \*/
+  */
 
-/\*\*
+/**
 
 - Solution 1: Left-to-Right with Previous Value Check
 - When current symbol value exceeds the previous, undo and recompute.
 - Time O(n) | Space O(1)
-  \*/
+  */
   function romanToInt(s: string): number {
   const val: Record<string, number> = {
   I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000,
@@ -83,7 +83,7 @@ for (let i = 0; i < s.length; i++) {
 const cur = val[s[i]];
 if (cur > prev) {
 // Undo prev (was added), now apply subtraction pair
-result += cur - 2 \* prev;
+result += cur - 2 * prev;
 } else {
 result += cur;
 }
@@ -93,12 +93,12 @@ prev = cur;
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Right-to-Left (cleaner, no undo needed)
 - Track running max; add if current >= max, subtract if smaller.
 - Time O(n) | Space O(1)
-  \*/
+  */
   function romanToIntRTL(s: string): number {
   const val: Record<string, number> = {
   I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000,
@@ -125,7 +125,7 @@ console.log(romanToInt("III")); // 3
 console.log(romanToInt("LVIII")); // 58
 console.log(romanToIntRTL("MCMXCIV")); // 1994
 console.log(romanToIntRTL("IV")); // 4
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

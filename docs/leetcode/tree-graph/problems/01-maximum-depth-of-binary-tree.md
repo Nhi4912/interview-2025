@@ -69,7 +69,7 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
 interface TreeNode {
 val: number;
@@ -77,12 +77,12 @@ left: TreeNode | null;
 right: TreeNode | null;
 }
 
-/\*\*
+/**
 
 - Solution 1: BFS Level Count (Iterative)
 - Time: O(n) — visit every node once
 - Space: O(w) — queue holds at most one full level (width w)
-  \*/
+  */
   function maxDepthBFS(root: TreeNode | null): number {
   if (!root) return 0;
 
@@ -104,12 +104,12 @@ depth++;
 return depth;
 }
 
-/\*\*
+/**
 
 - Solution 2: DFS Recursive (Optimal)
 - Time: O(n) — visit every node once
 - Space: O(h) — recursion stack = tree height (O(log n) balanced, O(n) skewed)
-  \*/
+  */
   function maxDepth(root: TreeNode | null): number {
   if (!root) return 0;
   return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
@@ -133,7 +133,7 @@ right: { val: 7, left: null, right: null },
 };
 console.log(maxDepth(root)); // 3
 
-{% endraw %}
+```
 
 ---
 

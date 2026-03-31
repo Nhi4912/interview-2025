@@ -61,19 +61,19 @@ Input: s="A",              numRows=1  → Output: "A"
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - ZigZag Conversion
 - https://leetcode.com/problems/zigzag-conversion/
-  \*/
+  */
 
-/\*\*
+/**
 
 - Solution 1: Row Simulation with Direction Flag (Standard)
 - Assign each character to its row; flip direction at boundaries.
 - Time O(n) | Space O(n)
-  \*/
+  */
   function convert(s: string, numRows: number): string {
   if (numRows === 1 || numRows >= s.length) return s;
 
@@ -91,16 +91,16 @@ row += dir;
 return rows.join("");
 }
 
-/\*\*
+/**
 
 - Solution 2: Cycle-Math (no direction flag)
 - Compute each character's row from its position in the cycle.
 - Time O(n) | Space O(n) — no mutable direction state
-  \*/
+  */
   function convertMath(s: string, numRows: number): string {
   if (numRows === 1 || numRows >= s.length) return s;
 
-const cycleLen = 2 \* (numRows - 1);
+const cycleLen = 2 * (numRows - 1);
 const rows: string[] = new Array(numRows).fill("");
 
 for (let i = 0; i < s.length; i++) {
@@ -117,7 +117,7 @@ console.log(convert("PAYPALISHIRING", 3)); // "PAHNAPLSIIGYIR"
 console.log(convert("PAYPALISHIRING", 4)); // "PINALSIGYAHRPI"
 console.log(convertMath("PAYPALISHIRING", 3)); // "PAHNAPLSIIGYIR"
 console.log(convertMath("A", 1)); // "A"
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

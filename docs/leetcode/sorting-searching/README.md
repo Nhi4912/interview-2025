@@ -1,71 +1,410 @@
 ---
 layout: page
-title: "Sorting/Searching Problems"
-category: Sorting/Searching
-description: "LeetCode Sorting/Searching problems with TypeScript solutions"
-total_problems: 6
-tags: [Sorting/Searching, LeetCode, Interview Preparation]
+title: "Sorting & Searching Problems"
+category: Sorting & Searching
+description: "LeetCode Sorting & Searching problems with TypeScript solutions"
+total_problems: 328
+tags: [Sorting & Searching, LeetCode, Interview Preparation]
 ---
 
-# Sorting/Searching Problems
+# Sorting & Searching Problems
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
-
-**LeetCode Sorting/Searching problem collection for technical interviews**
+> **See also**: [Table of Contents](../index.md) | [Patterns Index](../00-patterns-index.md) | [Study Guide](../00-study-guide.md)
 
 ## 📊 Overview
 
-- **Total Problems**: 6
-- **Difficulty Range**: Easy to Hard
+- **Total Problems**: 328 (6 with full solutions, 322 skeletons)
+- **Difficulty Range**: 🟢 Easy: 55 | 🟡 Medium: 201 | 🔴 Hard: 72
 - **Language**: TypeScript
 - **Focus**: Technical interview preparation
 
 ## 📋 Problem List
 
-- [Merge Sorted Array](problems/01-merge-sorted-array.md) - **Easy** - [LeetCode](https://leetcode.com/problems/merge-sorted-array/)
-- [First Bad Version](problems/02-first-bad-version.md) - **Easy** - [LeetCode](https://leetcode.com/problems/first-bad-version/)
-- [Kth Largest Element in an Array](problems/02-find-k-largest-elements.md) - **Medium** - [LeetCode](https://leetcode.com/problems/kth-largest-element-in-an-array/)
-- [Sort Colors](problems/03-sort-colors.md) - **Medium** - [LeetCode](https://leetcode.com/problems/sort-colors/)
-- [Search in Rotated Sorted Array](problems/03-search-in-rotated-sorted-array.md) - **Medium** - [LeetCode](https://leetcode.com/problems/search-in-rotated-sorted-array/)
-- [Median of Two Sorted Arrays](problems/04-median-of-two-sorted-arrays.md) - **Hard** - [LeetCode](https://leetcode.com/problems/median-of-two-sorted-arrays/)
+### Hand-Crafted Solutions (Full)
+
+- [Merge Sorted Array](problems/01-merge-sorted-array.md) - **🟢 Easy** - [LeetCode](https://leetcode.com/problems/merge-sorted-array/)
+- [Kth Largest Element in an Array](problems/02-find-k-largest-elements.md) - **🟡 Medium** - [LeetCode](https://leetcode.com/problems/kth-largest-element-in-an-array/)
+- [First Bad Version](problems/02-first-bad-version.md) - **🟢 Easy** - [LeetCode](https://leetcode.com/problems/first-bad-version/)
+- [Search in Rotated Sorted Array](problems/03-search-in-rotated-sorted-array.md) - **🟡 Medium** - [LeetCode](https://leetcode.com/problems/search-in-rotated-sorted-array/)
+- [Sort Colors](problems/03-sort-colors.md) - **🟡 Medium** - [LeetCode](https://leetcode.com/problems/sort-colors/)
+- [Median of Two Sorted Arrays](problems/04-median-of-two-sorted-arrays.md) - **🔴 Hard** - [LeetCode](https://leetcode.com/problems/median-of-two-sorted-arrays/)
+
+### Generated Skeletons (322 problems)
+
+> These problems have been identified from company interview data. Each file contains the problem structure, metadata, and placeholder for solutions. Contribute by implementing solutions!
+
+<details>
+<summary>🟢 Easy (53 problems)</summary>
+
+- [Majority Element](problems/10-majority-element.md) - [LeetCode](https://leetcode.com/problems/majority-element)
+- [How Many Numbers Are Smaller Than the Current Number](problems/100-how-many-numbers-are-smaller-than-the-current-number.md) - [LeetCode](https://leetcode.com/problems/how-many-numbers-are-smaller-than-the-current-number)
+- [Kth Missing Positive Number](problems/105-kth-missing-positive-number.md) - [LeetCode](https://leetcode.com/problems/kth-missing-positive-number)
+- [Sqrt(x)](problems/13-sqrtx.md) - [LeetCode](https://leetcode.com/problems/sqrtx)
+- [Minimum Cost of Buying Candies With Discount](problems/130-minimum-cost-of-buying-candies-with-discount.md) - [LeetCode](https://leetcode.com/problems/minimum-cost-of-buying-candies-with-discount)
+- [Valid Perfect Square](problems/142-valid-perfect-square.md) - [LeetCode](https://leetcode.com/problems/valid-perfect-square)
+- [Longest Harmonious Subsequence](problems/144-longest-harmonious-subsequence.md) - [LeetCode](https://leetcode.com/problems/longest-harmonious-subsequence)
+- [Fair Candy Swap](problems/146-fair-candy-swap.md) - [LeetCode](https://leetcode.com/problems/fair-candy-swap)
+- [Divide an Array Into Subarrays With Minimum Cost I](problems/167-divide-an-array-into-subarrays-with-minimum-cost-i.md) - [LeetCode](https://leetcode.com/problems/divide-an-array-into-subarrays-with-minimum-cost-i)
+- [Missing Number](problems/17-missing-number.md) - [LeetCode](https://leetcode.com/problems/missing-number)
+- [Intersection of Two Arrays](problems/18-intersection-of-two-arrays.md) - [LeetCode](https://leetcode.com/problems/intersection-of-two-arrays)
+- [Relative Sort Array](problems/182-relative-sort-array.md) - [LeetCode](https://leetcode.com/problems/relative-sort-array)
+- [Take Gifts From the Richest Pile](problems/187-take-gifts-from-the-richest-pile.md) - [LeetCode](https://leetcode.com/problems/take-gifts-from-the-richest-pile)
+- [Search Insert Position](problems/19-search-insert-position.md) - [LeetCode](https://leetcode.com/problems/search-insert-position)
+- [Sort Array By Parity](problems/194-sort-array-by-parity.md) - [LeetCode](https://leetcode.com/problems/sort-array-by-parity)
+- [Maximize Sum Of Array After K Negations](problems/203-maximize-sum-of-array-after-k-negations.md) - [LeetCode](https://leetcode.com/problems/maximize-sum-of-array-after-k-negations)
+- [Relative Ranks](problems/206-relative-ranks.md) - [LeetCode](https://leetcode.com/problems/relative-ranks)
+- [Widest Vertical Area Between Two Points Containing No Points](problems/214-widest-vertical-area-between-two-points-containing-no-points.md) - [LeetCode](https://leetcode.com/problems/widest-vertical-area-between-two-points-containing-no-points)
+- [Keep Multiplying Found Values by Two](problems/216-keep-multiplying-found-values-by-two.md) - [LeetCode](https://leetcode.com/problems/keep-multiplying-found-values-by-two)
+- [Set Mismatch](problems/219-set-mismatch.md) - [LeetCode](https://leetcode.com/problems/set-mismatch)
+- [Type of Triangle](problems/225-type-of-triangle.md) - [LeetCode](https://leetcode.com/problems/type-of-triangle)
+- [Transform Array by Parity](problems/232-transform-array-by-parity.md) - [LeetCode](https://leetcode.com/problems/transform-array-by-parity)
+- [Sort the People](problems/234-sort-the-people.md) - [LeetCode](https://leetcode.com/problems/sort-the-people)
+- [Find Resultant Array After Removing Anagrams](problems/240-find-resultant-array-after-removing-anagrams.md) - [LeetCode](https://leetcode.com/problems/find-resultant-array-after-removing-anagrams)
+- [Minimum Subsequence in Non-Increasing Order](problems/253-minimum-subsequence-in-non-increasing-order.md) - [LeetCode](https://leetcode.com/problems/minimum-subsequence-in-non-increasing-order)
+- [Average Salary Excluding the Minimum and Maximum Salary](problems/263-average-salary-excluding-the-minimum-and-maximum-salary.md) - [LeetCode](https://leetcode.com/problems/average-salary-excluding-the-minimum-and-maximum-salary)
+- [Number of Unequal Triplets in Array](problems/269-number-of-unequal-triplets-in-array.md) - [LeetCode](https://leetcode.com/problems/number-of-unequal-triplets-in-array)
+- [Squares of a Sorted Array](problems/27-squares-of-a-sorted-array.md) - [LeetCode](https://leetcode.com/problems/squares-of-a-sorted-array)
+- [Height Checker](problems/286-height-checker.md) - [LeetCode](https://leetcode.com/problems/height-checker)
+- [Check If a Number Is Majority Element in a Sorted Array](problems/287-check-if-a-number-is-majority-element-in-a-sorted-array.md) - [LeetCode](https://leetcode.com/problems/check-if-a-number-is-majority-element-in-a-sorted-array)
+- [Guess Number Higher or Lower](problems/289-guess-number-higher-or-lower.md) - [LeetCode](https://leetcode.com/problems/guess-number-higher-or-lower)
+- [Maximum Count of Positive Integer and Negative Integer](problems/290-maximum-count-of-positive-integer-and-negative-integer.md) - [LeetCode](https://leetcode.com/problems/maximum-count-of-positive-integer-and-negative-integer)
+- [Largest Perimeter Triangle](problems/300-largest-perimeter-triangle.md) - [LeetCode](https://leetcode.com/problems/largest-perimeter-triangle)
+- [Find Target Indices After Sorting Array](problems/302-find-target-indices-after-sorting-array.md) - [LeetCode](https://leetcode.com/problems/find-target-indices-after-sorting-array)
+- [Minimum Difference Between Highest and Lowest of K Scores](problems/303-minimum-difference-between-highest-and-lowest-of-k-scores.md) - [LeetCode](https://leetcode.com/problems/minimum-difference-between-highest-and-lowest-of-k-scores)
+- [How Many Apples Can You Put into the Basket](problems/308-how-many-apples-can-you-put-into-the-basket.md) - [LeetCode](https://leetcode.com/problems/how-many-apples-can-you-put-into-the-basket)
+- [Largest Number After Digit Swaps by Parity](problems/317-largest-number-after-digit-swaps-by-parity.md) - [LeetCode](https://leetcode.com/problems/largest-number-after-digit-swaps-by-parity)
+- [Find the Distance Value Between Two Arrays](problems/319-find-the-distance-value-between-two-arrays.md) - [LeetCode](https://leetcode.com/problems/find-the-distance-value-between-two-arrays)
+- [Sort Even and Odd Indices Independently](problems/321-sort-even-and-odd-indices-independently.md) - [LeetCode](https://leetcode.com/problems/sort-even-and-odd-indices-independently)
+- [Binary Search](problems/34-binary-search.md) - [LeetCode](https://leetcode.com/problems/binary-search)
+- [Maximum Product of Three Numbers](problems/39-maximum-product-of-three-numbers.md) - [LeetCode](https://leetcode.com/problems/maximum-product-of-three-numbers)
+- [Minimum Absolute Difference](problems/40-minimum-absolute-difference.md) - [LeetCode](https://leetcode.com/problems/minimum-absolute-difference)
+- [Number of 1 Bits](problems/48-number-of-1-bits.md) - [LeetCode](https://leetcode.com/problems/number-of-1-bits)
+- [Sort Array by Increasing Frequency](problems/49-sort-array-by-increasing-frequency.md) - [LeetCode](https://leetcode.com/problems/sort-array-by-increasing-frequency)
+- [Last Stone Weight](problems/70-last-stone-weight.md) - [LeetCode](https://leetcode.com/problems/last-stone-weight)
+- [Sort Integers by The Number of 1 Bits](problems/75-sort-integers-by-the-number-of-1-bits.md) - [LeetCode](https://leetcode.com/problems/sort-integers-by-the-number-of-1-bits)
+- [Reverse Bits](problems/76-reverse-bits.md) - [LeetCode](https://leetcode.com/problems/reverse-bits)
+- [Maximum Units on a Truck](problems/78-maximum-units-on-a-truck.md) - [LeetCode](https://leetcode.com/problems/maximum-units-on-a-truck)
+- [Maximum Product of Two Elements in an Array](problems/82-maximum-product-of-two-elements-in-an-array.md) - [LeetCode](https://leetcode.com/problems/maximum-product-of-two-elements-in-an-array)
+- [Meeting Rooms](problems/95-meeting-rooms.md) - [LeetCode](https://leetcode.com/problems/meeting-rooms)
+- [Find Subsequence of Length K With the Largest Sum](problems/96-find-subsequence-of-length-k-with-the-largest-sum.md) - [LeetCode](https://leetcode.com/problems/find-subsequence-of-length-k-with-the-largest-sum)
+- [Assign Cookies](problems/97-assign-cookies.md) - [LeetCode](https://leetcode.com/problems/assign-cookies)
+- [Count Pairs Whose Sum is Less than Target](problems/98-count-pairs-whose-sum-is-less-than-target.md) - [LeetCode](https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target)
+
+</details>
+
+<details>
+<summary>🟡 Medium (198 problems)</summary>
+
+- [Kth Largest Element in an Array](problems/05-kth-largest-element-in-an-array.md) - [LeetCode](https://leetcode.com/problems/kth-largest-element-in-an-array)
+- [Find First and Last Position of Element in Sorted Array](problems/06-find-first-and-last-position-of-element-in-sorted-array.md) - [LeetCode](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array)
+- [Koko Eating Bananas](problems/07-koko-eating-bananas.md) - [LeetCode](https://leetcode.com/problems/koko-eating-bananas)
+- [Search a 2D Matrix](problems/08-search-a-2d-matrix.md) - [LeetCode](https://leetcode.com/problems/search-a-2d-matrix)
+- [4Sum](problems/09-4sum.md) - [LeetCode](https://leetcode.com/problems/4sum)
+- [Minimum Processing Time](problems/101-minimum-processing-time.md) - [LeetCode](https://leetcode.com/problems/minimum-processing-time)
+- [Construct String With Repeat Limit](problems/104-construct-string-with-repeat-limit.md) - [LeetCode](https://leetcode.com/problems/construct-string-with-repeat-limit)
+- [Make Lexicographically Smallest Array by Swapping Elements](problems/106-make-lexicographically-smallest-array-by-swapping-elements.md) - [LeetCode](https://leetcode.com/problems/make-lexicographically-smallest-array-by-swapping-elements)
+- [Maximum Area of a Piece of Cake After Horizontal and Vertical Cuts](problems/107-maximum-area-of-a-piece-of-cake-after-horizontal-and-vertical-cuts.md) - [LeetCode](https://leetcode.com/problems/maximum-area-of-a-piece-of-cake-after-horizontal-and-vertical-cuts)
+- [Diagonal Traverse II](problems/108-diagonal-traverse-ii.md) - [LeetCode](https://leetcode.com/problems/diagonal-traverse-ii)
+- [Longest Substring with At Least K Repeating Characters](problems/109-longest-substring-with-at-least-k-repeating-characters.md) - [LeetCode](https://leetcode.com/problems/longest-substring-with-at-least-k-repeating-characters)
+- [Find Peak Element](problems/11-find-peak-element.md) - [LeetCode](https://leetcode.com/problems/find-peak-element)
+- [Mark Elements on Array by Performing Queries](problems/110-mark-elements-on-array-by-performing-queries.md) - [LeetCode](https://leetcode.com/problems/mark-elements-on-array-by-performing-queries)
+- [K-diff Pairs in an Array](problems/111-k-diff-pairs-in-an-array.md) - [LeetCode](https://leetcode.com/problems/k-diff-pairs-in-an-array)
+- [Get Biggest Three Rhombus Sums in a Grid](problems/112-get-biggest-three-rhombus-sums-in-a-grid.md) - [LeetCode](https://leetcode.com/problems/get-biggest-three-rhombus-sums-in-a-grid)
+- [Reach a Number](problems/114-reach-a-number.md) - [LeetCode](https://leetcode.com/problems/reach-a-number)
+- [Query Kth Smallest Trimmed Number](problems/115-query-kth-smallest-trimmed-number.md) - [LeetCode](https://leetcode.com/problems/query-kth-smallest-trimmed-number)
+- [Shortest Subarray to be Removed to Make Array Sorted](problems/118-shortest-subarray-to-be-removed-to-make-array-sorted.md) - [LeetCode](https://leetcode.com/problems/shortest-subarray-to-be-removed-to-make-array-sorted)
+- [Minimum Time to Repair Cars](problems/119-minimum-time-to-repair-cars.md) - [LeetCode](https://leetcode.com/problems/minimum-time-to-repair-cars)
+- [Largest Number](problems/12-largest-number.md) - [LeetCode](https://leetcode.com/problems/largest-number)
+- [Largest Submatrix With Rearrangements](problems/122-largest-submatrix-with-rearrangements.md) - [LeetCode](https://leetcode.com/problems/largest-submatrix-with-rearrangements)
+- [Most Profit Assigning Work](problems/123-most-profit-assigning-work.md) - [LeetCode](https://leetcode.com/problems/most-profit-assigning-work)
+- [Single-Threaded CPU](problems/124-single-threaded-cpu.md) - [LeetCode](https://leetcode.com/problems/single-threaded-cpu)
+- [Analyze User Website Visit Pattern](problems/125-analyze-user-website-visit-pattern.md) - [LeetCode](https://leetcode.com/problems/analyze-user-website-visit-pattern)
+- [Valid Triangle Number](problems/126-valid-triangle-number.md) - [LeetCode](https://leetcode.com/problems/valid-triangle-number)
+- [Minimum Limit of Balls in a Bag](problems/127-minimum-limit-of-balls-in-a-bag.md) - [LeetCode](https://leetcode.com/problems/minimum-limit-of-balls-in-a-bag)
+- [Wiggle Sort](problems/131-wiggle-sort.md) - [LeetCode](https://leetcode.com/problems/wiggle-sort)
+- [3Sum Smaller](problems/132-3sum-smaller.md) - [LeetCode](https://leetcode.com/problems/3sum-smaller)
+- [Maximum Palindromes After Operations](problems/133-maximum-palindromes-after-operations.md) - [LeetCode](https://leetcode.com/problems/maximum-palindromes-after-operations)
+- [Sell Diminishing-Valued Colored Balls](problems/134-sell-diminishing-valued-colored-balls.md) - [LeetCode](https://leetcode.com/problems/sell-diminishing-valued-colored-balls)
+- [Sort an Array](problems/135-sort-an-array.md) - [LeetCode](https://leetcode.com/problems/sort-an-array)
+- [Minimum Operations to Make All Array Elements Equal](problems/136-minimum-operations-to-make-all-array-elements-equal.md) - [LeetCode](https://leetcode.com/problems/minimum-operations-to-make-all-array-elements-equal)
+- [Rearrange Array to Maximize Prefix Score](problems/137-rearrange-array-to-maximize-prefix-score.md) - [LeetCode](https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score)
+- [132 Pattern](problems/138-132-pattern.md) - [LeetCode](https://leetcode.com/problems/132-pattern)
+- [Find Players With Zero or One Losses](problems/139-find-players-with-zero-or-one-losses.md) - [LeetCode](https://leetcode.com/problems/find-players-with-zero-or-one-losses)
+- [Random Pick with Weight](problems/14-random-pick-with-weight.md) - [LeetCode](https://leetcode.com/problems/random-pick-with-weight)
+- [Display Table of Food Orders in a Restaurant](problems/140-display-table-of-food-orders-in-a-restaurant.md) - [LeetCode](https://leetcode.com/problems/display-table-of-food-orders-in-a-restaurant)
+- [Alert Using Same Key-Card Three or More Times in a One Hour Period](problems/141-alert-using-same-key-card-three-or-more-times-in-a-one-hour-period.md) - [LeetCode](https://leetcode.com/problems/alert-using-same-key-card-three-or-more-times-in-a-one-hour-period)
+- [Sum of Square Numbers](problems/143-sum-of-square-numbers.md) - [LeetCode](https://leetcode.com/problems/sum-of-square-numbers)
+- [Maximum Number of Removable Characters](problems/145-maximum-number-of-removable-characters.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-removable-characters)
+- [Find Beautiful Indices in the Given Array I](problems/147-find-beautiful-indices-in-the-given-array-i.md) - [LeetCode](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i)
+- [Find Minimum in Rotated Sorted Array](problems/15-find-minimum-in-rotated-sorted-array.md) - [LeetCode](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array)
+- [Invalid Transactions](problems/150-invalid-transactions.md) - [LeetCode](https://leetcode.com/problems/invalid-transactions)
+- [Maximum Tastiness of Candy Basket](problems/151-maximum-tastiness-of-candy-basket.md) - [LeetCode](https://leetcode.com/problems/maximum-tastiness-of-candy-basket)
+- [Magnetic Force Between Two Balls](problems/152-magnetic-force-between-two-balls.md) - [LeetCode](https://leetcode.com/problems/magnetic-force-between-two-balls)
+- [Most Beautiful Item for Each Query](problems/153-most-beautiful-item-for-each-query.md) - [LeetCode](https://leetcode.com/problems/most-beautiful-item-for-each-query)
+- [Count the Number of Fair Pairs](problems/154-count-the-number-of-fair-pairs.md) - [LeetCode](https://leetcode.com/problems/count-the-number-of-fair-pairs)
+- [Sort the Matrix Diagonally](problems/155-sort-the-matrix-diagonally.md) - [LeetCode](https://leetcode.com/problems/sort-the-matrix-diagonally)
+- [Ways to Split Array Into Three Subarrays](problems/156-ways-to-split-array-into-three-subarrays.md) - [LeetCode](https://leetcode.com/problems/ways-to-split-array-into-three-subarrays)
+- [Count Pairs in Two Arrays](problems/157-count-pairs-in-two-arrays.md) - [LeetCode](https://leetcode.com/problems/count-pairs-in-two-arrays)
+- [Nth Digit](problems/158-nth-digit.md) - [LeetCode](https://leetcode.com/problems/nth-digit)
+- [Eliminate Maximum Number of Monsters](problems/159-eliminate-maximum-number-of-monsters.md) - [LeetCode](https://leetcode.com/problems/eliminate-maximum-number-of-monsters)
+- [Search Suggestions System](problems/16-search-suggestions-system.md) - [LeetCode](https://leetcode.com/problems/search-suggestions-system)
+- [Minimize Rounding Error to Meet Target](problems/160-minimize-rounding-error-to-meet-target.md) - [LeetCode](https://leetcode.com/problems/minimize-rounding-error-to-meet-target)
+- [Find Polygon With the Largest Perimeter](problems/161-find-polygon-with-the-largest-perimeter.md) - [LeetCode](https://leetcode.com/problems/find-polygon-with-the-largest-perimeter)
+- [Reduce Array Size to The Half](problems/164-reduce-array-size-to-the-half.md) - [LeetCode](https://leetcode.com/problems/reduce-array-size-to-the-half)
+- [Minimum Time to Complete Trips](problems/165-minimum-time-to-complete-trips.md) - [LeetCode](https://leetcode.com/problems/minimum-time-to-complete-trips)
+- [Ugly Number III](problems/168-ugly-number-iii.md) - [LeetCode](https://leetcode.com/problems/ugly-number-iii)
+- [Maximize the Confusion of an Exam](problems/169-maximize-the-confusion-of-an-exam.md) - [LeetCode](https://leetcode.com/problems/maximize-the-confusion-of-an-exam)
+- [Stone Game VI](problems/170-stone-game-vi.md) - [LeetCode](https://leetcode.com/problems/stone-game-vi)
+- [Missing Element in Sorted Array](problems/171-missing-element-in-sorted-array.md) - [LeetCode](https://leetcode.com/problems/missing-element-in-sorted-array)
+- [High-Access Employees](problems/172-high-access-employees.md) - [LeetCode](https://leetcode.com/problems/high-access-employees)
+- [Pancake Sorting](problems/173-pancake-sorting.md) - [LeetCode](https://leetcode.com/problems/pancake-sorting)
+- [Reward Top K Students](problems/174-reward-top-k-students.md) - [LeetCode](https://leetcode.com/problems/reward-top-k-students)
+- [Maximum Value at a Given Index in a Bounded Array](problems/175-maximum-value-at-a-given-index-in-a-bounded-array.md) - [LeetCode](https://leetcode.com/problems/maximum-value-at-a-given-index-in-a-bounded-array)
+- [Check if Strings Can be Made Equal With Operations II](problems/176-check-if-strings-can-be-made-equal-with-operations-ii.md) - [LeetCode](https://leetcode.com/problems/check-if-strings-can-be-made-equal-with-operations-ii)
+- [Smallest Value of the Rearranged Number](problems/177-smallest-value-of-the-rearranged-number.md) - [LeetCode](https://leetcode.com/problems/smallest-value-of-the-rearranged-number)
+- [Maximum Subsequence Score](problems/180-maximum-subsequence-score.md) - [LeetCode](https://leetcode.com/problems/maximum-subsequence-score)
+- [Removing Minimum Number of Magic Beans](problems/181-removing-minimum-number-of-magic-beans.md) - [LeetCode](https://leetcode.com/problems/removing-minimum-number-of-magic-beans)
+- [Max Number of K-Sum Pairs](problems/183-max-number-of-k-sum-pairs.md) - [LeetCode](https://leetcode.com/problems/max-number-of-k-sum-pairs)
+- [Minimum Deletions to Make String K-Special](problems/184-minimum-deletions-to-make-string-k-special.md) - [LeetCode](https://leetcode.com/problems/minimum-deletions-to-make-string-k-special)
+- [Median of a Row Wise Sorted Matrix](problems/186-median-of-a-row-wise-sorted-matrix.md) - [LeetCode](https://leetcode.com/problems/median-of-a-row-wise-sorted-matrix)
+- [Minimize Connected Groups by Inserting Interval](problems/188-minimize-connected-groups-by-inserting-interval.md) - [LeetCode](https://leetcode.com/problems/minimize-connected-groups-by-inserting-interval)
+- [Minimum Number of Pushes to Type Word II](problems/189-minimum-number-of-pushes-to-type-word-ii.md) - [LeetCode](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii)
+- [Subsequence of Size K With the Largest Even Sum](problems/193-subsequence-of-size-k-with-the-largest-even-sum.md) - [LeetCode](https://leetcode.com/problems/subsequence-of-size-k-with-the-largest-even-sum)
+- [Maximum Coins Heroes Can Collect](problems/196-maximum-coins-heroes-can-collect.md) - [LeetCode](https://leetcode.com/problems/maximum-coins-heroes-can-collect)
+- [Pour Water Between Buckets to Make Water Levels Equal](problems/197-pour-water-between-buckets-to-make-water-levels-equal.md) - [LeetCode](https://leetcode.com/problems/pour-water-between-buckets-to-make-water-levels-equal)
+- [3Sum Closest](problems/20-3sum-closest.md) - [LeetCode](https://leetcode.com/problems/3sum-closest)
+- [Mice and Cheese](problems/200-mice-and-cheese.md) - [LeetCode](https://leetcode.com/problems/mice-and-cheese)
+- [Maximum Gap](problems/202-maximum-gap.md) - [LeetCode](https://leetcode.com/problems/maximum-gap)
+- [Minimum Operations to Make a Uni-Value Grid](problems/204-minimum-operations-to-make-a-uni-value-grid.md) - [LeetCode](https://leetcode.com/problems/minimum-operations-to-make-a-uni-value-grid)
+- [Find if Array Can Be Sorted](problems/205-find-if-array-can-be-sorted.md) - [LeetCode](https://leetcode.com/problems/find-if-array-can-be-sorted)
+- [Rearrange Words in a Sentence](problems/207-rearrange-words-in-a-sentence.md) - [LeetCode](https://leetcode.com/problems/rearrange-words-in-a-sentence)
+- [The Earliest Moment When Everyone Become Friends](problems/208-the-earliest-moment-when-everyone-become-friends.md) - [LeetCode](https://leetcode.com/problems/the-earliest-moment-when-everyone-become-friends)
+- [Lexicographically Minimum String After Removing Stars](problems/209-lexicographically-minimum-string-after-removing-stars.md) - [LeetCode](https://leetcode.com/problems/lexicographically-minimum-string-after-removing-stars)
+- [Subarray Product Less Than K](problems/21-subarray-product-less-than-k.md) - [LeetCode](https://leetcode.com/problems/subarray-product-less-than-k)
+- [Bag of Tokens](problems/210-bag-of-tokens.md) - [LeetCode](https://leetcode.com/problems/bag-of-tokens)
+- [Minimum Number of Coins to be Added](problems/211-minimum-number-of-coins-to-be-added.md) - [LeetCode](https://leetcode.com/problems/minimum-number-of-coins-to-be-added)
+- [Maximum Number of Potholes That Can Be Fixed](problems/212-maximum-number-of-potholes-that-can-be-fixed.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-potholes-that-can-be-fixed)
+- [Minimize the Maximum of Two Arrays](problems/215-minimize-the-maximum-of-two-arrays.md) - [LeetCode](https://leetcode.com/problems/minimize-the-maximum-of-two-arrays)
+- [Successful Pairs of Spells and Potions](problems/217-successful-pairs-of-spells-and-potions.md) - [LeetCode](https://leetcode.com/problems/successful-pairs-of-spells-and-potions)
+- [Single Element in a Sorted Array](problems/22-single-element-in-a-sorted-array.md) - [LeetCode](https://leetcode.com/problems/single-element-in-a-sorted-array)
+- [Maximum Points Inside the Square](problems/220-maximum-points-inside-the-square.md) - [LeetCode](https://leetcode.com/problems/maximum-points-inside-the-square)
+- [Count Ways to Group Overlapping Ranges](problems/222-count-ways-to-group-overlapping-ranges.md) - [LeetCode](https://leetcode.com/problems/count-ways-to-group-overlapping-ranges)
+- [Minimum Operations to Make Median of Array Equal to K](problems/223-minimum-operations-to-make-median-of-array-equal-to-k.md) - [LeetCode](https://leetcode.com/problems/minimum-operations-to-make-median-of-array-equal-to-k)
+- [Sort the Students by Their Kth Score](problems/226-sort-the-students-by-their-kth-score.md) - [LeetCode](https://leetcode.com/problems/sort-the-students-by-their-kth-score)
+- [Get Equal Substrings Within Budget](problems/227-get-equal-substrings-within-budget.md) - [LeetCode](https://leetcode.com/problems/get-equal-substrings-within-budget)
+- [Maximum Side Length of a Square with Sum Less than or Equal to Threshold](problems/228-maximum-side-length-of-a-square-with-sum-less-than-or-equal-to-threshold.md) - [LeetCode](https://leetcode.com/problems/maximum-side-length-of-a-square-with-sum-less-than-or-equal-to-threshold)
+- [Top K Frequent Words](problems/23-top-k-frequent-words.md) - [LeetCode](https://leetcode.com/problems/top-k-frequent-words)
+- [Count Almost Equal Pairs I](problems/230-count-almost-equal-pairs-i.md) - [LeetCode](https://leetcode.com/problems/count-almost-equal-pairs-i)
+- [Eat Pizzas!](problems/233-eat-pizzas.md) - [LeetCode](https://leetcode.com/problems/eat-pizzas)
+- [Maximum Product After K Increments](problems/235-maximum-product-after-k-increments.md) - [LeetCode](https://leetcode.com/problems/maximum-product-after-k-increments)
+- [Maximum Number of Consecutive Values You Can Make](problems/236-maximum-number-of-consecutive-values-you-can-make.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-consecutive-values-you-can-make)
+- [Task Scheduler](problems/24-task-scheduler.md) - [LeetCode](https://leetcode.com/problems/task-scheduler)
+- [Minimum Cost to Connect Sticks](problems/241-minimum-cost-to-connect-sticks.md) - [LeetCode](https://leetcode.com/problems/minimum-cost-to-connect-sticks)
+- [Maximum White Tiles Covered by a Carpet](problems/242-maximum-white-tiles-covered-by-a-carpet.md) - [LeetCode](https://leetcode.com/problems/maximum-white-tiles-covered-by-a-carpet)
+- [Sort Transformed Array](problems/243-sort-transformed-array.md) - [LeetCode](https://leetcode.com/problems/sort-transformed-array)
+- [Find K Pairs with Smallest Sums](problems/245-find-k-pairs-with-smallest-sums.md) - [LeetCode](https://leetcode.com/problems/find-k-pairs-with-smallest-sums)
+- [Shortest Unsorted Continuous Subarray](problems/248-shortest-unsorted-continuous-subarray.md) - [LeetCode](https://leetcode.com/problems/shortest-unsorted-continuous-subarray)
+- [Maximum Number of Alloys](problems/249-maximum-number-of-alloys.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-alloys)
+- [Find the Duplicate Number](problems/25-find-the-duplicate-number.md) - [LeetCode](https://leetcode.com/problems/find-the-duplicate-number)
+- [Earliest Second to Mark Indices I](problems/250-earliest-second-to-mark-indices-i.md) - [LeetCode](https://leetcode.com/problems/earliest-second-to-mark-indices-i)
+- [Maximal Score After Applying K Operations](problems/252-maximal-score-after-applying-k-operations.md) - [LeetCode](https://leetcode.com/problems/maximal-score-after-applying-k-operations)
+- [Find the Integer Added to Array II](problems/255-find-the-integer-added-to-array-ii.md) - [LeetCode](https://leetcode.com/problems/find-the-integer-added-to-array-ii)
+- [Make K-Subarray Sums Equal](problems/257-make-k-subarray-sums-equal.md) - [LeetCode](https://leetcode.com/problems/make-k-subarray-sums-equal)
+- [Minimum Operations to Reduce X to Zero](problems/258-minimum-operations-to-reduce-x-to-zero.md) - [LeetCode](https://leetcode.com/problems/minimum-operations-to-reduce-x-to-zero)
+- [Reorganize String](problems/26-reorganize-string.md) - [LeetCode](https://leetcode.com/problems/reorganize-string)
+- [Minimum Moves to Equal Array Elements II](problems/260-minimum-moves-to-equal-array-elements-ii.md) - [LeetCode](https://leetcode.com/problems/minimum-moves-to-equal-array-elements-ii)
+- [Special Array II](problems/261-special-array-ii.md) - [LeetCode](https://leetcode.com/problems/special-array-ii)
+- [Minimum Number of Days to Make m Bouquets](problems/262-minimum-number-of-days-to-make-m-bouquets.md) - [LeetCode](https://leetcode.com/problems/minimum-number-of-days-to-make-m-bouquets)
+- [The Number of the Smallest Unoccupied Chair](problems/264-the-number-of-the-smallest-unoccupied-chair.md) - [LeetCode](https://leetcode.com/problems/the-number-of-the-smallest-unoccupied-chair)
+- [Find the Longest Equal Subarray](problems/265-find-the-longest-equal-subarray.md) - [LeetCode](https://leetcode.com/problems/find-the-longest-equal-subarray)
+- [Maximum Number of Integers to Choose From a Range I](problems/266-maximum-number-of-integers-to-choose-from-a-range-i.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-integers-to-choose-from-a-range-i)
+- [Maximum Number of Integers to Choose From a Range II](problems/267-maximum-number-of-integers-to-choose-from-a-range-ii.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-integers-to-choose-from-a-range-ii)
+- [Maximum Sum Obtained of Any Permutation](problems/268-maximum-sum-obtained-of-any-permutation.md) - [LeetCode](https://leetcode.com/problems/maximum-sum-obtained-of-any-permutation)
+- [Queue Reconstruction by Height](problems/270-queue-reconstruction-by-height.md) - [LeetCode](https://leetcode.com/problems/queue-reconstruction-by-height)
+- [Split Array into Consecutive Subsequences](problems/271-split-array-into-consecutive-subsequences.md) - [LeetCode](https://leetcode.com/problems/split-array-into-consecutive-subsequences)
+- [Shortest Way to Form String](problems/273-shortest-way-to-form-string.md) - [LeetCode](https://leetcode.com/problems/shortest-way-to-form-string)
+- [Longest Word in Dictionary](problems/274-longest-word-in-dictionary.md) - [LeetCode](https://leetcode.com/problems/longest-word-in-dictionary)
+- [The Number of Weak Characters in the Game](problems/275-the-number-of-weak-characters-in-the-game.md) - [LeetCode](https://leetcode.com/problems/the-number-of-weak-characters-in-the-game)
+- [Advantage Shuffle](problems/276-advantage-shuffle.md) - [LeetCode](https://leetcode.com/problems/advantage-shuffle)
+- [K-th Smallest Prime Fraction](problems/277-k-th-smallest-prime-fraction.md) - [LeetCode](https://leetcode.com/problems/k-th-smallest-prime-fraction)
+- [Max Chunks To Make Sorted](problems/278-max-chunks-to-make-sorted.md) - [LeetCode](https://leetcode.com/problems/max-chunks-to-make-sorted)
+- [Determine if Two Strings Are Close](problems/279-determine-if-two-strings-are-close.md) - [LeetCode](https://leetcode.com/problems/determine-if-two-strings-are-close)
+- [Search a 2D Matrix II](problems/28-search-a-2d-matrix-ii.md) - [LeetCode](https://leetcode.com/problems/search-a-2d-matrix-ii)
+- [3Sum With Multiplicity](problems/282-3sum-with-multiplicity.md) - [LeetCode](https://leetcode.com/problems/3sum-with-multiplicity)
+- [Better Compression of String](problems/283-better-compression-of-string.md) - [LeetCode](https://leetcode.com/problems/better-compression-of-string)
+- [Find Longest Special Substring That Occurs Thrice II](problems/284-find-longest-special-substring-that-occurs-thrice-ii.md) - [LeetCode](https://leetcode.com/problems/find-longest-special-substring-that-occurs-thrice-ii)
+- [Leftmost Column with at Least a One](problems/285-leftmost-column-with-at-least-a-one.md) - [LeetCode](https://leetcode.com/problems/leftmost-column-with-at-least-a-one)
+- [Search in Rotated Sorted Array II](problems/29-search-in-rotated-sorted-array-ii.md) - [LeetCode](https://leetcode.com/problems/search-in-rotated-sorted-array-ii)
+- [Minimized Maximum of Products Distributed to Any Store](problems/291-minimized-maximum-of-products-distributed-to-any-store.md) - [LeetCode](https://leetcode.com/problems/minimized-maximum-of-products-distributed-to-any-store)
+- [Minimum Number of Keypresses](problems/292-minimum-number-of-keypresses.md) - [LeetCode](https://leetcode.com/problems/minimum-number-of-keypresses)
+- [Reorder Data in Log Files](problems/294-reorder-data-in-log-files.md) - [LeetCode](https://leetcode.com/problems/reorder-data-in-log-files)
+- [Custom Sort String](problems/295-custom-sort-string.md) - [LeetCode](https://leetcode.com/problems/custom-sort-string)
+- [Maximum Number of Upgradable Servers](problems/296-maximum-number-of-upgradable-servers.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-upgradable-servers)
+- [Minimum Array Length After Pair Removals](problems/297-minimum-array-length-after-pair-removals.md) - [LeetCode](https://leetcode.com/problems/minimum-array-length-after-pair-removals)
+- [Maximize Area of Square Hole in Grid](problems/298-maximize-area-of-square-hole-in-grid.md) - [LeetCode](https://leetcode.com/problems/maximize-area-of-square-hole-in-grid)
+- [Two City Scheduling](problems/299-two-city-scheduling.md) - [LeetCode](https://leetcode.com/problems/two-city-scheduling)
+- [Capacity To Ship Packages Within D Days](problems/30-capacity-to-ship-packages-within-d-days.md) - [LeetCode](https://leetcode.com/problems/capacity-to-ship-packages-within-d-days)
+- [Number of Subsequences That Satisfy the Given Sum Condition](problems/304-number-of-subsequences-that-satisfy-the-given-sum-condition.md) - [LeetCode](https://leetcode.com/problems/number-of-subsequences-that-satisfy-the-given-sum-condition)
+- [Maximum Area Rectangle With Point Constraints I](problems/306-maximum-area-rectangle-with-point-constraints-i.md) - [LeetCode](https://leetcode.com/problems/maximum-area-rectangle-with-point-constraints-i)
+- [Apply Operations to Make String Empty](problems/309-apply-operations-to-make-string-empty.md) - [LeetCode](https://leetcode.com/problems/apply-operations-to-make-string-empty)
+- [Minimum Size Subarray Sum](problems/31-minimum-size-subarray-sum.md) - [LeetCode](https://leetcode.com/problems/minimum-size-subarray-sum)
+- [Find Score of an Array After Marking All Elements](problems/311-find-score-of-an-array-after-marking-all-elements.md) - [LeetCode](https://leetcode.com/problems/find-score-of-an-array-after-marking-all-elements)
+- [Divide Intervals Into Minimum Number of Groups](problems/312-divide-intervals-into-minimum-number-of-groups.md) - [LeetCode](https://leetcode.com/problems/divide-intervals-into-minimum-number-of-groups)
+- [Divide Array in Sets of K Consecutive Numbers](problems/315-divide-array-in-sets-of-k-consecutive-numbers.md) - [LeetCode](https://leetcode.com/problems/divide-array-in-sets-of-k-consecutive-numbers)
+- [Filter Restaurants by Vegan-Friendly, Price and Distance](problems/316-filter-restaurants-by-vegan-friendly-price-and-distance.md) - [LeetCode](https://leetcode.com/problems/filter-restaurants-by-vegan-friendly-price-and-distance)
+- [Two Sum II - Input Array Is Sorted](problems/32-two-sum-ii-input-array-is-sorted.md) - [LeetCode](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted)
+- [Find a Peak Element II](problems/320-find-a-peak-element-ii.md) - [LeetCode](https://leetcode.com/problems/find-a-peak-element-ii)
+- [The Latest Time to Catch a Bus](problems/322-the-latest-time-to-catch-a-bus.md) - [LeetCode](https://leetcode.com/problems/the-latest-time-to-catch-a-bus)
+- [Avoid Flood in The City](problems/324-avoid-flood-in-the-city.md) - [LeetCode](https://leetcode.com/problems/avoid-flood-in-the-city)
+- [Minimize Maximum Pair Sum in Array](problems/325-minimize-maximum-pair-sum-in-array.md) - [LeetCode](https://leetcode.com/problems/minimize-maximum-pair-sum-in-array)
+- [Minimum Operations to Exceed Threshold Value II](problems/326-minimum-operations-to-exceed-threshold-value-ii.md) - [LeetCode](https://leetcode.com/problems/minimum-operations-to-exceed-threshold-value-ii)
+- [Max Consecutive Ones III](problems/33-max-consecutive-ones-iii.md) - [LeetCode](https://leetcode.com/problems/max-consecutive-ones-iii)
+- [Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit](problems/36-longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit.md) - [LeetCode](https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit)
+- [Find the Smallest Divisor Given a Threshold](problems/41-find-the-smallest-divisor-given-a-threshold.md) - [LeetCode](https://leetcode.com/problems/find-the-smallest-divisor-given-a-threshold)
+- [K Closest Points to Origin](problems/42-k-closest-points-to-origin.md) - [LeetCode](https://leetcode.com/problems/k-closest-points-to-origin)
+- [Boats to Save People](problems/43-boats-to-save-people.md) - [LeetCode](https://leetcode.com/problems/boats-to-save-people)
+- [Car Fleet](problems/45-car-fleet.md) - [LeetCode](https://leetcode.com/problems/car-fleet)
+- [Majority Element II](problems/50-majority-element-ii.md) - [LeetCode](https://leetcode.com/problems/majority-element-ii)
+- [Heaters](problems/51-heaters.md) - [LeetCode](https://leetcode.com/problems/heaters)
+- [Find K Closest Elements](problems/52-find-k-closest-elements.md) - [LeetCode](https://leetcode.com/problems/find-k-closest-elements)
+- [Longest Happy String](problems/53-longest-happy-string.md) - [LeetCode](https://leetcode.com/problems/longest-happy-string)
+- [Furthest Building You Can Reach](problems/57-furthest-building-you-can-reach.md) - [LeetCode](https://leetcode.com/problems/furthest-building-you-can-reach)
+- [Count Zero Request Servers](problems/58-count-zero-request-servers.md) - [LeetCode](https://leetcode.com/problems/count-zero-request-servers)
+- [Peak Index in a Mountain Array](problems/60-peak-index-in-a-mountain-array.md) - [LeetCode](https://leetcode.com/problems/peak-index-in-a-mountain-array)
+- [Rank Teams by Votes](problems/64-rank-teams-by-votes.md) - [LeetCode](https://leetcode.com/problems/rank-teams-by-votes)
+- [Total Cost to Hire K Workers](problems/65-total-cost-to-hire-k-workers.md) - [LeetCode](https://leetcode.com/problems/total-cost-to-hire-k-workers)
+- [Maximize Greatness of an Array](problems/66-maximize-greatness-of-an-array.md) - [LeetCode](https://leetcode.com/problems/maximize-greatness-of-an-array)
+- [Minimum Area Rectangle](problems/67-minimum-area-rectangle.md) - [LeetCode](https://leetcode.com/problems/minimum-area-rectangle)
+- [Frequency of the Most Frequent Element](problems/68-frequency-of-the-most-frequent-element.md) - [LeetCode](https://leetcode.com/problems/frequency-of-the-most-frequent-element)
+- [Brightest Position on Street](problems/71-brightest-position-on-street.md) - [LeetCode](https://leetcode.com/problems/brightest-position-on-street)
+- [Maximum Number of Events That Can Be Attended](problems/72-maximum-number-of-events-that-can-be-attended.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-events-that-can-be-attended)
+- [Kth Smallest Element in a Sorted Matrix](problems/73-kth-smallest-element-in-a-sorted-matrix.md) - [LeetCode](https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix)
+- [Minimum Time Difference](problems/74-minimum-time-difference.md) - [LeetCode](https://leetcode.com/problems/minimum-time-difference)
+- [Minimum Deletions to Make Character Frequencies Unique](problems/77-minimum-deletions-to-make-character-frequencies-unique.md) - [LeetCode](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique)
+- [H-Index](problems/79-h-index.md) - [LeetCode](https://leetcode.com/problems/h-index)
+- [Minimum Absolute Difference Between Elements With Constraint](problems/80-minimum-absolute-difference-between-elements-with-constraint.md) - [LeetCode](https://leetcode.com/problems/minimum-absolute-difference-between-elements-with-constraint)
+- [Meeting Scheduler](problems/83-meeting-scheduler.md) - [LeetCode](https://leetcode.com/problems/meeting-scheduler)
+- [Number of Orders in the Backlog](problems/84-number-of-orders-in-the-backlog.md) - [LeetCode](https://leetcode.com/problems/number-of-orders-in-the-backlog)
+- [Minimum Increment to Make Array Unique](problems/86-minimum-increment-to-make-array-unique.md) - [LeetCode](https://leetcode.com/problems/minimum-increment-to-make-array-unique)
+- [Divide Players Into Teams of Equal Skill](problems/89-divide-players-into-teams-of-equal-skill.md) - [LeetCode](https://leetcode.com/problems/divide-players-into-teams-of-equal-skill)
+- [Least Number of Unique Integers after K Removals](problems/90-least-number-of-unique-integers-after-k-removals.md) - [LeetCode](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals)
+- [Car Pooling](problems/91-car-pooling.md) - [LeetCode](https://leetcode.com/problems/car-pooling)
+- [Minimum Number of Arrows to Burst Balloons](problems/92-minimum-number-of-arrows-to-burst-balloons.md) - [LeetCode](https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons)
+- [Process Tasks Using Servers](problems/93-process-tasks-using-servers.md) - [LeetCode](https://leetcode.com/problems/process-tasks-using-servers)
+- [Sort Characters By Frequency](problems/94-sort-characters-by-frequency.md) - [LeetCode](https://leetcode.com/problems/sort-characters-by-frequency)
+- [Find Original Array From Doubled Array](problems/99-find-original-array-from-doubled-array.md) - [LeetCode](https://leetcode.com/problems/find-original-array-from-doubled-array)
+
+</details>
+
+<details>
+<summary>🔴 Hard (71 problems)</summary>
+
+- [Divide an Array Into Subarrays With Minimum Cost II](problems/102-divide-an-array-into-subarrays-with-minimum-cost-ii.md) - [LeetCode](https://leetcode.com/problems/divide-an-array-into-subarrays-with-minimum-cost-ii)
+- [Word Abbreviation](problems/103-word-abbreviation.md) - [LeetCode](https://leetcode.com/problems/word-abbreviation)
+- [Minimum Operations to Make Numbers Non-positive](problems/113-minimum-operations-to-make-numbers-non-positive.md) - [LeetCode](https://leetcode.com/problems/minimum-operations-to-make-numbers-non-positive)
+- [Count the Number of Incremovable Subarrays II](problems/116-count-the-number-of-incremovable-subarrays-ii.md) - [LeetCode](https://leetcode.com/problems/count-the-number-of-incremovable-subarrays-ii)
+- [Put Marbles in Bags](problems/117-put-marbles-in-bags.md) - [LeetCode](https://leetcode.com/problems/put-marbles-in-bags)
+- [Maximum Running Time of N Computers](problems/120-maximum-running-time-of-n-computers.md) - [LeetCode](https://leetcode.com/problems/maximum-running-time-of-n-computers)
+- [Apply Operations to Maximize Frequency Score](problems/121-apply-operations-to-maximize-frequency-score.md) - [LeetCode](https://leetcode.com/problems/apply-operations-to-maximize-frequency-score)
+- [Find K-th Smallest Pair Distance](problems/128-find-k-th-smallest-pair-distance.md) - [LeetCode](https://leetcode.com/problems/find-k-th-smallest-pair-distance)
+- [Course Schedule III](problems/129-course-schedule-iii.md) - [LeetCode](https://leetcode.com/problems/course-schedule-iii)
+- [Find Beautiful Indices in the Given Array II](problems/148-find-beautiful-indices-in-the-given-array-ii.md) - [LeetCode](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii)
+- [Meeting Rooms III](problems/149-meeting-rooms-iii.md) - [LeetCode](https://leetcode.com/problems/meeting-rooms-iii)
+- [Minimum Initial Energy to Finish Tasks](problems/162-minimum-initial-energy-to-finish-tasks.md) - [LeetCode](https://leetcode.com/problems/minimum-initial-energy-to-finish-tasks)
+- [Create Sorted Array through Instructions](problems/163-create-sorted-array-through-instructions.md) - [LeetCode](https://leetcode.com/problems/create-sorted-array-through-instructions)
+- [Find a Value of a Mysterious Function Closest to Target](problems/166-find-a-value-of-a-mysterious-function-closest-to-target.md) - [LeetCode](https://leetcode.com/problems/find-a-value-of-a-mysterious-function-closest-to-target)
+- [Minimum Time to Eat All Grains](problems/178-minimum-time-to-eat-all-grains.md) - [LeetCode](https://leetcode.com/problems/minimum-time-to-eat-all-grains)
+- [Longest Duplicate Substring](problems/179-longest-duplicate-substring.md) - [LeetCode](https://leetcode.com/problems/longest-duplicate-substring)
+- [Number of Subarrays With AND Value of K](problems/185-number-of-subarrays-with-and-value-of-k.md) - [LeetCode](https://leetcode.com/problems/number-of-subarrays-with-and-value-of-k)
+- [Kth Smallest Number in Multiplication Table](problems/190-kth-smallest-number-in-multiplication-table.md) - [LeetCode](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table)
+- [Max Sum of Rectangle No Larger Than K](problems/191-max-sum-of-rectangle-no-larger-than-k.md) - [LeetCode](https://leetcode.com/problems/max-sum-of-rectangle-no-larger-than-k)
+- [Set Intersection Size At Least Two](problems/192-set-intersection-size-at-least-two.md) - [LeetCode](https://leetcode.com/problems/set-intersection-size-at-least-two)
+- [Maximum Building Height](problems/195-maximum-building-height.md) - [LeetCode](https://leetcode.com/problems/maximum-building-height)
+- [Maximum Fruits Harvested After at Most K Steps](problems/198-maximum-fruits-harvested-after-at-most-k-steps.md) - [LeetCode](https://leetcode.com/problems/maximum-fruits-harvested-after-at-most-k-steps)
+- [Minimize Manhattan Distances](problems/199-minimize-manhattan-distances.md) - [LeetCode](https://leetcode.com/problems/minimize-manhattan-distances)
+- [Subsequence With the Minimum Score](problems/201-subsequence-with-the-minimum-score.md) - [LeetCode](https://leetcode.com/problems/subsequence-with-the-minimum-score)
+- [Count of Smaller Numbers After Self](problems/213-count-of-smaller-numbers-after-self.md) - [LeetCode](https://leetcode.com/problems/count-of-smaller-numbers-after-self)
+- [Find Minimum in Rotated Sorted Array II](problems/218-find-minimum-in-rotated-sorted-array-ii.md) - [LeetCode](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array-ii)
+- [Find the K-Sum of an Array](problems/221-find-the-k-sum-of-an-array.md) - [LeetCode](https://leetcode.com/problems/find-the-k-sum-of-an-array)
+- [Find Products of Elements of Big Array](problems/224-find-products-of-elements-of-big-array.md) - [LeetCode](https://leetcode.com/problems/find-products-of-elements-of-big-array)
+- [Maximum Number of Robots Within Budget](problems/229-maximum-number-of-robots-within-budget.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-robots-within-budget)
+- [Find Building Where Alice and Bob Can Meet](problems/231-find-building-where-alice-and-bob-can-meet.md) - [LeetCode](https://leetcode.com/problems/find-building-where-alice-and-bob-can-meet)
+- [Maximize the Minimum Game Score](problems/237-maximize-the-minimum-game-score.md) - [LeetCode](https://leetcode.com/problems/maximize-the-minimum-game-score)
+- [Maximum Total Beauty of the Gardens](problems/238-maximum-total-beauty-of-the-gardens.md) - [LeetCode](https://leetcode.com/problems/maximum-total-beauty-of-the-gardens)
+- [Make String Anti-palindrome](problems/239-make-string-anti-palindrome.md) - [LeetCode](https://leetcode.com/problems/make-string-anti-palindrome)
+- [Kth Smallest Product of Two Sorted Arrays](problems/244-kth-smallest-product-of-two-sorted-arrays.md) - [LeetCode](https://leetcode.com/problems/kth-smallest-product-of-two-sorted-arrays)
+- [Time to Cross a Bridge](problems/246-time-to-cross-a-bridge.md) - [LeetCode](https://leetcode.com/problems/time-to-cross-a-bridge)
+- [Minimum Deletions to Make Array Divisible](problems/247-minimum-deletions-to-make-array-divisible.md) - [LeetCode](https://leetcode.com/problems/minimum-deletions-to-make-array-divisible)
+- [Earliest Second to Mark Indices II](problems/251-earliest-second-to-mark-indices-ii.md) - [LeetCode](https://leetcode.com/problems/earliest-second-to-mark-indices-ii)
+- [Find Array Given Subset Sums](problems/254-find-array-given-subset-sums.md) - [LeetCode](https://leetcode.com/problems/find-array-given-subset-sums)
+- [Find the Longest Valid Obstacle Course at Each Position](problems/256-find-the-longest-valid-obstacle-course-at-each-position.md) - [LeetCode](https://leetcode.com/problems/find-the-longest-valid-obstacle-course-at-each-position)
+- [Count of Range Sum](problems/259-count-of-range-sum.md) - [LeetCode](https://leetcode.com/problems/count-of-range-sum)
+- [Count Subarrays With Score Less Than K](problems/272-count-subarrays-with-score-less-than-k.md) - [LeetCode](https://leetcode.com/problems/count-subarrays-with-score-less-than-k)
+- [Maximum Number of Ones](problems/280-maximum-number-of-ones.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-ones)
+- [Construct Target Array With Multiple Sums](problems/281-construct-target-array-with-multiple-sums.md) - [LeetCode](https://leetcode.com/problems/construct-target-array-with-multiple-sums)
+- [Minimize Deviation in Array](problems/288-minimize-deviation-in-array.md) - [LeetCode](https://leetcode.com/problems/minimize-deviation-in-array)
+- [Minimum Time to Complete All Tasks](problems/293-minimum-time-to-complete-all-tasks.md) - [LeetCode](https://leetcode.com/problems/minimum-time-to-complete-all-tasks)
+- [Maximum GCD-Sum of a Subarray](problems/301-maximum-gcd-sum-of-a-subarray.md) - [LeetCode](https://leetcode.com/problems/maximum-gcd-sum-of-a-subarray)
+- [Minimum Space Wasted From Packaging](problems/305-minimum-space-wasted-from-packaging.md) - [LeetCode](https://leetcode.com/problems/minimum-space-wasted-from-packaging)
+- [Maximum Area Rectangle With Point Constraints II](problems/307-maximum-area-rectangle-with-point-constraints-ii.md) - [LeetCode](https://leetcode.com/problems/maximum-area-rectangle-with-point-constraints-ii)
+- [Earliest Possible Day of Full Bloom](problems/310-earliest-possible-day-of-full-bloom.md) - [LeetCode](https://leetcode.com/problems/earliest-possible-day-of-full-bloom)
+- [Minimum Number of Operations to Make Arrays Similar](problems/313-minimum-number-of-operations-to-make-arrays-similar.md) - [LeetCode](https://leetcode.com/problems/minimum-number-of-operations-to-make-arrays-similar)
+- [Count Good Triplets in an Array](problems/314-count-good-triplets-in-an-array.md) - [LeetCode](https://leetcode.com/problems/count-good-triplets-in-an-array)
+- [Make Array Empty](problems/318-make-array-empty.md) - [LeetCode](https://leetcode.com/problems/make-array-empty)
+- [Maximum Spending After Buying Items](problems/323-maximum-spending-after-buying-items.md) - [LeetCode](https://leetcode.com/problems/maximum-spending-after-buying-items)
+- [Employee Free Time](problems/35-employee-free-time.md) - [LeetCode](https://leetcode.com/problems/employee-free-time)
+- [The Skyline Problem](problems/37-the-skyline-problem.md) - [LeetCode](https://leetcode.com/problems/the-skyline-problem)
+- [IPO](problems/38-ipo.md) - [LeetCode](https://leetcode.com/problems/ipo)
+- [Block Placement Queries](problems/44-block-placement-queries.md) - [LeetCode](https://leetcode.com/problems/block-placement-queries)
+- [Number of Flowers in Full Bloom](problems/46-number-of-flowers-in-full-bloom.md) - [LeetCode](https://leetcode.com/problems/number-of-flowers-in-full-bloom)
+- [Smallest Range Covering Elements from K Lists](problems/47-smallest-range-covering-elements-from-k-lists.md) - [LeetCode](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists)
+- [Split Message Based on Limit](problems/54-split-message-based-on-limit.md) - [LeetCode](https://leetcode.com/problems/split-message-based-on-limit)
+- [Find Servers That Handled Most Number of Requests](problems/55-find-servers-that-handled-most-number-of-requests.md) - [LeetCode](https://leetcode.com/problems/find-servers-that-handled-most-number-of-requests)
+- [Maximum Performance of a Team](problems/56-maximum-performance-of-a-team.md) - [LeetCode](https://leetcode.com/problems/maximum-performance-of-a-team)
+- [Sliding Window Median](problems/59-sliding-window-median.md) - [LeetCode](https://leetcode.com/problems/sliding-window-median)
+- [Contains Duplicate III](problems/61-contains-duplicate-iii.md) - [LeetCode](https://leetcode.com/problems/contains-duplicate-iii)
+- [Maximum Number of Visible Points](problems/62-maximum-number-of-visible-points.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-visible-points)
+- [Best Meeting Point](problems/63-best-meeting-point.md) - [LeetCode](https://leetcode.com/problems/best-meeting-point)
+- [Number of Atoms](problems/69-number-of-atoms.md) - [LeetCode](https://leetcode.com/problems/number-of-atoms)
+- [Minimum Cost to Make Array Equal](problems/81-minimum-cost-to-make-array-equal.md) - [LeetCode](https://leetcode.com/problems/minimum-cost-to-make-array-equal)
+- [Maximum Number of Tasks You Can Assign](problems/85-maximum-number-of-tasks-you-can-assign.md) - [LeetCode](https://leetcode.com/problems/maximum-number-of-tasks-you-can-assign)
+- [Robot Collisions](problems/87-robot-collisions.md) - [LeetCode](https://leetcode.com/problems/robot-collisions)
+- [Strong Password Checker](problems/88-strong-password-checker.md) - [LeetCode](https://leetcode.com/problems/strong-password-checker)
+
+</details>
+
+
 
 ## 🎯 Key Concepts
 
-- Binary search variations
-- Sorting algorithms
-- Search space reduction
-- Two pointers
-- Merge operations
+- Binary search
+- Merge sort
+- Quick select
+- Partitioning
 
 ## 📚 Study Strategy
 
 ### Beginner Level
-
-1. Start with Easy problems
-2. Understand basic patterns
-3. Focus on time complexity
-4. Practice implementation
+1. Start with 🟢 Easy problems — build pattern recognition
+2. Focus on understanding the approach before optimizing
+3. Write brute force first, then optimize
 
 ### Intermediate Level
-
-1. Tackle Medium problems
-2. Learn optimization techniques
-3. Handle edge cases
-4. Practice multiple approaches
+1. Tackle 🟡 Medium problems — these are interview staples
+2. Practice identifying patterns quickly
+3. Aim for optimal time/space complexity
 
 ### Advanced Level
-
-1. Solve Hard problems
-2. Optimize space complexity
-3. Interview simulation
-4. Explain solutions clearly
+1. Master 🔴 Hard problems for senior-level interviews
+2. Practice follow-up variations and edge cases
+3. Focus on clean code and clear communication
 
 ## 🔗 Navigation
 
 - [Back to LeetCode Index](../index.md)
 - [All Categories](../index.md)
+- [Patterns Index](../00-patterns-index.md)
 
 ---
-
-**Total Problems: 6** | **Last Updated: 2025-07-13**
+**Total Problems: 328** | **Last Updated: 2026-03-31**

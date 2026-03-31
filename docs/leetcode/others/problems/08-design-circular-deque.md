@@ -58,12 +58,12 @@ Output: [null,            true,        true,        true,         false,        
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Design Circular Deque — Array with Front/Rear Pointers + Size
 - Time: O(1) all operations | Space: O(k)
-  \*/
+  */
   class MyCircularDeque {
   private deque: number[];
   private front: number = 0;
@@ -123,7 +123,7 @@ isFull(): boolean { return this.size === this.capacity; }
 // d.getRear() // → 2
 // d.deleteLast(); d.insertFront(4) // true, true
 // d.getFront() // → 4
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

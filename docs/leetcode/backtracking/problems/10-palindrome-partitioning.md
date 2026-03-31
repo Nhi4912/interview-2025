@@ -66,13 +66,13 @@ s = "aba"      → [["a","b","a"], ["aba"]]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Backtracking with inline palindrome check
 - Check palindrome on-the-fly using two pointers
 - Time: O(n × 2^n) | Space: O(n) recursion + O(n) current path
-  \*/
+  */
   function partition(s: string): string[][] {
   const result: string[][] = [];
   const current: string[] = [];
@@ -99,12 +99,12 @@ backtrack(0);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2 — DP Precompute + Backtracking ✅ Recommended
 - Build palindrome table first; then O(1) lookup during backtracking
 - Time: O(n² + n×2^n) | Space: O(n²) for dp table
-  \*/
+  */
   function partitionDP(s: string): string[][] {
   const n = s.length;
   // dp[i][j] = true iff s[i..j] is a palindrome
@@ -141,7 +141,7 @@ return result;
 // partition("a") → [["a"]]
 // partition("aba") → [["a","b","a"],["aba"]]
 // partition("abba") → [["a","b","b","a"],["a","bb","a"],["abba"]]
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

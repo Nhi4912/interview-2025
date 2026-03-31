@@ -74,7 +74,7 @@ Example 3: root = [1]            → [1]
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Note: TreeNode class is provided by LeetCode environment
 
 // Solution 1: Recursive DFS (Most readable — establish logic first)
@@ -144,7 +144,7 @@ console.log(inorderTraversal(t1)); // [1,3,2] ✅
 console.log(inorderTraversalIterative(t1));// [1,3,2] ✅
 console.log(inorderTraversalMorris(new TreeNode(1, null, new TreeNode(2, new TreeNode(3))))); // [1,3,2] ✅
 console.log(inorderTraversal(null)); // [] ✅
-{% endraw %}
+```
 
 ---
 

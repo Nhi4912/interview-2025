@@ -59,7 +59,7 @@ After put(4,4): HEAD ↔ [4] ↔ [1] ↔ [3] ↔ TAIL   (2 evicted — LRU)
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Solution 1: JavaScript Map (elegant, O(1) amortized) ← USE THIS IN INTERVIEW
 // JS Map preserves insertion order → delete+re-insert = move to MRU
 class LRUCache {
@@ -146,7 +146,7 @@ this.insertFront(node);
 this.map.set(key, node);
 }
 }
-{% endraw %}
+```
 
 ---
 

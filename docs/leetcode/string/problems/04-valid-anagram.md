@@ -58,24 +58,24 @@ Input: s = "silent",  t = "listen"  → Output: true
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Brute: Sort and Compare
 - Time: O(n log n) Space: O(n)
 - Sort both strings and compare. Simple but suboptimal.
-  \*/
+  */
   function isAnagramSort(s: string, t: string): boolean {
   if (s.length !== t.length) return false;
   return s.split("").sort().join("") === t.split("").sort().join("");
   }
 
-/\*\*
+/**
 
 - Solution 2 — Optimal: Frequency Array
 - Time: O(n) Space: O(1) — fixed 26-element array
 - Increment for s, decrement for t. Any non-zero means mismatch.
-  \*/
+  */
   function isAnagram(s: string, t: string): boolean {
   if (s.length !== t.length) return false;
 
@@ -95,7 +95,7 @@ console.assert(isAnagram("anagram", "nagaram") === true, "anagram: expected true
 console.assert(isAnagram("rat", "car") === false, "rat/car: expected false");
 console.assert(isAnagram("silent", "listen") === true, "silent/listen: expected true");
 console.assert(isAnagram("ab", "a") === false, "different lengths: expected false");
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

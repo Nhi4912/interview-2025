@@ -56,19 +56,19 @@ Input: "abc"   → Output: false (no single deletion works)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Valid Palindrome II
 - https://leetcode.com/problems/valid-palindrome-ii/
-  \*/
+  */
 
-/\*\*
+/**
 
 - Solution 1: Two Pointers + isPalin Helper (Standard)
 - At first mismatch, try skipping left char or right char.
 - Time O(n) | Space O(1)
-  \*/
+  */
   function validPalindrome(s: string): boolean {
   function isPalin(l: number, r: number): boolean {
   while (l < r) {
@@ -93,12 +93,12 @@ r--;
 return true;
 }
 
-/\*\*
+/**
 
 - Solution 2: Greedy Two-Pass (explicit mismatch detection)
 - Separate the "find first mismatch" step from the "check both options" step.
 - Time O(n) | Space O(1) — slightly clearer intent at interview
-  \*/
+  */
   function validPalindromeGreedy(s: string): boolean {
   function isPalinRange(l: number, r: number): boolean {
   while (l < r) {
@@ -130,7 +130,7 @@ console.log(validPalindrome("aba")); // true
 console.log(validPalindrome("abca")); // true
 console.log(validPalindromeGreedy("abc")); // false
 console.log(validPalindromeGreedy("deeee")); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

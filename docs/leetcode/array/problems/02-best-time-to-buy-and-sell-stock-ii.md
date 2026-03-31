@@ -58,12 +58,12 @@ Input:  [7, 6, 4, 3, 1]      → 0    (always decreasing, never buy)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Greedy — Collect Every Positive Slope (Optimal)
 - Time: O(n) | Space: O(1)
-  \*/
+  */
   function maxProfit(prices: number[]): number {
   let profit = 0;
 
@@ -76,13 +76,13 @@ profit += prices[i] - prices[i - 1];
 return profit;
 }
 
-/\*\*
+/**
 
 - Solution 2: Space-Optimized DP (equivalent result, shows DP thinking)
 - dp[0] = max profit NOT holding stock
 - dp[1] = max profit HOLDING stock
 - Time: O(n) | Space: O(1)
-  \*/
+  */
   function maxProfitDP(prices: number[]): number {
   if (prices.length <= 1) return 0;
 
@@ -102,7 +102,7 @@ console.log(maxProfit([7, 1, 5, 3, 6, 4]) === 7); // true
 console.log(maxProfit([1, 2, 3, 4, 5]) === 4); // true
 console.log(maxProfit([7, 6, 4, 3, 1]) === 0); // true
 console.log(maxProfit([1]) === 0); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

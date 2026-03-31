@@ -69,8 +69,8 @@ Constraints: `1 <= nums.length <= 3×10^4`, `-10^4 <= nums[i] <= 10^4`, sorted n
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Two Pointers — compare with write-2 (Optimal)
 -
@@ -79,7 +79,7 @@ Constraints: `1 <= nums.length <= 3×10^4`, `-10^4 <= nums[i] <= 10^4`, sorted n
 - Because array is sorted, identical values are adjacent — this check is sufficient.
 -
 - Time: O(n), Space: O(1)
-  \*/
+  */
   function removeDuplicates(nums: number[]): number {
   if (nums.length <= 2) return nums.length;
 
@@ -95,7 +95,7 @@ write++;
 return write;
 }
 
-/\*\*
+/**
 
 - Solution 2: Generalized — at most k duplicates
 -
@@ -105,7 +105,7 @@ return write;
 - k=3 → keep at most 3 of each
 -
 - Time: O(n), Space: O(1)
-  \*/
+  */
   function removeDuplicatesK(nums: number[], k: number): number {
   if (nums.length <= k) return nums.length;
 
@@ -131,7 +131,7 @@ console.log(removeDuplicates(b), b.slice(0, 7)); // 7 [0,0,1,1,2,3,3]
 const c = [1, 1, 1, 2, 2, 3];
 console.log(removeDuplicatesK(c, 1)); // 3
 console.log(c.slice(0, 3)); // [1,2,3]
-{% endraw %}
+```
 
 ---
 

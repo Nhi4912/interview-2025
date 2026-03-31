@@ -62,8 +62,8 @@ nums = [-2,3,-4]    → 24      ([-2,3,-4]: two negatives flip to positive)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Brute Force O(n²)
 - Check all subarrays explicitly
@@ -81,12 +81,12 @@ nums = [-2,3,-4]    → 24      ([-2,3,-4]: two negatives flip to positive)
   return result;
   }
 
-/\*\*
+/**
 
 - Solution 2 — Kadane's Variant: Track Min & Max ✅ Recommended
 - At each position, new max might come from flipping the minimum (neg×neg)
 - Time: O(n) | Space: O(1)
-  \*/
+  */
   function maxProduct(nums: number[]): number {
   let maxProd = nums[0];
   let minProd = nums[0];
@@ -110,7 +110,7 @@ return result;
 // maxProduct([-2,0,-1]) → 0
 // maxProduct([-2,3,-4]) → 24
 // maxProduct([-2]) → -2 (must return element even if negative)
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

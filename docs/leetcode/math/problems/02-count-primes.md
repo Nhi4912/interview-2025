@@ -68,8 +68,8 @@ Constraints: `0 <= n <= 5 × 10^6`
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Trial Division (Brute Force)
 - Time O(n √n), Space O(1) — too slow for n=5×10^6
@@ -87,7 +87,7 @@ Constraints: `0 <= n <= 5 × 10^6`
   return count;
   }
 
-/\*\*
+/**
 
 - Solution 2: Sieve of Eratosthenes (Optimal)
 - Time O(n log log n), Space O(n)
@@ -106,7 +106,7 @@ for (let i = 2; i * i < n; i++) {
 if (isPrime[i]) {
 // Mark multiples of i starting from i*i
 // (smaller multiples were already marked by earlier primes)
-for (let j = i \* i; j < n; j += i) {
+for (let j = i * i; j < n; j += i) {
 isPrime[j] = 0;
 }
 }
@@ -122,7 +122,7 @@ console.log(countPrimes(10) === 4); // true (2,3,5,7)
 console.log(countPrimes(0) === 0); // true
 console.log(countPrimes(1) === 0); // true
 console.log(countPrimes(20) === 8); // true (2,3,5,7,11,13,17,19)
-{% endraw %}
+```
 
 ---
 

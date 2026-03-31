@@ -71,14 +71,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: DP with Array (Clearer)
 - Time: O(n) — single pass through houses
 - Space: O(n) — dp array stores best value at each position
-  \*/
+  */
   function robDP(nums: number[]): number {
   if (nums.length === 1) return nums[0];
 
@@ -93,12 +93,12 @@ dp[i] = Math.max(dp[i - 2] + nums[i], dp[i - 1]);
 return dp[nums.length - 1];
 }
 
-/\*\*
+/**
 
 - Solution 2: Space-Optimized DP (Optimal)
 - Time: O(n) — single pass
 - Space: O(1) — only track prev2 and prev1
-  \*/
+  */
   function rob(nums: number[]): number {
   if (nums.length === 1) return nums[0];
 
@@ -119,7 +119,7 @@ console.log(rob([1, 2, 3, 1])); // 4
 console.log(rob([2, 7, 9, 3, 1])); // 12
 console.log(rob([1])); // 1 (edge: single house)
 
-{% endraw %}
+```
 
 ---
 

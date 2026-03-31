@@ -56,22 +56,22 @@ Input:  s = ["a"]                     → Output: ["a"]
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Brute: Built-in reverse (not in-place in spirit, but modifies array)
 - Time: O(n) Space: O(1) — acceptable but trivial; interviewer usually wants Solution 2
-  \*/
+  */
   function reverseStringBuiltin(s: string[]): void {
   s.reverse();
   }
 
-/\*\*
+/**
 
 - Solution 2 — Optimal: Two Pointers
 - Time: O(n) Space: O(1)
 - Swap from both ends, converge to center.
-  \*/
+  */
   function reverseString(s: string[]): void {
   let left = 0;
   let right = s.length - 1;
@@ -99,7 +99,7 @@ console.assert(t3[0] === "a", "single char: should stay unchanged");
 const t4: string[] = [];
 reverseString(t4);
 console.assert(t4.length === 0, "empty: should remain empty");
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

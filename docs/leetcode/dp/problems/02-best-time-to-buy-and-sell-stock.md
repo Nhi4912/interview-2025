@@ -67,14 +67,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force
 - Time: O(n²) — try every buy/sell pair
 - Space: O(1) — no extra memory
-  \*/
+  */
   function maxProfitBrute(prices: number[]): number {
   let maxProfit = 0;
 
@@ -87,12 +87,12 @@ maxProfit = Math.max(maxProfit, prices[j] - prices[i]);
 return maxProfit;
 }
 
-/\*\*
+/**
 
 - Solution 2: One-Pass Greedy (Optimal)
 - Time: O(n) — single scan, update min price and max profit
 - Space: O(1) — two variables only
-  \*/
+  */
   function maxProfit(prices: number[]): number {
   let minPrice = prices[0];
   let maxProfit = 0;
@@ -110,7 +110,7 @@ console.log(maxProfit([7, 1, 5, 3, 6, 4])); // 5
 console.log(maxProfit([7, 6, 4, 3, 1])); // 0
 console.log(maxProfit([1])); // 0 (edge: single day)
 
-{% endraw %}
+```
 
 ---
 

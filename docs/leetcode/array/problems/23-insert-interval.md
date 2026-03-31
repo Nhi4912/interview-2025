@@ -79,14 +79,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Insert + Sort + Merge (Brute Force)
 - Time: O(n log n) — sorting dominates
 - Space: O(n) — result array
-  \*/
+  */
   function insertBrute(intervals: number[][], newInterval: number[]): number[][] {
   const all = [...intervals, newInterval].sort((a, b) => a[0] - b[0]);
   const result: number[][] = [];
@@ -102,12 +102,12 @@ result[result.length - 1][1] = Math.max(result[result.length - 1][1], interval[1
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Three-Phase Linear Scan (Optimal)
 - Time: O(n) — single pass; input already sorted
 - Space: O(n) — result array
-  \*/
+  */
   function insert(intervals: number[][], newInterval: number[]): number[][] {
   const result: number[][] = [];
   let i = 0;
@@ -144,7 +144,7 @@ console.log(JSON.stringify(insert([], [5,7])));
 console.log(JSON.stringify(insert([[1,5]], [2,3])));
 // [[1,5]]
 
-{% endraw %}
+```
 
 ---
 

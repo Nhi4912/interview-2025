@@ -82,15 +82,15 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Array Only (Brute Force)
 - insert: O(1) amortized
 - remove: O(n) — must scan to find index ← does NOT meet requirement
 - getRandom: O(1)
-  \*/
+  */
   class RandomizedSetBrute {
   private arr: number[] = [];
 
@@ -112,13 +112,13 @@ return this.arr[Math.floor(Math.random() * this.arr.length)];
 }
 }
 
-/\*\*
+/**
 
 - Solution 2: HashMap + Array with Swap-to-Delete (Optimal)
 - insert: O(1) — push to array + map update
 - remove: O(1) — swap with last, pop, update map
 - getRandom: O(1) — random index into dense array
-  \*/
+  */
   class RandomizedSet {
   private map: Map<number, number> = new Map(); // val → array index
   private arr: number[] = [];
@@ -160,7 +160,7 @@ console.log(rs.insert(2)); // false (duplicate)
 console.log(rs.remove(1)); // true (set={2})
 console.log(rs.getRandom()); // 2 (only element)
 
-{% endraw %}
+```
 
 ---
 

@@ -65,12 +65,12 @@ Input:  nums1=[1,2,3],   nums2=[4,5,6]     → []
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Hash Map — Optimal for unsorted input
 - Time: O(n + m) | Space: O(min(n, m))
-  \*/
+  */
   function intersect(nums1: number[], nums2: number[]): number[] {
   // Use smaller array for map to minimize space
   if (nums1.length > nums2.length) return intersect(nums2, nums1);
@@ -90,11 +90,11 @@ freq.set(n, count - 1);
 return result;
 }
 
-/\*\*
+/**
 
 - Solution 2: Sort + Two Pointers — O(1) extra space (if mutation allowed)
 - Time: O(n log n + m log m) | Space: O(1)
-  \*/
+  */
   function intersectSort(nums1: number[], nums2: number[]): number[] {
   nums1.sort((a, b) => a - b);
   nums2.sort((a, b) => a - b);
@@ -116,7 +116,7 @@ console.log(JSON.stringify(intersect([1,2,2,1],[2,2]).sort()) === '[2,2]'); // t
 console.log(JSON.stringify(intersect([4,9,5],[9,4,9,8,4]).sort()) === '[4,9]'); // true
 console.log(JSON.stringify(intersect([1,2,3],[4,5,6])) === '[]'); // true
 console.log(JSON.stringify(intersect([1,1,1],[1,1]).sort()) === '[1,1]'); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

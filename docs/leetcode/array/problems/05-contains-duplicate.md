@@ -57,12 +57,12 @@ Input:  [1, 1, 1, 3, 3, 4, 3, 2, 4, 2] → true
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1: Hash Set — Optimal (with early exit)
 - Time: O(n) | Space: O(n)
-  \*/
+  */
   function containsDuplicate(nums: number[]): boolean {
   const seen = new Set<number>();
 
@@ -74,11 +74,11 @@ seen.add(num);
 return false;
 }
 
-/\*\*
+/**
 
 - Solution 2: Sort + Adjacent Compare — O(1) extra space
 - Time: O(n log n) | Space: O(1) (modifies input)
-  \*/
+  */
   function containsDuplicateSort(nums: number[]): boolean {
   nums.sort((a, b) => a - b);
 
@@ -94,7 +94,7 @@ console.log(containsDuplicate([1, 2, 3, 1]) === true); // true
 console.log(containsDuplicate([1, 2, 3, 4]) === false); // true
 console.log(containsDuplicate([1, 1, 1, 3, 3, 4, 3, 2, 4, 2]) === true); // true
 console.log(containsDuplicate([]) === false); // true
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

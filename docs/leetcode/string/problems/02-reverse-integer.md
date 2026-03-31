@@ -56,8 +56,8 @@ Input: x = 1534236469 → Output: 0  (overflow)
 
 ## Solutions
 
-{% raw %}
-/\*\*
+```typescript
+/**
 
 - Solution 1 — Brute: String Conversion
 - Time: O(log n) Space: O(log n) — extra string allocation
@@ -71,12 +71,12 @@ Input: x = 1534236469 → Output: 0  (overflow)
   return result;
   }
 
-/\*\*
+/**
 
 - Solution 2 — Optimal: Math / Digit Extraction
 - Time: O(log n) Space: O(1)
 - Extract digit by digit with overflow check before each multiply.
-  \*/
+  */
   function reverse(x: number): number {
   const sign = x < 0 ? -1 : 1;
   let num = Math.abs(x);
@@ -95,7 +95,7 @@ const digit = num % 10;
 
 }
 
-return sign \* result;
+return sign * result;
 }
 
 // Inline tests
@@ -103,7 +103,7 @@ console.assert(reverse(123) === 321, "positive: expected 321");
 console.assert(reverse(-123) === -321, "negative: expected -321");
 console.assert(reverse(120) === 21, "trailing zero: expected 21");
 console.assert(reverse(1534236469) === 0, "overflow: expected 0");
-{% endraw %}
+```
 
 ## 🔗 Related Problems
 

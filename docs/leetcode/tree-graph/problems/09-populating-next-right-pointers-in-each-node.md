@@ -69,7 +69,7 @@ Example 2: root = []  → null
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Note: Node class with val, left, right, next is provided by LeetCode environment
 
 // Solution 1: BFS with Queue (Clear and correct)
@@ -122,7 +122,7 @@ console.log(root.next); // null ✅ (root has no next)
 console.log(n2.next?.val); // 3 ✅
 console.log(n4.next?.val); // 5 ✅
 console.log(n7.next); // null ✅ (last in level)
-{% endraw %}
+```
 
 ---
 

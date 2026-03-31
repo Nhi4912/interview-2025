@@ -76,14 +76,14 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
+```typescript
 
-/\*\*
+/**
 
 - Solution 1: Brute Force — check every substring
 - Time: O(n²) — n starting positions, up to n characters each
 - Space: O(min(n, m)) — Set holds current window chars (m = charset size)
-  \*/
+  */
   function lengthOfLongestSubstringBrute(s: string): number {
   let max = 0;
   for (let i = 0; i < s.length; i++) {
@@ -97,12 +97,12 @@ Constraints:
   return max;
   }
 
-/\*\*
+/**
 
 - Solution 2: Sliding Window with Map (Optimal)
 - Time: O(n) — each character processed at most twice (added, then removed)
 - Space: O(min(n, m)) — Map holds at most charset-size entries
-  \*/
+  */
   function lengthOfLongestSubstring(s: string): number {
   const lastSeen = new Map<string, number>();
   let max = 0;
@@ -127,7 +127,7 @@ console.log(lengthOfLongestSubstring("bbbbb")); // 1
 console.log(lengthOfLongestSubstring("pwwkew")); // 3
 console.log(lengthOfLongestSubstring("")); // 0
 
-{% endraw %}
+```
 
 ---
 
