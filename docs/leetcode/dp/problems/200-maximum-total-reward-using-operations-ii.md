@@ -7,102 +7,133 @@ tags: [Array, Dynamic Programming, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/maximum-total-reward-using-operations-ii"
 ---
 
-# Maximum Total Reward Using Operations II / Maximum Total Reward Using Operations II
+## 🏆 3182. Maximum Total Reward Using Operations II / Tổng Phần Thưởng Tối Đa (II)
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) | [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement)
+**Difficulty:** 🔴 Hard
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Total Reward Using Operations II example:**
+**Analogy (Vietnamese):** Giống bài I, nhưng `rewardValues` có thể lên tới 100,000 — mảng boolean thông thường sẽ TLE. Trick: dùng **BigInt như một bitset**. Mỗi bit trong BigInt đại diện cho một tổng có thể đạt được. Shift và OR thay vì vòng lặp — cực nhanh!
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+dp as BigInt bitset: bit i is set ↔ sum i is reachable
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+For value v:
+  - Take only sums s where s < v: mask = (1n << BigInt(v)) - 1n
+  - Shift those bits left by v: dp |= (dp & mask) << BigInt(v)
+  - This adds v to all reachable sums less than v in one operation!
+
+Example: v=3, dp = 0b...1101 (sums 0,2,3 reachable)
+  mask = (1<<3)-1 = 0b111
+  dp & mask = 0b101 (sums 0,2 are < 3)
+  shift left 3: 0b101000 (sums 3,5 become reachable)
+  dp |= → sums {0,2,3,5,6} reachable
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Maximum Total Reward Using Operations II. ([LeetCode](https://leetcode.com/problems/maximum-total-reward-using-operations-ii))
+Same as 3181 but `rewardValues.length` up to 50,000 and values up to 100,000. The naive O(n × maxVal) DP would be too slow without bitset optimization.
 
-Difficulty: Hard | Acceptance: 20.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-total-reward-using-operations-ii) for full constraints
+- Example: `rewardValues = [1,6,4,3,2]` → **11**
+- Example: `rewardValues = [1,1,3,3]` → **4**
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🎯 **BigInt as bitset**: JavaScript BigInt supports arbitrary precision; bit operations on it are O(bits/64)
+- 🎯 **Key operation**: `dp |= (dp & mask) << BigInt(v)` where `mask = (1n << v) - 1n`
+- 🎯 **Why mask?**: Only sums `s < v` can be extended by `v` (constraint: `v > current total`)
+- 🎯 **Dedup**: remove duplicate values (only unique matters for reachability)
+- 🎯 **Answer**: highest set bit in final dp BigInt
+- 🎯 **Complexity**: O(n × maxVal / 64) with bitset — roughly O(n × 1563) for maxVal=100000
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: BigInt Bitset DP (Optimal)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumTotalRewardUsingOperationsIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function maxTotalReward(rewardValues: number[]): number {
+  const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumTotalRewardUsingOperationsIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  // dp as BigInt: bit i set = sum i is reachable
+  let dp = 1n; // sum 0 is reachable (bit 0)
 
-// === Test Cases ===
-// console.log(maximumTotalRewardUsingOperationsIi(/* example 1 */)); // expected
-// console.log(maximumTotalRewardUsingOperationsIi(/* example 2 */)); // expected
-// console.log(maximumTotalRewardUsingOperationsIi(/* edge case */)); // expected
+  for (const v of vals) {
+    const bv = BigInt(v);
+    // mask: keep only sums < v (bits 0..v-1)
+    const mask = (1n << bv) - 1n;
+    // shift those reachable sums by v (add v to each)
+    dp |= (dp & mask) << bv;
+  }
+
+  // Find highest set bit = maximum reachable sum
+  let result = 0n;
+  let temp = dp;
+  while (temp > 0n) {
+    temp >>= 1n;
+    result++;
+  }
+  return Number(result) - 1;
+}
+```
+
+### Solution 2: BigInt with bit_length helper
+
+```typescript
+function maxTotalRewardV2(rewardValues: number[]): number {
+  const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
+
+  let dp = 1n;
+
+  for (const v of vals) {
+    const bv = BigInt(v);
+    dp |= (dp & ((1n << bv) - 1n)) << bv;
+  }
+
+  // dp.toString(2).length - 1 = position of highest set bit
+  return dp.toString(2).length - 1;
+}
+```
+
+### Solution 3: Boolean Array fallback (for smaller constraints, shows logic)
+
+```typescript
+function maxTotalRewardFallback(rewardValues: number[]): number {
+  const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
+  const maxVal = vals[vals.length - 1];
+  const limit = 2 * maxVal;
+
+  const dp = new Uint8Array(limit);
+  dp[0] = 1;
+
+  for (const v of vals) {
+    // Iterate backwards through sums less than v
+    for (let s = v - 1; s >= 0; s--) {
+      if (dp[s] && s + v < limit) dp[s + v] = 1;
+    }
+  }
+
+  for (let s = limit - 1; s >= 0; s--) {
+    if (dp[s]) return s;
+  }
+  return 0;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) — same pattern: Backtracking
-- [Optimal Account Balancing](https://leetcode.com/problems/optimal-account-balancing) — same pattern: Backtracking
-- [Find Minimum Time to Finish All Jobs](https://leetcode.com/problems/find-minimum-time-to-finish-all-jobs) — same pattern: Backtracking
-- [Maximum Total Reward Using Operations II — LeetCode](https://leetcode.com/problems/maximum-total-reward-using-operations-ii) — problem page
+| Problem                                                                                                                         | Difficulty | Key Technique       |
+| ------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------- |
+| [3181. Maximum Total Reward I](https://leetcode.com/problems/maximum-total-reward-using-operations-i/)                          | Medium     | Boolean Array DP    |
+| [416. Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum/)                                    | Medium     | 0/1 Knapsack Bitset |
+| [1449. Number of Ways to Form Target](https://leetcode.com/problems/number-of-ways-to-form-a-target-string-given-a-dictionary/) | Hard       | DP                  |
+| [2915. Length of Longest Subsequence Sum](https://leetcode.com/problems/length-of-the-longest-subsequence-that-sums-to-target/) | Medium     | DP                  |

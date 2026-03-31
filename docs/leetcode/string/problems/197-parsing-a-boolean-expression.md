@@ -7,99 +7,158 @@ tags: [String, Stack, Recursion]
 leetcode_url: "https://leetcode.com/problems/parsing-a-boolean-expression"
 ---
 
-# Parsing A Boolean Expression / Parsing A Boolean Expression
+# Parsing A Boolean Expression / Phân Tích Biểu Thức Boolean
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Decode String](https://leetcode.com/problems/decode-string) | [Basic Calculator](https://leetcode.com/problems/basic-calculator)
+🔴 Hard
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
-
-**Pattern Recognition:**
-
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Parsing A Boolean Expression example:**
+> **Phép so sánh:** Giống máy tính tay — mỗi khi gặp `(`, mở ngoặc mới; khi gặp `)`, tính kết quả rồi đóng lại. Toán tử `!`, `&`, `|` áp dụng lên tập giá trị bên trong.
 
 ```
-stack = []
-
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+Expression: |(f,&(t,f))
+Stack:
+ push '|'
+ push '('
+ push 'f'
+ push '&'
+ push '('
+ push 't', 'f'
+ ')' → pop to '(' → & → false → push 'f'
+ ')' → pop to '(' → | → false
+Result: false
 ```
-
----
 
 ## Problem Description
 
-Parsing A Boolean Expression. ([LeetCode](https://leetcode.com/problems/parsing-a-boolean-expression))
+Return the result of evaluating a boolean expression string. An expression is one of:
 
-Difficulty: Hard | Acceptance: 69.9%
+- `"t"` → true, `"f"` → false
+- `"!(e)"` → logical NOT
+- `"&(e1,e2,...)"` → logical AND of all sub-expressions
+- `"|(e1,e2,...)"` → logical OR of all sub-expressions
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 1:** `"!(f)"` → `true`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/parsing-a-boolean-expression) for full constraints
+**Example 2:** `"|(f,f,f)"` → `false`
 
----
+**Example 3:** `"&(|(f))"` → `false`
+
+**Constraints:** `1 <= expression.length <= 20000`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Pattern signal:** Nested/recursive structure → Stack hoặc Recursive Descent Parser
+- **Stack trick:** Push operator trước `(`, khi gặp `)` pop cho đến `(` để thu thập operands
+- **Recursion trick:** Dùng shared index pointer; mỗi lần gọi đệ quy tiêu thụ một token
+- **`!` edge case:** Luôn có đúng 1 argument — xử lý giống `&`/`|` vẫn đúng
+- **Complexity:** O(n) time, O(n) space — mỗi ký tự xử lý tối đa 1 lần
+- **Interview insight:** Đây là Recursive Descent Parser — mẫu phổ biến trong compiler design
 
 ## Solutions
 
+### Solution 1: Stack (Iterative) — O(n) time, O(n) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function parsingABooleanExpressionBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function parseBoolExpr(expression: string): boolean {
+  const stack: string[] = [];
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function parsingABooleanExpression(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
-}
+  for (const ch of expression) {
+    if (ch === ",") continue;
+    if (ch !== ")") {
+      stack.push(ch);
+    } else {
+      const values: string[] = [];
+      while (stack[stack.length - 1] !== "(") {
+        values.push(stack.pop()!);
+      }
+      stack.pop(); // remove '('
+      const op = stack.pop()!; // remove operator
 
-// === Test Cases ===
-// console.log(parsingABooleanExpression(/* example 1 */)); // expected
-// console.log(parsingABooleanExpression(/* example 2 */)); // expected
-// console.log(parsingABooleanExpression(/* edge case */)); // expected
+      let result: string;
+      if (op === "!") {
+        result = values[0] === "t" ? "f" : "t";
+      } else if (op === "&") {
+        result = values.every((v) => v === "t") ? "t" : "f";
+      } else {
+        // '|'
+        result = values.some((v) => v === "t") ? "t" : "f";
+      }
+      stack.push(result);
+    }
+  }
+
+  return stack[0] === "t";
+}
 ```
 
----
+### Solution 2: Recursive Descent Parser — O(n) time, O(n) space
+
+```typescript
+function parseBoolExpr(expression: string): boolean {
+  let idx = 0;
+
+  function parse(): boolean {
+    const ch = expression[idx++];
+    if (ch === "t") return true;
+    if (ch === "f") return false;
+
+    // ch is '!', '&', or '|'
+    idx++; // skip '('
+    const results: boolean[] = [];
+
+    while (expression[idx] !== ")") {
+      if (expression[idx] === ",") idx++;
+      results.push(parse());
+    }
+    idx++; // skip ')'
+
+    if (ch === "!") return !results[0];
+    if (ch === "&") return results.every(Boolean);
+    return results.some(Boolean); // '|'
+  }
+
+  return parse();
+}
+```
+
+### Solution 3: Stack with bitmask — O(n) time, O(n) space
+
+```typescript
+function parseBoolExpr(expression: string): boolean {
+  const stack: string[] = [];
+
+  for (const ch of expression) {
+    if (ch === ",") continue;
+    if (ch !== ")") {
+      stack.push(ch);
+      continue;
+    }
+
+    let hasTrue = false,
+      hasFalse = false;
+    while (stack[stack.length - 1] !== "(") {
+      const v = stack.pop()!;
+      if (v === "t") hasTrue = true;
+      if (v === "f") hasFalse = true;
+    }
+    stack.pop(); // '('
+    const op = stack.pop()!;
+
+    if (op === "!") stack.push(hasTrue ? "f" : "t");
+    else if (op === "&") stack.push(hasFalse ? "f" : "t");
+    else stack.push(hasTrue ? "t" : "f");
+  }
+
+  return stack[0] === "t";
+}
+```
 
 ## 🔗 Related Problems
 
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Basic Calculator](https://leetcode.com/problems/basic-calculator) — same pattern: Stack
-- [Basic Calculator III](https://leetcode.com/problems/basic-calculator-iii) — same pattern: Stack
-- [Parse Lisp Expression](https://leetcode.com/problems/parse-lisp-expression) — same pattern: Stack
-- [Parsing A Boolean Expression — LeetCode](https://leetcode.com/problems/parsing-a-boolean-expression) — problem page
+| #   | Problem               | Difficulty | Tags             |
+| --- | --------------------- | ---------- | ---------------- |
+| 224 | Basic Calculator      | Hard       | Stack, Math      |
+| 227 | Basic Calculator II   | Medium     | Stack            |
+| 394 | Decode String         | Medium     | Stack, Recursion |
+| 736 | Parse Lisp Expression | Hard       | Stack, Recursion |

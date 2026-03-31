@@ -7,100 +7,162 @@ tags: [String, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/k-similar-strings"
 ---
 
-# K-Similar Strings / K-Similar Strings
+## 854. K-Similar Strings
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Evaluate Division](https://leetcode.com/problems/evaluate-division) | [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree)
+### Chuỗi K-Tương Tự | 🔴 Hard
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — K-Similar Strings example:**
+> **Vietnamese analogy:** Như xáo bài — mỗi lần chỉ được đổi chỗ 2 lá bài. Hỏi tối thiểu cần bao nhiêu lần đổi để từ xếp này sang xếp kia? BFS tìm số bước tối thiểu, mỗi state là một hoán vị.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
-
-BFS: process level by level using queue
+s = "abcd"  → t = "badc"
+Step 1: swap s[0] and s[1]: "bacd"
+Step 2: swap s[2] and s[3]: "badc" ✓
+k = 2
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-K-Similar Strings. ([LeetCode](https://leetcode.com/problems/k-similar-strings))
+Strings `s1` and `s2` are **k-similar** if we can swap characters in `s1` at most `k` times to equal `s2`. Given two anagrams `s1` and `s2`, return the minimum `k`.
 
-Difficulty: Hard | Acceptance: 40.0%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `s1 = "abcd"`, `s2 = "badc"`
+- Output: `2`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/k-similar-strings) for full constraints
+**Constraints:**
+
+- `1 <= s1.length <= 20`
+- `s1` and `s2` are anagrams of each other
+- Characters in `s1` in set `{'a','b','c','d','e','f'}`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **BFS on permutation states** — each swap is one step, BFS finds minimum swaps
+- 🔑 **Pruning:** only swap to fix mismatches; find first mismatch position, only swap with positions that match `s2[i]` there
+- 🔑 Avoid revisiting states — use a `Set` of visited strings
+- ⚠️ Brute-force all swaps is too slow — must prune to only productive swaps
+- ⚠️ Key insight: always fix the **leftmost** mismatch to avoid redundant states
+- 💡 At leftmost mismatch `i`, only swap with position `j > i` where `s[j] === s2[i]`
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: BFS with Pruning
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function kSimilarStringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function kSimilarity(s1: string, s2: string): number {
+  if (s1 === s2) return 0;
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function kSimilarStrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
+  const visited = new Set<string>([s1]);
+  let queue: string[] = [s1];
+  let steps = 0;
 
-// === Test Cases ===
-// console.log(kSimilarStrings(/* example 1 */)); // expected
-// console.log(kSimilarStrings(/* example 2 */)); // expected
-// console.log(kSimilarStrings(/* edge case */)); // expected
+  while (queue.length > 0) {
+    steps++;
+    const next: string[] = [];
+
+    for (const cur of queue) {
+      // Find leftmost mismatch
+      let i = 0;
+      while (i < cur.length && cur[i] === s2[i]) i++;
+
+      // Try swapping cur[i] with cur[j] where cur[j] === s2[i]
+      for (let j = i + 1; j < cur.length; j++) {
+        if (cur[j] === s2[i]) {
+          const arr = cur.split("");
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+          const swapped = arr.join("");
+
+          if (swapped === s2) return steps;
+          if (!visited.has(swapped)) {
+            visited.add(swapped);
+            next.push(swapped);
+          }
+        }
+      }
+    }
+
+    queue = next;
+  }
+
+  return steps;
+}
+```
+
+### Solution 2: BFS with Additional Pruning (Skip If cur[j] Already Correct)
+
+```typescript
+function kSimilarityV2(s1: string, s2: string): number {
+  if (s1 === s2) return 0;
+
+  const visited = new Set<string>([s1]);
+  let queue: string[] = [s1];
+  let steps = 0;
+
+  while (queue.length > 0) {
+    steps++;
+    const next: string[] = [];
+
+    for (const cur of queue) {
+      // Find leftmost mismatch
+      let i = 0;
+      while (cur[i] === s2[i]) i++;
+
+      for (let j = i + 1; j < cur.length; j++) {
+        // Only swap if cur[j] matches what we need at position i
+        // AND skip if cur[j] is already correct at position j (no benefit)
+        if (cur[j] === s2[i] && cur[j] !== s2[j]) {
+          const arr = cur.split("");
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+          const swapped = arr.join("");
+
+          if (swapped === s2) return steps;
+          if (!visited.has(swapped)) {
+            visited.add(swapped);
+            next.push(swapped);
+          }
+        }
+      }
+
+      // Also check the unoptimized case where cur[j] === s2[j] but might be needed
+      for (let j = i + 1; j < cur.length; j++) {
+        if (cur[j] === s2[i] && cur[j] === s2[j]) {
+          const arr = cur.split("");
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+          const swapped = arr.join("");
+          if (swapped === s2) return steps;
+          if (!visited.has(swapped)) {
+            visited.add(swapped);
+            next.push(swapped);
+          }
+          break; // Only need one such swap
+        }
+      }
+    }
+
+    queue = next;
+  }
+
+  return steps;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Accounts Merge](https://leetcode.com/problems/accounts-merge) — same pattern: Union Find
-- [K-Similar Strings — LeetCode](https://leetcode.com/problems/k-similar-strings) — problem page
+| #   | Problem               | Difficulty | Tags            |
+| --- | --------------------- | ---------- | --------------- |
+| 765 | Couples Holding Hands | 🔴 Hard    | BFS, Union Find |
+| 839 | Similar String Groups | 🔴 Hard    | Union Find, BFS |
+| 127 | Word Ladder           | 🔴 Hard    | BFS             |
+| 815 | Bus Routes            | 🔴 Hard    | BFS             |

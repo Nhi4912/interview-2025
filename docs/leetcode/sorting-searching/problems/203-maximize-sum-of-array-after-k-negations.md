@@ -7,97 +7,141 @@ tags: [Array, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/maximize-sum-of-array-after-k-negations"
 ---
 
-# Maximize Sum Of Array After K Negations / Maximize Sum Of Array After K Negations
+# Maximize Sum Of Array After K Negations / Tối Đa Hóa Tổng Sau K Lần Đảo Dấu
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Largest Number](https://leetcode.com/problems/largest-number) | [Task Scheduler](https://leetcode.com/problems/task-scheduler)
+🟢 Easy
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximize Sum Of Array After K Negations example:**
+> **Hình ảnh:** Bạn có k lần "lật dấu" một số. Muốn tổng lớn nhất. Chiến thuật: **lật hết số âm lớn nhất trước** (âm → dương tăng tổng nhiều nhất). Còn k dư thì lật đi lật lại số **nhỏ nhất tuyệt đối** (thiệt hại ít nhất).
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+nums = [3, -1, 0, 2],  k = 3
+
+Step 1: Sort: [-1, 0, 2, 3]
+Step 2: Negate negatives: k=3, negate -1 → [1, 0, 2, 3], k=2
+Step 3: k=2 left, min abs = 0 → negate 0 → still 0, k=1
+Step 4: k=1 left (odd), negate smallest |val| = 0 → 0
+Sum = 1+0+2+3 = 6 ✓
+
+Key: if k is odd after negating all negatives → negate min(|nums[i]|) once
+     if k is even → do nothing (negating same element twice = no-op)
 ```
 
----
+**Chiến lược:** Sort by value, negate negatives from smallest to largest. If k remaining is odd, negate element with minimum absolute value.
 
-## Problem Description
+## 📋 Problem Description
 
-Maximize Sum Of Array After K Negations. ([LeetCode](https://leetcode.com/problems/maximize-sum-of-array-after-k-negations))
+Given integer array `nums` and integer `k`, apply operation (negate any element) exactly `k` times to maximize the array sum. Same element can be chosen multiple times.
 
-Difficulty: Easy | Acceptance: 52.4%
+**Example 1:** `nums=[4,2,3]`, `k=1` → `5` (negate 2→-2? No, negate 3? Best: negate smallest → negate 2 gives `[4,-2,3]=5`. Actually -2 is worse. Negate nothing positive → best is leaving max, so negate 2: sum = 4+(-2)+3=5. Wait: k=1, we must negate once. Largest negative impact: negate smallest positive = 2 → sum=4-2+3=5 ✓)
+**Example 2:** `nums=[3,-1,0,2]`, `k=3` → `6`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximize-sum-of-array-after-k-negations) for full constraints
-
----
+**Constraints:** `1 ≤ n ≤ 10^4`, `-100 ≤ nums[i] ≤ 100`, `1 ≤ k ≤ 10^4`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- **Sort by value:** Process negatives first (most negative = biggest gain from negation)
+- **Two-phase greedy:** Phase 1: negate negatives while k > 0; Phase 2: if k odd, negate min |element|
+- **Why sort by |value| for phase 2?** Negating the smallest absolute value minimizes loss
+- **Parity matters:** Even remaining k = net zero effect; odd = must negate one element
+- **Alternative:** Sort by absolute value descending — negate negatives in order
+- **Edge case:** All positive, k odd → negate the smallest element (minimize loss)
 
----
+## 💡 Solutions
 
-## Solutions
+### Solution 1: Two-Phase Greedy Sort — O(n log n)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximizeSumOfArrayAfterKNegationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function largestSumAfterKNegations(nums: number[], k: number): number {
+  nums.sort((a, b) => a - b); // sort ascending
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximizeSumOfArrayAfterKNegations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
+  // Phase 1: negate negatives from most negative to least negative
+  for (let i = 0; i < nums.length && k > 0 && nums[i] < 0; i++) {
+    nums[i] = -nums[i];
+    k--;
+  }
 
-// === Test Cases ===
-// console.log(maximizeSumOfArrayAfterKNegations(/* example 1 */)); // expected
-// console.log(maximizeSumOfArrayAfterKNegations(/* example 2 */)); // expected
-// console.log(maximizeSumOfArrayAfterKNegations(/* edge case */)); // expected
+  // Phase 2: if k is odd, negate the smallest absolute value (minimize loss)
+  if (k % 2 === 1) {
+    let minAbsIdx = 0;
+    for (let i = 1; i < nums.length; i++) {
+      if (Math.abs(nums[i]) < Math.abs(nums[minAbsIdx])) minAbsIdx = i;
+    }
+    nums[minAbsIdx] = -nums[minAbsIdx];
+  }
+
+  return nums.reduce((s, v) => s + v, 0);
+}
 ```
 
----
+### Solution 2: Sort by Absolute Value — O(n log n)
+
+```typescript
+function largestSumAfterKNegationsAbsSort(nums: number[], k: number): number {
+  // Sort by absolute value descending: handle biggest impact first
+  nums.sort((a, b) => Math.abs(b) - Math.abs(a));
+
+  for (let i = 0; i < nums.length && k > 0; i++) {
+    if (nums[i] < 0) {
+      nums[i] = -nums[i];
+      k--;
+    }
+  }
+
+  // After negating all negatives, if k still odd → negate last (smallest abs value)
+  if (k % 2 === 1) {
+    nums[nums.length - 1] = -nums[nums.length - 1];
+  }
+
+  return nums.reduce((s, v) => s + v, 0);
+}
+```
+
+### Solution 3: Counting Sort (O(n) for bounded input)
+
+```typescript
+function largestSumAfterKNegationsCounting(nums: number[], k: number): number {
+  // Since -100 <= nums[i] <= 100, use frequency count
+  const OFFSET = 100;
+  const freq = new Array(201).fill(0);
+  for (const n of nums) freq[n + OFFSET]++;
+
+  // Negate negatives from most negative to least negative
+  for (let val = -100; val < 0 && k > 0; val++) {
+    const idx = val + OFFSET;
+    if (freq[idx] > 0) {
+      const negCount = Math.min(freq[idx], k);
+      freq[idx] -= negCount;
+      freq[-val + OFFSET] += negCount;
+      k -= negCount;
+    }
+  }
+
+  // If k is odd, negate smallest absolute value (the element at min position in freq)
+  if (k % 2 === 1) {
+    for (let val = 0; val <= 100; val++) {
+      if (freq[val + OFFSET] > 0) {
+        freq[val + OFFSET]--;
+        freq[-val + OFFSET]++;
+        break;
+      }
+    }
+  }
+
+  let total = 0;
+  for (let val = -100; val <= 100; val++) {
+    total += val * freq[val + OFFSET];
+  }
+  return total;
+}
+```
 
 ## 🔗 Related Problems
 
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [IPO](https://leetcode.com/problems/ipo) — same pattern: Heap / Priority Queue
-- [Maximize Sum Of Array After K Negations — LeetCode](https://leetcode.com/problems/maximize-sum-of-array-after-k-negations) — problem page
+| Problem                                                                                                         | Similarity                   |
+| --------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| [Largest Number](https://leetcode.com/problems/largest-number/)                                                 | Greedy with custom sort      |
+| [Minimum Operations to Reduce X to Zero](https://leetcode.com/problems/minimum-operations-to-reduce-x-to-zero/) | Greedy array manipulation    |
+| [Maximum Product of Three Numbers](https://leetcode.com/problems/maximum-product-of-three-numbers/)             | Sort + pick optimal elements |
+| [Minimize Maximum Pair Sum in Array](https://leetcode.com/problems/minimize-maximum-pair-sum-in-array/)         | Greedy pairing after sort    |

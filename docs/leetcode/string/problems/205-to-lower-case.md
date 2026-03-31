@@ -7,97 +7,99 @@ tags: [String]
 leetcode_url: "https://leetcode.com/problems/to-lower-case"
 ---
 
-# To Lower Case / To Lower Case
+# To Lower Case / Chuyển Thành Chữ Thường
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Decode String](https://leetcode.com/problems/decode-string)
+🟢 Easy
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — To Lower Case example:**
+> **Phép so sánh:** Giống bảng chữ cái — chữ hoa A-Z có mã ASCII 65-90, chữ thường a-z có mã 97-122. Khoảng cách luôn là 32. Dùng bit OR với 32 (`| 0x20`) để bật bit thứ 5, chuyển hoa → thường.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
-```
+ASCII trick:
+ 'A' = 65  = 0100 0001
+ 'a' = 97  = 0110 0001
+ diff = 32 = 0010 0000
 
----
+ 'A' | 32 = 97 = 'a'  ✓
+ 'Z' | 32 = 122 = 'z' ✓
+ 'a' | 32 = 97 = 'a'  (already lower, no change)
+ '5' | 32 = unchanged (non-alpha bit patterns safe)
+```
 
 ## Problem Description
 
-To Lower Case. ([LeetCode](https://leetcode.com/problems/to-lower-case))
+Given a string `s`, return the string with all uppercase letters converted to lowercase.
 
-Difficulty: Easy | Acceptance: 84.2%
+**Example 1:** `"Hello"` → `"hello"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `"here"` → `"here"`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/to-lower-case) for full constraints
+**Example 3:** `"LOVELY"` → `"lovely"`
 
----
+**Constraints:** `1 <= s.length <= 100`, s consists of printable ASCII characters
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Built-in:** `s.toLowerCase()` — always mention the obvious solution first in interviews
+- **Manual ASCII:** Check `ch >= 'A' && ch <= 'Z'`, then add 32 to char code
+- **Bit trick:** `ch.charCodeAt(0) | 32` converts uppercase to lowercase (safe for letters only)
+- **Why manual?** Interview may restrict built-ins — shows understanding of ASCII table
+- **Edge cases:** Non-alpha chars (digits, symbols) must pass through unchanged
+- **Complexity:** O(n) time, O(n) space for result string
 
 ## Solutions
 
+### Solution 1: Built-in — O(n) time, O(n) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function toLowerCaseBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function toLowerCase(s: string): string {
+  return s.toLowerCase();
 }
-
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function toLowerCase(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(toLowerCase(/* example 1 */)); // expected
-// console.log(toLowerCase(/* example 2 */)); // expected
-// console.log(toLowerCase(/* edge case */)); // expected
 ```
 
----
+### Solution 2: Manual ASCII check — O(n) time, O(n) space
+
+```typescript
+function toLowerCase(s: string): string {
+  return s
+    .split("")
+    .map((ch) => {
+      const code = ch.charCodeAt(0);
+      // Uppercase A-Z: 65-90
+      if (code >= 65 && code <= 90) {
+        return String.fromCharCode(code + 32);
+      }
+      return ch;
+    })
+    .join("");
+}
+```
+
+### Solution 3: Bit manipulation — O(n) time, O(n) space
+
+```typescript
+function toLowerCase(s: string): string {
+  const result: string[] = [];
+  for (const ch of s) {
+    const code = ch.charCodeAt(0);
+    // Set bit 5 (value 32) to convert uppercase → lowercase
+    // Safe because for lowercase and non-alpha, OR with 32 doesn't change letter identity
+    if (code >= 65 && code <= 90) {
+      result.push(String.fromCharCode(code | 32));
+    } else {
+      result.push(ch);
+    }
+  }
+  return result.join("");
+}
+```
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [To Lower Case — LeetCode](https://leetcode.com/problems/to-lower-case) — problem page
+| #    | Problem                       | Difficulty | Tags          |
+| ---- | ----------------------------- | ---------- | ------------- |
+| 709  | To Lower Case                 | Easy       | String        |
+| 520  | Detect Capital                | Easy       | String        |
+| 944  | Delete Columns to Make Sorted | Easy       | Array, String |
+| 1170 | Compare Strings by Frequency  | Easy       | String        |

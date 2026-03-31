@@ -7,97 +7,177 @@ tags: [Graph, Heap (Priority Queue), Shortest Path]
 leetcode_url: "https://leetcode.com/problems/minimum-cost-to-reach-city-with-discounts"
 ---
 
-# Minimum Cost to Reach City With Discounts / Minimum Cost to Reach City With Discounts
+## 2093. Minimum Cost to Reach City With Discounts
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Shortest Path (BFS/Dijkstra)
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) | [Network Delay Time](https://leetcode.com/problems/network-delay-time)
+### Chi Phí Tối Thiểu Để Đến Thành Phố Với Giảm Giá | 🟡 Medium
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống tìm đường đi ngắn nhất trên Google Maps — BFS cho đồ thị không trọng số, Dijkstra cho có trọng số dương.
-
-**Pattern Recognition:**
-
-- Signal: "shortest/minimum path with weights" → **Dijkstra/BFS**
-- Bài này thuộc dạng Shortest Path (BFS/Dijkstra) — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Cost to Reach City With Discounts example:**
+> **Vietnamese analogy:** Đi từ thành phố 0 đến thành phố n-1 có tối đa `discounts` lần giảm 50% chi phí đường. Dùng Dijkstra nhưng mở rộng state: `(city, discountsUsed)` để theo dõi số lần đã giảm giá.
 
 ```
-// TODO: Add step-by-step visual for Shortest Path (BFS/Dijkstra)
-// Show one complete example with state at each step
+State: (cost, city, discountsLeft)
+At each edge with weight w:
+  Option 1: pay w      → (cost+w,   next, d)
+  Option 2: pay w/2    → (cost+w/2, next, d-1)  if d > 0
+
+Dijkstra on this 2D state space.
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Minimum Cost to Reach City With Discounts. ([LeetCode](https://leetcode.com/problems/minimum-cost-to-reach-city-with-discounts))
+Given `n` cities, `highways[i] = [city1, city2, toll]` (undirected), and `discounts` (number of half-price uses allowed), find minimum cost to travel from city `0` to city `n-1`. Return `-1` if impossible.
 
-Difficulty: Medium | Acceptance: 59.9%
+**Constraints:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-cost-to-reach-city-with-discounts) for full constraints
+- `2 <= n <= 1000`
+- `1 <= highways.length <= 1000`
+- `0 <= discounts <= 500`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Dijkstra with state** `(city, discountsUsed)` — classic "layered graph" pattern
+- 🔑 State space: `n × (discounts+1)` — each city can be visited with 0..discounts used
+- 🔑 For each edge, try both paying full and paying half (if discounts remain)
+- ⚠️ Half price = `Math.floor(toll / 2)` (integer division)
+- ⚠️ Don't just track best distance per city — must track per `(city, discountsUsed)` pair
+- 💡 This is the same pattern as "cheapest flights within K stops" — 2D DP/Dijkstra
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Dijkstra with Discount State
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumCostToReachCityWithDiscountsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function minimumCost(n: number, highways: number[][], discounts: number): number {
+  const adj: [number, number][][] = Array.from({ length: n }, () => []);
+  for (const [u, v, w] of highways) {
+    adj[u].push([v, w]);
+    adj[v].push([u, w]);
+  }
 
-/**
- * Solution 2: Optimized — Shortest Path (BFS/Dijkstra)
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumCostToReachCityWithDiscounts(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Shortest Path (BFS/Dijkstra)
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
+  // dist[city][discountsUsed] = minimum cost
+  const INF = Infinity;
+  const dist: number[][] = Array.from({ length: n }, () => new Array(discounts + 1).fill(INF));
+  dist[0][0] = 0;
 
-// === Test Cases ===
-// console.log(minimumCostToReachCityWithDiscounts(/* example 1 */)); // expected
-// console.log(minimumCostToReachCityWithDiscounts(/* example 2 */)); // expected
-// console.log(minimumCostToReachCityWithDiscounts(/* edge case */)); // expected
+  // Min-heap: [cost, city, discountsUsed]
+  const heap: [number, number, number][] = [[0, 0, 0]];
+
+  function heapPush(item: [number, number, number]) {
+    heap.push(item);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const p = Math.floor((i - 1) / 2);
+      if (heap[p][0] <= heap[i][0]) break;
+      [heap[p], heap[i]] = [heap[i], heap[p]];
+      i = p;
+    }
+  }
+
+  function heapPop(): [number, number, number] {
+    const top = heap[0];
+    const last = heap.pop()!;
+    if (heap.length > 0) {
+      heap[0] = last;
+      let i = 0;
+      while (true) {
+        let smallest = i;
+        const l = 2 * i + 1,
+          r = 2 * i + 2;
+        if (l < heap.length && heap[l][0] < heap[smallest][0]) smallest = l;
+        if (r < heap.length && heap[r][0] < heap[smallest][0]) smallest = r;
+        if (smallest === i) break;
+        [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+        i = smallest;
+      }
+    }
+    return top;
+  }
+
+  while (heap.length > 0) {
+    const [cost, city, used] = heapPop();
+    if (cost > dist[city][used]) continue;
+    if (city === n - 1) return cost;
+
+    for (const [next, toll] of adj[city]) {
+      // Option 1: no discount
+      const newCost1 = cost + toll;
+      if (newCost1 < dist[next][used]) {
+        dist[next][used] = newCost1;
+        heapPush([newCost1, next, used]);
+      }
+      // Option 2: use discount
+      if (used < discounts) {
+        const newCost2 = cost + Math.floor(toll / 2);
+        if (newCost2 < dist[next][used + 1]) {
+          dist[next][used + 1] = newCost2;
+          heapPush([newCost2, next, used + 1]);
+        }
+      }
+    }
+  }
+
+  return Math.min(...dist[n - 1]) === INF ? -1 : Math.min(...dist[n - 1]);
+}
+```
+
+### Solution 2: BFS/DP Layered Approach
+
+```typescript
+function minimumCostDP(n: number, highways: number[][], discounts: number): number {
+  const adj: [number, number][][] = Array.from({ length: n }, () => []);
+  for (const [u, v, w] of highways) {
+    adj[u].push([v, w]);
+    adj[v].push([u, w]);
+  }
+
+  // dp[d][city] = min cost reaching city using exactly d discounts
+  const INF = Infinity;
+  const dp: number[][] = Array.from({ length: discounts + 1 }, () => new Array(n).fill(INF));
+  dp[0][0] = 0;
+
+  // Run Dijkstra across all layers
+  const pq: [number, number, number][] = [[0, 0, 0]]; // [cost, node, discountsUsed]
+  pq.sort((a, b) => a[0] - b[0]);
+
+  while (pq.length > 0) {
+    pq.sort((a, b) => a[0] - b[0]);
+    const [cost, u, d] = pq.shift()!;
+    if (cost > dp[d][u]) continue;
+
+    for (const [v, w] of adj[u]) {
+      if (cost + w < dp[d][v]) {
+        dp[d][v] = cost + w;
+        pq.push([dp[d][v], v, d]);
+      }
+      if (d < discounts && cost + Math.floor(w / 2) < dp[d + 1][v]) {
+        dp[d + 1][v] = cost + Math.floor(w / 2);
+        pq.push([dp[d + 1][v], v, d + 1]);
+      }
+    }
+  }
+
+  let ans = INF;
+  for (let d = 0; d <= discounts; d++) ans = Math.min(ans, dp[d][n - 1]);
+  return ans === INF ? -1 : ans;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Network Delay Time](https://leetcode.com/problems/network-delay-time) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Path with Maximum Probability](https://leetcode.com/problems/path-with-maximum-probability) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Minimum Cost to Buy Apples](https://leetcode.com/problems/minimum-cost-to-buy-apples) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Minimum Cost to Reach City With Discounts — LeetCode](https://leetcode.com/problems/minimum-cost-to-reach-city-with-discounts) — problem page
+| #    | Problem                                   | Difficulty | Tags         |
+| ---- | ----------------------------------------- | ---------- | ------------ |
+| 787  | Cheapest Flights Within K Stops           | 🟡 Medium  | DP, Dijkstra |
+| 743  | Network Delay Time                        | 🟡 Medium  | Dijkstra     |
+| 1928 | Minimum Cost to Reach Destination in Time | 🔴 Hard    | DP, Graph    |
+| 1976 | Number of Ways to Arrive at Destination   | 🟡 Medium  | Dijkstra, DP |

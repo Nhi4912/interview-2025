@@ -7,97 +7,150 @@ tags: [Array, Hash Table, String, Depth-First Search, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/similar-string-groups"
 ---
 
-# Similar String Groups / Similar String Groups
+## 839. Similar String Groups
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Union Find
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Accounts Merge](https://leetcode.com/problems/accounts-merge) | [Smallest String With Swaps](https://leetcode.com/problems/smallest-string-with-swaps)
+### Nhóm Chuỗi Tương Tự | 🔴 Hard
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống nhóm bạn — ban đầu ai cũng riêng, khi hai người kết bạn thì nhóm họ gộp lại. Union Find quản lý các nhóm này hiệu quả.
-
-**Pattern Recognition:**
-
-- Signal: "group elements" + "connectivity queries" → **Union Find**
-- Bài này thuộc dạng Union Find — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Similar String Groups example:**
+> **Vietnamese analogy:** Các từ như những người bạn — hai người "quen" nhau nếu chỉ khác nhau đúng 2 chữ cái (hoán đổi). Bài toán hỏi có bao nhiêu nhóm bạn bè (components)?
 
 ```
-// TODO: Add step-by-step visual for Union Find
-// Show one complete example with state at each step
+strs = ["tars","rats","arts","star"]
+
+tars ↔ rats (swap t↔r at pos 0,2)
+tars ↔ arts (swap t↔a at pos 0,1)
+rats ↔ arts (swap r↔a)
+star: similar to tars? t-a-r-s vs s-t-a-r → 4 diffs → NO
+
+Groups: {tars, rats, arts}, {star} → 2 groups
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Similar String Groups. ([LeetCode](https://leetcode.com/problems/similar-string-groups))
+Two strings are **similar** if we can swap exactly two letters (in different positions) of one string to equal the other, or if they're identical. Given a list of strings `strs` (all anagrams of each other), return the number of groups of similar strings.
 
-Difficulty: Hard | Acceptance: 55.4%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `strs = ["tars","rats","arts","star"]`
+- Output: `2`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/similar-string-groups) for full constraints
+**Constraints:**
+
+- `1 <= strs.length <= 300`
+- `1 <= strs[i].length <= 300`
+- All strings are anagrams of each other
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 Two strings are similar if they differ in exactly 0 or 2 positions
+- 🔑 Use **Union-Find** for O(n²·L) — connect similar pairs then count components
+- 🔑 Since all strings are anagrams, differing in exactly 2 positions guarantees it's a valid swap
+- ⚠️ Difference count > 2 → not similar; count == 1 → impossible for anagrams
+- ⚠️ Duplicate strings ARE similar to themselves (0 diffs)
+- 💡 DFS/BFS also works: build adjacency list then count connected components
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Union-Find (Optimal)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function similarStringGroupsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function numSimilarGroups(strs: string[]): number {
+  const n = strs.length;
+  const parent = Array.from({ length: n }, (_, i) => i);
+  const rank = new Array(n).fill(0);
 
-/**
- * Solution 2: Optimized — Union Find
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function similarStringGroups(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Union Find
-  // Hint: Use union-find with path compression and union by rank
-  throw new Error('Not implemented');
-}
+  function find(x: number): number {
+    if (parent[x] !== x) parent[x] = find(parent[x]);
+    return parent[x];
+  }
 
-// === Test Cases ===
-// console.log(similarStringGroups(/* example 1 */)); // expected
-// console.log(similarStringGroups(/* example 2 */)); // expected
-// console.log(similarStringGroups(/* edge case */)); // expected
+  function union(x: number, y: number): void {
+    const px = find(x),
+      py = find(y);
+    if (px === py) return;
+    if (rank[px] < rank[py]) parent[px] = py;
+    else if (rank[px] > rank[py]) parent[py] = px;
+    else {
+      parent[py] = px;
+      rank[px]++;
+    }
+  }
+
+  function isSimilar(a: string, b: string): boolean {
+    let diffs = 0;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) diffs++;
+      if (diffs > 2) return false;
+    }
+    return diffs === 0 || diffs === 2;
+  }
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      if (isSimilar(strs[i], strs[j])) {
+        union(i, j);
+      }
+    }
+  }
+
+  const roots = new Set<number>();
+  for (let i = 0; i < n; i++) roots.add(find(i));
+  return roots.size;
+}
+```
+
+### Solution 2: DFS with Adjacency
+
+```typescript
+function numSimilarGroupsDFS(strs: string[]): number {
+  const n = strs.length;
+  const visited = new Array(n).fill(false);
+  let groups = 0;
+
+  function isSimilar(a: string, b: string): boolean {
+    let diffs = 0;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i] && ++diffs > 2) return false;
+    }
+    return diffs === 0 || diffs === 2;
+  }
+
+  function dfs(i: number): void {
+    visited[i] = true;
+    for (let j = 0; j < n; j++) {
+      if (!visited[j] && isSimilar(strs[i], strs[j])) {
+        dfs(j);
+      }
+    }
+  }
+
+  for (let i = 0; i < n; i++) {
+    if (!visited[i]) {
+      dfs(i);
+      groups++;
+    }
+  }
+
+  return groups;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Accounts Merge](https://leetcode.com/problems/accounts-merge) — same pattern: Union Find
-- [Smallest String With Swaps](https://leetcode.com/problems/smallest-string-with-swaps) — same pattern: Union Find
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Minimize Malware Spread](https://leetcode.com/problems/minimize-malware-spread) — same pattern: Union Find
-- [Similar String Groups — LeetCode](https://leetcode.com/problems/similar-string-groups) — problem page
+| #   | Problem                 | Difficulty | Tags            |
+| --- | ----------------------- | ---------- | --------------- |
+| 684 | Redundant Connection    | 🟡 Medium  | Union Find      |
+| 721 | Accounts Merge          | 🟡 Medium  | Union Find, DFS |
+| 547 | Number of Provinces     | 🟡 Medium  | DFS, Union Find |
+| 924 | Minimize Malware Spread | 🔴 Hard    | Union Find      |

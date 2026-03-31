@@ -7,104 +7,139 @@ tags: [Math, Backtracking, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/stepping-numbers"
 ---
 
-# Stepping Numbers / Stepping Numbers
+## 1215. Stepping Numbers
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Perfect Squares](https://leetcode.com/problems/perfect-squares) | [Word Ladder II](https://leetcode.com/problems/word-ladder-ii)
+### Số Bậc Thang | 🟡 Medium
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
-
-**Pattern Recognition:**
-
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Stepping Numbers example:**
+> **Vietnamese analogy:** Số bậc thang là số mà các chữ số cạnh nhau chênh lệch đúng 1 — như đi lên hoặc xuống từng bậc một. BFS/DFS từ các chữ số 1-9 để xây dựng tất cả số bậc thang trong khoảng.
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+Stepping numbers: 0,1,2,...,9,10,12,21,23,32,...,98
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+BFS from seed digit d:
+  d=1: 1 → 10, 12 → 101, 121, 123, 210, 212 → ...
+  d=2: 2 → 21, 23 → ...
+
+Filter by [low, high] range.
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Stepping Numbers. ([LeetCode](https://leetcode.com/problems/stepping-numbers))
+A **stepping number** is an integer where every two adjacent digits differ by exactly 1. Given two integers `low` and `high`, return all stepping numbers in `[low, high]` in **sorted** order.
 
-Difficulty: Medium | Acceptance: 47.7%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `low = 0`, `high = 21`
+- Output: `[0,1,2,3,4,5,6,7,8,9,10,12,21]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/stepping-numbers) for full constraints
+**Constraints:** `0 <= low <= high <= 2 * 10^9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+- 🔑 **BFS:** seed with digits 0–9, extend by appending digit ± 1 to the last digit
+- 🔑 Stop extending when number exceeds `high`
+- 🔑 Treat `0` as a special case (only the single digit 0, no leading zeros from extension)
+- ⚠️ From digit 0, only append 1 (can't append -1); from digit 9, only append 8
+- ⚠️ Numbers with leading zeros (like 01) are invalid — skip extending 0
+- 💡 BFS produces numbers in sorted order by digit count, so sort result at end
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: BFS
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function steppingNumbersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function countSteppingNumbers(low: number, high: number): number[] {
+  const result: number[] = [];
+  if (low === 0) result.push(0);
 
-/**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function steppingNumbers(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
-}
+  const queue: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  let qi = 0;
 
-// === Test Cases ===
-// console.log(steppingNumbers(/* example 1 */)); // expected
-// console.log(steppingNumbers(/* example 2 */)); // expected
-// console.log(steppingNumbers(/* edge case */)); // expected
+  while (qi < queue.length) {
+    const num = queue[qi++];
+    if (num > high) continue;
+    if (num >= low) result.push(num);
+
+    const lastDigit = num % 10;
+    const next1 = num * 10 + (lastDigit - 1);
+    const next2 = num * 10 + (lastDigit + 1);
+
+    if (lastDigit > 0 && next1 <= high) queue.push(next1);
+    if (lastDigit < 9 && next2 <= high) queue.push(next2);
+  }
+
+  return result.sort((a, b) => a - b);
+}
+```
+
+### Solution 2: DFS / Backtracking
+
+```typescript
+function countSteppingNumbersDFS(low: number, high: number): number[] {
+  const result: number[] = [];
+  if (low === 0) result.push(0);
+
+  function dfs(num: number): void {
+    if (num > high) return;
+    if (num >= low) result.push(num);
+
+    const lastDigit = num % 10;
+    if (lastDigit > 0) dfs(num * 10 + lastDigit - 1);
+    if (lastDigit < 9) dfs(num * 10 + lastDigit + 1);
+  }
+
+  for (let d = 1; d <= 9; d++) dfs(d);
+
+  return result.sort((a, b) => a - b);
+}
+```
+
+### Solution 3: BFS with Level-by-Level Processing
+
+```typescript
+function countSteppingNumbersLevel(low: number, high: number): number[] {
+  const result: number[] = [];
+  if (low === 0) result.push(0);
+
+  let queue: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  while (queue.length > 0) {
+    const next: number[] = [];
+    for (const num of queue) {
+      if (num > high) continue;
+      if (num >= low) result.push(num);
+
+      const last = num % 10;
+      const bigger = num * 10 + last + 1;
+      const smaller = num * 10 + last - 1;
+
+      if (last < 9 && bigger <= high) next.push(bigger);
+      if (last > 0 && smaller <= high) next.push(smaller);
+    }
+    queue = next;
+  }
+
+  return result.sort((a, b) => a - b);
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Perfect Squares](https://leetcode.com/problems/perfect-squares) — same pattern: Dynamic Programming
-- [Word Ladder II](https://leetcode.com/problems/word-ladder-ii) — same pattern: Backtracking
-- [Remove Invalid Parentheses](https://leetcode.com/problems/remove-invalid-parentheses) — same pattern: Backtracking
-- [Gray Code](https://leetcode.com/problems/gray-code) — same pattern: Backtracking
-- [Stepping Numbers — LeetCode](https://leetcode.com/problems/stepping-numbers) — problem page
+| #    | Problem                                   | Difficulty | Tags         |
+| ---- | ----------------------------------------- | ---------- | ------------ |
+| 200  | Number of Islands                         | 🟡 Medium  | BFS, DFS     |
+| 90   | Subsets II                                | 🟡 Medium  | Backtracking |
+| 967  | Numbers With Same Consecutive Differences | 🟡 Medium  | BFS, DFS     |
+| 1539 | Kth Missing Positive Number               | 🟢 Easy    | Math         |

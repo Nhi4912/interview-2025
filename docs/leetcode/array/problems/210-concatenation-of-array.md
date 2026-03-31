@@ -7,97 +7,115 @@ tags: [Array, Simulation]
 leetcode_url: "https://leetcode.com/problems/concatenation-of-array"
 ---
 
-# Concatenation of Array / Concatenation of Array
+# Concatenation of Array / Nối Mảng
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Text Justification](https://leetcode.com/problems/text-justification)
-
----
+🟢 Easy | Array · Simulation | LeetCode #1929
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Concatenation of Array" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Concatenation of Array example:**
+**Vietnamese:** Đơn giản nhất có thể — tạo một mảng mới gấp đôi và điền `ans[i] = ans[i+n] = nums[i]`. Hoặc dùng spread operator: `[...nums, ...nums]`.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+nums = [1, 2, 1]
+n = 3
 
----
+ans[0] = nums[0] = 1
+ans[1] = nums[1] = 2
+ans[2] = nums[2] = 1
+ans[3] = nums[0] = 1
+ans[4] = nums[1] = 2
+ans[5] = nums[2] = 1
+
+Result: [1, 2, 1, 1, 2, 1]
+```
 
 ## Problem Description
 
-Concatenation of Array. ([LeetCode](https://leetcode.com/problems/concatenation-of-array))
+Given integer array `nums` of length `n`, return the **concatenation** of `nums` with itself — an array of length `2n` where `ans[i] = nums[i]` and `ans[i+n] = nums[i]` for all `0 <= i < n`.
 
-Difficulty: Easy | Acceptance: 90.5%
+This is the foundational building block used in circular array problems — doubling the array simplifies wraparound logic.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+nums=[1,2,1]
+Output: [1,2,1,1,2,1]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/concatenation-of-array) for full constraints
+**Example 2:**
 
----
+```
+nums=[1,3,2,1]
+Output: [1,3,2,1,1,3,2,1]
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🔑 One-liner / Một dòng lệnh:** `return [...nums, ...nums]` — cleanest and fast enough for interviews
+- **⚡ In-place building / Xây dựng tại chỗ:** Pre-allocate size 2n; `ans[i] = ans[i+n] = nums[i]` — single loop
+- **🔄 Modular index / Chỉ số modulo:** Pattern `nums[i % n]` appears in circular problems — this concatenation enables it
+- **📦 Use cases / Ứng dụng:** Circular array problems, sliding window on circular arrays, rotated array search
+- **📊 Complexity / Độ phức tạp:** O(n) time, O(n) space — irreducible since output is size 2n
+- **🌟 Follow-up / Câu hỏi tiếp theo:** "How would you handle k concatenations?" → Use modulo `i % n` to index without building k-copy array
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Spread operator — idiomatic TypeScript
+ * Time: O(n)
+ * Space: O(n)
  */
-function concatenationOfArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function getConcatenation(nums: number[]): number[] {
+  return [...nums, ...nums];
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function concatenationOfArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(concatenationOfArray(/* example 1 */)); // expected
-// console.log(concatenationOfArray(/* example 2 */)); // expected
-// console.log(concatenationOfArray(/* edge case */)); // expected
+console.log(getConcatenation([1, 2, 1])); // [1,2,1,1,2,1]
+console.log(getConcatenation([1, 3, 2, 1])); // [1,3,2,1,1,3,2,1]
+console.log(getConcatenation([0])); // [0,0]
 ```
 
----
+```typescript
+/**
+ * Approach 2: Preallocated array with index formula
+ * Time: O(n)
+ * Space: O(n)
+ */
+function getConcatenationV2(nums: number[]): number[] {
+  const n = nums.length;
+  const ans = new Array(2 * n);
+  for (let i = 0; i < n; i++) {
+    ans[i] = nums[i];
+    ans[i + n] = nums[i];
+  }
+  return ans;
+}
+
+console.log(getConcatenationV2([1, 2, 1])); // [1,2,1,1,2,1]
+console.log(getConcatenationV2([1, 3, 2, 1])); // [1,3,2,1,1,3,2,1]
+```
+
+```typescript
+/**
+ * Approach 3: Using concat (for k repetitions generalization)
+ * Time: O(n)
+ * Space: O(n)
+ */
+function getConcatenationGeneral(nums: number[], k: number = 2): number[] {
+  let result: number[] = [];
+  for (let i = 0; i < k; i++) result = result.concat(nums);
+  return result;
+}
+
+console.log(getConcatenationGeneral([1, 2, 1])); // [1,2,1,1,2,1]
+console.log(getConcatenationGeneral([1, 2], 3)); // [1,2,1,2,1,2]
+```
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) — same pattern: Stack
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Concatenation of Array — LeetCode](https://leetcode.com/problems/concatenation-of-array) — problem page
+| Problem                                                                                                               | Difficulty | Pattern                  |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------ |
+| [Running Sum of 1d Array](https://leetcode.com/problems/running-sum-of-1d-array/)                                     | 🟢 Easy    | Array                    |
+| [Shuffle the Array](https://leetcode.com/problems/shuffle-the-array/)                                                 | 🟢 Easy    | Array                    |
+| [Minimum Swaps to Group All 1s Together II](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together-ii/) | 🟡 Medium  | Circular, Sliding Window |
+| [Find the Minimum in Rotated Sorted Array](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/)       | 🟡 Medium  | Binary Search            |

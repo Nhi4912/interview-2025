@@ -7,102 +7,156 @@ tags: [Array, Dynamic Programming, Bit Manipulation, Bitmask]
 leetcode_url: "https://leetcode.com/problems/number-of-ways-to-wear-different-hats-to-each-other"
 ---
 
-# Number of Ways to Wear Different Hats to Each Other / Number of Ways to Wear Different Hats to Each Other
+## 🎩 1434. Number of Ways to Wear Different Hats to Each Other / Số Cách Đội Mũ Khác Nhau
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) | [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement)
+**Difficulty:** 🔴 Hard
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Number of Ways to Wear Different Hats to Each Other example:**
+**Analogy (Vietnamese):** Có 40 chiếc mũ và tối đa 10 người. Thay vì "người nào đội mũ gì", ta lật chiều: **duyệt từng chiếc mũ** và quyết định ai được đội nó. Bitmask theo **người** (tối đa 10 người = 2^10 = 1024 trạng thái) — rất nhỏ!
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Hats processed: 1 → 2 → 3 → ... → 40
+                ↓
+Mask: 000 (nobody) → 001 (person 0) → 011 (p0,p1) → 111 (all 3)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Key: iterate hats (outer loop), not people → prevents assigning 2 hats to 1 person
 ```
+
+**Key insight:** n ≤ 10 → bitmask over **people**. 40 hats is the outer dimension. `dp[mask]` = ways to assign hats 1..h such that people-in-mask have exactly one hat each.
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Number of Ways to Wear Different Hats to Each Other. ([LeetCode](https://leetcode.com/problems/number-of-ways-to-wear-different-hats-to-each-other))
+Given `n` people (≤10) and hats 1–40. Each person has a preferred hat list. Count assignments where every person wears a **different** hat (from their list). Return result mod 10^9+7.
 
-Difficulty: Hard | Acceptance: 44.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-ways-to-wear-different-hats-to-each-other) for full constraints
+- Example: `hats = [[3,4],[4,5],[5]]` → **1** (person 0 wears hat 3, person 1 wears hat 4, person 2 wears hat 5)
+- Example: `hats = [[3,5,1],[3,5]]` → **4**
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🎯 **Flip dimensions**: iterate hats (40) not people (10); prevents double hat assignment naturally
+- 🎯 **Bitmask DP**: `dp[mask]` = ways to have assigned one hat to each person in the mask
+- 🎯 **Transition**: for hat h, option A: skip it; option B: give it to some person p who likes h (p not in mask)
+- 🎯 **Target state**: `full = (1<<n) - 1` — all people have a hat
+- 🎯 **Copy array**: `next = [...dp]` before processing each hat (skip option)
+- 🎯 **Complexity**: O(40 × 2^n × n) time, O(2^n) space — well within limits
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Bottom-Up Bitmask DP
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfWaysToWearDifferentHatsToEachOtherBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function numberWays(hats: number[][]): number {
+  const MOD = 1_000_000_007n;
+  const n = hats.length;
+  const full = (1 << n) - 1;
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfWaysToWearDifferentHatsToEachOther(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  // Build reverse map: hat → list of people who like it
+  const hatToPeople: number[][] = Array.from({ length: 41 }, () => []);
+  for (let p = 0; p < n; p++) {
+    for (const h of hats[p]) hatToPeople[h].push(p);
+  }
 
-// === Test Cases ===
-// console.log(numberOfWaysToWearDifferentHatsToEachOther(/* example 1 */)); // expected
-// console.log(numberOfWaysToWearDifferentHatsToEachOther(/* example 2 */)); // expected
-// console.log(numberOfWaysToWearDifferentHatsToEachOther(/* edge case */)); // expected
+  // dp[mask] = number of ways to have people-in-mask assigned unique hats from hats 1..h
+  const dp = new Array<bigint>(full + 1).fill(0n);
+  dp[0] = 1n; // base: 0 hats assigned, nobody has a hat
+
+  for (let h = 1; h <= 40; h++) {
+    // process in reverse to avoid using hat h twice in same step
+    const next = [...dp]; // "skip hat h" option
+    for (const p of hatToPeople[h]) {
+      for (let mask = 0; mask <= full; mask++) {
+        if ((mask >> p) & 1) continue; // person p already has a hat
+        const newMask = mask | (1 << p);
+        next[newMask] = (next[newMask] + dp[mask]) % MOD;
+      }
+    }
+    // replace dp with next
+    for (let mask = 0; mask <= full; mask++) dp[mask] = next[mask];
+  }
+
+  return Number(dp[full]);
+}
+```
+
+### Solution 2: Top-Down Memoization
+
+```typescript
+function numberWaysMemo(hats: number[][]): number {
+  const MOD = 1_000_000_007;
+  const n = hats.length;
+  const full = (1 << n) - 1;
+
+  const hatToPeople: number[][] = Array.from({ length: 41 }, () => []);
+  for (let p = 0; p < n; p++) {
+    for (const h of hats[p]) hatToPeople[h].push(p);
+  }
+
+  const memo = new Map<number, number>();
+
+  function solve(hat: number, mask: number): number {
+    if (mask === full) return 1;
+    if (hat > 40) return 0;
+    const key = hat * 1024 + mask;
+    if (memo.has(key)) return memo.get(key)!;
+
+    let ways = solve(hat + 1, mask); // skip hat
+    for (const p of hatToPeople[hat]) {
+      if (!((mask >> p) & 1)) {
+        ways = (ways + solve(hat + 1, mask | (1 << p))) % MOD;
+      }
+    }
+    memo.set(key, ways);
+    return ways;
+  }
+
+  return solve(1, 0);
+}
+```
+
+### Solution 3: Compact Bottom-Up with flat array
+
+```typescript
+function numberWaysCompact(hats: number[][]): number {
+  const MOD = 1_000_000_007;
+  const n = hats.length;
+  const full = (1 << n) - 1;
+  const hatToPeople: number[][] = Array.from({ length: 41 }, () => []);
+  for (let p = 0; p < n; p++) for (const h of hats[p]) hatToPeople[h].push(p);
+
+  let dp = new Array(full + 1).fill(0);
+  dp[0] = 1;
+
+  for (let h = 1; h <= 40; h++) {
+    const nx = [...dp];
+    for (const p of hatToPeople[h]) {
+      for (let m = full; m >= 0; m--) {
+        if (dp[m] && !((m >> p) & 1)) {
+          nx[m | (1 << p)] = (nx[m | (1 << p)] + dp[m]) % MOD;
+        }
+      }
+    }
+    dp = nx;
+  }
+  return dp[full];
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) — same pattern: Backtracking
-- [Optimal Account Balancing](https://leetcode.com/problems/optimal-account-balancing) — same pattern: Backtracking
-- [Find Minimum Time to Finish All Jobs](https://leetcode.com/problems/find-minimum-time-to-finish-all-jobs) — same pattern: Backtracking
-- [Number of Ways to Wear Different Hats to Each Other — LeetCode](https://leetcode.com/problems/number-of-ways-to-wear-different-hats-to-each-other) — problem page
+| Problem                                                                                            | Difficulty | Key Technique |
+| -------------------------------------------------------------------------------------------------- | ---------- | ------------- |
+| [1494. Parallel Courses II](https://leetcode.com/problems/parallel-courses-ii/)                    | Hard       | Bitmask DP    |
+| [691. Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word/)               | Hard       | Bitmask DP    |
+| [526. Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement/)                 | Medium     | Bitmask DP    |
+| [943. Find the Shortest Superstring](https://leetcode.com/problems/find-the-shortest-superstring/) | Hard       | Bitmask DP    |

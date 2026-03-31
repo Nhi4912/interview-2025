@@ -7,100 +7,109 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/minimum-length-of-string-after-operations"
 ---
 
-# Minimum Length of String After Operations / Minimum Length of String After Operations
+# Minimum Length of String After Operations / Độ Dài Nhỏ Nhất Sau Khi Thao Tác
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
+🟡 Medium
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Length of String After Operations example:**
+> **Phép so sánh:** Giống bộ bài — mỗi khi có đủ 3 lá cùng loại, bạn bỏ 2 lá (1 trái, 1 phải). Bạn cứ bỏ đến khi không còn bỏ được nữa. Kết quả chỉ phụ thuộc vào tần suất mỗi ký tự.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+Operation: pick char s[i], if s[j]==s[i] (j<i) and s[k]==s[i] (k>i) → delete j and k
+Effect: each time we have ≥3 of a char, we can remove 2 of them
 
-Key insight: store complement for O(1) lookup
+freq=1 → remains 1
+freq=2 → remains 2
+freq=3 → remove 2 → remains 1
+freq=4 → remove 2 → remains 2
+freq=5 → remove 2 → remove 2 → remains 1
+Pattern: odd freq → 1 left, even freq → 2 left
 ```
-
----
 
 ## Problem Description
 
-Minimum Length of String After Operations. ([LeetCode](https://leetcode.com/problems/minimum-length-of-string-after-operations))
+Given string `s`, repeatedly pick index `i` where `s[j] == s[i]` for some `j < i` and `s[k] == s[i]` for some `k > i`, then delete `s[j]` and `s[k]`. Return the minimum length achievable.
 
-Difficulty: Medium | Acceptance: 74.9%
+**Example 1:** `"abaacbcbb"` → `5`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `"aa"` → `2`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-length-of-string-after-operations) for full constraints
-
----
+**Constraints:** `1 <= s.length <= 2*10^5`, s contains only lowercase letters
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Key insight:** Operation reduces frequency of a char by 2 — repeat until freq < 3
+- **Pattern:** If freq is odd → final count = 1; if freq is even → final count = 2
+- **No simulation needed:** Just count frequencies, apply the formula character by character
+- **Minimum freq left:** `freq % 2 === 0 ? 2 : 1` (since freq ≥ 1 always contributes ≥ 1)
+- **Complexity:** O(n) time, O(1) space (26 letters)
+- **Interview insight:** Nhận ra phép toán giảm 2 là chìa khóa — không cần mô phỏng từng bước
 
 ## Solutions
 
+### Solution 1: Frequency counting — O(n) time, O(1) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumLengthOfStringAfterOperationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function minimumLength(s: string): number {
+  const freq = new Array(26).fill(0);
+  for (const ch of s) {
+    freq[ch.charCodeAt(0) - 97]++;
+  }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumLengthOfStringAfterOperations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+  let result = 0;
+  for (const f of freq) {
+    if (f === 0) continue;
+    // Reduce f by 2 until < 3
+    result += f % 2 === 0 ? 2 : 1;
+  }
+  return result;
 }
-
-// === Test Cases ===
-// console.log(minimumLengthOfStringAfterOperations(/* example 1 */)); // expected
-// console.log(minimumLengthOfStringAfterOperations(/* example 2 */)); // expected
-// console.log(minimumLengthOfStringAfterOperations(/* edge case */)); // expected
 ```
 
----
+### Solution 2: Map-based counting — O(n) time, O(26) space
+
+```typescript
+function minimumLength(s: string): number {
+  const freq = new Map<string, number>();
+  for (const ch of s) {
+    freq.set(ch, (freq.get(ch) ?? 0) + 1);
+  }
+
+  let total = 0;
+  for (const [, count] of freq) {
+    // Each character contributes 1 if odd frequency, 2 if even
+    total += count % 2 === 1 ? 1 : 2;
+  }
+  return total;
+}
+```
+
+### Solution 3: Simulation for clarity — O(n) time, O(1) space
+
+```typescript
+function minimumLength(s: string): number {
+  const freq = new Array(26).fill(0);
+  for (const ch of s) freq[ch.charCodeAt(0) - 97]++;
+
+  let len = s.length;
+  for (let i = 0; i < 26; i++) {
+    let f = freq[i];
+    // Each removal reduces by 2; stop when f < 3
+    while (f >= 3) {
+      f -= 2;
+      len -= 2;
+    }
+  }
+  return len;
+}
+```
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Minimum Length of String After Operations — LeetCode](https://leetcode.com/problems/minimum-length-of-string-after-operations) — problem page
+| #    | Problem                                                | Difficulty | Tags                 |
+| ---- | ------------------------------------------------------ | ---------- | -------------------- |
+| 383  | Ransom Note                                            | Easy       | Hash Table, Counting |
+| 387  | First Unique Character                                 | Easy       | Hash Table, String   |
+| 1647 | Minimum Deletions to Make Character Frequencies Unique | Medium     | Greedy               |
+| 2870 | Minimum Number of Operations                           | Medium     | Hash Table           |

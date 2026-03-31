@@ -7,100 +7,133 @@ tags: [Tree, Depth-First Search, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/maximum-depth-of-n-ary-tree"
 ---
 
-# Maximum Depth of N-ary Tree / Maximum Depth of N-ary Tree
+## 559. Maximum Depth of N-ary Tree
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Same Tree](https://leetcode.com/problems/same-tree) | [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree)
+### Chiều Sâu Tối Đa của Cây N-nhánh | 🟢 Easy
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Depth of N-ary Tree example:**
+> **Vietnamese analogy:** Giống như đo chiều cao của cây phả hệ — bạn hỏi mỗi nhánh "mày sâu bao nhiêu?" rồi lấy cái sâu nhất cộng thêm 1 (cho tầng hiện tại).
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+        1
+      / | \
+     3  2  4
+    / \
+   5   6
 
-BFS: process level by level using queue
+DFS returns: max(2, 1, 1) + 1 = 3
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Maximum Depth of N-ary Tree. ([LeetCode](https://leetcode.com/problems/maximum-depth-of-n-ary-tree))
+Given the `root` of an N-ary tree, return its **maximum depth** — the number of nodes along the longest path from the root down to the farthest leaf node.
 
-Difficulty: Easy | Acceptance: 72.9%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `root = [1,null,3,2,4,null,5,6]`
+- Output: `3`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-depth-of-n-ary-tree) for full constraints
+**Constraints:**
+
+- Total nodes in `[0, 10^4]`
+- Depth of tree ≤ `1000`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Base case:** empty tree → depth 0; leaf node → depth 1
+- 🔑 **DFS approach:** recurse all children, take max + 1
+- 🔑 **BFS approach:** count levels as you traverse; level count = depth
+- ⚠️ N-ary means `node.children` is an array (could be empty), not just `.left`/`.right`
+- ⚠️ Children array may be empty but never null — guard against empty root
+- 💡 BFS is sometimes easier to reason about for "depth = level count"
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: DFS Recursive
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumDepthOfNAryTreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class Node {
+  val: number;
+  children: Node[];
+  constructor(val?: number) {
+    this.val = val === undefined ? 0 : val;
+    this.children = [];
+  }
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumDepthOfNAryTree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
+function maxDepth(root: Node | null): number {
+  if (!root) return 0;
+  if (root.children.length === 0) return 1;
 
-// === Test Cases ===
-// console.log(maximumDepthOfNAryTree(/* example 1 */)); // expected
-// console.log(maximumDepthOfNAryTree(/* example 2 */)); // expected
-// console.log(maximumDepthOfNAryTree(/* edge case */)); // expected
+  let maxChildDepth = 0;
+  for (const child of root.children) {
+    maxChildDepth = Math.max(maxChildDepth, maxDepth(child));
+  }
+  return maxChildDepth + 1;
+}
+```
+
+### Solution 2: BFS Iterative (Level-by-Level)
+
+```typescript
+function maxDepthBFS(root: Node | null): number {
+  if (!root) return 0;
+
+  const queue: Node[] = [root];
+  let depth = 0;
+
+  while (queue.length > 0) {
+    depth++;
+    const levelSize = queue.length;
+    for (let i = 0; i < levelSize; i++) {
+      const node = queue.shift()!;
+      for (const child of node.children) {
+        queue.push(child);
+      }
+    }
+  }
+
+  return depth;
+}
+```
+
+### Solution 3: DFS Iterative with Stack
+
+```typescript
+function maxDepthIterativeDFS(root: Node | null): number {
+  if (!root) return 0;
+
+  const stack: [Node, number][] = [[root, 1]];
+  let result = 0;
+
+  while (stack.length > 0) {
+    const [node, depth] = stack.pop()!;
+    result = Math.max(result, depth);
+    for (const child of node.children) {
+      stack.push([child, depth + 1]);
+    }
+  }
+
+  return result;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Maximum Depth of N-ary Tree — LeetCode](https://leetcode.com/problems/maximum-depth-of-n-ary-tree) — problem page
+| #    | Problem                      | Difficulty | Tags      |
+| ---- | ---------------------------- | ---------- | --------- |
+| 104  | Maximum Depth of Binary Tree | 🟢 Easy    | Tree, DFS |
+| 111  | Minimum Depth of Binary Tree | 🟢 Easy    | Tree, BFS |
+| 559  | Maximum Depth of N-ary Tree  | 🟢 Easy    | Tree, DFS |
+| 1302 | Deepest Leaves Sum           | 🟡 Medium  | Tree, DFS |

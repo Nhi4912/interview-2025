@@ -7,97 +7,126 @@ tags: [Array, Simulation]
 leetcode_url: "https://leetcode.com/problems/most-visited-sector-in-a-circular-track"
 ---
 
-# Most Visited Sector in  a Circular Track / Most Visited Sector in  a Circular Track
+# Most Visited Sector in a Circular Track / Khu Vực Được Ghé Thăm Nhiều Nhất Trên Đường Đua Vòng
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Text Justification](https://leetcode.com/problems/text-justification)
-
----
+🟢 Easy | Array · Simulation | LeetCode #1560
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Most Visited Sector in  a Circular Track" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Most Visited Sector in  a Circular Track example:**
+**Vietnamese:** Như đường đua vòng tròn — runner đi qua từng khu vực theo chiều kim đồng hồ. Thay vì mô phỏng từng bước, quan sát: khu vực được thăm nhiều nhất luôn nằm trong đoạn `[rounds[0]..rounds[last]]` (chiều kim đồng hồ) hoặc `[1..rounds[last]]` và `[rounds[0]..n]` nếu rounds[-1] < rounds[0].
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+n=4, rounds=[1,3,1,2]
 
----
+Lap 1: 1→2→3
+Lap 2: 3→4→1
+Lap 3: 1→2
+
+Visits: 1=3, 2=2, 3=2, 4=1
+Most: [1]
+
+Key insight: start=rounds[0], end=rounds[last]
+If end >= start: sectors [start..end]
+If end < start:  sectors [1..end] + [start..n]
+```
 
 ## Problem Description
 
-Most Visited Sector in  a Circular Track. ([LeetCode](https://leetcode.com/problems/most-visited-sector-in-a-circular-track))
+Given `n` sectors (1-indexed) and an array `rounds` where `rounds[i]` is the finish sector of round `i`, the runner starts at `rounds[0]` and visits sectors clockwise. Return **all sectors visited the maximum number of times**, sorted ascending.
 
-Difficulty: Easy | Acceptance: 59.1%
+The runner always starts at `rounds[0]` before round 1. The key observation reduces simulation to just comparing first and last positions.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+n=4, rounds=[1,3,1,2]
+Output: [1,2]  // sector 1 visited 3 times, sector 2 visited 2 times... wait
+// Actually output: [1] — sector 1 visited most
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/most-visited-sector-in-a-circular-track) for full constraints
+**Example 2:**
 
----
+```
+n=2, rounds=[2,1,2,1,2]
+Output: [2]
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🔑 Key observation / Quan sát then chốt:** Only first and last round positions matter — intermediate full laps visit everything equally
+- **🎯 Two cases / Hai trường hợp:** If `end >= start`: answer is `[start..end]`; if `end < start`: `[1..end]` + `[start..n]`
+- **🔄 Why it works / Tại sao đúng:** Full laps contribute equal visits to all sectors; partial laps [start→end] skew the distribution
+- **⚠️ Simulation fallback / Mô phỏng dự phòng:** If unsure during interview, simulate by building a frequency array — O(n + rounds×n)
+- **📊 Complexity / Độ phức tạp:** O(n) with the observation, O(rounds×n) with brute simulation
+- **🌟 Edge case / Trường hợp biên:** `rounds[0] == rounds[last]` with single lap → all sectors from start to start
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Mathematical observation — O(n) time
+ * Key: only start and end positions of partial lap matter
+ * Time: O(n)
+ * Space: O(n) for output
  */
-function mostVisitedSectorInACircularTrackBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function mostVisited(n: number, rounds: number[]): number[] {
+  const start = rounds[0];
+  const end = rounds[rounds.length - 1];
+  const result: number[] = [];
+
+  if (end >= start) {
+    for (let i = start; i <= end; i++) result.push(i);
+  } else {
+    for (let i = 1; i <= end; i++) result.push(i);
+    for (let i = start; i <= n; i++) result.push(i);
+  }
+
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function mostVisitedSectorInACircularTrack(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(mostVisitedSectorInACircularTrack(/* example 1 */)); // expected
-// console.log(mostVisitedSectorInACircularTrack(/* example 2 */)); // expected
-// console.log(mostVisitedSectorInACircularTrack(/* edge case */)); // expected
+console.log(mostVisited(4, [1, 3, 1, 2])); // [1,2]
+console.log(mostVisited(2, [2, 1, 2, 1, 2])); // [2]
+console.log(mostVisited(7, [1, 3, 5, 7])); // [1,2,3,4,5,6,7]
 ```
 
----
+```typescript
+/**
+ * Approach 2: Simulation with frequency array
+ * Time: O(rounds.length * n) — slower but illustrates the problem
+ * Space: O(n)
+ */
+function mostVisitedSimulation(n: number, rounds: number[]): number[] {
+  const visits = new Array(n + 1).fill(0);
+
+  // Visit rounds[0] before any round
+  let current = rounds[0];
+  visits[current]++;
+
+  for (let r = 1; r < rounds.length; r++) {
+    const target = rounds[r];
+    while (current !== target) {
+      current = (current % n) + 1; // move clockwise
+      visits[current]++;
+    }
+  }
+
+  const maxVisits = Math.max(...visits);
+  const result: number[] = [];
+  for (let i = 1; i <= n; i++) {
+    if (visits[i] === maxVisits) result.push(i);
+  }
+  return result;
+}
+
+console.log(mostVisitedSimulation(4, [1, 3, 1, 2])); // [1,2]
+console.log(mostVisitedSimulation(2, [2, 1, 2, 1, 2])); // [2]
+```
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) — same pattern: Stack
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Most Visited Sector in  a Circular Track — LeetCode](https://leetcode.com/problems/most-visited-sector-in-a-circular-track) — problem page
+| Problem                                                                                                     | Difficulty | Pattern      |
+| ----------------------------------------------------------------------------------------------------------- | ---------- | ------------ |
+| [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game/) | 🟡 Medium  | Simulation   |
+| [Design Circular Queue](https://leetcode.com/problems/design-circular-queue/)                               | 🟡 Medium  | Queue        |
+| [Circular Array Loop](https://leetcode.com/problems/circular-array-loop/)                                   | 🟡 Medium  | Two Pointers |
+| [Spiral Matrix](https://leetcode.com/problems/spiral-matrix/)                                               | 🟡 Medium  | Simulation   |

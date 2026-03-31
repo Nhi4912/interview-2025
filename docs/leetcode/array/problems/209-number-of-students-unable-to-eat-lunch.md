@@ -7,99 +7,141 @@ tags: [Array, Stack, Queue, Simulation]
 leetcode_url: "https://leetcode.com/problems/number-of-students-unable-to-eat-lunch"
 ---
 
-# Number of Students Unable to Eat Lunch / Number of Students Unable to Eat Lunch
+# Number of Students Unable to Eat Lunch / Số Học Sinh Không Ăn Được Trưa
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) | [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game)
-
----
+🟢 Easy | Array · Stack · Queue · Simulation | LeetCode #1700
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
-
-**Pattern Recognition:**
-
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Number of Students Unable to Eat Lunch example:**
+**Vietnamese:** Học sinh đứng thành hàng; bánh sandwich xếp thành chồng. Học sinh đầu hàng sẽ ăn nếu bánh đầu chồng phù hợp; nếu không, họ về cuối hàng. Quá trình dừng khi không ai thích bánh đầu chồng. Mẹo: đếm tổng số học sinh muốn loại 0 và loại 1 — nếu số học sinh muốn loại `sandwiches[i]` = 0 thì dừng.
 
 ```
-stack = []
+students=[1,1,0,0], sandwiches=[0,1,0,1]
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+Count: want0=2, want1=2
+
+Sandwich 0: want0=2>0, serve one → want0=1
+Sandwich 1: want1=2>0, serve one → want1=1
+Sandwich 0: want0=1>0, serve one → want0=0
+Sandwich 1: want1=1>0, serve one → want1=0
+
+All served! Answer = 0
 ```
-
----
 
 ## Problem Description
 
-Number of Students Unable to Eat Lunch. ([LeetCode](https://leetcode.com/problems/number-of-students-unable-to-eat-lunch))
+Students form a queue; sandwiches form a stack. If the front student wants the top sandwich, they eat it; otherwise, the student goes to the back. This continues until no queued student wants the top sandwich. Return the number of students unable to eat.
 
-Difficulty: Easy | Acceptance: 78.7%
+**Key insight:** No need to simulate the queue — count students wanting each type. Process sandwiches in order; if count for current sandwich type is 0, everyone remaining can't eat.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+students=[1,1,0,0], sandwiches=[0,1,0,1]
+Output: 0
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-students-unable-to-eat-lunch) for full constraints
+**Example 2:**
 
----
+```
+students=[1,1,1,0,0,1], sandwiches=[1,0,0,0,1,1]
+Output: 3
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🔑 Count trick / Mẹo đếm:** Don't simulate queue rotation — just count `want[0]` and `want[1]`; stop when `want[sandwiches[i]] === 0`
+- **🎯 Why it works / Tại sao đúng:** Queue rotation doesn't change total counts; we only fail when no one wants the current top sandwich
+- **⚡ O(n) vs O(n²) / Tối ưu:** Simulation can be O(n²) in worst case; count approach is always O(n)
+- **🔄 Simulation approach / Cách mô phỏng:** For interviews: simulate with actual queue to show understanding, then optimize with counting
+- **⚠️ Termination / Điều kiện dừng:** Stop as soon as `want[sandwiches[i]] === 0` — remaining students can't eat
+- **📊 Remaining count / Đếm còn lại:** Remaining students = `want[0] + want[1]` after early termination
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Counting — O(n) optimal
+ * Time: O(n)
+ * Space: O(1)
  */
-function numberOfStudentsUnableToEatLunchBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countStudents(students: number[], sandwiches: number[]): number {
+  const want = [0, 0];
+  for (const s of students) want[s]++;
+
+  for (const sandwich of sandwiches) {
+    if (want[sandwich] === 0) break; // no one wants this type
+    want[sandwich]--;
+  }
+
+  return want[0] + want[1];
 }
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfStudentsUnableToEatLunch(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(numberOfStudentsUnableToEatLunch(/* example 1 */)); // expected
-// console.log(numberOfStudentsUnableToEatLunch(/* example 2 */)); // expected
-// console.log(numberOfStudentsUnableToEatLunch(/* edge case */)); // expected
+console.log(countStudents([1, 1, 0, 0], [0, 1, 0, 1])); // 0
+console.log(countStudents([1, 1, 1, 0, 0, 1], [1, 0, 0, 0, 1, 1])); // 3
+console.log(countStudents([0], [0])); // 0
+console.log(countStudents([1], [0])); // 1
 ```
 
----
+```typescript
+/**
+ * Approach 2: Full queue simulation (shows understanding)
+ * Time: O(n^2) worst case
+ * Space: O(n) for queue
+ */
+function countStudentsSimulation(students: number[], sandwiches: number[]): number {
+  const queue = [...students];
+  const stack = [...sandwiches];
+
+  let attempts = 0; // consecutive failed attempts
+
+  while (queue.length > 0 && attempts < queue.length) {
+    if (queue[0] === stack[0]) {
+      queue.shift();
+      stack.shift();
+      attempts = 0; // reset on success
+    } else {
+      queue.push(queue.shift()!);
+      attempts++;
+    }
+  }
+
+  return queue.length;
+}
+
+console.log(countStudentsSimulation([1, 1, 0, 0], [0, 1, 0, 1])); // 0
+console.log(countStudentsSimulation([1, 1, 1, 0, 0, 1], [1, 0, 0, 0, 1, 1])); // 3
+```
+
+```typescript
+/**
+ * Approach 3: One-liner using reduce
+ * Time: O(n)
+ * Space: O(1) extra
+ */
+function countStudentsOneLiner(students: number[], sandwiches: number[]): number {
+  let c0 = students.filter((s) => s === 0).length;
+  let c1 = students.length - c0;
+
+  for (const s of sandwiches) {
+    if (s === 0) {
+      if (c0-- === 0) return c1 + 1;
+    } else {
+      if (c1-- === 0) return c0 + 1;
+    }
+  }
+  return 0;
+}
+
+console.log(countStudentsOneLiner([1, 1, 0, 0], [0, 1, 0, 1])); // 0
+console.log(countStudentsOneLiner([1, 1, 1, 0, 0, 1], [1, 0, 0, 0, 1, 1])); // 3
+```
 
 ## 🔗 Related Problems
 
-- [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) — same pattern: Stack
-- [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) — same pattern: Queue
-- [Robot Collisions](https://leetcode.com/problems/robot-collisions) — same pattern: Stack
-- [Time Needed to Buy Tickets](https://leetcode.com/problems/time-needed-to-buy-tickets) — same pattern: Queue
-- [Number of Students Unable to Eat Lunch — LeetCode](https://leetcode.com/problems/number-of-students-unable-to-eat-lunch) — problem page
+| Problem                                                                                             | Difficulty | Pattern       |
+| --------------------------------------------------------------------------------------------------- | ---------- | ------------- |
+| [Time Needed to Buy Tickets](https://leetcode.com/problems/time-needed-to-buy-tickets/)             | 🟢 Easy    | Queue         |
+| [Reveal Cards In Increasing Order](https://leetcode.com/problems/reveal-cards-in-increasing-order/) | 🟡 Medium  | Queue         |
+| [Design Circular Queue](https://leetcode.com/problems/design-circular-queue/)                       | 🟡 Medium  | Queue         |
+| [Dota2 Senate](https://leetcode.com/problems/dota2-senate/)                                         | 🟡 Medium  | Greedy, Queue |

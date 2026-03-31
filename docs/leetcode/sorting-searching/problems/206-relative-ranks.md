@@ -7,104 +7,117 @@ tags: [Array, Sorting, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/relative-ranks"
 ---
 
-# Relative Ranks / Relative Ranks
+# Relative Ranks / Xếp Hạng Tương Đối
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) | [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system)
+🟢 Easy
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
-
-**Pattern Recognition:**
-
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Relative Ranks example:**
+> **Hình ảnh:** Đây là bài toán **bảng xếp hạng thể thao** — sắp xếp theo điểm số giảm dần, top 3 nhận huy chương vàng/bạc/đồng, còn lại nhận số thứ hạng. Trick: giữ lại **vị trí ban đầu** trong khi sắp xếp.
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+score = [5, 4, 3, 2, 1]
+         ↑  ↑  ↑  ↑  ↑
+idx:     0  1  2  3  4
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+Sort by score desc → [(5,0), (4,1), (3,2), (2,3), (1,4)]
+
+Assign:
+  rank 1 → idx 0 → "Gold Medal"
+  rank 2 → idx 1 → "Silver Medal"
+  rank 3 → idx 2 → "Bronze Medal"
+  rank 4 → idx 3 → "4"
+  rank 5 → idx 4 → "5"
+
+result[0]="Gold Medal", result[1]="Silver Medal", ...
 ```
 
----
+**Chiến lược:** Pair each score with its original index, sort descending, then assign medals/ranks back by original index.
 
-## Problem Description
+## 📋 Problem Description
 
-Relative Ranks. ([LeetCode](https://leetcode.com/problems/relative-ranks))
+Given integer array `score` of `n` athletes. Return `answer[i]` = athlete `i`'s rank. Top 3 get `"Gold Medal"`, `"Silver Medal"`, `"Bronze Medal"`; others get their rank number as string.
 
-Difficulty: Easy | Acceptance: 73.3%
+**Example 1:** `score=[5,4,3,2,1]` → `["Gold Medal","Silver Medal","Bronze Medal","4","5"]`
+**Example 2:** `score=[10,3,8,9,4]` → `["Gold Medal","5","Bronze Medal","Silver Medal","4"]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/relative-ranks) for full constraints
-
----
+**Constraints:** `1 ≤ n ≤ 10^4`, `0 ≤ score[i] ≤ 10^6`, all scores distinct
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- **Key trick:** Create `(score[i], i)` pairs before sorting to track original positions
+- **Sort descending** by score; iterate to assign ranks by original index
+- **Medals array:** `["Gold Medal", "Silver Medal", "Bronze Medal"]` — just index with rank-1
+- **All scores distinct** (per constraints) — no tie-breaking needed
+- **Alternative:** Use `Map<score, rank>` for O(1) lookup after sorting
+- **Edge case:** n=1 → single athlete gets "Gold Medal"; n=2 → Gold + Silver
 
----
+## 💡 Solutions
 
-## Solutions
+### Solution 1: Sort with Index — O(n log n)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function relativeRanksBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function findRelativeRanks(score: number[]): string[] {
+  const medals = ["Gold Medal", "Silver Medal", "Bronze Medal"];
+  const n = score.length;
+  const result = new Array<string>(n);
 
-/**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function relativeRanks(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
-}
+  // Pair each score with its original index, sort descending by score
+  const sorted = score.map((s, i) => [s, i] as [number, number]);
+  sorted.sort((a, b) => b[0] - a[0]);
 
-// === Test Cases ===
-// console.log(relativeRanks(/* example 1 */)); // expected
-// console.log(relativeRanks(/* example 2 */)); // expected
-// console.log(relativeRanks(/* edge case */)); // expected
+  // Assign rank back to original position
+  for (let rank = 0; rank < n; rank++) {
+    const origIdx = sorted[rank][1];
+    result[origIdx] = rank < 3 ? medals[rank] : String(rank + 1);
+  }
+
+  return result;
+}
 ```
 
----
+### Solution 2: Map-Based Lookup — O(n log n)
+
+```typescript
+function findRelativeRanksMap(score: number[]): string[] {
+  const medals = ["Gold Medal", "Silver Medal", "Bronze Medal"];
+
+  // Sort scores descending, build rank map
+  const sorted = [...score].sort((a, b) => b - a);
+  const rankMap = new Map<number, string>();
+  sorted.forEach((s, rank) => {
+    rankMap.set(s, rank < 3 ? medals[rank] : String(rank + 1));
+  });
+
+  return score.map((s) => rankMap.get(s)!);
+}
+```
+
+### Solution 3: Heap-Based (Priority Queue) — O(n log n)
+
+```typescript
+function findRelativeRanksHeap(score: number[]): string[] {
+  const medals = ["Gold Medal", "Silver Medal", "Bronze Medal"];
+  const n = score.length;
+  const result = new Array<string>(n);
+
+  // Max-heap by score (simulate with sorted array for simplicity)
+  // Use indices sorted by score descending
+  const heap = [...Array(n).keys()].sort((a, b) => score[b] - score[a]);
+
+  heap.forEach((origIdx, rank) => {
+    result[origIdx] = rank < 3 ? medals[rank] : String(rank + 1);
+  });
+
+  return result;
+}
+```
 
 ## 🔗 Related Problems
 
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Relative Ranks — LeetCode](https://leetcode.com/problems/relative-ranks) — problem page
+| Problem                                                                                           | Similarity                    |
+| ------------------------------------------------------------------------------------------------- | ----------------------------- |
+| [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array/) | Finding rank / kth element    |
+| [Rank Transform of an Array](https://leetcode.com/problems/rank-transform-of-an-array/)           | Assign rank by sorted order   |
+| [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/)                 | Sort by frequency for ranking |
+| [Assign Cookies](https://leetcode.com/problems/assign-cookies/)                                   | Greedy pairing after sort     |

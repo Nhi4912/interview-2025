@@ -7,100 +7,127 @@ tags: [Array, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together"
 ---
 
-# Minimum Swaps to Group All 1's Together / Minimum Swaps to Group All 1's Together
+# Minimum Swaps to Group All 1's Together / Số Hoán Vị Tối Thiểu Để Gom Tất Cả Số 1
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) | [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum)
-
----
+🟡 Medium | Array · Sliding Window | LeetCode #1151
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
-
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Swaps to Group All 1's Together example:**
+**Vietnamese:** Đếm tổng số 1 trong mảng (= `total`). Để gom tất cả số 1 lại, cần một cửa sổ độ rộng `total`. Số lần hoán vị = số 0 trong cửa sổ tốt nhất. Ta cần tìm cửa sổ có nhiều số 1 nhất — vì đây là mảng vòng tròn.
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+data = [1,0,1,0,1,0,0,1,1,0], total_ones=5
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+Window size=5, slide through circular array:
+[1,0,1,0,1] → 3 ones → 2 swaps
+[0,1,0,1,0] → 2 ones → 3 swaps
+[1,0,1,0,0] → 2 ones → 3 swaps
+[0,1,0,0,1] → 2 ones → 3 swaps
+[1,0,0,1,1] → 3 ones → 2 swaps
+[0,0,1,1,0] → 2 ones → 3 swaps
+[0,1,1,0,1] → 3 ones → 2 swaps
+[1,1,0,1,0] → 3 ones → 2 swaps
+[1,0,1,0,1] → 3 ones → 2 swaps  (circular)
+
+Answer = min(swaps) = 2
 ```
-
----
 
 ## Problem Description
 
-Minimum Swaps to Group All 1's Together. ([LeetCode](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together))
+Given a binary circular array `data`, return the **minimum number of swaps** needed to group all `1`s together anywhere in the circular array. A swap exchanges any two elements.
 
-Difficulty: Medium | Acceptance: 61.1%
+The key insight: count total ones `k`, then find the window of size `k` with the **maximum number of 1s** — answer is `k - maxOnesInWindow`.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+data=[1,0,1,0,1]
+Output: 1  // [1,1,1,0,0] needs 1 swap
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together) for full constraints
+**Example 2:**
 
----
+```
+data=[0,0,0,1,0]
+Output: 0  // already grouped
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
-
----
+- **🔑 Count total 1s / Đếm tổng số 1:** Window size = total 1s — swaps needed = 0s inside best window
+- **🔄 Circular handling / Xử lý vòng tròn:** Use modulo `(i + k) % n` to wrap around, or duplicate the array
+- **🎯 Sliding window formula / Công thức cửa sổ:** `swaps = windowSize - onesInWindow`, minimize swaps = maximize ones
+- **⚠️ Edge cases / Trường hợp biên:** All 1s → 0 swaps; all 0s or one 1 → 0 swaps
+- **📊 Fixed window / Cửa sổ cố định:** Window size is fixed (= total ones), so this is a fixed sliding window
+- **🌀 Circular trick / Mẹo vòng tròn:** `data.concat(data)` then slide normally — valid when window < n
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Fixed sliding window with circular handling via modulo
+ * Time: O(n)
+ * Space: O(1)
  */
-function minimumSwapsToGroupAll1sTogetherBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minSwaps(data: number[]): number {
+  const n = data.length;
+  const total = data.reduce((s, x) => s + x, 0);
+  if (total === 0 || total === n) return 0;
+
+  // Count ones in initial window [0..total-1]
+  let windowOnes = 0;
+  for (let i = 0; i < total; i++) windowOnes += data[i];
+
+  let maxOnes = windowOnes;
+
+  // Slide window (circular via modulo)
+  for (let i = 1; i < n; i++) {
+    windowOnes += data[(i + total - 1) % n]; // add right
+    windowOnes -= data[i - 1]; // remove left
+    maxOnes = Math.max(maxOnes, windowOnes);
+  }
+
+  return total - maxOnes;
 }
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumSwapsToGroupAll1sTogether(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumSwapsToGroupAll1sTogether(/* example 1 */)); // expected
-// console.log(minimumSwapsToGroupAll1sTogether(/* example 2 */)); // expected
-// console.log(minimumSwapsToGroupAll1sTogether(/* edge case */)); // expected
+console.log(minSwaps([1, 0, 1, 0, 1])); // 1
+console.log(minSwaps([0, 0, 0, 1, 0])); // 0
+console.log(minSwaps([1, 0, 1, 0, 1, 0, 0, 1, 1, 0])); // 3
 ```
 
----
+```typescript
+/**
+ * Approach 2: Duplicate array trick for circular
+ * Time: O(n)
+ * Space: O(n) — doubled array
+ */
+function minSwapsV2(data: number[]): number {
+  const n = data.length;
+  const total = data.reduce((s, x) => s + x, 0);
+  if (total === 0 || total === n) return 0;
+
+  const doubled = [...data, ...data];
+  let windowOnes = doubled.slice(0, total).reduce((s, x) => s + x, 0);
+  let maxOnes = windowOnes;
+
+  for (let i = 1; i < n; i++) {
+    windowOnes += doubled[i + total - 1];
+    windowOnes -= doubled[i - 1];
+    maxOnes = Math.max(maxOnes, windowOnes);
+  }
+
+  return total - maxOnes;
+}
+
+console.log(minSwapsV2([1, 0, 1, 0, 1])); // 1
+console.log(minSwapsV2([1, 0, 1, 0, 1, 0, 0, 1, 1, 0])); // 3
+```
 
 ## 🔗 Related Problems
 
-- [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) — same pattern: Sliding Window
-- [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum) — same pattern: Sliding Window
-- [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii) — same pattern: Sliding Window
-- [Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit](https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit) — same pattern: Monotonic Queue
-- [Minimum Swaps to Group All 1's Together — LeetCode](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together) — problem page
+| Problem                                                                                                               | Difficulty | Pattern        |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii/)                                   | 🟡 Medium  | Sliding Window |
+| [Minimum Operations to Reduce X to Zero](https://leetcode.com/problems/minimum-operations-to-reduce-x-to-zero/)       | 🟡 Medium  | Sliding Window |
+| [Minimum Swaps to Group All 1s Together II](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together-ii/) | 🟡 Medium  | Sliding Window |
+| [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum/)                                 | 🟡 Medium  | Sliding Window |

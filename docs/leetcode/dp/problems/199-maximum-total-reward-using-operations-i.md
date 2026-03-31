@@ -7,102 +7,134 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/maximum-total-reward-using-operations-i"
 ---
 
-# Maximum Total Reward Using Operations I / Maximum Total Reward Using Operations I
+## 🏆 3181. Maximum Total Reward Using Operations I / Tổng Phần Thưởng Tối Đa (I)
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+**Difficulty:** 🟡 Medium
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Total Reward Using Operations I example:**
+**Analogy (Vietnamese):** Bạn có một bộ thẻ điểm. Mỗi lần chọn thẻ có giá trị `v`, bạn chỉ được chọn nếu `v > tổng điểm hiện tại`. Sau đó cộng `v` vào tổng. Mục tiêu: tổng điểm cao nhất có thể. Giống như leo thang — chỉ leo bước tiếp nếu bước đó **cao hơn** tổng các bước đã leo.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+rewardValues = [1, 6, 4, 3, 2], sorted = [1,2,3,4,6]
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Reachable totals (dp set):
+Start: {0}
+Add 1 (>0): {0,1}
+Add 2 (>1): {0,1,2,3}      ← 0+2, 1+2
+Add 3 (>2): {0,1,2,3,4,6}  ← 3+3
+Add 4 (>3): {0,1,2,3,4,5,6,7,8,10}
+Add 6 (>5): {... can reach 11}
+Answer: max reachable = 11
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Maximum Total Reward Using Operations I. ([LeetCode](https://leetcode.com/problems/maximum-total-reward-using-operations-i))
+Given `rewardValues[]`, perform operations: pick any unused element `v` where `v > currentTotal`, then `total += v`. Return maximum achievable total. Elements can be used at most once; best strategy is to sort and use DP on reachable sums.
 
-Difficulty: Medium | Acceptance: 30.0%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-total-reward-using-operations-i) for full constraints
+- Example: `rewardValues = [1,1,3,3]` → **4**
+- Example: `rewardValues = [1,6,4,3,2]` → **11**
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🎯 **Sort first**: to ensure we process in increasing order (only use each value once)
+- 🎯 **DP set**: `dp[s] = true` means sum `s` is reachable; iterate from high to low to avoid reuse
+- 🎯 **Key constraint**: `v > currentTotal` means if current total is `s`, we can only add `v > s`
+- 🎯 **Dedup**: remove duplicates from `rewardValues` — only min cost per value matters (here, it's just "use or not")
+- 🎯 **Upper bound**: max total ≤ 2 × max(rewardValues) - 1, since last value must be > half total
+- 🎯 **Complexity**: O(n × maxVal) time; for Part I maxVal ≤ 2000, so O(n²) is fine
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: DP Boolean Array (Subset Sum variant)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumTotalRewardUsingOperationsIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function maxTotalReward(rewardValues: number[]): number {
+  // Sort and deduplicate
+  const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
+  const maxVal = vals[vals.length - 1];
+  // max achievable total < 2 * maxVal
+  const limit = 2 * maxVal;
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumTotalRewardUsingOperationsI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  // dp[s] = can we reach sum s?
+  const dp = new Uint8Array(limit);
+  dp[0] = 1;
 
-// === Test Cases ===
-// console.log(maximumTotalRewardUsingOperationsI(/* example 1 */)); // expected
-// console.log(maximumTotalRewardUsingOperationsI(/* example 2 */)); // expected
-// console.log(maximumTotalRewardUsingOperationsI(/* edge case */)); // expected
+  for (const v of vals) {
+    // Process from high to low to avoid picking v twice
+    // Only add v to sums s where s < v (constraint: v > current total)
+    for (let s = v - 1; s >= 0; s--) {
+      if (dp[s]) dp[s + v] = 1;
+    }
+  }
+
+  // Find maximum reachable sum
+  for (let s = limit - 1; s >= 0; s--) {
+    if (dp[s]) return s;
+  }
+  return 0;
+}
+```
+
+### Solution 2: DP with explicit reachable set
+
+```typescript
+function maxTotalRewardSet(rewardValues: number[]): number {
+  const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
+  let reachable = new Set<number>([0]);
+
+  for (const v of vals) {
+    const next = new Set(reachable);
+    for (const s of reachable) {
+      if (s < v) next.add(s + v); // constraint: v > current total
+    }
+    reachable = next;
+  }
+
+  return Math.max(...reachable);
+}
+```
+
+### Solution 3: Greedy + DP optimized
+
+```typescript
+function maxTotalRewardGreedy(rewardValues: number[]): number {
+  const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
+  const n = vals.length;
+  const maxVal = vals[n - 1];
+  const dp = new Uint8Array(2 * maxVal);
+  dp[0] = 1;
+
+  for (let i = 0; i < n; i++) {
+    const v = vals[i];
+    // For each reachable sum s < v, mark s+v as reachable
+    for (let s = 0; s < v; s++) {
+      if (dp[s]) dp[s + v] = 1;
+    }
+  }
+
+  for (let s = 2 * maxVal - 1; s >= 0; s--) {
+    if (dp[s]) return s;
+  }
+  return 0;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Maximum Total Reward Using Operations I — LeetCode](https://leetcode.com/problems/maximum-total-reward-using-operations-i) — problem page
+| Problem                                                                                                                                             | Difficulty | Key Technique |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------- |
+| [416. Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum/)                                                        | Medium     | 0/1 Knapsack  |
+| [494. Target Sum](https://leetcode.com/problems/target-sum/)                                                                                        | Medium     | DP            |
+| [3182. Maximum Total Reward Using Operations II](https://leetcode.com/problems/maximum-total-reward-using-operations-ii/)                           | Hard       | Bitset DP     |
+| [2915. Length of the Longest Subsequence That Sums to Target](https://leetcode.com/problems/length-of-the-longest-subsequence-that-sums-to-target/) | Medium     | DP            |

@@ -7,102 +7,182 @@ tags: [Array, String, Dynamic Programming, Suffix Array]
 leetcode_url: "https://leetcode.com/problems/construct-string-with-minimum-cost"
 ---
 
-# Construct String with Minimum Cost / Construct String with Minimum Cost
+## 🔨 3213. Construct String with Minimum Cost / Xây Chuỗi Với Chi Phí Nhỏ Nhất
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest String Chain](https://leetcode.com/problems/longest-string-chain) | [Word Break II](https://leetcode.com/problems/word-break-ii)
+**Difficulty:** 🔴 Hard
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Construct String with Minimum Cost example:**
+**Analogy (Vietnamese):** Giống như ghép mảnh ghép hình — bạn muốn tạo ra chuỗi `target` bằng cách chọn các từ trong `words[]`, mỗi từ có chi phí riêng. Mỗi lần chọn một từ khớp với `target[i..i+len-1]` thì trả chi phí tương ứng. Tìm cách ghép rẻ nhất.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+target = "abcdef", words = ["ab","bc","cd","bcd"], costs = [1,2,3,5]
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[0]=0
+  "ab"  matches target[0..1] → dp[2] = min(∞, 0+1) = 1
+  "bc"  matches target[1..2] → dp[3] = min(∞, 0+2) = 2  (from dp[0])
+dp[2]=1
+  "cd"  matches target[2..3] → dp[4] = min(∞, 1+3) = 4
+  "bcd" matches target[1..3] → dp[4] = min(4, 0+5) = 4
+...
 ```
+
+**Key insight:** `dp[i]` = min cost to construct `target[0..i-1]`. For each position, try matching each word. Use Aho-Corasick or simple string search for efficiency.
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Construct String with Minimum Cost. ([LeetCode](https://leetcode.com/problems/construct-string-with-minimum-cost))
+Given string `target` and arrays `words`, `costs`. You can use each word unlimited times. Constructing `target[i..i+len-1]` using `words[j]` costs `costs[j]`. Find minimum total cost, or -1 if impossible.
 
-Difficulty: Hard | Acceptance: 19.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/construct-string-with-minimum-cost) for full constraints
+- Example: `target="abcdef"`, `words=["abdef","abc","d","def","ef"]`, `costs=[100,1,1,10,5]` → **7**
+- Example: `target="aaaa"`, `words=["z"]`, `costs=[1]` → **-1**
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🎯 **DP state**: `dp[i]` = min cost to build `target[0..i-1]`; `dp[0] = 0`
+- 🎯 **Transition**: `dp[i + len] = min(dp[i + len], dp[i] + cost[j])` if `words[j]` matches `target[i..]`
+- 🎯 **Optimization**: group words by length then check match; or use suffix automaton / Aho-Corasick for O(n·L) total
+- 🎯 **Multiple same-length words**: only keep minimum cost per word string
+- 🎯 **Return**: if `dp[n] === Infinity`, return -1
+- 🎯 **Complexity**: O(n × sum_of_word_lengths) naively; suffix-array approach is O(n·maxLen)
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: DP + Hash Map (group words by content, keep min cost)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function constructStringWithMinimumCostBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function minimumCost(target: string, words: string[], costs: number[]): number {
+  const n = target.length;
+  const INF = Infinity;
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function constructStringWithMinimumCost(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  // Deduplicate: keep minimum cost per unique word
+  const wordCost = new Map<string, number>();
+  for (let i = 0; i < words.length; i++) {
+    const prev = wordCost.get(words[i]) ?? INF;
+    wordCost.set(words[i], Math.min(prev, costs[i]));
+  }
 
-// === Test Cases ===
-// console.log(constructStringWithMinimumCost(/* example 1 */)); // expected
-// console.log(constructStringWithMinimumCost(/* example 2 */)); // expected
-// console.log(constructStringWithMinimumCost(/* edge case */)); // expected
+  // Group by length for faster iteration
+  const byLen = new Map<number, [string, number][]>();
+  for (const [w, c] of wordCost) {
+    const arr = byLen.get(w.length) ?? [];
+    arr.push([w, c]);
+    byLen.set(w.length, arr);
+  }
+
+  const dp = new Array(n + 1).fill(INF);
+  dp[0] = 0;
+
+  for (let i = 0; i < n; i++) {
+    if (dp[i] === INF) continue;
+    for (const [len, pairs] of byLen) {
+      if (i + len > n) continue;
+      const sub = target.slice(i, i + len);
+      for (const [w, c] of pairs) {
+        if (sub === w) {
+          dp[i + len] = Math.min(dp[i + len], dp[i] + c);
+        }
+      }
+    }
+  }
+
+  return dp[n] === INF ? -1 : dp[n];
+}
+```
+
+### Solution 2: DP + Trie for Fast Matching
+
+```typescript
+function minimumCostTrie(target: string, words: string[], costs: number[]): number {
+  const n = target.length;
+
+  // Build trie; each node stores min cost if it's a word end
+  interface TrieNode {
+    children: Map<string, TrieNode>;
+    minCost: number;
+  }
+  const root: TrieNode = { children: new Map(), minCost: Infinity };
+
+  for (let idx = 0; idx < words.length; idx++) {
+    let node = root;
+    for (const ch of words[idx]) {
+      if (!node.children.has(ch)) {
+        node.children.set(ch, { children: new Map(), minCost: Infinity });
+      }
+      node = node.children.get(ch)!;
+    }
+    node.minCost = Math.min(node.minCost, costs[idx]);
+  }
+
+  const dp = new Array(n + 1).fill(Infinity);
+  dp[0] = 0;
+
+  for (let i = 0; i < n; i++) {
+    if (dp[i] === Infinity) continue;
+    let node = root;
+    for (let j = i; j < n; j++) {
+      const ch = target[j];
+      if (!node.children.has(ch)) break;
+      node = node.children.get(ch)!;
+      if (node.minCost < Infinity) {
+        dp[j + 1] = Math.min(dp[j + 1], dp[i] + node.minCost);
+      }
+    }
+  }
+
+  return dp[n] === Infinity ? -1 : dp[n];
+}
+```
+
+### Solution 3: DP + Suffix Matching (check word at every start)
+
+```typescript
+function minimumCostSuffix(target: string, words: string[], costs: number[]): number {
+  const n = target.length;
+  const dp = new Array(n + 1).fill(Infinity);
+  dp[0] = 0;
+
+  // Precompute: for each end position e, what (word, cost) pairs end here?
+  const endAt: [number, number][][] = Array.from({ length: n + 1 }, () => []);
+  for (let k = 0; k < words.length; k++) {
+    const w = words[k];
+    const len = w.length;
+    // Find all occurrences of w in target
+    let start = 0;
+    while (start <= n - len) {
+      const pos = target.indexOf(w, start);
+      if (pos === -1) break;
+      endAt[pos + len].push([pos, costs[k]]);
+      start = pos + 1;
+    }
+  }
+
+  for (let i = 1; i <= n; i++) {
+    for (const [start, cost] of endAt[i]) {
+      if (dp[start] < Infinity) {
+        dp[i] = Math.min(dp[i], dp[start] + cost);
+      }
+    }
+  }
+
+  return dp[n] === Infinity ? -1 : dp[n];
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Number of Ways to Form a Target String Given a Dictionary](https://leetcode.com/problems/number-of-ways-to-form-a-target-string-given-a-dictionary) — same pattern: Dynamic Programming
-- [Number of Matching Subsequences](https://leetcode.com/problems/number-of-matching-subsequences) — same pattern: Trie
-- [Construct String with Minimum Cost — LeetCode](https://leetcode.com/problems/construct-string-with-minimum-cost) — problem page
+| Problem                                                                                                       | Difficulty | Key Technique |
+| ------------------------------------------------------------------------------------------------------------- | ---------- | ------------- |
+| [139. Word Break](https://leetcode.com/problems/word-break/)                                                  | Medium     | DP + Trie     |
+| [472. Concatenated Words](https://leetcode.com/problems/concatenated-words/)                                  | Hard       | DP + Trie     |
+| [2977. Minimum Cost to Convert String I](https://leetcode.com/problems/minimum-cost-to-convert-string-i/)     | Medium     | Dijkstra      |
+| [1977. Number of Ways to Separate Numbers](https://leetcode.com/problems/number-of-ways-to-separate-numbers/) | Hard       | DP            |

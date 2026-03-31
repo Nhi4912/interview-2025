@@ -7,97 +7,113 @@ tags: [Array, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/running-sum-of-1d-array"
 ---
 
-# Running Sum of 1d Array / Running Sum of 1d Array
+# Running Sum of 1d Array / Tổng Luỹ Tiến Của Mảng 1D
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Prefix Sum
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) | [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight)
-
----
+🟢 Easy | Array · Prefix Sum | LeetCode #1480
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
-
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Running Sum of 1d Array example:**
+**Vietnamese:** Như đếm tiền tích luỹ — mỗi ngày cộng thêm số tiền hôm nay vào tổng ngày hôm qua. Kết quả tại vị trí `i` là tổng tất cả phần tử từ đầu đến `i`.
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
-```
+nums  = [1, 2, 3, 4]
 
----
+Step 0: result[0] = 1
+Step 1: result[1] = 1+2 = 3
+Step 2: result[2] = 3+3 = 6
+Step 3: result[3] = 6+4 = 10
+
+Result: [1, 3, 6, 10]
+```
 
 ## Problem Description
 
-Running Sum of 1d Array. ([LeetCode](https://leetcode.com/problems/running-sum-of-1d-array))
+Given an array `nums`, return the **running sum** where `runningSum[i] = sum(nums[0]...nums[i])`. Each element is the sum of all previous elements plus itself.
 
-Difficulty: Easy | Acceptance: 87.0%
+This is the foundational **prefix sum** pattern — building it once enables O(1) range sum queries.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+nums=[1,2,3,4]
+Output: [1,3,6,10]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/running-sum-of-1d-array) for full constraints
+**Example 2:**
 
----
+```
+nums=[3,1,2,10,1]
+Output: [3,4,6,16,17]
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🔑 Foundation pattern / Nền tảng:** This is the building block for prefix sums — master it, then use it in harder problems
+- **🔄 In-place option / Tại chỗ:** Can modify input: `nums[i] += nums[i-1]` — saves O(n) space if mutation is allowed
+- **📊 Range query power / Sức mạnh truy vấn:** After building, `sum(l..r) = prefix[r+1] - prefix[l]` in O(1)
+- **⚠️ Off-by-one / Lỗi lệch 1:** When prefix array has size n+1, `prefix[0]=0`; when same size, start from index 1
+- **🎯 Interview follow-up / Câu hỏi tiếp theo:** "Given prefix sum, answer Q range queries in O(Q) total vs O(Q·N) brute force"
+- **🌟 Variants / Biến thể:** 2D prefix sum for matrix problems, difference arrays for range updates
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: New array prefix sum
+ * Time: O(n)
+ * Space: O(n)
  */
-function runningSumOf1dArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function runningSum(nums: number[]): number[] {
+  const result = new Array(nums.length);
+  result[0] = nums[0];
+  for (let i = 1; i < nums.length; i++) {
+    result[i] = result[i - 1] + nums[i];
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function runningSumOf1dArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(runningSumOf1dArray(/* example 1 */)); // expected
-// console.log(runningSumOf1dArray(/* example 2 */)); // expected
-// console.log(runningSumOf1dArray(/* edge case */)); // expected
+console.log(runningSum([1, 2, 3, 4])); // [1,3,6,10]
+console.log(runningSum([1, 1, 1, 1, 1])); // [1,2,3,4,5]
+console.log(runningSum([3, 1, 2, 10, 1])); // [3,4,6,16,17]
 ```
 
----
+```typescript
+/**
+ * Approach 2: In-place modification (O(1) extra space)
+ * Time: O(n)
+ * Space: O(1) extra — modifies input
+ */
+function runningSumInPlace(nums: number[]): number[] {
+  for (let i = 1; i < nums.length; i++) {
+    nums[i] += nums[i - 1];
+  }
+  return nums;
+}
+
+console.log(runningSumInPlace([1, 2, 3, 4])); // [1,3,6,10]
+console.log(runningSumInPlace([3, 1, 2, 10, 1])); // [3,4,6,16,17]
+```
+
+```typescript
+/**
+ * Approach 3: Using reduce (functional style)
+ * Time: O(n)
+ * Space: O(n)
+ */
+function runningSumFunctional(nums: number[]): number[] {
+  let acc = 0;
+  return nums.map((n) => (acc += n));
+}
+
+console.log(runningSumFunctional([1, 2, 3, 4])); // [1,3,6,10]
+console.log(runningSumFunctional([1, 1, 1, 1, 1])); // [1,2,3,4,5]
+```
 
 ## 🔗 Related Problems
 
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) — same pattern: Sliding Window
-- [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum) — same pattern: Prefix Sum
-- [Running Sum of 1d Array — LeetCode](https://leetcode.com/problems/running-sum-of-1d-array) — problem page
+| Problem                                                                                     | Difficulty | Pattern           |
+| ------------------------------------------------------------------------------------------- | ---------- | ----------------- |
+| [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k/)               | 🟡 Medium  | Prefix Sum + Hash |
+| [Range Sum Query - Immutable](https://leetcode.com/problems/range-sum-query-immutable/)     | 🟢 Easy    | Prefix Sum        |
+| [K Radius Subarray Averages](https://leetcode.com/problems/k-radius-subarray-averages/)     | 🟡 Medium  | Prefix Sum        |
+| [Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) | 🟡 Medium  | Prefix Product    |

@@ -7,103 +7,157 @@ tags: [Array, Two Pointers, Stack, Greedy, Monotonic Stack]
 leetcode_url: "https://leetcode.com/problems/create-maximum-number"
 ---
 
-# Create Maximum Number / Create Maximum Number
+# Create Maximum Number / Tạo Số Lớn Nhất
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Monotonic Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Shortest Unsorted Continuous Subarray](https://leetcode.com/problems/shortest-unsorted-continuous-subarray) | [Minimum Cost Tree From Leaf Values](https://leetcode.com/problems/minimum-cost-tree-from-leaf-values)
-
----
+🔴 Hard | Array · Two Pointers · Stack · Greedy · Monotonic Stack | LeetCode #321
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống dãy núi — giữ stack luôn đơn điệu (tăng hoặc giảm). Khi gặp phần tử phá vỡ tính đơn điệu, ta biết ngay đáp án cho các phần tử trước đó.
-
-**Pattern Recognition:**
-
-- Signal: "next greater/smaller element" → **Monotonic Stack**
-- Bài này thuộc dạng Monotonic Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Create Maximum Number example:**
+**Vietnamese:** Chia nhỏ bài toán: chọn `i` chữ số từ mảng 1 và `k-i` chữ số từ mảng 2 (giữ nguyên thứ tự). Với mỗi phân chia `i` từ 0 đến k, dùng monotonic stack để chọn số lớn nhất từ mỗi mảng, rồi merge hai dãy đã chọn.
 
 ```
-arr = [2, 1, 5, 6, 2, 3]
-stack (indices): []
+nums1=[3,4,6,5], nums2=[9,1,2,5,8,3], k=5
 
-i=0: push 0         stack=[0]          (vals: [2])
-i=1: 1<2 → push     stack=[0,1]        (vals: [2,1])
-i=2: 5>1 → pop, process; 5>2 → pop, process
-     push           stack=[2]          (vals: [5])
-...
+Try i=0: pick 0 from nums1, 5 from nums2
+  max from nums2(5)=[9,8,5,3,2] → merge=[9,8,5,3,2]
+
+Try i=1: pick 1 from nums1=[6], 4 from nums2=[9,8,3,2]
+  merge([6],[9,8,3,2]) → [9,8,6,3,2]
+
+Try i=2: pick 2 from nums1=[6,5], 3 from nums2=[9,8,3]
+  merge([6,5],[9,8,3]) → [9,8,6,5,3]  ← maximum!
+
+Answer: [9,8,6,5,3]
 ```
-
----
 
 ## Problem Description
 
-Create Maximum Number. ([LeetCode](https://leetcode.com/problems/create-maximum-number))
+Given two arrays `nums1` (length m) and `nums2` (length n), and integer `k` (k ≤ m+n), create the **maximum number** of length `k` by picking digits from both arrays while preserving their relative order. Return as an array.
 
-Difficulty: Hard | Acceptance: 32.5%
+Three sub-problems: (1) pick best i digits from one array using monotonic stack, (2) merge two arrays to form maximum, (3) try all splits i=0..k.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+nums1=[3,4,6,5], nums2=[9,1,2,5,8,3], k=5
+Output: [9,8,6,5,3]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/create-maximum-number) for full constraints
+**Example 2:**
 
----
+```
+nums1=[6,7], nums2=[6,0,4], k=5
+Output: [6,7,6,0,4]
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🔑 Decompose / Phân tách:** Split k into (i from nums1, k-i from nums2); try all valid splits — i from max(0,k-n) to min(k,m)
+- **🏔️ Monotonic stack / Stack đơn điệu:** To pick best t digits from array: use decreasing monotonic stack, can remove at most (n-t) elements
+- **🔀 Merge for maximum / Merge để max:** When comparing two sequences during merge, compare lexicographically from current positions
+- **⚠️ Merge comparison / So sánh khi merge:** Greedy pick larger head; on tie, look further ahead to break tie correctly
+- **📊 Complexity / Độ phức tạp:** O(k(m+n)) — k splits × O(m+n) for stack + merge
+- **🌟 Tricky part / Phần khó:** The merge step: when `a[i] === b[j]`, must compare suffixes `a[i..]` vs `b[j..]` lexicographically
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Helper: extract max t digits from arr preserving order
+ * Uses monotonic decreasing stack
  */
-function createMaximumNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxSubsequence(arr: number[], t: number): number[] {
+  const drop = arr.length - t;
+  const stack: number[] = [];
+  let dropped = 0;
+
+  for (const n of arr) {
+    while (dropped < drop && stack.length > 0 && stack[stack.length - 1] < n) {
+      stack.pop();
+      dropped++;
+    }
+    stack.push(n);
+  }
+
+  return stack.slice(0, t);
 }
 
 /**
- * Solution 2: Optimized — Monotonic Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Helper: merge two arrays to form maximum number
  */
-function createMaximumNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Monotonic Stack
-  // Hint: Maintain monotonic property, pop when new element breaks it
-  throw new Error('Not implemented');
+function merge(a: number[], b: number[]): number[] {
+  const result: number[] = [];
+  let i = 0,
+    j = 0;
+
+  while (i < a.length && j < b.length) {
+    // Compare suffixes for correct greedy choice on tie
+    let ai = i,
+      bj = j;
+    let pick = 0; // 0=equal, 1=a wins, -1=b wins
+    while (ai < a.length && bj < b.length) {
+      if (a[ai] > b[bj]) {
+        pick = 1;
+        break;
+      }
+      if (a[ai] < b[bj]) {
+        pick = -1;
+        break;
+      }
+      ai++;
+      bj++;
+    }
+    if (pick === 0) pick = a.length - i >= b.length - j ? 1 : -1;
+
+    if (pick >= 0) result.push(a[i++]);
+    else result.push(b[j++]);
+  }
+
+  while (i < a.length) result.push(a[i++]);
+  while (j < b.length) result.push(b[j++]);
+  return result;
 }
 
-// === Test Cases ===
-// console.log(createMaximumNumber(/* example 1 */)); // expected
-// console.log(createMaximumNumber(/* example 2 */)); // expected
-// console.log(createMaximumNumber(/* edge case */)); // expected
-```
+/**
+ * Main solution: try all splits
+ * Time: O(k*(m+n))
+ * Space: O(m+n)
+ */
+function maxNumber(nums1: number[], nums2: number[], k: number): number[] {
+  const m = nums1.length,
+    n = nums2.length;
+  let best: number[] = [];
 
----
+  for (let i = Math.max(0, k - n); i <= Math.min(k, m); i++) {
+    const sub1 = maxSubsequence(nums1, i);
+    const sub2 = maxSubsequence(nums2, k - i);
+    const candidate = merge(sub1, sub2);
+
+    // Compare lexicographically
+    let better = false;
+    for (let x = 0; x < k; x++) {
+      if (candidate[x] > (best[x] ?? -1)) {
+        better = true;
+        break;
+      }
+      if (candidate[x] < (best[x] ?? -1)) break;
+    }
+    if (best.length === 0 || better) best = candidate;
+  }
+
+  return best;
+}
+
+console.log(maxNumber([3, 4, 6, 5], [9, 1, 2, 5, 8, 3], 5)); // [9,8,6,5,3]
+console.log(maxNumber([6, 7], [6, 0, 4], 5)); // [6,7,6,0,4]
+console.log(maxNumber([3, 9], [8, 9], 3)); // [9,8,9]
+```
 
 ## 🔗 Related Problems
 
-- [Shortest Unsorted Continuous Subarray](https://leetcode.com/problems/shortest-unsorted-continuous-subarray) — same pattern: Monotonic Stack
-- [Minimum Cost Tree From Leaf Values](https://leetcode.com/problems/minimum-cost-tree-from-leaf-values) — same pattern: Monotonic Stack
-- [Shortest Subarray to be Removed to Make Array Sorted](https://leetcode.com/problems/shortest-subarray-to-be-removed-to-make-array-sorted) — same pattern: Monotonic Stack
-- [Maximum Width Ramp](https://leetcode.com/problems/maximum-width-ramp) — same pattern: Monotonic Stack
-- [Create Maximum Number — LeetCode](https://leetcode.com/problems/create-maximum-number) — problem page
+| Problem                                                                                     | Difficulty | Pattern         |
+| ------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Remove K Digits](https://leetcode.com/problems/remove-k-digits/)                           | 🟡 Medium  | Monotonic Stack |
+| [Largest Number](https://leetcode.com/problems/largest-number/)                             | 🟡 Medium  | Greedy, Sort    |
+| [Largest Merge Of Two Strings](https://leetcode.com/problems/largest-merge-of-two-strings/) | 🟡 Medium  | Greedy          |
+| [Monotone Increasing Digits](https://leetcode.com/problems/monotone-increasing-digits/)     | 🟡 Medium  | Greedy          |

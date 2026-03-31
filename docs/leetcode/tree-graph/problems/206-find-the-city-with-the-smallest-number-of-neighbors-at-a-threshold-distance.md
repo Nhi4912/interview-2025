@@ -7,97 +7,163 @@ tags: [Dynamic Programming, Graph, Shortest Path]
 leetcode_url: "https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance"
 ---
 
-# Find the City With the Smallest Number of Neighbors at a Threshold Distance / Find the City With the Smallest Number of Neighbors at a Threshold Distance
+## 1334. Find the City With the Smallest Number of Neighbors at a Threshold Distance
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Shortest Path (BFS/Dijkstra)
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) | [Minimum Cost to Convert String II](https://leetcode.com/problems/minimum-cost-to-convert-string-ii)
+### Tìm Thành Phố Có Ít Hàng Xóm Nhất Trong Ngưỡng Khoảng Cách | 🟡 Medium
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống tìm đường đi ngắn nhất trên Google Maps — BFS cho đồ thị không trọng số, Dijkstra cho có trọng số dương.
-
-**Pattern Recognition:**
-
-- Signal: "shortest/minimum path with weights" → **Dijkstra/BFS**
-- Bài này thuộc dạng Shortest Path (BFS/Dijkstra) — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find the City With the Smallest Number of Neighbors at a Threshold Distance example:**
+> **Vietnamese analogy:** Với ngưỡng khoảng cách `d`, đếm mỗi thành phố có thể đến bao nhiêu thành phố khác. Thành phố nào đến được ít nhất (tức biệt lập hơn), với index lớn nhất nếu hòa — đó là kết quả.
 
 ```
-// TODO: Add step-by-step visual for Shortest Path (BFS/Dijkstra)
-// Show one complete example with state at each step
+n=4, edges=[[0,1,3],[1,2,1],[1,3,4],[2,3,1]], dist=4
+
+Shortest paths (Floyd-Warshall):
+     0   1   2   3
+0  [ 0,  3,  4,  5]
+1  [ 3,  0,  1,  2]
+2  [ 4,  1,  0,  1]
+3  [ 5,  2,  1,  0]
+
+Neighbors within dist=4:
+  City 0: {1,2} → 2 neighbors
+  City 1: {0,2,3} → 3 neighbors
+  City 2: {0,1,3} → 3 neighbors
+  City 3: {1,2} → 2 neighbors
+
+Min = 2, largest index = city 3 → answer = 3
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Find the City With the Smallest Number of Neighbors at a Threshold Distance. ([LeetCode](https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance))
+Given `n` cities and `edges[i] = [from, to, weight]`, find the city with the **fewest** number of cities reachable within distance `distanceThreshold`. Return the city with the largest index if tied.
 
-Difficulty: Medium | Acceptance: 70.2%
+**Constraints:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance) for full constraints
+- `2 <= n <= 100`
+- `1 <= edges.length <= n*(n-1)/2`
+- `1 <= distanceThreshold <= 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Floyd-Warshall** is perfect here: O(n³), compute all-pairs shortest paths
+- 🔑 Initialize `dist[i][i] = 0`, `dist[i][j] = weight` for edges, `Infinity` otherwise
+- 🔑 After Floyd-Warshall, count neighbors within threshold for each city
+- ⚠️ Return city with **fewest** neighbors; if tied, return **largest index**
+- ⚠️ Iterate cities from high to low index to naturally get largest index on tie
+- 💡 Dijkstra from each city also works: O(n·(E log V))
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Floyd-Warshall (All-Pairs Shortest Path)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheCityWithTheSmallestNumberOfNeighborsAtAThresholdDistanceBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function findTheCity(n: number, edges: number[][], distanceThreshold: number): number {
+  const INF = Infinity;
+  const dist: number[][] = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => (i === j ? 0 : INF)),
+  );
 
-/**
- * Solution 2: Optimized — Shortest Path (BFS/Dijkstra)
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheCityWithTheSmallestNumberOfNeighborsAtAThresholdDistance(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Shortest Path (BFS/Dijkstra)
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
+  // Initialize with direct edges
+  for (const [u, v, w] of edges) {
+    dist[u][v] = w;
+    dist[v][u] = w;
+  }
 
-// === Test Cases ===
-// console.log(findTheCityWithTheSmallestNumberOfNeighborsAtAThresholdDistance(/* example 1 */)); // expected
-// console.log(findTheCityWithTheSmallestNumberOfNeighborsAtAThresholdDistance(/* example 2 */)); // expected
-// console.log(findTheCityWithTheSmallestNumberOfNeighborsAtAThresholdDistance(/* edge case */)); // expected
+  // Floyd-Warshall
+  for (let k = 0; k < n; k++) {
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (dist[i][k] !== INF && dist[k][j] !== INF) {
+          dist[i][j] = Math.min(dist[i][j], dist[i][k] + dist[k][j]);
+        }
+      }
+    }
+  }
+
+  let bestCity = -1,
+    minNeighbors = Infinity;
+
+  for (let i = 0; i < n; i++) {
+    let neighbors = 0;
+    for (let j = 0; j < n; j++) {
+      if (i !== j && dist[i][j] <= distanceThreshold) neighbors++;
+    }
+    // Use <= to prefer larger index on tie
+    if (neighbors <= minNeighbors) {
+      minNeighbors = neighbors;
+      bestCity = i;
+    }
+  }
+
+  return bestCity;
+}
+```
+
+### Solution 2: Dijkstra from Each City
+
+```typescript
+function findTheCityDijkstra(n: number, edges: number[][], distanceThreshold: number): number {
+  const adj: [number, number][][] = Array.from({ length: n }, () => []);
+  for (const [u, v, w] of edges) {
+    adj[u].push([v, w]);
+    adj[v].push([u, w]);
+  }
+
+  function dijkstra(src: number): number {
+    const d = new Array(n).fill(Infinity);
+    d[src] = 0;
+    // Simple priority queue using sorted array (n<=100 so OK)
+    const pq: [number, number][] = [[0, src]]; // [dist, node]
+
+    while (pq.length > 0) {
+      pq.sort((a, b) => a[0] - b[0]);
+      const [cost, u] = pq.shift()!;
+      if (cost > d[u]) continue;
+      for (const [v, w] of adj[u]) {
+        if (d[u] + w < d[v]) {
+          d[v] = d[u] + w;
+          pq.push([d[v], v]);
+        }
+      }
+    }
+
+    let count = 0;
+    for (let i = 0; i < n; i++) {
+      if (i !== src && d[i] <= distanceThreshold) count++;
+    }
+    return count;
+  }
+
+  let bestCity = -1,
+    minNeighbors = Infinity;
+  for (let i = 0; i < n; i++) {
+    const neighbors = dijkstra(i);
+    if (neighbors <= minNeighbors) {
+      minNeighbors = neighbors;
+      bestCity = i;
+    }
+  }
+
+  return bestCity;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Minimum Cost to Convert String II](https://leetcode.com/problems/minimum-cost-to-convert-string-ii) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Parallel Courses III](https://leetcode.com/problems/parallel-courses-iii) — same pattern: Topological Sort
-- [Find the City With the Smallest Number of Neighbors at a Threshold Distance — LeetCode](https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance) — problem page
+| #    | Problem                                 | Difficulty | Tags          |
+| ---- | --------------------------------------- | ---------- | ------------- |
+| 743  | Network Delay Time                      | 🟡 Medium  | Dijkstra      |
+| 787  | Cheapest Flights Within K Stops         | 🟡 Medium  | DP, Dijkstra  |
+| 1631 | Path With Minimum Effort                | 🟡 Medium  | Dijkstra, BFS |
+| 1976 | Number of Ways to Arrive at Destination | 🟡 Medium  | Dijkstra, DP  |

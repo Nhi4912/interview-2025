@@ -7,97 +7,154 @@ tags: [Array, Matrix]
 leetcode_url: "https://leetcode.com/problems/modify-the-matrix"
 ---
 
-# Modify the Matrix / Modify the Matrix
+# Modify the Matrix / Chỉnh Sửa Ma Trận
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Rotting Oranges](https://leetcode.com/problems/rotting-oranges)
-
----
+🟢 Easy | Array · Matrix | LeetCode #3033
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Modify the Matrix" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Modify the Matrix example:**
+**Vietnamese:** Như điền ô trống trong bảng — mỗi `-1` cần được thay bằng giá trị lớn nhất trong cùng cột. Duyệt mỗi cột một lần để tìm max, sau đó thay thế các ô `-1`.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+matrix = [[1,-1,2],
+          [4,-1,6],
+          [7, 8, 9]]
 
----
+Column 0: max=7, no -1
+Column 1: max=8, replace -1 at rows 0,1 → [8,8,8]
+Column 2: max=9, no -1
+
+Result: [[1,8,2],
+         [4,8,6],
+         [7,8,9]]
+```
 
 ## Problem Description
 
-Modify the Matrix. ([LeetCode](https://leetcode.com/problems/modify-the-matrix))
+Given a 0-indexed `m×n` integer matrix, replace every `-1` with the **maximum value in its column**. Return the modified matrix.
 
-Difficulty: Easy | Acceptance: 68.3%
+Two-pass approach per column: first find the column max (ignoring -1), then replace all -1s.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+matrix=[[1,-1,2],[4,-1,6],[7,8,9]]
+Output: [[1,8,2],[4,8,6],[7,8,9]]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/modify-the-matrix) for full constraints
+**Example 2:**
 
----
+```
+matrix=[[3,-1],[5,2]]
+Output: [[3,2],[5,2]]
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🔑 Column-wise traversal / Duyệt theo cột:** Process column by column — find max first, then replace -1s
+- **🎯 Two-pass / Hai lượt:** Pass 1: find column max ignoring -1. Pass 2: replace -1 with that max
+- **⚠️ -1 in max / -1 khi tìm max:** Skip -1 values when computing column max (`filter` or conditional max)
+- **🔄 In-place modification / Sửa tại chỗ:** Can modify the input matrix directly — no need for extra matrix
+- **📊 Complexity / Độ phức tạp:** O(m×n) time — each cell visited twice; O(1) extra space
+- **🌟 Row version / Phiên bản theo hàng:** If problem asked for row max instead, same approach transposed
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Two-pass column scan — find max then replace
+ * Time: O(m*n)
+ * Space: O(1) extra (modifies in place)
  */
-function modifyTheMatrixBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function modifiedMatrix(matrix: number[][]): number[][] {
+  const m = matrix.length;
+  const n = matrix[0].length;
+
+  for (let col = 0; col < n; col++) {
+    // Pass 1: find column max (skip -1)
+    let colMax = -Infinity;
+    for (let row = 0; row < m; row++) {
+      if (matrix[row][col] !== -1) {
+        colMax = Math.max(colMax, matrix[row][col]);
+      }
+    }
+    // Pass 2: replace -1 with column max
+    for (let row = 0; row < m; row++) {
+      if (matrix[row][col] === -1) {
+        matrix[row][col] = colMax;
+      }
+    }
+  }
+
+  return matrix;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function modifyTheMatrix(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(modifyTheMatrix(/* example 1 */)); // expected
-// console.log(modifyTheMatrix(/* example 2 */)); // expected
-// console.log(modifyTheMatrix(/* edge case */)); // expected
+console.log(
+  modifiedMatrix([
+    [1, -1, 2],
+    [4, -1, 6],
+    [7, 8, 9],
+  ]),
+);
+// [[1,8,2],[4,8,6],[7,8,9]]
+console.log(
+  modifiedMatrix([
+    [3, -1],
+    [5, 2],
+  ]),
+);
+// [[3,2],[5,2]]
+console.log(modifiedMatrix([[-1]]));
+// [[-1]] (no other value in column)
 ```
 
----
+```typescript
+/**
+ * Approach 2: Precompute all column maxes first
+ * Time: O(m*n)
+ * Space: O(n) for columnMax array
+ */
+function modifiedMatrixV2(matrix: number[][]): number[][] {
+  const m = matrix.length;
+  const n = matrix[0].length;
+
+  // Compute all column maxes in one pass
+  const colMax = new Array(n).fill(-Infinity);
+  for (let row = 0; row < m; row++) {
+    for (let col = 0; col < n; col++) {
+      if (matrix[row][col] !== -1) {
+        colMax[col] = Math.max(colMax[col], matrix[row][col]);
+      }
+    }
+  }
+
+  // Second pass: replace -1
+  for (let row = 0; row < m; row++) {
+    for (let col = 0; col < n; col++) {
+      if (matrix[row][col] === -1) {
+        matrix[row][col] = colMax[col];
+      }
+    }
+  }
+
+  return matrix;
+}
+
+console.log(
+  modifiedMatrixV2([
+    [1, -1, 2],
+    [4, -1, 6],
+    [7, 8, 9],
+  ]),
+);
+// [[1,8,2],[4,8,6],[7,8,9]]
+```
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Rotting Oranges](https://leetcode.com/problems/rotting-oranges) — same pattern: BFS
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix) — same pattern: Binary Search
-- [Modify the Matrix — LeetCode](https://leetcode.com/problems/modify-the-matrix) — problem page
+| Problem                                                                 | Difficulty | Pattern          |
+| ----------------------------------------------------------------------- | ---------- | ---------------- |
+| [Set Matrix Zeroes](https://leetcode.com/problems/set-matrix-zeroes/)   | 🟡 Medium  | Matrix           |
+| [Spiral Matrix](https://leetcode.com/problems/spiral-matrix/)           | 🟡 Medium  | Matrix Traversal |
+| [Transpose Matrix](https://leetcode.com/problems/transpose-matrix/)     | 🟢 Easy    | Matrix           |
+| [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix/) | 🟡 Medium  | Binary Search    |

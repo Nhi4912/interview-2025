@@ -7,97 +7,121 @@ tags: [Math, Simulation]
 leetcode_url: "https://leetcode.com/problems/find-three-consecutive-integers-that-sum-to-a-given-number"
 ---
 
-# Find Three Consecutive Integers That Sum to a Given Number / Find Three Consecutive Integers That Sum to a Given Number
+# Find Three Consecutive Integers That Sum to a Given Number / Tìm Ba Số Nguyên Liên Tiếp Có Tổng Cho Trước
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Multiply Strings](https://leetcode.com/problems/multiply-strings) | [Add Binary](https://leetcode.com/problems/add-binary)
-
----
+🟡 Medium | Math · Simulation | LeetCode #2177
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find Three Consecutive Integers That Sum to a Given Number example:**
+**Vietnamese:** Ba số nguyên liên tiếp có dạng `(m-1, m, m+1)`, tổng = `3m`. Vậy `m = num / 3`. Nếu `num` chia hết cho 3, tồn tại đáp án; ngược lại không có.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
-```
+num = 33
+m = 33 / 3 = 11
+Answer: [10, 11, 12]  → 10+11+12 = 33 ✓
 
----
+num = 4
+4 / 3 = 1.33... (not integer)
+Answer: []  → no solution
+
+num = 0
+0 / 3 = 0
+Answer: [-1, 0, 1]  → -1+0+1 = 0 ✓
+```
 
 ## Problem Description
 
-Find Three Consecutive Integers That Sum to a Given Number. ([LeetCode](https://leetcode.com/problems/find-three-consecutive-integers-that-sum-to-a-given-number))
+Given integer `num`, return **three consecutive integers** (as an array) that sum to `num`, or an **empty array** if no such integers exist. Consecutive means each differs by 1 (can be negative).
 
-Difficulty: Medium | Acceptance: 64.6%
+The math is elegant: if three consecutive integers are `(n-1, n, n+1)`, their sum = `3n`, so `n = num/3` must be an integer.
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+num=33
+Output: [10,11,12]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-three-consecutive-integers-that-sum-to-a-given-number) for full constraints
+**Example 2:**
 
----
+```
+num=4
+Output: []  // 4 % 3 != 0
+```
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🔑 Math shortcut / Công thức toán:** `(n-1)+n+(n+1) = 3n` — answer exists iff `num % 3 === 0`
+- **🎯 Middle element / Phần tử giữa:** `middle = num / 3`; return `[middle-1, middle, middle+1]`
+- **⚠️ Negative numbers / Số âm:** Works fine — e.g., `num=0` → `[-1,0,1]`; `num=-3` → `[-2,-1,0]`
+- **📦 Return type / Kiểu trả về:** Return `number[]` (not `bigint[]` even though `num` can be large 10^15 — use BigInt for large inputs)
+- **🔄 BigInt for large inputs / BigInt cho input lớn:** `num` up to 10^15 — JavaScript Number is safe up to 2^53, so regular numbers work
+- **💡 Generalize / Tổng quát hoá:** For k consecutive: sum = k\*(2m+k-1)/2 — k odd means middle = num/k
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Direct math — check divisibility by 3
+ * Time: O(1)
+ * Space: O(1)
  */
-function findThreeConsecutiveIntegersThatSumToAGivenNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function sumOfThree(num: number): number[] {
+  if (num % 3 !== 0) return [];
+  const mid = num / 3;
+  return [mid - 1, mid, mid + 1];
 }
 
-/**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findThreeConsecutiveIntegersThatSumToAGivenNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(findThreeConsecutiveIntegersThatSumToAGivenNumber(/* example 1 */)); // expected
-// console.log(findThreeConsecutiveIntegersThatSumToAGivenNumber(/* example 2 */)); // expected
-// console.log(findThreeConsecutiveIntegersThatSumToAGivenNumber(/* edge case */)); // expected
+console.log(sumOfThree(33)); // [10, 11, 12]
+console.log(sumOfThree(4)); // []
+console.log(sumOfThree(0)); // [-1, 0, 1]
+console.log(sumOfThree(-3)); // [-2, -1, 0]
 ```
 
----
+```typescript
+/**
+ * Approach 2: BigInt-safe version for very large numbers
+ * Time: O(1)
+ * Space: O(1)
+ */
+function sumOfThreeBig(num: number): number[] {
+  // Use BigInt to handle up to 10^15 safely (though Number is fine here)
+  const n = BigInt(num);
+  if (n % 3n !== 0n) return [];
+  const mid = Number(n / 3n);
+  return [mid - 1, mid, mid + 1];
+}
+
+console.log(sumOfThreeBig(33)); // [10, 11, 12]
+console.log(sumOfThreeBig(4)); // []
+console.log(sumOfThreeBig(999999999999)); // [333333333332, 333333333333, 333333333334]
+```
+
+```typescript
+/**
+ * Approach 3: Brute force scan (educational — shows pattern generalizes)
+ * Try middle values around num/3
+ * Time: O(1) effectively (bounded search)
+ * Space: O(1)
+ */
+function sumOfThreeBrute(num: number): number[] {
+  // Only need to check one candidate
+  const mid = Math.floor(num / 3);
+  for (let m = mid - 1; m <= mid + 1; m++) {
+    if (m - 1 + m + (m + 1) === num) return [m - 1, m, m + 1];
+  }
+  return [];
+}
+
+console.log(sumOfThreeBrute(33)); // [10, 11, 12]
+console.log(sumOfThreeBrute(4)); // []
+```
 
 ## 🔗 Related Problems
 
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) — same pattern: Queue
-- [Add Strings](https://leetcode.com/problems/add-strings) — same pattern: Math
-- [Find Three Consecutive Integers That Sum to a Given Number — LeetCode](https://leetcode.com/problems/find-three-consecutive-integers-that-sum-to-a-given-number) — problem page
+| Problem                                                                                                | Difficulty | Pattern      |
+| ------------------------------------------------------------------------------------------------------ | ---------- | ------------ |
+| [Check if Array Is Consecutive](https://leetcode.com/problems/check-if-array-is-consecutive/)          | 🟢 Easy    | Math         |
+| [Find Three Consecutive Integers II](https://leetcode.com/problems/find-the-integer-added-to-array-i/) | 🟢 Easy    | Math         |
+| [Closest Divisors](https://leetcode.com/problems/closest-divisors/)                                    | 🟡 Medium  | Math         |
+| [Three Sum](https://leetcode.com/problems/3sum/)                                                       | 🟡 Medium  | Two Pointers |

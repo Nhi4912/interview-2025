@@ -7,97 +7,106 @@ tags: [String, Greedy]
 leetcode_url: "https://leetcode.com/problems/maximum-binary-string-after-change"
 ---
 
-# Maximum Binary String After Change / Maximum Binary String After Change
+# Maximum Binary String After Change / Chuỗi Nhị Phân Lớn Nhất Sau Khi Đổi
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) | [Largest Number](https://leetcode.com/problems/largest-number)
+🟡 Medium
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Binary String After Change example:**
+> **Phép so sánh:** Giống sắp xếp chỗ ngồi — mọi số `0` đều có thể dồn thành một khối liên tiếp. Nếu có `k` số 0 (bỏ qua tiền tố toàn `1`), kết quả luôn là: tất cả là `1` trừ đúng một vị trí là `0`.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
-```
+Input:  "000110"
+Zeros after leading 1s: positions 0,1,2,4 → count=4, ones_before=0
+Result: "111011"  (n-1 ones, one '0' at position zeros_count-1)
 
----
+Rule: "00" → "10", "10" → "01"
+Key: all zeros can be bubbled right past ones → one lone 0 remains
+```
 
 ## Problem Description
 
-Maximum Binary String After Change. ([LeetCode](https://leetcode.com/problems/maximum-binary-string-after-change))
+Given a binary string `binary`, you may apply **any number** of operations:
 
-Difficulty: Medium | Acceptance: 47.1%
+- `"00"` → `"10"`, or `"10"` → `"01"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+Return the **maximum** binary string you can get (lexicographically largest).
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-binary-string-after-change) for full constraints
+**Example 1:** `"000110"` → `"111011"`
 
----
+**Example 2:** `"01"` → `"01"`
+
+**Constraints:** `1 <= binary.length <= 10^5`, binary[i] ∈ `{'0','1'}`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Key insight:** All `1`s before the first `0` stay in place — leading ones are already maximal
+- **Greedy observation:** Every `0` can shift past a `1` using `"10"→"01"`, so all zeros collapse into a contiguous block
+- **Final form:** `(leading 1s)(all 1s)(one 0)(all 1s)` — the single `0` is placed at index `firstZero + zerosCount - 1`
+- **Edge case:** String with no `0` is already maximum — return as-is
+- **Complexity:** O(n) time, O(n) space (result array)
+- **Interview insight:** Nhận ra "invariant của greedy" — chứng minh vị trí `0` cuối cùng không ảnh hưởng đến kết quả
 
 ## Solutions
 
+### Solution 1: Greedy Count — O(n) time, O(n) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumBinaryStringAfterChangeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function maximumBinaryString(binary: string): string {
+  const n = binary.length;
+  let firstZero = -1;
+  let zerosCount = 0;
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumBinaryStringAfterChange(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
+  for (let i = 0; i < n; i++) {
+    if (binary[i] === "0") {
+      if (firstZero === -1) firstZero = i;
+      zerosCount++;
+    }
+  }
 
-// === Test Cases ===
-// console.log(maximumBinaryStringAfterChange(/* example 1 */)); // expected
-// console.log(maximumBinaryStringAfterChange(/* example 2 */)); // expected
-// console.log(maximumBinaryStringAfterChange(/* edge case */)); // expected
+  // No zero or only one zero → already max or just "01"
+  if (zerosCount <= 1) return binary;
+
+  // Build result: all 1s except one 0 at position (firstZero + zerosCount - 1)
+  const result = new Array(n).fill("1");
+  result[firstZero + zerosCount - 1] = "0";
+  return result.join("");
+}
 ```
 
----
+### Solution 2: Simulation with index tracking — O(n) time, O(n) space
+
+```typescript
+function maximumBinaryString(binary: string): string {
+  const n = binary.length;
+  const arr = binary.split("");
+
+  let i = 0;
+  // Skip leading ones — they can't be improved
+  while (i < n && arr[i] === "1") i++;
+
+  // From first zero onward, collect all zeros and push them forward
+  let j = i;
+  while (j < n) {
+    if (arr[j] === "0") {
+      // Swap zero to position i, fill i with '1'
+      arr[i] = "1";
+      arr[j] = "0";
+      // Now move zero one step forward: "00" → "10" leaves a new zero
+      i++;
+    }
+    j++;
+  }
+  // i now points past the last zero we placed; the lone zero is at i-1
+  return arr.join("");
+}
+```
 
 ## 🔗 Related Problems
 
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Maximum Binary String After Change — LeetCode](https://leetcode.com/problems/maximum-binary-string-after-change) — problem page
+| #    | Problem                       | Difficulty | Tags                    |
+| ---- | ----------------------------- | ---------- | ----------------------- |
+| 402  | Remove K Digits               | Medium     | Greedy, Monotonic Stack |
+| 670  | Maximum Swap                  | Medium     | Greedy                  |
+| 1899 | Merge Triplets to Form Target | Medium     | Greedy                  |
+| 2086 | Minimum Number of Buckets     | Medium     | Greedy                  |

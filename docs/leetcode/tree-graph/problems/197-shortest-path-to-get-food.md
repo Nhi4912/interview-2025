@@ -7,100 +7,160 @@ tags: [Array, Breadth-First Search, Matrix]
 leetcode_url: "https://leetcode.com/problems/shortest-path-to-get-food"
 ---
 
-# Shortest Path to Get Food / Shortest Path to Get Food
+## 1730. Shortest Path to Get Food
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Rotting Oranges](https://leetcode.com/problems/rotting-oranges) | [Max Area of Island](https://leetcode.com/problems/max-area-of-island)
+### Đường Đi Ngắn Nhất Để Lấy Thức Ăn | 🟡 Medium
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Shortest Path to Get Food example:**
+> **Vietnamese analogy:** Bạn đang đói trong mê cung — bắt đầu từ vị trí của mình `@`, tìm đường ngắn nhất đến thức ăn `#`. BFS đảm bảo tìm được đường ngắn nhất theo số bước.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+Grid:
+  X X X X X X X
+  X * * * * * X
+  X @ 0 0 0 # X
+  X X X X X X X
 
-BFS: process level by level using queue
+BFS from @: spread level by level → reach # in 4 steps
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem Description
 
-Shortest Path to Get Food. ([LeetCode](https://leetcode.com/problems/shortest-path-to-get-food))
+Given a `m x n` character matrix `grid`:
 
-Difficulty: Medium | Acceptance: 56.7%
+- `'*'` = open space
+- `'#'` = food
+- `'X'` = obstacle
+- `'@'` = starting position (exactly one)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+Return the **minimum number of steps** to reach any food cell. Return `-1` if impossible.
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/shortest-path-to-get-food) for full constraints
+**Example:**
+
+- Input: `grid = [["X","X","X","X","X","X"],["X","*","*","#","*","X"],["X","@","X","X","X","X"]]`
+- Output: `-1`
+
+**Constraints:** `1 <= m, n <= 200`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **BFS** guarantees shortest path in unweighted grid
+- 🔑 Find `@` first (starting cell), then do multi-source BFS
+- 🔑 Stop immediately when you reach `#` — first time is shortest
+- ⚠️ Mark visited as you enqueue (not dequeue) to avoid re-queueing
+- ⚠️ `'X'` is a wall; only move through `'*'`, `'#'` (stop), `'@'`
+- 💡 Can also work with multiple food sources using multi-source BFS from all `#`
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: BFS from Starting Position
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shortestPathToGetFoodBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function getFood(grid: string[][]): number {
+  const m = grid.length;
+  const n = grid[0].length;
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shortestPathToGetFood(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
+  // Find starting position '@'
+  let startR = -1,
+    startC = -1;
+  for (let r = 0; r < m; r++) {
+    for (let c = 0; c < n; c++) {
+      if (grid[r][c] === "@") {
+        startR = r;
+        startC = c;
+      }
+    }
+  }
 
-// === Test Cases ===
-// console.log(shortestPathToGetFood(/* example 1 */)); // expected
-// console.log(shortestPathToGetFood(/* example 2 */)); // expected
-// console.log(shortestPathToGetFood(/* edge case */)); // expected
+  const queue: [number, number][] = [[startR, startC]];
+  const visited = Array.from({ length: m }, () => new Array(n).fill(false));
+  visited[startR][startC] = true;
+  let steps = 0;
+
+  while (queue.length > 0) {
+    const levelSize = queue.length;
+    steps++;
+    for (let i = 0; i < levelSize; i++) {
+      const [r, c] = queue.shift()!;
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr < 0 || nr >= m || nc < 0 || nc >= n) continue;
+        if (visited[nr][nc] || grid[nr][nc] === "X") continue;
+        if (grid[nr][nc] === "#") return steps;
+        visited[nr][nc] = true;
+        queue.push([nr, nc]);
+      }
+    }
+  }
+
+  return -1;
+}
+```
+
+### Solution 2: BFS with Distance Tracking
+
+```typescript
+function getFoodDist(grid: string[][]): number {
+  const m = grid.length;
+  const n = grid[0].length;
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
+  const dist = Array.from({ length: m }, () => new Array(n).fill(-1));
+
+  const queue: [number, number][] = [];
+  for (let r = 0; r < m; r++) {
+    for (let c = 0; c < n; c++) {
+      if (grid[r][c] === "@") {
+        dist[r][c] = 0;
+        queue.push([r, c]);
+      }
+    }
+  }
+
+  while (queue.length > 0) {
+    const [r, c] = queue.shift()!;
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr,
+        nc = c + dc;
+      if (nr < 0 || nr >= m || nc < 0 || nc >= n) continue;
+      if (dist[nr][nc] !== -1 || grid[nr][nc] === "X") continue;
+      dist[nr][nc] = dist[r][c] + 1;
+      if (grid[nr][nc] === "#") return dist[nr][nc];
+      queue.push([nr, nc]);
+    }
+  }
+
+  return -1;
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Rotting Oranges](https://leetcode.com/problems/rotting-oranges) — same pattern: BFS
-- [Max Area of Island](https://leetcode.com/problems/max-area-of-island) — same pattern: Union Find
-- [Making A Large Island](https://leetcode.com/problems/making-a-large-island) — same pattern: Union Find
-- [Snakes and Ladders](https://leetcode.com/problems/snakes-and-ladders) — same pattern: BFS
-- [Shortest Path to Get Food — LeetCode](https://leetcode.com/problems/shortest-path-to-get-food) — problem page
+| #    | Problem                        | Difficulty | Tags        |
+| ---- | ------------------------------ | ---------- | ----------- |
+| 994  | Rotting Oranges                | 🟡 Medium  | BFS, Matrix |
+| 1091 | Shortest Path in Binary Matrix | 🟡 Medium  | BFS, Matrix |
+| 542  | 01 Matrix                      | 🟡 Medium  | BFS, DP     |
+| 1293 | Shortest Path with Obstacles   | 🔴 Hard    | BFS         |

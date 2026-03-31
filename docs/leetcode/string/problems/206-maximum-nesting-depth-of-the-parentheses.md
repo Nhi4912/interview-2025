@@ -7,99 +7,106 @@ tags: [String, Stack]
 leetcode_url: "https://leetcode.com/problems/maximum-nesting-depth-of-the-parentheses"
 ---
 
-# Maximum Nesting Depth of the Parentheses / Maximum Nesting Depth of the Parentheses
+# Maximum Nesting Depth of the Parentheses / Độ Sâu Lồng Nhau Lớn Nhất
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Decode String](https://leetcode.com/problems/decode-string) | [Simplify Path](https://leetcode.com/problems/simplify-path)
+🟢 Easy
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
-
-**Pattern Recognition:**
-
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Nesting Depth of the Parentheses example:**
+> **Phép so sánh:** Giống đếm tầng của tòa nhà — mỗi `(` bước lên một tầng, mỗi `)` bước xuống. Câu hỏi: bạn lên cao nhất tầng mấy?
 
 ```
-stack = []
-
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+s = "(1+(2*3)+((8)/4))+1"
+      (           → depth=1, max=1
+       1+(         → depth=2, max=2
+          2*3)+    → depth=1
+               ((  → depth=3, max=3
+                 8)/4))+1
+Result: max depth = 3
 ```
-
----
 
 ## Problem Description
 
-Maximum Nesting Depth of the Parentheses. ([LeetCode](https://leetcode.com/problems/maximum-nesting-depth-of-the-parentheses))
+A string is a **valid parenthesization** if it is balanced. The **nesting depth** is the maximum number of nested open parentheses. Given a VPS string `s`, return its nesting depth.
 
-Difficulty: Easy | Acceptance: 84.3%
+**Example 1:** `"(1+(2*3)+((8)/4))+1"` → `3`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `"(1)+((2))+(((3)))"` → `3`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-nesting-depth-of-the-parentheses) for full constraints
-
----
+**Constraints:** `1 <= s.length <= 100`, s is a valid parenthesized expression
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **No actual stack needed:** Just a counter — increment on `(`, decrement on `)`, track max
+- **Stack simulation:** Push on `(`, pop on `)`, max depth = max stack size seen
+- **Valid input guarantee:** No need to check underflow — never more `)` than `(`
+- **One pass:** O(n) single scan, O(1) extra space (counter only)
+- **Pattern:** This is the "depth tracking" variant of balanced parentheses — simpler than validity check
+- **Follow-up:** LeetCode 1111 asks how to split parentheses for min max-depth — uses same depth counter
 
 ## Solutions
 
+### Solution 1: Counter (optimal) — O(n) time, O(1) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNestingDepthOfTheParenthesesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function maxDepth(s: string): number {
+  let depth = 0;
+  let maxD = 0;
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNestingDepthOfTheParentheses(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
-}
+  for (const ch of s) {
+    if (ch === "(") {
+      depth++;
+      maxD = Math.max(maxD, depth);
+    } else if (ch === ")") {
+      depth--;
+    }
+  }
 
-// === Test Cases ===
-// console.log(maximumNestingDepthOfTheParentheses(/* example 1 */)); // expected
-// console.log(maximumNestingDepthOfTheParentheses(/* example 2 */)); // expected
-// console.log(maximumNestingDepthOfTheParentheses(/* edge case */)); // expected
+  return maxD;
+}
 ```
 
----
+### Solution 2: Stack simulation — O(n) time, O(n) space
+
+```typescript
+function maxDepth(s: string): number {
+  const stack: string[] = [];
+  let maxD = 0;
+
+  for (const ch of s) {
+    if (ch === "(") {
+      stack.push(ch);
+      maxD = Math.max(maxD, stack.length);
+    } else if (ch === ")") {
+      stack.pop();
+    }
+  }
+
+  return maxD;
+}
+```
+
+### Solution 3: Functional reduce — O(n) time, O(1) space
+
+```typescript
+function maxDepth(s: string): number {
+  const { max } = s.split("").reduce(
+    ({ depth, max }, ch) => {
+      if (ch === "(") return { depth: depth + 1, max: Math.max(max, depth + 1) };
+      if (ch === ")") return { depth: depth - 1, max };
+      return { depth, max };
+    },
+    { depth: 0, max: 0 },
+  );
+  return max;
+}
+```
 
 ## 🔗 Related Problems
 
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Basic Calculator II](https://leetcode.com/problems/basic-calculator-ii) — same pattern: Stack
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Maximum Nesting Depth of the Parentheses — LeetCode](https://leetcode.com/problems/maximum-nesting-depth-of-the-parentheses) — problem page
+| #    | Problem                                        | Difficulty | Tags          |
+| ---- | ---------------------------------------------- | ---------- | ------------- |
+| 20   | Valid Parentheses                              | Easy       | Stack         |
+| 1111 | Maximum Nesting Depth of Two Valid Parentheses | Medium     | Stack, Greedy |
+| 856  | Score of Parentheses                           | Medium     | Stack         |
+| 301  | Remove Invalid Parentheses                     | Hard       | BFS           |

@@ -7,97 +7,140 @@ tags: [Array, String]
 leetcode_url: "https://leetcode.com/problems/remove-comments"
 ---
 
-# Remove Comments / Remove Comments
+# Remove Comments / Xóa Bình Luận
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Largest Number](https://leetcode.com/problems/largest-number)
+🟡 Medium
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Remove Comments example:**
+> **Phép so sánh:** Giống đọc văn bản với bút highlight — khi gặp `/*` thì che đi tất cả cho đến `*/`, khi gặp `//` thì che phần còn lại của dòng đó.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
-```
+State machine:
+ inBlock=false → scan char by char
+   "/*" → set inBlock=true, skip
+   "//" → skip rest of line
+   else → append to current line
+ inBlock=true → scan char by char
+   "*/" → set inBlock=false
+   else → skip
 
----
+Line boundary: if !inBlock and currentLine non-empty → push to result
+```
 
 ## Problem Description
 
-Remove Comments. ([LeetCode](https://leetcode.com/problems/remove-comments))
+Given a C++ source code (array of strings), remove all comments:
 
-Difficulty: Medium | Acceptance: 39.4%
+- Line comments `//` remove everything after them on the same line
+- Block comments `/* ... */` can span multiple lines
+
+Return the source code after removing all comments (empty lines omitted).
+
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input:  ["/*Test*/", "int main()", "{ //test", "   cout << s /* s */;", "}"]
+Output: ["int main()", "{ ", "   cout << s ;", "}"]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-comments) for full constraints
-
----
+**Constraints:** `1 <= source.length <= 100`, each line length `<= 80`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **State machine:** Chỉ cần một flag `inBlock` — 2 trạng thái, không cần stack
+- **Block spans lines:** Không thể xử lý từng dòng độc lập — cần duy trì `currentLine` across lines
+- **Line boundary:** Chỉ emit `currentLine` khi kết thúc dòng và KHÔNG đang trong block comment
+- **Edge case:** `*/` trong `//` không kết thúc block; `//` trong `/* */` cũng bị ignore
+- **Two-pointer:** Dùng index `i` trong vòng lặp để nhảy 2 ký tự khi phát hiện `/*` hay `*/`
+- **Complexity:** O(n·m) time where n=lines, m=max line length
 
 ## Solutions
 
+### Solution 1: State Machine — O(n·m) time, O(n·m) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function removeCommentsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function removeComments(source: string[]): string[] {
+  const result: string[] = [];
+  let inBlock = false;
+  let currentLine = "";
 
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function removeComments(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
+  for (const line of source) {
+    let i = 0;
+    while (i < line.length) {
+      if (inBlock) {
+        if (line[i] === "*" && line[i + 1] === "/") {
+          inBlock = false;
+          i += 2;
+        } else {
+          i++;
+        }
+      } else {
+        if (line[i] === "/" && line[i + 1] === "*") {
+          inBlock = true;
+          i += 2;
+        } else if (line[i] === "/" && line[i + 1] === "/") {
+          break; // skip rest of line
+        } else {
+          currentLine += line[i];
+          i++;
+        }
+      }
+    }
 
-// === Test Cases ===
-// console.log(removeComments(/* example 1 */)); // expected
-// console.log(removeComments(/* example 2 */)); // expected
-// console.log(removeComments(/* edge case */)); // expected
+    // End of line: emit if not inside block comment
+    if (!inBlock && currentLine.length > 0) {
+      result.push(currentLine);
+      currentLine = "";
+    }
+  }
+
+  return result;
+}
 ```
 
----
+### Solution 2: Join then scan — O(n·m) time, O(n·m) space
+
+```typescript
+function removeComments(source: string[]): string[] {
+  // Join with sentinel newlines to preserve line info
+  const lines: string[] = [];
+  let inBlock = false;
+  let buf = "";
+
+  for (const line of source) {
+    for (let i = 0; i < line.length; ) {
+      const two = line.slice(i, i + 2);
+      if (!inBlock && two === "/*") {
+        inBlock = true;
+        i += 2;
+      } else if (!inBlock && two === "//") {
+        break;
+      } else if (inBlock && two === "*/") {
+        inBlock = false;
+        i += 2;
+      } else if (!inBlock) {
+        buf += line[i];
+        i++;
+      } else {
+        i++;
+      }
+    }
+    if (!inBlock && buf !== "") {
+      lines.push(buf);
+      buf = "";
+    }
+  }
+
+  return lines;
+}
+```
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Remove Comments — LeetCode](https://leetcode.com/problems/remove-comments) — problem page
+| #    | Problem                     | Difficulty | Tags               |
+| ---- | --------------------------- | ---------- | ------------------ |
+| 68   | Text Justification          | Hard       | String, Simulation |
+| 271  | Encode and Decode Strings   | Medium     | String             |
+| 722  | Remove Comments             | Medium     | String             |
+| 1119 | Remove Vowels from a String | Easy       | String             |

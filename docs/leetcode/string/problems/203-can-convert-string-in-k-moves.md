@@ -7,100 +7,128 @@ tags: [Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/can-convert-string-in-k-moves"
 ---
 
-# Can Convert String in K Moves / Can Convert String in K Moves
+# Can Convert String in K Moves / Có Thể Chuyển Chuỗi Trong K Bước
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree)
+🟡 Medium
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Can Convert String in K Moves example:**
+> **Phép so sánh:** Giống đặt lịch hẹn — mỗi "bước dịch chuyển" cần một slot thời gian riêng. Nếu hai ký tự đều cần dịch 3 bước, chúng phải dùng các lượt khác nhau: lượt 3 và lượt 29 (3 + 26), ...
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+s="input", t="ouput", k=9
+Positions needing shift:
+ i→o: (15-9+26)%26=6, or wait: slots 6, 32, 58,...
+ n→u: (21-14)=7, slots 7, 33, 59,...
+ p→p: same → no shift needed
+ u→u: same
+ t→t: same
 
-Key insight: store complement for O(1) lookup
+For each diff d (1-25): need slots d, d+26, d+52,...
+Slot used by i-th occurrence = d + 26*(i-1)
+Must have slot <= k
 ```
-
----
 
 ## Problem Description
 
-Can Convert String in K Moves. ([LeetCode](https://leetcode.com/problems/can-convert-string-in-k-moves))
+Given strings `s` and `t` (same length) and integer `k`, determine if you can convert `s` to `t` in **at most k moves**. In move `i` (1-indexed) you can choose one character and shift it forward by `i` positions (mod 26). Each move is used at most once.
 
-Difficulty: Medium | Acceptance: 35.9%
+**Example 1:** `s="input"`, `t="ouput"`, `k=9` → `true`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `s="abc"`, `t="bcd"`, `k=10` → `false`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/can-convert-string-in-k-moves) for full constraints
-
----
+**Constraints:** `1 <= s.length <= 10^5`, `0 <= k <= 10^9`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **No-op shifts:** If `s[i] == t[i]`, skip — no move needed
+- **Shift value:** `diff = (t[i] - s[i] + 26) % 26`; if `diff == 0` skip
+- **Slot allocation:** Multiple positions with same diff use slots `diff, diff+26, diff+52,...`
+- **Key check:** For the j-th occurrence of diff `d`, required slot = `d + 26*(j-1)` ≤ k
+- **Count array:** Track how many times each diff value (1..25) has appeared so far
+- **Complexity:** O(n) time, O(26) = O(1) space
 
 ## Solutions
 
+### Solution 1: Count array + slot formula — O(n) time, O(1) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function canConvertStringInKMovesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function canConvertString(s: string, t: string, k: number): boolean {
+  if (s.length !== t.length) return false;
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function canConvertStringInKMoves(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
-}
+  // count[d] = how many positions already need shift of d
+  const count = new Array(26).fill(0);
 
-// === Test Cases ===
-// console.log(canConvertStringInKMoves(/* example 1 */)); // expected
-// console.log(canConvertStringInKMoves(/* example 2 */)); // expected
-// console.log(canConvertStringInKMoves(/* edge case */)); // expected
+  for (let i = 0; i < s.length; i++) {
+    const diff = (t.charCodeAt(i) - s.charCodeAt(i) + 26) % 26;
+    if (diff === 0) continue;
+
+    // The (count[diff]+1)-th occurrence of this diff uses slot: diff + 26*count[diff]
+    const requiredSlot = diff + 26 * count[diff];
+    if (requiredSlot > k) return false;
+
+    count[diff]++;
+  }
+
+  return true;
+}
 ```
 
----
+### Solution 2: Hash map approach (equivalent) — O(n) time, O(26) space
+
+```typescript
+function canConvertString(s: string, t: string, k: number): boolean {
+  if (s.length !== t.length) return false;
+
+  const usedSlots = new Map<number, number>();
+
+  for (let i = 0; i < s.length; i++) {
+    const diff = (t.charCodeAt(i) - s.charCodeAt(i) + 26) % 26;
+    if (diff === 0) continue;
+
+    const uses = usedSlots.get(diff) ?? 0;
+    const slot = diff + 26 * uses;
+
+    if (slot > k) return false;
+    usedSlots.set(diff, uses + 1);
+  }
+
+  return true;
+}
+```
+
+### Solution 3: Sorted slot assignment — O(n log n) time, O(n) space
+
+```typescript
+function canConvertString(s: string, t: string, k: number): boolean {
+  if (s.length !== t.length) return false;
+
+  const shifts: number[] = [];
+  for (let i = 0; i < s.length; i++) {
+    const diff = (t.charCodeAt(i) - s.charCodeAt(i) + 26) % 26;
+    if (diff !== 0) shifts.push(diff);
+  }
+
+  // Group by diff value and assign slots in order
+  shifts.sort((a, b) => a - b);
+  const slotOf = new Map<number, number>();
+
+  for (const d of shifts) {
+    const uses = slotOf.get(d) ?? 0;
+    const slot = d + 26 * uses;
+    if (slot > k) return false;
+    slotOf.set(d, uses + 1);
+  }
+
+  return true;
+}
+```
 
 ## 🔗 Related Problems
 
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree) — same pattern: Trie
-- [Isomorphic Strings](https://leetcode.com/problems/isomorphic-strings) — same pattern: Hash Map
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Can Convert String in K Moves — LeetCode](https://leetcode.com/problems/can-convert-string-in-k-moves) — problem page
+| #    | Problem                         | Difficulty | Tags       |
+| ---- | ------------------------------- | ---------- | ---------- |
+| 205  | Isomorphic Strings              | Easy       | Hash Table |
+| 290  | Word Pattern                    | Easy       | Hash Table |
+| 1323 | Maximum 69 Number               | Easy       | Greedy     |
+| 2027 | Minimum Moves to Convert String | Easy       | Greedy     |

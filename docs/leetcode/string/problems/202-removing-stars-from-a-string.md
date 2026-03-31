@@ -7,99 +7,105 @@ tags: [String, Stack, Simulation]
 leetcode_url: "https://leetcode.com/problems/removing-stars-from-a-string"
 ---
 
-# Removing Stars From a String / Removing Stars From a String
+# Removing Stars From a String / Xóa Dấu Sao Khỏi Chuỗi
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) | [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor)
+🟡 Medium
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
-
-**Pattern Recognition:**
-
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Removing Stars From a String example:**
+> **Phép so sánh:** Giống phím Backspace trên bàn phím — mỗi `*` xóa ký tự cuối cùng bạn gõ. Stack là cấu trúc hoàn hảo: push ký tự thường, pop khi gặp `*`.
 
 ```
-stack = []
-
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+s = "leet**cod*e"
+Stack evolution:
+ 'l' → [l]
+ 'e' → [l,e]
+ 'e' → [l,e,e]
+ 't' → [l,e,e,t]
+ '*' → [l,e,e]   (pop 't')
+ '*' → [l,e]     (pop 'e')
+ 'c' → [l,e,c]
+ 'o' → [l,e,c,o]
+ 'd' → [l,e,c,o,d]
+ '*' → [l,e,c,o] (pop 'd')
+ 'e' → [l,e,c,o,e]
+Result: "lecoe"
 ```
-
----
 
 ## Problem Description
 
-Removing Stars From a String. ([LeetCode](https://leetcode.com/problems/removing-stars-from-a-string))
+Given string `s` containing lowercase letters and `*`. Each `*` removes the **nearest non-star character to its left**. Return the resulting string after processing all stars.
 
-Difficulty: Medium | Acceptance: 78.0%
+**Example 1:** `"leet**cod*e"` → `"lecoe"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `"erase*****"` → `""`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/removing-stars-from-a-string) for full constraints
-
----
+**Constraints:** `1 <= s.length <= 10^5`, always valid (enough chars before each `*`)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Stack = O(n) solution:** Push regular chars, pop on `*` — clean and intuitive
+- **Array-as-stack:** Using `string[]` + `join('')` at end avoids repeated string concatenation
+- **Two-pointer alternative:** Maintain write pointer `w`; increment on char, decrement on `*` — O(1) space
+- **Guaranteed valid input:** No need to check if stack is empty before pop
+- **Complexity:** O(n) time, O(n) space
+- **Interview insight:** Mô phỏng text editor — bài này thường xuất hiện trong system design discussion
 
 ## Solutions
 
+### Solution 1: Stack — O(n) time, O(n) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function removingStarsFromAStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function removeStars(s: string): string {
+  const stack: string[] = [];
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function removingStarsFromAString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
-}
+  for (const ch of s) {
+    if (ch === "*") {
+      stack.pop();
+    } else {
+      stack.push(ch);
+    }
+  }
 
-// === Test Cases ===
-// console.log(removingStarsFromAString(/* example 1 */)); // expected
-// console.log(removingStarsFromAString(/* example 2 */)); // expected
-// console.log(removingStarsFromAString(/* edge case */)); // expected
+  return stack.join("");
+}
 ```
 
----
+### Solution 2: Two-pointer (in-place) — O(n) time, O(n) space for output
+
+```typescript
+function removeStars(s: string): string {
+  const arr = s.split("");
+  let write = 0;
+
+  for (let read = 0; read < arr.length; read++) {
+    if (arr[read] === "*") {
+      write--; // "delete" last written char
+    } else {
+      arr[write++] = arr[read];
+    }
+  }
+
+  return arr.slice(0, write).join("");
+}
+```
+
+### Solution 3: Functional / reduce — O(n) time, O(n) space
+
+```typescript
+function removeStars(s: string): string {
+  return s.split("").reduce((acc, ch) => {
+    if (ch === "*") return acc.slice(0, -1);
+    return acc + ch;
+  }, "");
+}
+```
 
 ## 🔗 Related Problems
 
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor) — same pattern: Linked List
-- [Remove All Occurrences of a Substring](https://leetcode.com/problems/remove-all-occurrences-of-a-substring) — same pattern: Stack
-- [Minimum String Length After Removing Substrings](https://leetcode.com/problems/minimum-string-length-after-removing-substrings) — same pattern: Stack
-- [Removing Stars From a String — LeetCode](https://leetcode.com/problems/removing-stars-from-a-string) — problem page
+| #    | Problem                                    | Difficulty | Tags                |
+| ---- | ------------------------------------------ | ---------- | ------------------- |
+| 844  | Backspace String Compare                   | Easy       | Two Pointers, Stack |
+| 2390 | Removing Stars From a String               | Medium     | Stack               |
+| 1003 | Check If Word Is Valid After Substitutions | Medium     | Stack               |
+| 2716 | Minimize String Length                     | Easy       | Hash Table          |
