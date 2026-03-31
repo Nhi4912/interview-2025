@@ -7,97 +7,97 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/minimum-distance-to-the-target-element"
 ---
 
-# Minimum Distance to the Target Element / Minimum Distance to the Target Element
+# Minimum Distance to the Target Element / Khoảng Cách Nhỏ Nhất Đến Phần Tử Mục Tiêu
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
-
----
+> **Difficulty**: 🟢 Easy | **Category**: Array | **Pattern**: Linear Scan / Min Tracking
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Minimum Distance to the Target Element" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Vietnamese analogy**: Như tìm người bạn gần nhất trong hàng ngang — bạn biết vị trí của mình (start), và tìm người đó (target) gần bạn nhất theo khoảng cách ghế ngồi.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Single linear scan to find all indices where `nums[i] == target`
+- Track minimum `|i - start|` across all matching positions
+- No sorting needed — just iterate once
 
-**Visual — Minimum Distance to the Target Element example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
-```
+nums  = [1, 2, 3, 4, 5], target = 5, start = 3
+       idx: 0  1  2  3  4
 
----
+Find all i where nums[i] == 5 → i=4
+|4 - 3| = 1
+
+nums  = [1, 2, 3, 4, 5, 2, 3], target = 2, start = 4
+i=1: |1-4|=3
+i=5: |5-4|=1  ← minimum
+Answer: 1
+```
 
 ## Problem Description
 
-Minimum Distance to the Target Element. ([LeetCode](https://leetcode.com/problems/minimum-distance-to-the-target-element))
+Given array `nums`, integer `start`, and integer `target`, find the minimum absolute distance `|i - start|` for all `i` where `nums[i] == target`. It's guaranteed that `target` exists in `nums`.
 
-Difficulty: Easy | Acceptance: 54.2%
+**Example 1:** `nums=[1,2,3,4,5], target=5, start=3` → `1`
+**Example 2:** `nums=[1,2,3,4,5,2,3], target=2, start=4` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-distance-to-the-target-element) for full constraints
-
----
+**Constraints:** `1 ≤ nums.length ≤ 1000`, target guaranteed to exist
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Is `start` always a valid index? (Yes, per constraints)
+2. **Approach**: Linear scan — O(n) one pass, track min distance
+3. **Edge cases**: target appears once, target equals `nums[start]` (distance=0)
+4. **Optimize**: Could break early if distance = 0 found
+5. **Follow-up**: What if multiple queries? (preprocess indices with a map)
+6. **Complexity**: Time O(n), Space O(1)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumDistanceToTheTargetElementBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Single linear scan — Time: O(n) | Space: O(1)
+function getMinDistance(nums: number[], target: number, start: number): number {
+  let minDist = Infinity;
+
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] === target) {
+      minDist = Math.min(minDist, Math.abs(i - start));
+      if (minDist === 0) return 0; // can't do better
+    }
+  }
+
+  return minDist;
 }
 
-/**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumDistanceToTheTargetElement(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+// Solution 2: Reduce approach — Time: O(n) | Space: O(1)
+function getMinDistance2(nums: number[], target: number, start: number): number {
+  return nums.reduce(
+    (min, val, idx) => (val === target ? Math.min(min, Math.abs(idx - start)) : min),
+    Infinity,
+  );
 }
 
-// === Test Cases ===
-// console.log(minimumDistanceToTheTargetElement(/* example 1 */)); // expected
-// console.log(minimumDistanceToTheTargetElement(/* example 2 */)); // expected
-// console.log(minimumDistanceToTheTargetElement(/* edge case */)); // expected
+// Solution 3: Collect indices then find min — Time: O(n) | Space: O(k)
+function getMinDistance3(nums: number[], target: number, start: number): number {
+  const indices = nums.map((v, i) => (v === target ? i : -1)).filter((i) => i !== -1);
+
+  return Math.min(...indices.map((i) => Math.abs(i - start)));
+}
+
+// Tests
+console.log(getMinDistance([1, 2, 3, 4, 5], 5, 3)); // 1
+console.log(getMinDistance([1, 2, 3, 4, 5, 2, 3], 2, 4)); // 1
+console.log(getMinDistance([1], 1, 0)); // 0
+console.log(getMinDistance2([1, 2, 3, 4, 5], 5, 3)); // 1
+console.log(getMinDistance3([5, 3, 6, 5, 2], 5, 0)); // 0
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Minimum Distance to the Target Element — LeetCode](https://leetcode.com/problems/minimum-distance-to-the-target-element) — problem page
+| Problem                                                                                                                     | Relationship                       |
+| --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | --- | ---------------- |
+| [Find Nearest Point (LeetCode 1779)](https://leetcode.com/problems/find-nearest-point-that-has-the-same-x-or-y-coordinate/) | Minimum distance in 2D coordinates |
+| [Minimum Absolute Difference (LeetCode 1200)](https://leetcode.com/problems/minimum-absolute-difference/)                   | Minimum                            | a-b | between elements |
+| [K Closest Points to Origin (LeetCode 973)](https://leetcode.com/problems/k-closest-points-to-origin/)                      | Distance-based element selection   |

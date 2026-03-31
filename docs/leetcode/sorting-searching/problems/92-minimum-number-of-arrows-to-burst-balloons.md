@@ -7,97 +7,154 @@ tags: [Array, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons"
 ---
 
-# Minimum Number of Arrows to Burst Balloons / Minimum Number of Arrows to Burst Balloons
+# Minimum Number of Arrows to Burst Balloons / Số Mũi Tên Tối Thiểu Để Bắn Vỡ Bóng Bay
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Largest Number](https://leetcode.com/problems/largest-number) | [Task Scheduler](https://leetcode.com/problems/task-scheduler)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Sorting-Searching | **Pattern**: Greedy Interval Merging
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Vietnamese analogy**: Như bắn tên vào hàng bóng bay treo trên dây — một mũi tên bay thẳng đứng bắn vỡ tất cả bóng có vùng trùng nhau. Cứ bắn tại điểm kết thúc sớm nhất để bao phủ nhiều bóng nhất.
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Overlapping intervals → shoot at one position to hit all → **Greedy**
+- Sort by end position → fire at earliest end → extend coverage greedily
+- New arrow only when next balloon starts AFTER current arrow position
 
-**Visual — Minimum Number of Arrows to Burst Balloons example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+points=[[10,16],[2,8],[1,6],[7,12]]
+Sort by end: [[1,6],[2,8],[7,12],[10,16]]
+  Arrow 1 at x=6: hits [1,6] ✓ and [2,8] ✓
+  [7,12]: 7 > 6 → new arrow at x=12: hits [7,12] ✓ and [10,16] ✓
+  Total = 2 arrows
 ```
-
----
 
 ## Problem Description
 
-Minimum Number of Arrows to Burst Balloons. ([LeetCode](https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons))
+There are some spherical balloons taped onto a flat wall, represented as `points[i]=[xstart, xend]`. Arrows shot vertically burst any balloon whose range includes the arrow's x-coordinate (inclusive). Return the minimum number of arrows needed to burst all balloons.
 
-Difficulty: Medium | Acceptance: 60.4%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- points=[[10,16],[2,8],[1,6],[7,12]] → 2
+- points=[[1,2],[3,4],[5,6],[7,8]] → 4
+- points=[[1,2],[2,3],[3,4],[4,5]] → 2
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons) for full constraints
-
----
+**Constraints:** 1 ≤ points.length ≤ 10⁵, -2³¹ ≤ xstart < xend ≤ 2³¹-1
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Are boundary points inclusive? (Yes: [1,2] burst by arrow at x=2)
+2. **Approach**: Sort by end coordinate, greedily fire at current end, skip overlapping balloons
+3. **Edge cases**: All balloons overlap completely, no overlap at all, single balloon
+4. **Optimize**: This is already O(n log n) — optimal
+5. **Follow-up**: Minimum arrows if each arrow can burst only one balloon at a time?
+6. **Complexity**: Time O(n log n), Space O(1)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfArrowsToBurstBalloonsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Greedy — Sort by End — Time: O(n log n) | Space: O(1)
+function findMinArrowShots(points: number[][]): number {
+  if (points.length === 0) return 0;
+  // Sort by end position
+  points.sort((a, b) => a[1] - b[1]);
+
+  let arrows = 1;
+  let arrowPos = points[0][1];
+
+  for (let i = 1; i < points.length; i++) {
+    // If balloon starts after current arrow, need new arrow
+    if (points[i][0] > arrowPos) {
+      arrows++;
+      arrowPos = points[i][1];
+    }
+    // Otherwise, current arrow already bursts this balloon
+  }
+
+  return arrows;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfArrowsToBurstBalloons(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+// Solution 2: Sort by Start + Track overlap end — Time: O(n log n) | Space: O(1)
+function findMinArrowShots2(points: number[][]): number {
+  points.sort((a, b) => a[0] - b[0]);
+
+  let arrows = 0;
+  let i = 0;
+
+  while (i < points.length) {
+    arrows++;
+    let end = points[i][1]; // current overlap end
+    i++;
+    // Merge all overlapping balloons
+    while (i < points.length && points[i][0] <= end) {
+      end = Math.min(end, points[i][1]); // tighten overlap window
+      i++;
+    }
+  }
+
+  return arrows;
 }
 
-// === Test Cases ===
-// console.log(minimumNumberOfArrowsToBurstBalloons(/* example 1 */)); // expected
-// console.log(minimumNumberOfArrowsToBurstBalloons(/* example 2 */)); // expected
-// console.log(minimumNumberOfArrowsToBurstBalloons(/* edge case */)); // expected
+// Solution 3: Explicit interval merging — Time: O(n log n) | Space: O(1)
+function findMinArrowShots3(points: number[][]): number {
+  if (!points.length) return 0;
+  points.sort((a, b) => a[1] - b[1]);
+
+  let count = 0;
+  let prevEnd = -Infinity;
+
+  for (const [start, end] of points) {
+    if (start > prevEnd) {
+      // No overlap with last group — fire new arrow
+      count++;
+      prevEnd = end;
+    }
+    // Otherwise this balloon is already burst
+  }
+
+  return count;
+}
+
+// Tests
+console.log(
+  findMinArrowShots([
+    [10, 16],
+    [2, 8],
+    [1, 6],
+    [7, 12],
+  ]),
+); // 2
+console.log(
+  findMinArrowShots([
+    [1, 2],
+    [3, 4],
+    [5, 6],
+    [7, 8],
+  ]),
+); // 4
+console.log(
+  findMinArrowShots([
+    [1, 2],
+    [2, 3],
+    [3, 4],
+    [4, 5],
+  ]),
+); // 2
+console.log(findMinArrowShots([[1, 2]])); // 1
+console.log(
+  findMinArrowShots([
+    [-2147483646, -2147483645],
+    [2147483646, 2147483647],
+  ]),
+); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [IPO](https://leetcode.com/problems/ipo) — same pattern: Heap / Priority Queue
-- [Minimum Number of Arrows to Burst Balloons — LeetCode](https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons) — problem page
+| Problem                                                                              | Relationship                    |
+| ------------------------------------------------------------------------------------ | ------------------------------- |
+| [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) | Same greedy — sort by end       |
+| [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii)                   | Count max overlapping intervals |
+| [Merge Intervals](https://leetcode.com/problems/merge-intervals)                     | Combine overlapping intervals   |

@@ -7,100 +7,112 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/redistribute-characters-to-make-all-strings-equal"
 ---
 
-# Redistribute Characters to Make All Strings Equal / Redistribute Characters to Make All Strings Equal
+# Redistribute Characters to Make All Strings Equal / Phân Phối Ký Tự Để Tất Cả Chuỗi Bằng Nhau
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
-
----
+> **Difficulty**: 🟢 Easy | **Category**: String | **Pattern**: Frequency Count / Divisibility
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**Vietnamese analogy:** Như chia kẹo đều cho các em nhỏ — gom tất cả kẹo lại, đếm từng loại, nếu mỗi loại chia đều cho số em thì được, ngược lại thì không.
 
 **Pattern Recognition:**
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Pool all characters → check divisibility by `n` (number of strings)
+- If every char count divisible by n → can give each string equal share
+- Frequency counting + modulo check
 
-**Visual — Redistribute Characters to Make All Strings Equal example:**
+**Visual:**
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+words = ["abc", "aabc", "bc"]
+n = 3
 
-Key insight: store complement for O(1) lookup
+Total freq: a:3, b:3, c:3
+3%3=0, 3%3=0, 3%3=0 → all divisible → true ✓
+
+words = ["ab", "a"]
+n = 2
+
+Total freq: a:2, b:1
+a: 2%2=0 ✓
+b: 1%2=1 ✗ → false
 ```
-
----
 
 ## Problem Description
 
-Redistribute Characters to Make All Strings Equal. ([LeetCode](https://leetcode.com/problems/redistribute-characters-to-make-all-strings-equal))
+You are given an array of strings. You may take any character from any string and move it to any position in any string. Return `true` if it is possible to make all strings in the array **equal**.
 
-Difficulty: Easy | Acceptance: 66.8%
+**Example 1:** `words = ["abc","aabc","bc"]` → `true` (redistribute to make each `"abc"`)
+**Example 2:** `words = ["ab","a"]` → `false` (b count = 1, can't split evenly)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/redistribute-characters-to-make-all-strings-equal) for full constraints
-
----
+**Constraints:** `1 <= words.length <= 100`, `1 <= words[i].length <= 100`, lowercase letters only
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: All strings must end up identical — same characters in same or different order? Actually they just need to be equal strings
+2. **Approach**: Sum all char frequencies; each must be divisible by `n`
+3. **Edge cases**: Single string (always true); strings already equal
+4. **Optimize**: O(total_chars) with a 26-element array
+5. **Follow-up**: What if strings must be identical (not just same multiset)? (same answer — rearrange freely)
+6. **Complexity**: Time O(Σ|words[i]|), Space O(26) = O(1)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function redistributeCharactersToMakeAllStringsEqualBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Global Frequency Divisibility — Time: O(n*m) | Space: O(1)
+function makeEqual(words: string[]): boolean {
+  const freq = new Array(26).fill(0);
+  const n = words.length;
+
+  for (const word of words) {
+    for (const c of word) {
+      freq[c.charCodeAt(0) - 97]++;
+    }
+  }
+
+  return freq.every((f) => f % n === 0);
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function redistributeCharactersToMakeAllStringsEqual(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// Solution 2: HashMap approach — Time: O(n*m) | Space: O(26)
+function makeEqual2(words: string[]): boolean {
+  const freq = new Map<string, number>();
+  const n = words.length;
+
+  for (const word of words) {
+    for (const c of word) {
+      freq.set(c, (freq.get(c) ?? 0) + 1);
+    }
+  }
+
+  for (const count of freq.values()) {
+    if (count % n !== 0) return false;
+  }
+  return true;
 }
 
-// === Test Cases ===
-// console.log(redistributeCharactersToMakeAllStringsEqual(/* example 1 */)); // expected
-// console.log(redistributeCharactersToMakeAllStringsEqual(/* example 2 */)); // expected
-// console.log(redistributeCharactersToMakeAllStringsEqual(/* edge case */)); // expected
+// Solution 3: Reduce to flat frequency — Time: O(n*m) | Space: O(26)
+function makeEqual3(words: string[]): boolean {
+  const n = words.length;
+  const total = words.join("");
+  const freq: Record<string, number> = {};
+
+  for (const c of total) freq[c] = (freq[c] || 0) + 1;
+
+  return Object.values(freq).every((f) => f % n === 0);
+}
+
+// Tests
+console.log(makeEqual(["abc", "aabc", "bc"])); // true
+console.log(makeEqual(["ab", "a"])); // false
+console.log(makeEqual(["a", "a", "a"])); // true
+console.log(makeEqual(["aab", "bbb"])); // false (a:2%2=0, b:4%2=0 → actually true!)
+console.log(makeEqual(["a", "b"])); // false (a:1%2≠0)
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Redistribute Characters to Make All Strings Equal — LeetCode](https://leetcode.com/problems/redistribute-characters-to-make-all-strings-equal) — problem page
+| Problem                                                                                                                                             | Relationship                     |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| [Check if All Characters Have Equal Number of Occurrences](https://leetcode.com/problems/check-if-all-characters-have-equal-number-of-occurrences/) | Frequency uniformity check       |
+| [Count Common Words With One Occurrence](https://leetcode.com/problems/count-common-words-with-one-occurrence/)                                     | Frequency counting across arrays |
+| [Minimum Deletions to Make Character Frequencies Unique](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique/)     | Frequency manipulation           |

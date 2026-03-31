@@ -7,104 +7,156 @@ tags: [Array, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/process-tasks-using-servers"
 ---
 
-# Process Tasks Using Servers / Process Tasks Using Servers
+# Process Tasks Using Servers / Xử Lý Công Việc Bằng Máy Chủ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) | [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Sorting-Searching | **Pattern**: Dual Heap Simulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
+**Vietnamese analogy**: Như phân công công việc ở bưu điện — có hàng đợi máy rảnh và hàng đợi máy bận. Khi đến giờ task mới, đưa máy bận đã xong về hàng rảnh, rồi giao task cho máy rảnh ưu tiên nhất.
 
 **Pattern Recognition:**
 
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Free servers need priority → min-heap by (weight, index) → **Dual Heap**
+- Busy servers finish at future time → min-heap by (finish_time, index)
+- Simulate time: at task i's arrival, release finished servers, assign best free server
 
-**Visual — Process Tasks Using Servers example:**
+**Visual:**
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+servers=[3,3,2], tasks=[1,2,3,2,1,2]
+free heap (weight,idx): [(2,2),(3,0),(3,1)]
+busy heap (finish,weight,idx): []
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+t=0: task[0]=1 → assign server 2(w=2): free=[(3,0),(3,1)], busy=[(1,2,2)]
+t=1: task[1]=2 → server 2 done(t=1) → free=[(2,2),(3,0),(3,1)] → assign 2: busy=[(3,2,2),(3,0),(3,1)]
+...
+result=[2,2,0,2,1,2]
 ```
-
----
 
 ## Problem Description
 
-Process Tasks Using Servers. ([LeetCode](https://leetcode.com/problems/process-tasks-using-servers))
+You have `servers[i]` (weight values) servers and `tasks[j]` (duration) tasks. Task `j` arrives at time `j`. Assign each task to the free server with smallest weight (break ties by index). If no server is free, wait until the earliest one becomes free. Return the server index assigned to each task.
 
-Difficulty: Medium | Acceptance: 41.1%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- servers=[3,3,2], tasks=[1,2,3,2,1,2] → [2,2,0,2,1,2]
+- servers=[5,1,4,3,2], tasks=[2,1,2,4,5,2,1] → [1,4,1,4,1,3,2]
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/process-tasks-using-servers) for full constraints
-
----
+**Constraints:** 1 ≤ servers.length, tasks.length ≤ 2×10⁵, 1 ≤ servers[i], tasks[j] ≤ 2×10⁵
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: How to break ties between servers? (smallest weight, then smallest index)
+2. **Approach**: Two min-heaps: free servers (weight, idx) and busy servers (finishTime, weight, idx)
+3. **Edge cases**: More tasks than servers (must wait), all servers same weight, tasks of length 1
+4. **Optimize**: JavaScript lacks built-in heap — must implement or simulate with sorted structures
+5. **Follow-up**: What if tasks have priorities too?
+6. **Complexity**: Time O((n+m) log n), Space O(n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function processTasksUsingServersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Min-Heap helper
+class MinHeap<T> {
+  private data: T[] = [];
+  constructor(private compare: (a: T, b: T) => number) {}
+
+  push(val: T): void {
+    this.data.push(val);
+    this.bubbleUp(this.data.length - 1);
+  }
+
+  pop(): T | undefined {
+    if (!this.data.length) return undefined;
+    const top = this.data[0];
+    const last = this.data.pop()!;
+    if (this.data.length > 0) {
+      this.data[0] = last;
+      this.sinkDown(0);
+    }
+    return top;
+  }
+
+  peek(): T | undefined {
+    return this.data[0];
+  }
+  size(): number {
+    return this.data.length;
+  }
+
+  private bubbleUp(i: number): void {
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (this.compare(this.data[i], this.data[parent]) < 0) {
+        [this.data[i], this.data[parent]] = [this.data[parent], this.data[i]];
+        i = parent;
+      } else break;
+    }
+  }
+
+  private sinkDown(i: number): void {
+    const n = this.data.length;
+    while (true) {
+      let min = i;
+      const l = 2 * i + 1,
+        r = 2 * i + 2;
+      if (l < n && this.compare(this.data[l], this.data[min]) < 0) min = l;
+      if (r < n && this.compare(this.data[r], this.data[min]) < 0) min = r;
+      if (min === i) break;
+      [this.data[i], this.data[min]] = [this.data[min], this.data[i]];
+      i = min;
+    }
+  }
 }
 
-/**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function processTasksUsingServers(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
+// Solution 1: Dual Min-Heap Simulation — Time: O((n+m) log n) | Space: O(n)
+function assignTasks(servers: number[], tasks: number[]): number[] {
+  // Free: [weight, index]
+  const free = new MinHeap<[number, number]>((a, b) => a[0] - b[0] || a[1] - b[1]);
+  // Busy: [finishTime, weight, index]
+  const busy = new MinHeap<[number, number, number]>(
+    (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2],
+  );
+
+  for (let i = 0; i < servers.length; i++) free.push([servers[i], i]);
+
+  const result: number[] = [];
+
+  for (let t = 0; t < tasks.length; t++) {
+    const taskTime = t; // task j arrives at time j
+
+    // Release servers that finished by time t
+    while (busy.size() > 0 && busy.peek()![0] <= taskTime) {
+      const [, w, idx] = busy.pop()!;
+      free.push([w, idx]);
+    }
+
+    if (free.size() > 0) {
+      const [w, idx] = free.pop()!;
+      result.push(idx);
+      busy.push([taskTime + tasks[t], w, idx]);
+    } else {
+      // No free server: wait for earliest
+      const [finishTime, w, idx] = busy.pop()!;
+      result.push(idx);
+      busy.push([finishTime + tasks[t], w, idx]);
+    }
+  }
+
+  return result;
 }
 
-// === Test Cases ===
-// console.log(processTasksUsingServers(/* example 1 */)); // expected
-// console.log(processTasksUsingServers(/* example 2 */)); // expected
-// console.log(processTasksUsingServers(/* edge case */)); // expected
+// Tests
+console.log(assignTasks([3, 3, 2], [1, 2, 3, 2, 1, 2])); // [2,2,0,2,1,2]
+console.log(assignTasks([5, 1, 4, 3, 2], [2, 1, 2, 4, 5, 2, 1])); // [1,4,1,4,1,3,2]
+console.log(assignTasks([1], [1, 2, 3])); // [0,0,0]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Process Tasks Using Servers — LeetCode](https://leetcode.com/problems/process-tasks-using-servers) — problem page
+| Problem                                                                                                          | Relationship                        |
+| ---------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)                                                   | Assign tasks with cooldowns         |
+| [Find Servers That Handled Most Requests](https://leetcode.com/problems/find-servers-that-handled-most-requests) | Similar server-task assignment      |
+| [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii)                                               | Min-heap to track room availability |

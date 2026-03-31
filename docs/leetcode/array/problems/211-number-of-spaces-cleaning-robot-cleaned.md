@@ -7,97 +7,160 @@ tags: [Array, Matrix, Simulation]
 leetcode_url: "https://leetcode.com/problems/number-of-spaces-cleaning-robot-cleaned"
 ---
 
-# Number of Spaces Cleaning Robot Cleaned / Number of Spaces Cleaning Robot Cleaned
+# Number of Spaces Cleaning Robot Cleaned / Số Ô Robot Lau Đã Lau
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Array | **Pattern**: Matrix Simulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Number of Spaces Cleaning Robot Cleaned" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Vietnamese analogy**: Giống như con robot hút bụi Roomba di chuyển thẳng qua phòng — khi gặp tường hoặc ô đã quét, nó rẽ phải 90°, cứ thế cho đến khi không còn đường nào mới.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- State = (row, col, direction) — robot loops when revisiting same state
+- Directions cycle: right → down → left → up → right (0→1→2→3→0)
+- Track visited cells AND visited states to detect termination
 
-**Visual — Number of Spaces Cleaning Robot Cleaned example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+room = [[1,1,0],[1,1,1],[0,1,1]]  (0=wall, 1=space)
+Start (0,0) dir=RIGHT →
 
----
+(0,0)→(0,1)→WALL  turn DOWN
+(0,1)→(1,1)→(2,1)→WALL  turn LEFT
+(2,1)→(2,0)→WALL  turn UP
+...
+Cleaned = {(0,0),(0,1),(1,1),(2,1)} = 4 spaces
+```
 
 ## Problem Description
 
-Number of Spaces Cleaning Robot Cleaned. ([LeetCode](https://leetcode.com/problems/number-of-spaces-cleaning-robot-cleaned))
+A cleaning robot starts at `(0,0)` in a room grid moving right. A cell with `room[r][c] = 1` is a space; `0` is a wall. When it hits a wall or already-cleaned cell, it turns 90° clockwise. It stops when it returns to a state `(row, col, direction)` it has already visited.
 
-Difficulty: Medium | Acceptance: 62.1%
+**Example 1:** `room = [[1,1,0],[1,1,1],[0,1,1]]` → `Output: 7`
+**Example 2:** `room = [[1,1,1,1],[1,0,0,1],[1,1,1,1]]` → `Output: 10`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-spaces-cleaning-robot-cleaned) for full constraints
-
----
+**Constraints:** `m, n ≤ 300`, cells are `0` or `1`, `room[0][0] == 1`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Does the robot stop or keep going after a full cycle? (Stops when state repeats)
+2. **Approach**: Simulate with a visited-state set of (row, col, dir)
+3. **Edge cases**: Single-cell room, room that's all walls except start
+4. **Optimize**: Early termination when state revisited — O(m×n×4) states max
+5. **Follow-up**: What if robot can start anywhere?
+6. **Complexity**: Time O(m×n), Space O(m×n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfSpacesCleaningRobotCleanedBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Simulation with State Tracking — Time: O(m*n) | Space: O(m*n)
+function numberOfCleanRooms(room: number[][]): number {
+  const m = room.length;
+  const n = room[0].length;
+  // directions: right, down, left, up
+  const dr = [0, 1, 0, -1];
+  const dc = [1, 0, -1, 0];
+
+  const cleaned = new Set<string>();
+  const visited = new Set<string>();
+
+  let r = 0,
+    c = 0,
+    dir = 0;
+
+  while (true) {
+    const state = `${r},${c},${dir}`;
+    if (visited.has(state)) break;
+    visited.add(state);
+    cleaned.add(`${r},${c}`);
+
+    const nr = r + dr[dir];
+    const nc = c + dc[dir];
+
+    if (nr < 0 || nr >= m || nc < 0 || nc >= n || room[nr][nc] === 0) {
+      // Turn right 90°
+      dir = (dir + 1) % 4;
+    } else {
+      r = nr;
+      c = nc;
+    }
+  }
+
+  return cleaned.size;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfSpacesCleaningRobotCleaned(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+// Solution 2: Bit-packed state for memory efficiency — Time: O(m*n) | Space: O(m*n)
+function numberOfCleanRooms2(room: number[][]): number {
+  const m = room.length;
+  const n = room[0].length;
+  const dr = [0, 1, 0, -1];
+  const dc = [1, 0, -1, 0];
+
+  // Pack state as integer: row*n*4 + col*4 + dir
+  const visited = new Set<number>();
+  const cleanedCells = new Set<number>();
+
+  let r = 0,
+    c = 0,
+    dir = 0;
+
+  while (true) {
+    const state = r * n * 4 + c * 4 + dir;
+    if (visited.has(state)) break;
+    visited.add(state);
+    cleanedCells.add(r * n + c);
+
+    const nr = r + dr[dir];
+    const nc = c + dc[dir];
+
+    if (nr < 0 || nr >= m || nc < 0 || nc >= n || room[nr][nc] === 0) {
+      dir = (dir + 1) % 4;
+    } else {
+      r = nr;
+      c = nc;
+    }
+  }
+
+  return cleanedCells.size;
 }
 
-// === Test Cases ===
-// console.log(numberOfSpacesCleaningRobotCleaned(/* example 1 */)); // expected
-// console.log(numberOfSpacesCleaningRobotCleaned(/* example 2 */)); // expected
-// console.log(numberOfSpacesCleaningRobotCleaned(/* edge case */)); // expected
+// Tests
+console.log(
+  numberOfCleanRooms([
+    [1, 1, 0],
+    [1, 1, 1],
+    [0, 1, 1],
+  ]),
+); // 7
+console.log(
+  numberOfCleanRooms([
+    [1, 1, 1, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+  ]),
+); // 10
+console.log(numberOfCleanRooms([[1]])); // 1
+console.log(
+  numberOfCleanRooms2([
+    [1, 1, 0],
+    [1, 1, 1],
+    [0, 1, 1],
+  ]),
+); // 7
+console.log(
+  numberOfCleanRooms2([
+    [1, 0],
+    [1, 1],
+  ]),
+); // 3
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Game of Life](https://leetcode.com/problems/game-of-life) — same pattern: Matrix / Simulation
-- [Candy Crush](https://leetcode.com/problems/candy-crush) — same pattern: Two Pointers
-- [Number of Spaces Cleaning Robot Cleaned — LeetCode](https://leetcode.com/problems/number-of-spaces-cleaning-robot-cleaned) — problem page
+| Problem                                                                                 | Relationship                     |
+| --------------------------------------------------------------------------------------- | -------------------------------- |
+| [Robot Room Cleaner (LeetCode 489)](https://leetcode.com/problems/robot-room-cleaner/)  | Same robot concept, unknown room |
+| [Spiral Matrix (LeetCode 54)](https://leetcode.com/problems/spiral-matrix/)             | Directional turning pattern      |
+| [Number of Enclaves (LeetCode 1020)](https://leetcode.com/problems/number-of-enclaves/) | Matrix reachability counting     |

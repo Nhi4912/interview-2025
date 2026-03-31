@@ -7,97 +7,150 @@ tags: [Hash Table, Math, String, Combinatorics, Counting]
 leetcode_url: "https://leetcode.com/problems/count-anagrams"
 ---
 
-# Count Anagrams / Count Anagrams
+# Count Anagrams / Đếm Các Hoán Vị Từ
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Count the Number of Good Subsequences](https://leetcode.com/problems/count-the-number-of-good-subsequences) | [Right Triangles](https://leetcode.com/problems/right-triangles)
-
----
+> **Difficulty**: 🔴 Hard | **Category**: String | **Pattern**: Combinatorics + Modular Arithmetic
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
+**Vietnamese analogy:** Như đếm số cách xếp các chữ cái của từng từ trong câu — mỗi từ có số hoán vị riêng, nhân tất cả lại ra đáp số (modulo tránh tràn số).
 
 **Pattern Recognition:**
 
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Each word contributes `word.length! / (freq[c1]! * freq[c2]! * ...)` permutations
+- Multiply across all words (mod 10^9+7)
+- Need modular inverse for division in modular arithmetic
 
-**Visual — Count Anagrams example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
-```
+s = "too hot"
+Words: ["too", "hot"]
 
----
+"too": len=3, freq={t:1,o:2}
+  perms = 3! / (1! * 2!) = 6 / 2 = 3
+
+"hot": len=3, freq={h:1,o:1,t:1}
+  perms = 3! / (1! * 1! * 1!) = 6
+
+Total = 3 * 6 = 18
+```
 
 ## Problem Description
 
-Count Anagrams. ([LeetCode](https://leetcode.com/problems/count-anagrams))
+Given a string `s` of words separated by spaces, return the total number of ways to arrange letters of each word (anagrams), multiplied across all words. Answer mod `10^9 + 7`.
 
-Difficulty: Hard | Acceptance: 35.2%
+**Example 1:** `s = "too hot"` → `18`
+**Example 2:** `s = "aa"` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-anagrams) for full constraints
-
----
+**Constraints:** `2 <= s.length <= 10^5`, `s` has no leading/trailing spaces, words separated by single space, lowercase letters only
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Each word is permuted independently; multiply all counts
+2. **Approach**: Precompute factorials and modular inverses; for each word compute multinomial coefficient
+3. **Edge cases**: All same chars in a word → 1 permutation; single-char word → 1
+4. **Optimize**: Precompute fact[] and inv_fact[] up to max length once
+5. **Follow-up**: What if we want distinct permutations only? (same approach, multinomial handles it)
+6. **Complexity**: Time O(n), Space O(n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countAnagramsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Factorial + Modular Inverse (Fermat's Little Theorem) — Time: O(n) | Space: O(n)
+function countAnagrams(s: string): number {
+  const MOD = 1_000_000_007n;
+  const words = s.split(" ");
+  const maxLen = Math.max(...words.map((w) => w.length)) + 1;
+
+  // Precompute factorials and inverse factorials
+  const fact = new Array<bigint>(maxLen + 1);
+  const inv_fact = new Array<bigint>(maxLen + 1);
+  fact[0] = 1n;
+  for (let i = 1; i <= maxLen; i++) fact[i] = (fact[i - 1] * BigInt(i)) % MOD;
+
+  function modpow(base: bigint, exp: bigint, mod: bigint): bigint {
+    let result = 1n;
+    base %= mod;
+    while (exp > 0n) {
+      if (exp & 1n) result = (result * base) % mod;
+      base = (base * base) % mod;
+      exp >>= 1n;
+    }
+    return result;
+  }
+
+  inv_fact[maxLen] = modpow(fact[maxLen], MOD - 2n, MOD);
+  for (let i = maxLen - 1; i >= 0; i--) {
+    inv_fact[i] = (inv_fact[i + 1] * BigInt(i + 1)) % MOD;
+  }
+
+  let result = 1n;
+
+  for (const word of words) {
+    const freq: Record<string, number> = {};
+    for (const c of word) freq[c] = (freq[c] || 0) + 1;
+
+    // Multinomial: word.length! / product(freq[c]!)
+    let ways = fact[word.length];
+    for (const cnt of Object.values(freq)) {
+      ways = (ways * inv_fact[cnt]) % MOD;
+    }
+    result = (result * ways) % MOD;
+  }
+
+  return Number(result);
 }
 
-/**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countAnagrams(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+// Solution 2: Per-word modular inverse computation — Time: O(n log n) | Space: O(n)
+function countAnagrams2(s: string): number {
+  const MOD = 1_000_000_007n;
+
+  function modpow(base: bigint, exp: bigint, mod: bigint): bigint {
+    let r = 1n;
+    base %= mod;
+    while (exp > 0n) {
+      if (exp & 1n) r = (r * base) % mod;
+      base = (base * base) % mod;
+      exp >>= 1n;
+    }
+    return r;
+  }
+
+  function factorial(n: number): bigint {
+    let r = 1n;
+    for (let i = 2n; i <= BigInt(n); i++) r = (r * i) % MOD;
+    return r;
+  }
+
+  let result = 1n;
+
+  for (const word of s.split(" ")) {
+    const freq: Record<string, number> = {};
+    for (const c of word) freq[c] = (freq[c] || 0) + 1;
+
+    let ways = factorial(word.length);
+    for (const cnt of Object.values(freq)) {
+      ways = (ways * modpow(factorial(cnt), MOD - 2n, MOD)) % MOD;
+    }
+    result = (result * ways) % MOD;
+  }
+
+  return Number(result);
 }
 
-// === Test Cases ===
-// console.log(countAnagrams(/* example 1 */)); // expected
-// console.log(countAnagrams(/* example 2 */)); // expected
-// console.log(countAnagrams(/* edge case */)); // expected
+// Tests
+console.log(countAnagrams("too hot")); // 18
+console.log(countAnagrams("aa")); // 1
+console.log(countAnagrams("abc")); // 6
+console.log(countAnagrams("ab cd")); // 4
+console.log(countAnagrams("aab cd")); // 6
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Count the Number of Good Subsequences](https://leetcode.com/problems/count-the-number-of-good-subsequences) — same pattern: Math
-- [Right Triangles](https://leetcode.com/problems/right-triangles) — same pattern: Math
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Count Anagrams — LeetCode](https://leetcode.com/problems/count-anagrams) — problem page
+| Problem                                                                                                                       | Relationship                               |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [Permutations](https://leetcode.com/problems/permutations/)                                                                   | Counting all permutations                  |
+| [Permutations II](https://leetcode.com/problems/permutations-ii/)                                                             | Permutations with duplicates (multinomial) |
+| [Number of Ways to Rearrange Sticks](https://leetcode.com/problems/number-of-ways-to-rearrange-sticks-with-k-sticks-visible/) | Combinatorics with modular arithmetic      |

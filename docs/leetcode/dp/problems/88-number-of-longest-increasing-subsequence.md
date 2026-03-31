@@ -7,97 +7,118 @@ tags: [Array, Dynamic Programming, Binary Indexed Tree, Segment Tree]
 leetcode_url: "https://leetcode.com/problems/number-of-longest-increasing-subsequence"
 ---
 
-# Number of Longest Increasing Subsequence / Number of Longest Increasing Subsequence
+# Number of Longest Increasing Subsequence / Số Lượng Dãy Con Tăng Dần Dài Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Segment Tree
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Count Number of Teams](https://leetcode.com/problems/count-number-of-teams) | [The Skyline Problem](https://leetcode.com/problems/the-skyline-problem)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Dynamic Programming | **Pattern**: LIS + Count DP
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Cấu trúc dữ liệu cho range queries — cập nhật và truy vấn đoạn trong O(log n).
+**Vietnamese analogy:** Đếm số lượng "con đường leo núi" dài nhất trong dãy núi: mỗi đỉnh phải cao hơn đỉnh trước, và ta đếm tất cả con đường có cùng độ dài tối đa.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Segment Tree**
-- Bài này thuộc dạng Segment Tree — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- LIS length → standard O(n²) DP, but track counts alongside lengths
+- At each element: if extending max LIS → add count; if matching max → accumulate counts
+- Two parallel arrays: `len[i]` (LIS ending at i) and `cnt[i]` (ways to achieve len[i])
 
-**Visual — Number of Longest Increasing Subsequence example:**
+**Visual (nums = [1,3,5,4,7]):**
 
 ```
-// TODO: Add step-by-step visual for Segment Tree
-// Show one complete example with state at each step
-```
+i=0 val=1: len=1  cnt=1
+i=1 val=3: prev 1<3 → len=2  cnt=1
+i=2 val=5: prev 3<5 → len=3  cnt=1
+i=3 val=4: prev 3<4 → len=3  cnt=1
+i=4 val=7: prev 5<7 → len=4 cnt=1
+           prev 4<7 → len=4 cnt=1  →same len→ cnt=1+1=2
 
----
+maxLen=4, answer = cnt where len==4 → 2
+```
 
 ## Problem Description
 
-Number of Longest Increasing Subsequence. ([LeetCode](https://leetcode.com/problems/number-of-longest-increasing-subsequence))
+Given an integer array `nums`, return the **number of longest increasing subsequences**. Two subsequences are different if they use different indices even if values are equal.
 
-Difficulty: Medium | Acceptance: 49.9%
+**Example 1:** `nums = [1,3,5,4,7]` → `2` (paths: 1→3→5→7 and 1→3→4→7)
+**Example 2:** `nums = [2,2,2,2,2]` → `5` (each single element is LIS of length 1)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-longest-increasing-subsequence) for full constraints
-
----
+**Constraints:** `1 <= nums.length <= 2000`, `-10^6 <= nums[i] <= 10^6`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Are elements unique? No — handle equal values (strictly increasing).
+2. **Approach**: O(n²) DP with two arrays: length and count. Update count when matching max.
+3. **Edge cases**: All same elements → each single element is an LIS of length 1.
+4. **Optimize**: O(n log n) with segment/BIT trees storing (maxLen, count) per value.
+5. **Follow-up**: What if non-decreasing? Change `<` to `<=` in comparisons.
+6. **Complexity**: O(n²) time, O(n) space (standard); O(n log n) with segment tree.
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfLongestIncreasingSubsequenceBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: O(n²) DP with count tracking — Time: O(n²) | Space: O(n)
+function findNumberOfLIS(nums: number[]): number {
+  const n = nums.length;
+  if (n === 0) return 0;
+
+  const len = new Array(n).fill(1); // LIS length ending at i
+  const cnt = new Array(n).fill(1); // number of LIS ending at i
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[j] < nums[i]) {
+        if (len[j] + 1 > len[i]) {
+          len[i] = len[j] + 1;
+          cnt[i] = cnt[j];
+        } else if (len[j] + 1 === len[i]) {
+          cnt[i] += cnt[j];
+        }
+      }
+    }
+  }
+
+  const maxLen = Math.max(...len);
+  let result = 0;
+  for (let i = 0; i < n; i++) {
+    if (len[i] === maxLen) result += cnt[i];
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Segment Tree
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfLongestIncreasingSubsequence(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Segment Tree
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+// Solution 2: Optimized with early grouping — Time: O(n²) | Space: O(n)
+function findNumberOfLIS2(nums: number[]): number {
+  const n = nums.length;
+  const len = new Array(n).fill(1);
+  const cnt = new Array(n).fill(1);
+  let maxLen = 1;
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[j] >= nums[i]) continue;
+      if (len[j] + 1 > len[i]) {
+        len[i] = len[j] + 1;
+        cnt[i] = cnt[j];
+      } else if (len[j] + 1 === len[i]) {
+        cnt[i] += cnt[j];
+      }
+    }
+    maxLen = Math.max(maxLen, len[i]);
+  }
+
+  return nums.reduce((acc, _, i) => (len[i] === maxLen ? acc + cnt[i] : acc), 0);
 }
 
-// === Test Cases ===
-// console.log(numberOfLongestIncreasingSubsequence(/* example 1 */)); // expected
-// console.log(numberOfLongestIncreasingSubsequence(/* example 2 */)); // expected
-// console.log(numberOfLongestIncreasingSubsequence(/* edge case */)); // expected
+// Tests
+console.log(findNumberOfLIS([1, 3, 5, 4, 7])); // 2
+console.log(findNumberOfLIS([2, 2, 2, 2, 2])); // 5
+console.log(findNumberOfLIS([1, 2, 4, 3, 5, 4, 7, 2])); // 3
+console.log(findNumberOfLIS([1])); // 1
+console.log(findNumberOfLIS([1, 3, 2])); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Count Number of Teams](https://leetcode.com/problems/count-number-of-teams) — same pattern: Segment Tree
-- [The Skyline Problem](https://leetcode.com/problems/the-skyline-problem) — same pattern: Segment Tree
-- [Block Placement Queries](https://leetcode.com/problems/block-placement-queries) — same pattern: Segment Tree
-- [Distribute Elements Into Two Arrays II](https://leetcode.com/problems/distribute-elements-into-two-arrays-ii) — same pattern: Segment Tree
-- [Number of Longest Increasing Subsequence — LeetCode](https://leetcode.com/problems/number-of-longest-increasing-subsequence) — problem page
+| Problem                                                                                         | Relationship                                |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) | Find length; this counts all such sequences |
+| [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/)         | Similar count + length parallel DP          |
+| [Russian Doll Envelopes](https://leetcode.com/problems/russian-doll-envelopes/)                 | 2D LIS variant                              |

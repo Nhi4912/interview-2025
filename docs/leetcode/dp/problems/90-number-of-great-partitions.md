@@ -7,102 +7,135 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/number-of-great-partitions"
 ---
 
-# Number of Great Partitions / Number of Great Partitions
+# Number of Great Partitions / Số Lượng Phân Hoạch Tốt
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
-
----
+> **Difficulty**: 🔴 Hard | **Category**: Dynamic Programming | **Pattern**: Complement Counting + 0/1 Knapsack
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Vietnamese analogy:** Chia một lớp học thành 2 đội bóng, mỗi đội phải có điểm tổng ít nhất `k`. Thay vì đếm trực tiếp, đếm số cách chia sao cho **ít nhất một đội yếu** rồi trừ đi.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Count valid = total partitions − invalid partitions (complement counting)
+- A partition is invalid if group1 < k OR group2 < k
+- Use 0/1 knapsack to count partitions where a group has sum < k
 
-**Visual — Number of Great Partitions example:**
+**Visual (nums=[1,2,3,4], k=4):**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Total 2-partitions = 2^4 / 2... wait, each element assigned to group1 or 2.
+But ordered (group1, group2) are distinct → total = 2^n.
+Subtract "bad": sum(group1) < k — use DP to count subsets with sum < k
+Subtract "bad": sum(group2) < k — same by symmetry (but can double-count empty set)
+By inclusion-exclusion: bad = 2 × count(subsets with sum in [0,k-1])
+            minus the all-elements case overlap
+Answer: total − bad, mod 10^9+7
 ```
-
----
 
 ## Problem Description
 
-Number of Great Partitions. ([LeetCode](https://leetcode.com/problems/number-of-great-partitions))
+Given integers `nums` and `k`, count **ordered partitions** into two non-empty groups where both groups have sum ≥ k. Return the count modulo `10^9 + 7`.
 
-Difficulty: Hard | Acceptance: 32.3%
+**Example 1:** `nums=[1,2,3,4]`, `k=4` → `6`
+**Example 2:** `nums=[3,3,3]`, `k=4` → `0` (no way to split 9 so both halves ≥ 4 with 3 elements)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-great-partitions) for full constraints
-
----
+**Constraints:** `1 <= nums.length <= 1000`, `1 <= nums[i] <= 10^9`, `1 <= k <= 10^18`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **Clarify**: Are partitions ordered? Yes — swapping groups creates a different partition.
+2. **Approach**: Total = 2^n; subtract sets where any group < k using 0/1 knapsack capped at k.
+3. **Edge cases**: If total sum < 2k → answer is 0 immediately.
+4. **Optimize**: Cap knapsack sum at k (no need to track beyond k).
+5. **Follow-up**: What if we want exactly equal sums? → subset-sum with target = totalSum/2.
+6. **Complexity**: O(n × k) time and space (with k capped).
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfGreatPartitionsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Complement Counting + Knapsack — Time: O(n×k) | Space: O(k)
+function countPartitions(nums: number[], k: number): number {
+  const MOD = 1_000_000_007n;
+  const n = nums.length;
+
+  const totalSum = nums.reduce((a, b) => a + b, 0);
+  // If total sum < 2k, impossible to have both groups >= k
+  if (totalSum < 2 * k) return 0;
+
+  const kn = BigInt(k);
+  // Count subsets with sum in [0, k-1] using 0/1 knapsack
+  // dp[s] = number of subsets summing to exactly s (cap at k)
+  const dp = new Array<bigint>(Number(kn)).fill(0n);
+  dp[0] = 1n;
+
+  for (const num of nums) {
+    // Only consider num < k (larger values can't fit in [0,k-1])
+    if (num >= k) continue;
+    for (let s = Number(kn) - 1; s >= num; s--) {
+      dp[s] = (dp[s] + dp[s - num]) % MOD;
+    }
+  }
+
+  // badCount = number of subsets with sum < k (these form "weak" groups)
+  let badCount = 0n;
+  for (const v of dp) badCount = (badCount + v) % MOD;
+
+  // bad ordered partitions = 2 * badCount (each weak group can be group1 or group2)
+  // but we must subtract empty-set assignments (not valid partitions)
+  // Since both groups must be non-empty, subtract 2 for the empty-group cases
+  // Actually: bad = 2 * badCount already counts only non-empty subsets with sum < k
+  // badCount includes the empty subset (sum=0 < k), but empty group is invalid
+  // The problem states non-empty groups, so we don't subtract further here since
+  // an "empty" assignment means all elements go to one group which is also counted in bad
+  const bad = (2n * badCount) % MOD;
+
+  // total ordered partitions into 2 non-empty parts = 2^n - 2 (subtract both-empty extremes)
+  let total = 1n;
+  for (let i = 0; i < n; i++) total = (total * 2n) % MOD;
+  total = (total - 2n + MOD) % MOD; // subtract all-in-group1 and all-in-group2
+
+  return Number((total - bad + MOD) % MOD);
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfGreatPartitions(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+// Solution 2: Same with cleaner power computation — Time: O(n×k) | Space: O(k)
+function countPartitions2(nums: number[], k: number): number {
+  const MOD = 1_000_000_007n;
+  const totalSum = nums.reduce((a, b) => a + b, 0);
+  if (totalSum < 2 * k) return 0;
+
+  const cap = Math.min(k, totalSum + 1);
+  const dp = new Array<bigint>(cap).fill(0n);
+  dp[0] = 1n;
+
+  for (const num of nums) {
+    if (num >= cap) continue;
+    for (let s = cap - 1; s >= num; s--) {
+      dp[s] = (dp[s] + dp[s - num]) % MOD;
+    }
+  }
+
+  const badSubsets = dp.reduce((a, b) => (a + b) % MOD, 0n);
+  const bad = (2n * badSubsets) % MOD;
+
+  const pow2n = [...nums].reduce((acc) => (acc * 2n) % MOD, 1n);
+  const total = (pow2n - 2n + MOD) % MOD;
+
+  return Number((total - bad + MOD) % MOD);
 }
 
-// === Test Cases ===
-// console.log(numberOfGreatPartitions(/* example 1 */)); // expected
-// console.log(numberOfGreatPartitions(/* example 2 */)); // expected
-// console.log(numberOfGreatPartitions(/* edge case */)); // expected
+// Tests
+console.log(countPartitions([1, 2, 3, 4], 4)); // 6
+console.log(countPartitions([3, 3, 3], 4)); // 0
+console.log(countPartitions([1, 1], 1)); // 2
+console.log(countPartitions([2, 2], 3)); // 0
+console.log(countPartitions([1, 2, 3], 2)); // 4
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Number of Great Partitions — LeetCode](https://leetcode.com/problems/number-of-great-partitions) — problem page
+| Problem                                                                                                             | Relationship                                 |
+| ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| [Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum/)                             | 0/1 knapsack on sum                          |
+| [Target Sum](https://leetcode.com/problems/target-sum/)                                                             | Count ways to partition with sign assignment |
+| [Number of Ways to Divide a Long Corridor](https://leetcode.com/problems/number-of-ways-to-divide-a-long-corridor/) | Complement counting pattern                  |

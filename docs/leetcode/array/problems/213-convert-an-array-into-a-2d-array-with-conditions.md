@@ -7,100 +7,124 @@ tags: [Array, Hash Table]
 leetcode_url: "https://leetcode.com/problems/convert-an-array-into-a-2d-array-with-conditions"
 ---
 
-# Convert an Array Into a 2D Array With Conditions / Convert an Array Into a 2D Array With Conditions
+# Convert an Array Into a 2D Array With Conditions / Chuyển Mảng Thành Mảng 2D Theo Điều Kiện
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [First Missing Positive](https://leetcode.com/problems/first-missing-positive) | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Array | **Pattern**: Greedy + Hash Map Bucketing
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**Vietnamese analogy**: Như phân loại sinh viên vào các phòng thi — mỗi phòng không được có hai thí sinh trùng tên. Mỗi sinh viên vào phòng đầu tiên chưa có người cùng tên.
 
 **Pattern Recognition:**
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Each row must have distinct elements → frequency determines min rows needed
+- Greedy: assign each element to the first row that doesn't already contain it
+- Answer rows = max frequency of any element
 
-**Visual — Convert an Array Into a 2D Array With Conditions example:**
+**Visual:**
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+nums = [1,3,4,1,2,3,1]
+freq: 1→3, 3→2, 4→1, 2→1
 
-Key insight: store complement for O(1) lookup
+Process each num:
+1 → row[0] (no 1 yet)        rows=[[1]]
+3 → row[0] (no 3 yet)        rows=[[1,3]]
+4 → row[0] (no 4 yet)        rows=[[1,3,4]]
+1 → row[1] (1 in row[0])     rows=[[1,3,4],[1]]
+2 → row[0] (no 2 yet)        rows=[[1,3,4,2],[1]]
+3 → row[1] (3 in row[0])     rows=[[1,3,4,2],[1,3]]
+1 → row[2] (1 in 0,1)        rows=[[1,3,4,2],[1,3],[1]]
 ```
-
----
 
 ## Problem Description
 
-Convert an Array Into a 2D Array With Conditions. ([LeetCode](https://leetcode.com/problems/convert-an-array-into-a-2d-array-with-conditions))
+Given a 0-indexed integer array `nums`, convert it to a 2D array where each row contains only distinct integers. Use a minimum number of rows. The order within rows doesn't matter, but each element of `nums` must appear exactly once.
 
-Difficulty: Medium | Acceptance: 86.3%
+**Example 1:** `nums = [1,3,4,1,2,3,1]` → `[[1,3,4,2],[1,3],[1]]`
+**Example 2:** `nums = [1,2,3,4]` → `[[1,2,3,4]]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/convert-an-array-into-a-2d-array-with-conditions) for full constraints
-
----
+**Constraints:** `1 ≤ nums.length ≤ 200`, `1 ≤ nums[i] ≤ nums.length`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Can rows have different lengths? (Yes — fill greedily)
+2. **Approach**: Track how many times each number has appeared = its row index
+3. **Edge cases**: All identical elements → one per row; all distinct → single row
+4. **Optimize**: Use count map to directly index which row to append to
+5. **Follow-up**: Minimize total rows while also minimizing longest row?
+6. **Complexity**: Time O(n), Space O(n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function convertAnArrayIntoA2dArrayWithConditionsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Greedy with frequency count — Time: O(n) | Space: O(n)
+function findMatrix(nums: number[]): number[][] {
+  const result: number[][] = [];
+  const count = new Map<number, number>();
+
+  for (const num of nums) {
+    const freq = count.get(num) ?? 0;
+    // The num's occurrence count tells us which row index to use
+    if (freq >= result.length) {
+      result.push([]);
+    }
+    result[freq].push(num);
+    count.set(num, freq + 1);
+  }
+
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function convertAnArrayIntoA2dArrayWithConditions(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// Solution 2: Row-set approach (explicit uniqueness check) — Time: O(n^2) | Space: O(n)
+function findMatrix2(nums: number[]): number[][] {
+  const rows: number[][] = [];
+  const rowSets: Set<number>[] = [];
+
+  for (const num of nums) {
+    let placed = false;
+    for (let i = 0; i < rows.length; i++) {
+      if (!rowSets[i].has(num)) {
+        rows[i].push(num);
+        rowSets[i].add(num);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      rows.push([num]);
+      rowSets.push(new Set([num]));
+    }
+  }
+
+  return rows;
 }
 
-// === Test Cases ===
-// console.log(convertAnArrayIntoA2dArrayWithConditions(/* example 1 */)); // expected
-// console.log(convertAnArrayIntoA2dArrayWithConditions(/* example 2 */)); // expected
-// console.log(convertAnArrayIntoA2dArrayWithConditions(/* edge case */)); // expected
+// Solution 3: One-liner using reduce — Time: O(n) | Space: O(n)
+function findMatrix3(nums: number[]): number[][] {
+  const freq = new Map<number, number>();
+  const res: number[][] = [];
+  for (const n of nums) {
+    const r = freq.get(n) ?? 0;
+    if (r === res.length) res.push([]);
+    res[r].push(n);
+    freq.set(n, r + 1);
+  }
+  return res;
+}
+
+// Tests
+console.log(findMatrix([1, 3, 4, 1, 2, 3, 1])); // [[1,3,4,2],[1,3],[1]]
+console.log(findMatrix([1, 2, 3, 4])); // [[1,2,3,4]]
+console.log(findMatrix([1, 1, 1])); // [[1],[1],[1]]
+console.log(findMatrix2([1, 3, 4, 1, 2, 3, 1])); // [[1,3,4,2],[1,3],[1]]
+console.log(findMatrix3([2, 1, 2, 1, 2])); // [[2,1],[2,1],[2]]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence) — same pattern: Union Find
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Convert an Array Into a 2D Array With Conditions — LeetCode](https://leetcode.com/problems/convert-an-array-into-a-2d-array-with-conditions) — problem page
+| Problem                                                                                                    | Relationship                            |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| [Group Anagrams (LeetCode 49)](https://leetcode.com/problems/group-anagrams/)                              | Group elements by property into buckets |
+| [Find Duplicate Number (LeetCode 287)](https://leetcode.com/problems/find-the-duplicate-number/)           | Frequency tracking in arrays            |
+| [Longest Consecutive Sequence (LeetCode 128)](https://leetcode.com/problems/longest-consecutive-sequence/) | Hash map for array element analysis     |

@@ -7,100 +7,126 @@ tags: [Array, Two Pointers, Binary Search, Sorting]
 leetcode_url: "https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target"
 ---
 
-# Count Pairs Whose Sum is Less than Target / Count Pairs Whose Sum is Less than Target
+# Count Pairs Whose Sum is Less than Target / Đếm Cặp Có Tổng Nhỏ Hơn Target
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) | [Heaters](https://leetcode.com/problems/heaters)
-
----
+> **Difficulty**: 🟢 Easy | **Category**: Sorting-Searching | **Pattern**: Two Pointers on Sorted Array
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Vietnamese analogy**: Như tìm cặp học sinh ghép đôi mà tổng điểm không vượt ngưỡng — xếp điểm từ thấp đến cao, ghép người cao nhất với người thấp nhất; nếu thỏa điều kiện thì tất cả cặp từ thấp nhất đến người cao nhất đều thỏa.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Count pairs with sum < target → sort + two pointers → **Classic Two-Pointer**
+- If nums[l]+nums[r] < target: all pairs (l, l+1), (l, l+2)…(l, r) satisfy → add r-l
+- If not, shrink from right
 
-**Visual — Count Pairs Whose Sum is Less than Target example:**
+**Visual:**
 
 ```
-arr = [... sorted ...]
- L                 R
-
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+nums=[-1,1,2,3,1], target=2
+Sort: [-1,1,1,2,3]
+l=0(-1), r=4(3): -1+3=2 not < 2 → r--
+l=0(-1), r=3(2): -1+2=1 < 2 → pairs: (0,1),(0,2),(0,3) count+=3, l++
+l=1(1),  r=3(2): 1+2=3 not < 2 → r--
+l=1(1),  r=2(1): 1+1=2 not < 2 → r--
+l=1 >= r=1: stop
+Total = 3
 ```
-
----
 
 ## Problem Description
 
-Count Pairs Whose Sum is Less than Target. ([LeetCode](https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target))
+Given a 0-indexed integer array `nums` of length `n` and integer `target`, return the number of pairs `(i, j)` where `0 ≤ i < j < n` and `nums[i] + nums[j] < target`.
 
-Difficulty: Easy | Acceptance: 87.5%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- nums=[-1,1,2,3,1], target=2 → 3 (pairs: (-1,1),(-1,1),(-1,2))
+- nums=[-6,2,5,-2,-7,-1,3], target=-2 → 10
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target) for full constraints
-
----
+**Constraints:** 1 ≤ nums.length ≤ 50, -50 ≤ nums[i] < 50, -50 < target ≤ 50
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+1. **Clarify**: Are (i,j) and (j,i) counted as one pair? (Yes, pairs are unordered with i<j)
+2. **Approach**: Sort + two pointers; when left+right < target, all middle pairs also satisfy
+3. **Edge cases**: All pairs satisfy, no pairs satisfy, duplicate values, negative numbers
+4. **Optimize**: Two-pointer O(n log n) beats brute force O(n²); binary search also works
+5. **Follow-up**: Count pairs with sum exactly equal to target? (Classic Two Sum count)
+6. **Complexity**: Time O(n log n), Space O(1)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countPairsWhoseSumIsLessThanTargetBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Sort + Two Pointers — Time: O(n log n) | Space: O(1)
+function countPairs(nums: number[], target: number): number {
+  nums.sort((a, b) => a - b);
+  let count = 0;
+  let l = 0,
+    r = nums.length - 1;
+
+  while (l < r) {
+    if (nums[l] + nums[r] < target) {
+      // All pairs (l, l+1), (l, l+2), ..., (l, r) are valid
+      count += r - l;
+      l++;
+    } else {
+      r--;
+    }
+  }
+
+  return count;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countPairsWhoseSumIsLessThanTarget(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+// Solution 2: Brute Force — Time: O(n²) | Space: O(1)
+function countPairs2(nums: number[], target: number): number {
+  let count = 0;
+  for (let i = 0; i < nums.length; i++) {
+    for (let j = i + 1; j < nums.length; j++) {
+      if (nums[i] + nums[j] < target) count++;
+    }
+  }
+  return count;
 }
 
-// === Test Cases ===
-// console.log(countPairsWhoseSumIsLessThanTarget(/* example 1 */)); // expected
-// console.log(countPairsWhoseSumIsLessThanTarget(/* example 2 */)); // expected
-// console.log(countPairsWhoseSumIsLessThanTarget(/* edge case */)); // expected
+// Solution 3: Sort + Binary Search per element — Time: O(n log n) | Space: O(1)
+function countPairs3(nums: number[], target: number): number {
+  nums.sort((a, b) => a - b);
+  let count = 0;
+
+  for (let i = 0; i < nums.length - 1; i++) {
+    // Find largest j where nums[i] + nums[j] < target
+    const need = target - nums[i]; // nums[j] < need
+    // Binary search for rightmost value < need in nums[i+1..]
+    let lo = i + 1,
+      hi = nums.length - 1,
+      pos = i; // pos = last valid index
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (nums[mid] < need) {
+        pos = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    count += pos - i; // indices i+1..pos are all valid
+  }
+
+  return count;
+}
+
+// Tests
+console.log(countPairs([-1, 1, 2, 3, 1], 2)); // 3
+console.log(countPairs([-6, 2, 5, -2, -7, -1, 3], -2)); // 10
+console.log(countPairs([1, 2, 3], 10)); // 3
+console.log(countPairs([1, 2, 3], 1)); // 0
+console.log(countPairs([0, 0, 0, 0], 1)); // 6
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Heaters](https://leetcode.com/problems/heaters) — same pattern: Two Pointers
-- [Find K Closest Elements](https://leetcode.com/problems/find-k-closest-elements) — same pattern: Sliding Window
-- [Maximum Number of Tasks You Can Assign](https://leetcode.com/problems/maximum-number-of-tasks-you-can-assign) — same pattern: Monotonic Queue
-- [Count Pairs Whose Sum is Less than Target — LeetCode](https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target) — problem page
+| Problem                                                                                                                            | Relationship                              |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| [Two Sum II](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted)                                                       | Two pointers on sorted array for pair sum |
+| [3Sum Smaller](https://leetcode.com/problems/3sum-smaller)                                                                         | Count triplets with sum < target          |
+| [Count Number of Pairs With Absolute Difference K](https://leetcode.com/problems/count-number-of-pairs-with-absolute-difference-k) | Pair counting with condition              |

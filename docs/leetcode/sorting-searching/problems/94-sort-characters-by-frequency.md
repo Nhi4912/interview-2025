@@ -7,104 +7,121 @@ tags: [Hash Table, String, Sorting, Heap (Priority Queue), Bucket Sort]
 leetcode_url: "https://leetcode.com/problems/sort-characters-by-frequency"
 ---
 
-# Sort Characters By Frequency / Sort Characters By Frequency
+# Sort Characters By Frequency / Sắp Xếp Ký Tự Theo Tần Suất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Sorting-Searching | **Pattern**: Frequency Sort / Bucket Sort
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
+**Vietnamese analogy**: Như đếm số lần xuất hiện của từng chữ cái trong một bài thơ rồi viết lại — viết chữ xuất hiện nhiều nhất trước, lặp lại đúng số lần, sau đó đến chữ ít hơn.
 
 **Pattern Recognition:**
 
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Count char frequency → sort by count descending → rebuild string → **Bucket/Heap Sort**
+- Multiple solutions: HashMap + sort, bucket sort O(n), or max-heap
+- Key: high-frequency chars cluster together in output
 
-**Visual — Sort Characters By Frequency example:**
+**Visual:**
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+s = "tree"
+freq: {t:1, r:1, e:2}
+Sort desc by freq: [(e,2),(t,1),(r,1)]
+Build: "ee" + "t" + "r" = "eetr"  (or "eetr", "eetr" valid)
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+s = "cccaaa"
+freq: {c:3, a:3}
+Build: "cccaaa" or "aaaccc"  (both valid)
 ```
-
----
 
 ## Problem Description
 
-Sort Characters By Frequency. ([LeetCode](https://leetcode.com/problems/sort-characters-by-frequency))
+Given string `s`, sort it so that characters with higher frequency appear before those with lower frequency. If two characters have same frequency, their order is arbitrary. Return the sorted string.
 
-Difficulty: Medium | Acceptance: 74.1%
+**Example:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- s="tree" → "eert" or "eetr"
+- s="cccaaa" → "aaaccc" or "cccaaa"
+- s="Aabb" → "bbAa" or "bbaA"
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sort-characters-by-frequency) for full constraints
-
----
+**Constraints:** 1 ≤ s.length ≤ 5×10⁵, s consists of uppercase/lowercase letters and digits
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Does 'A' and 'a' count separately? (Yes, they are distinct characters)
+2. **Approach**: Count with Map, sort entries by frequency desc, build result string
+3. **Edge cases**: All same character, all distinct characters, mixed case
+4. **Optimize**: Bucket sort O(n) since max frequency ≤ n
+5. **Follow-up**: What if equal-frequency chars must maintain original relative order?
+6. **Complexity**: Time O(n log n) with sort, O(n) with bucket; Space O(n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sortCharactersByFrequencyBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: HashMap + Sort — Time: O(n log n) | Space: O(n)
+function frequencySort(s: string): string {
+  const freq = new Map<string, number>();
+  for (const c of s) freq.set(c, (freq.get(c) ?? 0) + 1);
+
+  const entries = [...freq.entries()].sort((a, b) => b[1] - a[1]);
+
+  let result = "";
+  for (const [char, count] of entries) {
+    result += char.repeat(count);
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sortCharactersByFrequency(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
+// Solution 2: Bucket Sort — Time: O(n) | Space: O(n)
+function frequencySort2(s: string): string {
+  const freq = new Map<string, number>();
+  for (const c of s) freq.set(c, (freq.get(c) ?? 0) + 1);
+
+  // Bucket[i] = list of chars with frequency i
+  const buckets: string[][] = new Array(s.length + 1).fill(null).map(() => []);
+  for (const [char, cnt] of freq) {
+    buckets[cnt].push(char);
+  }
+
+  let result = "";
+  for (let f = s.length; f >= 1; f--) {
+    for (const char of buckets[f]) {
+      result += char.repeat(f);
+    }
+  }
+  return result;
 }
 
-// === Test Cases ===
-// console.log(sortCharactersByFrequency(/* example 1 */)); // expected
-// console.log(sortCharactersByFrequency(/* example 2 */)); // expected
-// console.log(sortCharactersByFrequency(/* edge case */)); // expected
+// Solution 3: Max-Heap (simulated) — Time: O(n log k) | Space: O(n)
+function frequencySort3(s: string): string {
+  const freq = new Map<string, number>();
+  for (const c of s) freq.set(c, (freq.get(c) ?? 0) + 1);
+
+  // Sort descending by frequency (simulate max-heap with sort)
+  const sorted = [...freq.entries()].sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    return a[0].localeCompare(b[0]); // stable tie-break
+  });
+
+  const parts: string[] = [];
+  for (const [char, count] of sorted) {
+    parts.push(char.repeat(count));
+  }
+  return parts.join("");
+}
+
+// Tests
+console.log(frequencySort("tree")); // "eert" or "eetr"
+console.log(frequencySort("cccaaa")); // "aaaccc" or "cccaaa"
+console.log(frequencySort("Aabb")); // "bbAa" or "bbaA"
+console.log(frequencySort("2a554442f42")); // "44444255a2f" or similar
+console.log(frequencySort("a")); // "a"
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Rank Teams by Votes](https://leetcode.com/problems/rank-teams-by-votes) — same pattern: Sorting
-- [Sort Characters By Frequency — LeetCode](https://leetcode.com/problems/sort-characters-by-frequency) — problem page
+| Problem                                                                                                           | Relationship                        |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements)                                  | Frequency counting + selection      |
+| [Least Number of Unique Integers](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals) | Greedy on frequency counts          |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string)                                              | Frequency-based string construction |

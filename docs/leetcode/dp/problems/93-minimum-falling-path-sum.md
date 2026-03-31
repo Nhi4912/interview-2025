@@ -7,102 +7,150 @@ tags: [Array, Dynamic Programming, Matrix]
 leetcode_url: "https://leetcode.com/problems/minimum-falling-path-sum"
 ---
 
-# Minimum Falling Path Sum / Minimum Falling Path Sum
+# Minimum Falling Path Sum / Tổng Đường Rơi Tối Thiểu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Maximal Square](https://leetcode.com/problems/maximal-square) | [Unique Paths II](https://leetcode.com/problems/unique-paths-ii)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Dynamic Programming | **Pattern**: Grid DP / Path DP
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Vietnamese analogy:** Một giọt mưa rơi từ mái nhà xuống, mỗi bước chỉ được rơi thẳng hoặc chéo sang ô kề bên. Tìm con đường rơi có tổng giá trị nhỏ nhất.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Row-by-row path → dp[i][j] = min sum reaching cell (i,j) from row 0
+- Each cell comes from 3 possible cells above: left-diagonal, above, right-diagonal
+- Final answer: min of last row
 
-**Visual — Minimum Falling Path Sum example:**
+**Visual (matrix=[[2,1,3],[6,5,4],[7,8,9]]):**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Row 0:  2   1   3
+Row 1:  min(2,1)+6=7  min(2,1,3)+5=6  min(1,3)+4=5
+        →  8   6   5
+Row 2:  min(8,6)+7=13  min(8,6,5)+8=13  min(6,5)+9=14
+        → 13  13  14
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Answer: min(13,13,14) = 13  (path: 1→5→4→? no: 1→4=path 1,3→path 3,4,9=wrong)
+Actually 1→5→9=15? No. 2→1=row1[1]=6, 1→4=row1[2]=5... Answer = 13
 ```
-
----
 
 ## Problem Description
 
-Minimum Falling Path Sum. ([LeetCode](https://leetcode.com/problems/minimum-falling-path-sum))
+Given an `n × n` integer matrix, return the **minimum sum** of any falling path. A falling path starts at any element in the first row and chooses from the element directly below or either adjacent diagonal in each subsequent row.
 
-Difficulty: Medium | Acceptance: 61.4%
+**Example 1:** `matrix=[[2,1,3],[6,5,4],[7,8,9]]` → `13` (path: 1→5→7 = 13)
+**Example 2:** `matrix=[[−19,57],[−40,−5]]` → `−59` (path: −19→−40)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-falling-path-sum) for full constraints
-
----
+**Constraints:** `n` is 1–100, values `−100` to `100`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **Clarify**: Can we start/end at any column? Yes — any element in first row, any in last row.
+2. **Approach**: In-place DP on each row: for each cell, take min of valid predecessors + current.
+3. **Edge cases**: n=1 → single element; edge columns only have 2 predecessors, not 3.
+4. **Optimize**: Modify matrix in-place to avoid extra space (if mutation is allowed).
+5. **Follow-up**: LeetCode 1289 "Minimum Falling Path Sum II" — non-adjacent columns allowed.
+6. **Complexity**: O(n²) time, O(1) extra space (in-place).
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumFallingPathSumBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: In-place DP — Time: O(n²) | Space: O(1)
+function minFallingPathSum(matrix: number[][]): number {
+  const n = matrix.length;
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const above = matrix[i - 1][j];
+      const aboveLeft = j > 0 ? matrix[i - 1][j - 1] : Infinity;
+      const aboveRight = j < n - 1 ? matrix[i - 1][j + 1] : Infinity;
+      matrix[i][j] += Math.min(above, aboveLeft, aboveRight);
+    }
+  }
+
+  return Math.min(...matrix[n - 1]);
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumFallingPathSum(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+// Solution 2: DP with copy (non-destructive) — Time: O(n²) | Space: O(n)
+function minFallingPathSum2(matrix: number[][]): number {
+  const n = matrix.length;
+  let prev = [...matrix[0]];
+
+  for (let i = 1; i < n; i++) {
+    const curr = new Array(n).fill(0);
+    for (let j = 0; j < n; j++) {
+      let best = prev[j];
+      if (j > 0) best = Math.min(best, prev[j - 1]);
+      if (j < n - 1) best = Math.min(best, prev[j + 1]);
+      curr[j] = matrix[i][j] + best;
+    }
+    prev = curr;
+  }
+
+  return Math.min(...prev);
 }
 
-// === Test Cases ===
-// console.log(minimumFallingPathSum(/* example 1 */)); // expected
-// console.log(minimumFallingPathSum(/* example 2 */)); // expected
-// console.log(minimumFallingPathSum(/* edge case */)); // expected
+// Solution 3: Track path (for reconstruction) — Time: O(n²) | Space: O(n²)
+function minFallingPathSumWithPath(matrix: number[][]): number {
+  const n = matrix.length;
+  const dp = matrix.map((row) => [...row]);
+  const from: number[][] = Array.from({ length: n }, () => new Array(n).fill(-1));
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      let best = dp[i - 1][j],
+        bestJ = j;
+      if (j > 0 && dp[i - 1][j - 1] < best) {
+        best = dp[i - 1][j - 1];
+        bestJ = j - 1;
+      }
+      if (j < n - 1 && dp[i - 1][j + 1] < best) {
+        best = dp[i - 1][j + 1];
+        bestJ = j + 1;
+      }
+      dp[i][j] += best;
+      from[i][j] = bestJ;
+    }
+  }
+
+  return Math.min(...dp[n - 1]);
+}
+
+// Tests
+console.log(
+  minFallingPathSum([
+    [2, 1, 3],
+    [6, 5, 4],
+    [7, 8, 9],
+  ]),
+); // 13
+console.log(
+  minFallingPathSum([
+    [-19, 57],
+    [-40, -5],
+  ]),
+); // -59
+console.log(minFallingPathSum([[1]])); // 1
+console.log(
+  minFallingPathSum([
+    [1, 2],
+    [3, 4],
+  ]),
+); // 4 (1→3)
+console.log(
+  minFallingPathSum([
+    [100, -42, -46, -41],
+    [31, 97, 10, -10],
+    [-58, -51, 82, 89],
+    [51, 81, 69, -51],
+  ]),
+); // -36
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle) — same pattern: Monotonic Stack
-- [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum) — same pattern: Dynamic Programming
-- [Minimum Falling Path Sum — LeetCode](https://leetcode.com/problems/minimum-falling-path-sum) — problem page
+| Problem                                                                                   | Relationship                           |
+| ----------------------------------------------------------------------------------------- | -------------------------------------- |
+| [Minimum Falling Path Sum II](https://leetcode.com/problems/minimum-falling-path-sum-ii/) | No adjacent column restriction version |
+| [Triangle](https://leetcode.com/problems/triangle/)                                       | Similar falling path on triangle       |
+| [Dungeon Game](https://leetcode.com/problems/dungeon-game/)                               | Grid DP with path constraints          |

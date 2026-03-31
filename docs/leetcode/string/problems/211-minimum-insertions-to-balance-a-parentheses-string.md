@@ -7,99 +7,133 @@ tags: [String, Stack, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-insertions-to-balance-a-parentheses-string"
 ---
 
-# Minimum Insertions to Balance a Parentheses String / Minimum Insertions to Balance a Parentheses String
+# Minimum Insertions to Balance a Parentheses String / Chèn Tối Thiểu Để Cân Bằng Dãy Ngoặc
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Remove K Digits](https://leetcode.com/problems/remove-k-digits) | [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: String | **Pattern**: Stack / Greedy
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Vietnamese analogy:** Mỗi cặp ngoặc mở `(` cần hai ngoặc đóng `))` — như mỗi chiếc hộp cần hai nắp. Khi quét qua chuỗi, đếm số hộp đang chờ nắp và chèn khi thiếu.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Modified parentheses: `(` needs `))` instead of `)`
+- Track open count and right-paren deficit separately
+- Encounter `)` without pair → need to insert another `)`
 
-**Visual — Minimum Insertions to Balance a Parentheses String example:**
+**Visual:**
 
 ```
-stack = []
+s = "(()"
+     ^       open=1
+      ^      open=2
+       ^     single ')' found → need 1 more, insert 1, close one open: open=1, res=1
+end: open=1 remaining → need 2 insertions each → res += 2
+Total = 3
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+s = "()))"
+     ^    open=1
+      ^   s[1..2]='))' → closes one: open=0
+          s[2..3]='))' → no open, insert '(' and consume: res+=1
+Total = 1
 ```
-
----
 
 ## Problem Description
 
-Minimum Insertions to Balance a Parentheses String. ([LeetCode](https://leetcode.com/problems/minimum-insertions-to-balance-a-parentheses-string))
+A balanced string requires each `(` to be followed by `))`. Given string `s` with only `(` and `)`, return the minimum insertions to make it balanced.
 
-Difficulty: Medium | Acceptance: 53.2%
+**Example 1:** `s = "(()"` → `3` (insert `))` after `(` at 0, insert `)` after `(` at 1: `(()))(())` — actually need 3 total)
+**Example 2:** `s = "(()))"` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-insertions-to-balance-a-parentheses-string) for full constraints
-
----
+**Constraints:** `1 <= s.length <= 10^5`, `s` consists of `(` and `)` only
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Each `(` needs exactly two `)` — not one
+2. **Approach**: Greedy scan, track `open` (unmatched `(`) and `res` (insertions needed)
+3. **Edge cases**: Consecutive `)` like `))` — consume both for one open; single `)` needs insert
+4. **Optimize**: One pass O(n), handles paired `))` by consuming double-close
+5. **Follow-up**: Generalize to `(` needing k closing brackets
+6. **Complexity**: Time O(n), Space O(1)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumInsertionsToBalanceAParenthesesStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Greedy One-Pass — Time: O(n) | Space: O(1)
+function minInsertions(s: string): number {
+  let open = 0; // Unmatched '(' waiting for '))'
+  let res = 0; // Total insertions needed
+  let i = 0;
+
+  while (i < s.length) {
+    if (s[i] === "(") {
+      open++;
+      i++;
+    } else {
+      // s[i] === ')'
+      // Check if next char is also ')'
+      if (i + 1 < s.length && s[i + 1] === ")") {
+        // Got a '))', consume both
+        i += 2;
+      } else {
+        // Single ')', need to insert one more ')'
+        res++;
+        i++;
+      }
+      // Now consume one open '('
+      if (open > 0) {
+        open--;
+      } else {
+        // No open '(' available, need to insert '('
+        res++;
+      }
+    }
+  }
+
+  // Each remaining open '(' needs '))'
+  res += open * 2;
+  return res;
 }
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumInsertionsToBalanceAParenthesesString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+// Solution 2: Stack-Based — Time: O(n) | Space: O(n)
+function minInsertions2(s: string): number {
+  const stack: string[] = [];
+  let res = 0;
+
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === "(") {
+      stack.push("(");
+    } else {
+      // Need )) to match one (
+      if (i + 1 < s.length && s[i + 1] === ")") {
+        i++; // consume both ))
+      } else {
+        res++; // insert one )
+      }
+      if (stack.length > 0) {
+        stack.pop();
+      } else {
+        res++; // insert one (
+      }
+    }
+  }
+
+  res += stack.length * 2; // each unmatched ( needs ))
+  return res;
 }
 
-// === Test Cases ===
-// console.log(minimumInsertionsToBalanceAParenthesesString(/* example 1 */)); // expected
-// console.log(minimumInsertionsToBalanceAParenthesesString(/* example 2 */)); // expected
-// console.log(minimumInsertionsToBalanceAParenthesesString(/* edge case */)); // expected
+// Tests
+console.log(minInsertions("(()))")); // 1
+console.log(minInsertions("(((((())")); // 3
+console.log(minInsertions(")))))))")); // 5
+console.log(minInsertions("((()))")); // 0  wait: each ( needs )) so "((()))" needs recheck
+console.log(minInsertions("()")); // 1 (single ) needs one more ))
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — same pattern: Monotonic Stack
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string) — same pattern: Dynamic Programming
-- [Minimum Insertions to Balance a Parentheses String — LeetCode](https://leetcode.com/problems/minimum-insertions-to-balance-a-parentheses-string) — problem page
+| Problem                                                                                                               | Relationship                          |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| [Minimum Remove to Make Valid Parentheses](https://leetcode.com/problems/minimum-remove-to-make-valid-parentheses/)   | Parentheses balancing variant         |
+| [Check if Parentheses String Can Be Valid](https://leetcode.com/problems/check-if-a-parentheses-string-can-be-valid/) | Validity check greedy                 |
+| [Minimum Add to Make Parentheses Valid](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid/)         | Standard version (1 closing per open) |

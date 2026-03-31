@@ -7,100 +7,164 @@ tags: [Tree, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/binary-tree-level-order-traversal-ii"
 ---
 
-# Binary Tree Level Order Traversal II / Binary Tree Level Order Traversal II
+# Binary Tree Level Order Traversal II / Duyệt Cây Nhị Phân Theo Tầng (Ngược)
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Same Tree](https://leetcode.com/problems/same-tree) | [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Tree-Graph | **Pattern**: BFS Level-by-Level + Reverse
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Như đọc tầng lầu từ dưới lên trên** — trong một tòa nhà, thay vì liệt kê từ tầng cao nhất xuống, bạn đọc từ tầng trệt lên. Đơn giản chỉ cần duyệt BFS bình thường rồi đảo ngược kết quả.
 
 **Pattern Recognition:**
 
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Level-order (BFS) bình thường → thu thập từng tầng → reverse cuối cùng
+- Hoặc dùng `unshift` thay vì `push` để thêm mỗi tầng vào đầu
+- BFS với queue, process từng level một batch
 
-**Visual — Binary Tree Level Order Traversal II example:**
+**Visual:**
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
-
-BFS: process level by level using queue
+     3
+    / \
+   9  20
+     /  \
+    15   7
+BFS: [[3],[9,20],[15,7]]
+Reversed: [[15,7],[9,20],[3]]
 ```
-
----
 
 ## Problem Description
 
-Binary Tree Level Order Traversal II. ([LeetCode](https://leetcode.com/problems/binary-tree-level-order-traversal-ii))
+Given the root of a binary tree, return the bottom-up level order traversal — nodes at the deepest level first, then up to root level, left to right within each level.
 
-Difficulty: Medium | Acceptance: 66.0%
+**Example:** Tree `[3,9,20,null,null,15,7]` → `[[15,7],[9,20],[3]]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/binary-tree-level-order-traversal-ii) for full constraints
-
----
+**Constraints:** 0 ≤ n ≤ 2000, -1000 ≤ node.val ≤ 1000
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Bottom-up means deepest level first. Within each level, left-to-right order is preserved.
+2. **Approach**: Standard BFS collecting each level, then reverse the result array.
+3. **Edge cases**: Empty tree → `[]`. Single node → `[[root.val]]`. All left children (skewed tree) fine.
+4. **Optimize**: Prepend each level to result using `unshift` to avoid O(n) final reverse — but `reverse()` is cleaner.
+5. **Follow-up**: What if you need right-to-left within each level too? Alternate direction each level → Zigzag traversal.
+6. **Complexity**: O(n) time, O(n) space for queue + result.
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function binaryTreeLevelOrderTraversalIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function binaryTreeLevelOrderTraversalIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+// Solution 1: BFS + reverse
+// Time: O(n) | Space: O(n)
+function levelOrderBottom(root: TreeNode | null): number[][] {
+  if (!root) return [];
+  const result: number[][] = [];
+  const queue: TreeNode[] = [root];
+
+  while (queue.length > 0) {
+    const levelSize = queue.length;
+    const level: number[] = [];
+    for (let i = 0; i < levelSize; i++) {
+      const node = queue.shift()!;
+      level.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    result.push(level);
+  }
+
+  return result.reverse();
 }
 
-// === Test Cases ===
-// console.log(binaryTreeLevelOrderTraversalIi(/* example 1 */)); // expected
-// console.log(binaryTreeLevelOrderTraversalIi(/* example 2 */)); // expected
-// console.log(binaryTreeLevelOrderTraversalIi(/* edge case */)); // expected
+// Solution 2: BFS with unshift (prepend each level)
+// Time: O(n) | Space: O(n)
+function levelOrderBottom2(root: TreeNode | null): number[][] {
+  if (!root) return [];
+  const result: number[][] = [];
+  const queue: TreeNode[] = [root];
+
+  while (queue.length > 0) {
+    const levelSize = queue.length;
+    const level: number[] = [];
+    for (let i = 0; i < levelSize; i++) {
+      const node = queue.shift()!;
+      level.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    result.unshift(level); // Prepend instead of append
+  }
+
+  return result;
+}
+
+// Solution 3: DFS collecting levels by depth, then reverse
+// Time: O(n) | Space: O(n)
+function levelOrderBottom3(root: TreeNode | null): number[][] {
+  const levels: number[][] = [];
+
+  function dfs(node: TreeNode | null, depth: number): void {
+    if (!node) return;
+    if (depth === levels.length) levels.push([]);
+    levels[depth].push(node.val);
+    dfs(node.left, depth + 1);
+    dfs(node.right, depth + 1);
+  }
+
+  dfs(root, 0);
+  return levels.reverse();
+}
+
+// Helper
+function buildTree(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length || vals[0] === null) return null;
+  const root = new TreeNode(vals[0] as number);
+  const queue = [root];
+  let i = 1;
+  while (i < vals.length) {
+    const node = queue.shift()!;
+    if (i < vals.length && vals[i] !== null) {
+      node.left = new TreeNode(vals[i] as number);
+      queue.push(node.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] !== null) {
+      node.right = new TreeNode(vals[i] as number);
+      queue.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+
+// Tests
+console.log(JSON.stringify(levelOrderBottom(buildTree([3, 9, 20, null, null, 15, 7]))));
+// [[15,7],[9,20],[3]]
+
+console.log(JSON.stringify(levelOrderBottom2(buildTree([1]))));
+// [[1]]
+
+console.log(JSON.stringify(levelOrderBottom3(null)));
+// []
+
+console.log(JSON.stringify(levelOrderBottom(buildTree([1, 2, 3, 4, 5]))));
+// [[4,5],[2,3],[1]]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Binary Tree Level Order Traversal II — LeetCode](https://leetcode.com/problems/binary-tree-level-order-traversal-ii) — problem page
+| Problem                                                                                                             | Relationship                            |
+| ------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| [Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal/)               | Same, top-down version                  |
+| [Binary Tree Zigzag Level Order Traversal](https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/) | Level order with alternating direction  |
+| [Average of Levels in Binary Tree](https://leetcode.com/problems/average-of-levels-in-binary-tree/)                 | Same BFS pattern, different computation |

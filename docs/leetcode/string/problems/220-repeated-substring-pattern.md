@@ -7,97 +7,122 @@ tags: [String, String Matching]
 leetcode_url: "https://leetcode.com/problems/repeated-substring-pattern"
 ---
 
-# Repeated Substring Pattern / Repeated Substring Pattern
+# Repeated Substring Pattern / Mẫu Chuỗi Lặp Lại
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Matching
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) | [Rotate String](https://leetcode.com/problems/rotate-string)
-
----
+> **Difficulty**: 🟢 Easy | **Category**: String | **Pattern**: KMP / String Doubling
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tìm pattern trong text — KMP, Rabin-Karp, hoặc Z-algorithm cho O(n+m) thay vì O(n*m) brute force.
+**Vietnamese analogy:** Như kiểm tra một bài hát có phải là đoạn điệp khúc lặp lại không — nếu ghép bài hát với chính nó rồi bỏ đầu bỏ đuôi, bài hát vẫn xuất hiện ở giữa.
 
 **Pattern Recognition:**
 
-- Signal: "find pattern in text" → **String Matching (KMP/Rabin-Karp)**
-- Bài này thuộc dạng String Matching — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Classic trick: if `s` is made of repeated substring, then `s` appears in `(s+s)[1..-1]`
+- KMP approach: check if last value of failure function creates a valid period
+- Period p = n - lps[n-1]; valid if p divides n
 
-**Visual — Repeated Substring Pattern example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for String Matching
-// Show one complete example with state at each step
-```
+s = "abcabc"
 
----
+Method 1 (doubling):
+  s+s = "abcabcabcabc"
+  strip first & last: "bcabcabcab"
+  find "abcabc" in "bcabcabcab" → YES at index 3 → true ✓
+
+Method 2 (KMP lps):
+  s = "abcabc", n=6
+  lps = [0,0,0,1,2,3]
+  period = n - lps[n-1] = 6 - 3 = 3
+  n % period = 6 % 3 = 0 → true ✓
+
+s = "abac"
+  lps = [0,0,1,0]
+  period = 4 - 0 = 4 = n → not a repeat → false
+```
 
 ## Problem Description
 
-Repeated Substring Pattern. ([LeetCode](https://leetcode.com/problems/repeated-substring-pattern))
+Given a string `s`, return `true` if it can be constructed by taking a substring and repeating it at least twice.
 
-Difficulty: Easy | Acceptance: 46.9%
+**Example 1:** `s = "abab"` → `true` ("ab" repeated twice)
+**Example 2:** `s = "aba"` → `false`
+**Example 3:** `s = "abcabcabcabc"` → `true` ("abcabc" or "abc")
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/repeated-substring-pattern) for full constraints
-
----
+**Constraints:** `1 <= s.length <= 10^4`, lowercase letters only
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Substring must repeat at least twice (so length ≤ n/2)
+2. **Approach**: String doubling trick: check if s appears in (s+s)[1:-1]
+3. **Edge cases**: Length 1 → always false; length 2 → both chars must match
+4. **Optimize**: KMP failure function gives O(n) with O(n) space
+5. **Follow-up**: Find the shortest such repeating substring?
+6. **Complexity**: Time O(n), Space O(n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function repeatedSubstringPatternBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: String Doubling Trick — Time: O(n) | Space: O(n)
+function repeatedSubstringPattern(s: string): boolean {
+  const doubled = s + s;
+  // Remove first and last character, check if s appears inside
+  const inner = doubled.slice(1, doubled.length - 1);
+  return inner.includes(s);
 }
 
-/**
- * Solution 2: Optimized — String Matching
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function repeatedSubstringPattern(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Matching
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+// Solution 2: KMP Failure Function — Time: O(n) | Space: O(n)
+function repeatedSubstringPattern2(s: string): boolean {
+  const n = s.length;
+  const lps = new Array<number>(n).fill(0);
+
+  // Build KMP partial-match table (failure function)
+  let len = 0;
+  let i = 1;
+  while (i < n) {
+    if (s[i] === s[len]) {
+      lps[i++] = ++len;
+    } else if (len > 0) {
+      len = lps[len - 1];
+    } else {
+      lps[i++] = 0;
+    }
+  }
+
+  const period = n - lps[n - 1];
+  // Valid repeating pattern if period < n AND n is divisible by period
+  return period < n && n % period === 0;
 }
 
-// === Test Cases ===
-// console.log(repeatedSubstringPattern(/* example 1 */)); // expected
-// console.log(repeatedSubstringPattern(/* example 2 */)); // expected
-// console.log(repeatedSubstringPattern(/* edge case */)); // expected
+// Solution 3: Brute Force Substring Check — Time: O(n^2) | Space: O(n)
+function repeatedSubstringPattern3(s: string): boolean {
+  const n = s.length;
+
+  // Try all possible pattern lengths from 1 to n/2
+  for (let len = 1; len <= Math.floor(n / 2); len++) {
+    if (n % len !== 0) continue;
+
+    const pattern = s.slice(0, len);
+    const reps = n / len;
+    if (pattern.repeat(reps) === s) return true;
+  }
+
+  return false;
+}
+
+// Tests
+console.log(repeatedSubstringPattern("abab")); // true
+console.log(repeatedSubstringPattern("aba")); // false
+console.log(repeatedSubstringPattern("abcabcabcabc")); // true
+console.log(repeatedSubstringPattern("a")); // false
+console.log(repeatedSubstringPattern("aa")); // true
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) — same pattern: Two Pointers
-- [Rotate String](https://leetcode.com/problems/rotate-string) — same pattern: String Matching
-- [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome) — same pattern: String Matching
-- [Count Prefix and Suffix Pairs II](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) — same pattern: Trie
-- [Repeated Substring Pattern — LeetCode](https://leetcode.com/problems/repeated-substring-pattern) — problem page
+| Problem                                                                                                 | Relationship                               |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [Implement strStr()](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/) | KMP string matching foundation             |
+| [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome/)                               | KMP failure function application           |
+| [String Compression](https://leetcode.com/problems/string-compression/)                                 | Run-length encoding / repetition detection |
