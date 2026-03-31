@@ -71,57 +71,53 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
-
-/\*\*
-
-- Solution 1: Sort Descending (Brute Force)
-- Time: O(n log n) — sort dominates
-- Space: O(1) — in-place sort (note: modifies input array)
-  \*/
-  function findKthLargestSort(nums: number[], k: number): number {
+```typescript
+/**
+ * Solution 1: Sort Descending (Brute Force)
+ * Time: O(n log n) — sort dominates
+ * Space: O(1) — in-place sort (note: modifies input array)
+ */
+function findKthLargestSort(nums: number[], k: number): number {
   nums.sort((a, b) => b - a);
   return nums[k - 1];
-  }
+}
 
-/\*\*
-
-- Solution 2: Min Heap of Size k (Optimal for k << n)
-- Time: O(n log k) — n pushes, each O(log k)
-- Space: O(k) — heap holds at most k elements
-  \*/
-  function findKthLargest(nums: number[], k: number): number {
+/**
+ * Solution 2: Min Heap of Size k (Optimal for k << n)
+ * Time: O(n log k) — n pushes, each O(log k)
+ * Space: O(k) — heap holds at most k elements
+ */
+function findKthLargest(nums: number[], k: number): number {
   // JS has no built-in heap; simulate with sorted array (acceptable for interviews)
   const heap: number[] = [];
 
-const heapPush = (val: number) => {
-heap.push(val);
-heap.sort((a, b) => a - b); // min at index 0
-};
+  const heapPush = (val: number) => {
+    heap.push(val);
+    heap.sort((a, b) => a - b); // min at index 0
+  };
 
-for (const num of nums) {
-heapPush(num);
-if (heap.length > k) heap.shift(); // evict minimum (not in top k)
+  for (const num of nums) {
+    heapPush(num);
+    if (heap.length > k) heap.shift(); // evict minimum (not in top k)
+  }
+
+  return heap[0]; // min of top-k = kth largest overall
 }
 
-return heap[0]; // min of top-k = kth largest overall
-}
-
-/\*\*
-
-- Solution 3: Quick Select (Optimal — O(n) average)
-- Time: O(n) average, O(n²) worst — random pivot avoids worst case in practice
-- Space: O(1) — in-place partitioning, O(log n) recursion stack on average
-  \*/
-  function findKthLargestQuickSelect(nums: number[], k: number): number {
+/**
+ * Solution 3: Quick Select (Optimal — O(n) average)
+ * Time: O(n) average, O(n²) worst — random pivot avoids worst case in practice
+ * Space: O(1) — in-place partitioning, O(log n) recursion stack on average
+ */
+function findKthLargestQuickSelect(nums: number[], k: number): number {
   const target = nums.length - k; // kth largest = (n-k)th smallest index
 
-function quickSelect(left: number, right: number): number {
-// Random pivot avoids O(n²) worst case on sorted/reverse-sorted input
-const pivotIdx = left + Math.floor(Math.random() \* (right - left + 1));
-[nums[pivotIdx], nums[right]] = [nums[right], nums[pivotIdx]];
-const pivot = nums[right];
-let i = left;
+  function quickSelect(left: number, right: number): number {
+    // Random pivot avoids O(n²) worst case on sorted/reverse-sorted input
+    const pivotIdx = left + Math.floor(Math.random() * (right - left + 1));
+    [nums[pivotIdx], nums[right]] = [nums[right], nums[pivotIdx]];
+    const pivot = nums[right];
+    let i = left;
 
     for (let j = left; j < right; j++) {
       if (nums[j] <= pivot) {
@@ -133,10 +129,9 @@ let i = left;
 
     if (i === target) return nums[i];
     return i < target ? quickSelect(i + 1, right) : quickSelect(left, i - 1);
+  }
 
-}
-
-return quickSelect(0, nums.length - 1);
+  return quickSelect(0, nums.length - 1);
 }
 
 // === Test Cases ===
@@ -144,8 +139,7 @@ console.log(findKthLargest([3, 2, 1, 5, 6, 4], 2)); // 5
 console.log(findKthLargest([3, 2, 3, 1, 2, 4, 5, 5, 6], 4)); // 4
 console.log(findKthLargestQuickSelect([3, 2, 1, 5, 6, 4], 2)); // 5
 console.log(findKthLargestSort([1], 1)); // 1
-
-{% endraw %}
+```
 
 ---
 

@@ -70,36 +70,33 @@ Constraints:
 
 ## Solutions
 
-{% raw %}
-
-/\*\*
-
-- Solution 1: Linear Scan (Brute Force)
-- Time: O(n) — scan every element
-- Space: O(1)
-  \*/
-  function searchLinear(nums: number[], target: number): number {
+```typescript
+/**
+ * Solution 1: Linear Scan (Brute Force)
+ * Time: O(n) — scan every element
+ * Space: O(1)
+ */
+function searchLinear(nums: number[], target: number): number {
   for (let i = 0; i < nums.length; i++) {
-  if (nums[i] === target) return i;
+    if (nums[i] === target) return i;
   }
   return -1;
-  }
+}
 
-/\*\*
-
-- Solution 2: Modified Binary Search (Optimal)
-- Time: O(log n) — halve search space each iteration
-- Space: O(1)
--
-- Key insight: one half is ALWAYS sorted after a rotation.
-- Use the sorted half to decide which side to search.
-  \*/
-  function search(nums: number[], target: number): number {
+/**
+ * Solution 2: Modified Binary Search (Optimal)
+ * Time: O(log n) — halve search space each iteration
+ * Space: O(1)
+ *
+ * Key insight: one half is ALWAYS sorted after a rotation.
+ * Use the sorted half to decide which side to search.
+ */
+function search(nums: number[], target: number): number {
   let left = 0;
   let right = nums.length - 1;
 
-while (left <= right) {
-const mid = Math.floor((left + right) / 2);
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
 
     if (nums[mid] === target) return mid;
 
@@ -109,31 +106,29 @@ const mid = Math.floor((left + right) / 2);
       if (nums[left] <= target && target < nums[mid]) {
         right = mid - 1; // target is in sorted left half
       } else {
-        left = mid + 1;  // target must be in right half
+        left = mid + 1; // target must be in right half
       }
     } else {
       // Right half [mid..right] is sorted
       if (nums[mid] < target && target <= nums[right]) {
-        left = mid + 1;  // target is in sorted right half
+        left = mid + 1; // target is in sorted right half
       } else {
         right = mid - 1; // target must be in left half
       }
     }
+  }
 
-}
-
-return -1;
+  return -1;
 }
 
 // === Test Cases ===
-console.log(search([4,5,6,7,0,1,2], 0)); // 4
-console.log(search([4,5,6,7,0,1,2], 3)); // -1
+console.log(search([4, 5, 6, 7, 0, 1, 2], 0)); // 4
+console.log(search([4, 5, 6, 7, 0, 1, 2], 3)); // -1
 console.log(search([1], 0)); // -1
 console.log(search([1], 1)); // 0
-console.log(search([3,1], 1)); // 1
-console.log(search([1,2,3,4,5], 3)); // 2 (no rotation case)
-
-{% endraw %}
+console.log(search([3, 1], 1)); // 1
+console.log(search([1, 2, 3, 4, 5], 3)); // 2 (no rotation case)
+```
 
 ---
 

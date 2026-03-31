@@ -64,50 +64,56 @@ Example 3: nums1=[0], m=0, nums2=[1], n=1                 → [1]
 
 ## Solutions
 
-{% raw %}
-/\*\*
-
-- Solution 1: Brute Force — Concat + Sort
-- Time O((m+n) log(m+n)), Space O(1) amortized
-  \*/
-  function mergeBrute(nums1: number[], m: number, nums2: number[], n: number): void {
+```typescript
+/**
+ * Solution 1: Brute Force — Concat + Sort
+ * Time O((m+n) log(m+n)), Space O(1) amortized
+ */
+function mergeBrute(nums1: number[], m: number, nums2: number[], n: number): void {
   for (let i = 0; i < n; i++) nums1[m + i] = nums2[i];
   nums1.sort((a, b) => a - b);
-  }
+}
 
-/\*\*
-
-- Solution 2: Two Pointers from End (Optimal)
-- Time O(m+n), Space O(1)
--
-- Key insight: fill nums1 from the back to avoid overwriting
-- unprocessed elements.
-  \*/
-  function merge(nums1: number[], m: number, nums2: number[], n: number): void {
+/**
+ * Solution 2: Two Pointers from End (Optimal)
+ * Time O(m+n), Space O(1)
+ *
+ * Key insight: fill nums1 from the back to avoid overwriting
+ * unprocessed elements.
+ */
+function merge(nums1: number[], m: number, nums2: number[], n: number): void {
   let p1 = m - 1; // pointer for nums1 active elements
   let p2 = n - 1; // pointer for nums2
   let p = m + n - 1; // write pointer (tail of nums1)
 
-while (p1 >= 0 && p2 >= 0) {
-if (nums1[p1] > nums2[p2]) {
-nums1[p--] = nums1[p1--];
-} else {
-nums1[p--] = nums2[p2--];
-}
-}
+  while (p1 >= 0 && p2 >= 0) {
+    if (nums1[p1] > nums2[p2]) {
+      nums1[p--] = nums1[p1--];
+    } else {
+      nums1[p--] = nums2[p2--];
+    }
+  }
 
-// Any remaining nums2 elements (nums1 leftovers are already in place)
-while (p2 >= 0) {
-nums1[p--] = nums2[p2--];
-}
+  // Any remaining nums2 elements (nums1 leftovers are already in place)
+  while (p2 >= 0) {
+    nums1[p--] = nums2[p2--];
+  }
 }
 
 // --- Quick inline tests ---
-const t1 = [1,2,3,0,0,0]; merge(t1,3,[2,5,6],3); console.log(JSON.stringify(t1)==='[1,2,2,3,5,6]'); // true
-const t2 = [1]; merge(t2,1,[],0); console.log(JSON.stringify(t2)==='[1]'); // true
-const t3 = [0]; merge(t3,0,[1],1); console.log(JSON.stringify(t3)==='[1]'); // true
-const t4 = [4,5,6,0,0,0]; merge(t4,3,[1,2,3],3); console.log(JSON.stringify(t4)==='[1,2,3,4,5,6]'); // true
-{% endraw %}
+const t1 = [1, 2, 3, 0, 0, 0];
+merge(t1, 3, [2, 5, 6], 3);
+console.log(JSON.stringify(t1) === "[1,2,2,3,5,6]"); // true
+const t2 = [1];
+merge(t2, 1, [], 0);
+console.log(JSON.stringify(t2) === "[1]"); // true
+const t3 = [0];
+merge(t3, 0, [1], 1);
+console.log(JSON.stringify(t3) === "[1]"); // true
+const t4 = [4, 5, 6, 0, 0, 0];
+merge(t4, 3, [1, 2, 3], 3);
+console.log(JSON.stringify(t4) === "[1,2,3,4,5,6]"); // true
+```
 
 ---
 

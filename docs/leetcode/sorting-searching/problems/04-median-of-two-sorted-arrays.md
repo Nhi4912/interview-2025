@@ -67,56 +67,58 @@ Constraints: `0 <= m, n <= 1000`, `-10^6 <= nums[i] <= 10^6`
 
 ## Solutions
 
-{% raw %}
-/\*\*
-
-- Solution 1: Merge then Find — O(m+n) time, O(1) extra space
-- Walk both arrays simultaneously, stop at median position.
-- Good starting point to explain before optimizing.
-  \*/
-  function findMedianSortedArraysMerge(nums1: number[], nums2: number[]): number {
+```typescript
+/**
+ * Solution 1: Merge then Find — O(m+n) time, O(1) extra space
+ * Walk both arrays simultaneously, stop at median position.
+ * Good starting point to explain before optimizing.
+ */
+function findMedianSortedArraysMerge(nums1: number[], nums2: number[]): number {
   const total = nums1.length + nums2.length;
   const half = Math.floor(total / 2);
-  let i = 0, j = 0, prev = 0, curr = 0;
+  let i = 0,
+    j = 0,
+    prev = 0,
+    curr = 0;
 
-for (let k = 0; k <= half; k++) {
-prev = curr;
-if (i >= nums1.length) curr = nums2[j++];
-else if (j >= nums2.length) curr = nums1[i++];
-else if (nums1[i] <= nums2[j]) curr = nums1[i++];
-else curr = nums2[j++];
+  for (let k = 0; k <= half; k++) {
+    prev = curr;
+    if (i >= nums1.length) curr = nums2[j++];
+    else if (j >= nums2.length) curr = nums1[i++];
+    else if (nums1[i] <= nums2[j]) curr = nums1[i++];
+    else curr = nums2[j++];
+  }
+
+  return total % 2 === 0 ? (prev + curr) / 2 : curr;
 }
 
-return total % 2 === 0 ? (prev + curr) / 2 : curr;
-}
-
-/\*\*
-
-- Solution 2: Binary Search on Partition (Optimal)
-- Time O(log(min(m,n))), Space O(1)
--
-- Idea: partition nums1 at cut1, nums2 at cut2=half-cut1
-- such that left-halves together have (m+n+1)/2 elements
-- and max(left) <= min(right) across both arrays.
-  \*/
-  function findMedianSortedArrays(nums1: number[], nums2: number[]): number {
+/**
+ * Solution 2: Binary Search on Partition (Optimal)
+ * Time O(log(min(m,n))), Space O(1)
+ *
+ * Idea: partition nums1 at cut1, nums2 at cut2=half-cut1
+ * such that left-halves together have (m+n+1)/2 elements
+ * and max(left) <= min(right) across both arrays.
+ */
+function findMedianSortedArrays(nums1: number[], nums2: number[]): number {
   // Always binary-search the shorter array
   if (nums1.length > nums2.length) return findMedianSortedArrays(nums2, nums1);
 
-const m = nums1.length;
-const n = nums2.length;
-const half = Math.floor((m + n + 1) / 2); // size of left partition
+  const m = nums1.length;
+  const n = nums2.length;
+  const half = Math.floor((m + n + 1) / 2); // size of left partition
 
-let lo = 0, hi = m;
+  let lo = 0,
+    hi = m;
 
-while (lo <= hi) {
-const cut1 = Math.floor((lo + hi) / 2);
-const cut2 = half - cut1;
+  while (lo <= hi) {
+    const cut1 = Math.floor((lo + hi) / 2);
+    const cut2 = half - cut1;
 
     const maxL1 = cut1 === 0 ? -Infinity : nums1[cut1 - 1];
-    const minR1 = cut1 === m ?  Infinity : nums1[cut1];
+    const minR1 = cut1 === m ? Infinity : nums1[cut1];
     const maxL2 = cut2 === 0 ? -Infinity : nums2[cut2 - 1];
-    const minR2 = cut2 === n ?  Infinity : nums2[cut2];
+    const minR2 = cut2 === n ? Infinity : nums2[cut2];
 
     if (maxL1 <= minR2 && maxL2 <= minR1) {
       // Valid partition found
@@ -127,18 +129,17 @@ const cut2 = half - cut1;
     } else {
       lo = cut1 + 1; // too few from nums1 on left
     }
+  }
 
-}
-
-throw new Error("Input arrays are not sorted");
+  throw new Error("Input arrays are not sorted");
 }
 
 // --- Quick inline tests ---
-console.log(findMedianSortedArrays([1,3],[2]) === 2.0); // true
-console.log(findMedianSortedArrays([1,2],[3,4]) === 2.5); // true
-console.log(findMedianSortedArrays([],[1]) === 1.0); // true
-console.log(findMedianSortedArrays([2],[]) === 2.0); // true
-{% endraw %}
+console.log(findMedianSortedArrays([1, 3], [2]) === 2.0); // true
+console.log(findMedianSortedArrays([1, 2], [3, 4]) === 2.5); // true
+console.log(findMedianSortedArrays([], [1]) === 1.0); // true
+console.log(findMedianSortedArrays([2], []) === 2.0); // true
+```
 
 ---
 

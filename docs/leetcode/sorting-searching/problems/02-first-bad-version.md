@@ -68,56 +68,59 @@ Constraints: `1 <= bad <= n <= 2^31 - 1`
 
 ## Solutions
 
-{% raw %}
+```typescript
 // Mock API (provided by LeetCode)
-let \_bad = 0;
-function isBadVersion(v: number): boolean { return v >= \_bad; }
-
-/\*\*
-
-- Solution 1: Linear Search (Brute Force)
-- Time O(n), Space O(1) — tệ khi n ~ 2^31
-  \*/
-  function firstBadVersionLinear(n: number): number {
-  for (let i = 1; i <= n; i++) {
-  if (isBadVersion(i)) return i;
-  }
-  return n;
-  }
-
-/\*\*
-
-- Solution 2: Binary Search — Left Boundary (Optimal)
-- Time O(log n), Space O(1)
--
-- Loop invariant:
-- - answer is always in [left, right]
-- - when left === right, we found the answer
-    \*/
-    function firstBadVersion(n: number): number {
-    let left = 1;
-    let right = n;
-
-while (left < right) {
-const mid = left + Math.floor((right - left) / 2);
-
-    if (isBadVersion(mid)) {
-      right = mid;      // mid could be the answer, keep it
-    } else {
-      left = mid + 1;   // mid is definitely good, discard it
-    }
-
+let _bad = 0;
+function isBadVersion(v: number): boolean {
+  return v >= _bad;
 }
 
-return left; // left === right === first bad version
+/**
+ * Solution 1: Linear Search (Brute Force)
+ * Time O(n), Space O(1) — tệ khi n ~ 2^31
+ */
+function firstBadVersionLinear(n: number): number {
+  for (let i = 1; i <= n; i++) {
+    if (isBadVersion(i)) return i;
+  }
+  return n;
+}
+
+/**
+ * Solution 2: Binary Search — Left Boundary (Optimal)
+ * Time O(log n), Space O(1)
+ *
+ * Loop invariant:
+ *   - answer is always in [left, right]
+ *   - when left === right, we found the answer
+ */
+function firstBadVersion(n: number): number {
+  let left = 1;
+  let right = n;
+
+  while (left < right) {
+    const mid = left + Math.floor((right - left) / 2);
+
+    if (isBadVersion(mid)) {
+      right = mid; // mid could be the answer, keep it
+    } else {
+      left = mid + 1; // mid is definitely good, discard it
+    }
+  }
+
+  return left; // left === right === first bad version
 }
 
 // --- Quick inline tests ---
-\_bad = 4; console.log(firstBadVersion(5) === 4); // true
-\_bad = 1; console.log(firstBadVersion(1) === 1); // true
-\_bad = 1; console.log(firstBadVersion(10) === 1); // true
-\_bad = 10;console.log(firstBadVersion(10) === 10); // true
-{% endraw %}
+_bad = 4;
+console.log(firstBadVersion(5) === 4); // true
+_bad = 1;
+console.log(firstBadVersion(1) === 1); // true
+_bad = 1;
+console.log(firstBadVersion(10) === 1); // true
+_bad = 10;
+console.log(firstBadVersion(10) === 10); // true
+```
 
 ---
 

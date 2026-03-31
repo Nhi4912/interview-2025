@@ -69,57 +69,64 @@ Constraints: `1 <= n <= 300`, `nums[i]` ∈ {0,1,2}
 
 ## Solutions
 
-{% raw %}
-/\*\*
-
-- Solution 1: Counting Sort (2 passes)
-- Time O(n), Space O(1) — simple but two passes
-  \*/
-  function sortColorsCounting(nums: number[]): void {
+```typescript
+/**
+ * Solution 1: Counting Sort (2 passes)
+ * Time O(n), Space O(1) — simple but two passes
+ */
+function sortColorsCounting(nums: number[]): void {
   const count = [0, 0, 0];
   for (const n of nums) count[n]++;
   let i = 0;
   for (let color = 0; color <= 2; color++) {
-  for (let j = 0; j < count[color]; j++) nums[i++] = color;
+    for (let j = 0; j < count[color]; j++) nums[i++] = color;
   }
-  }
+}
 
-/\*\*
-
-- Solution 2: Dutch National Flag — 1 pass in-place (Optimal)
-- Time O(n), Space O(1)
--
-- Invariant at each step:
-- nums[0..low-1] = 0 (red, finalized)
-- nums[low..mid-1] = 1 (white,finalized)
-- nums[mid..high] = ? (unprocessed)
-- nums[high+1..n-1]= 2 (blue, finalized)
-  \*/
-  function sortColors(nums: number[]): void {
+/**
+ * Solution 2: Dutch National Flag — 1 pass in-place (Optimal)
+ * Time O(n), Space O(1)
+ *
+ * Invariant at each step:
+ *   nums[0..low-1] = 0 (red, finalized)
+ *   nums[low..mid-1] = 1 (white, finalized)
+ *   nums[mid..high] = ? (unprocessed)
+ *   nums[high+1..n-1] = 2 (blue, finalized)
+ */
+function sortColors(nums: number[]): void {
   let low = 0;
   let mid = 0;
   let high = nums.length - 1;
 
-while (mid <= high) {
-if (nums[mid] === 0) {
-[nums[low], nums[mid]] = [nums[mid], nums[low]];
-low++;
-mid++; // nums[low] was 1 (already seen), safe to advance
-} else if (nums[mid] === 1) {
-mid++; // already in correct zone
-} else { // nums[mid] === 2
-[nums[mid], nums[high]] = [nums[high], nums[mid]];
-high--; // DON'T advance mid — swapped element is unseen
-}
-}
+  while (mid <= high) {
+    if (nums[mid] === 0) {
+      [nums[low], nums[mid]] = [nums[mid], nums[low]];
+      low++;
+      mid++; // nums[low] was 1 (already seen), safe to advance
+    } else if (nums[mid] === 1) {
+      mid++; // already in correct zone
+    } else {
+      // nums[mid] === 2
+      [nums[mid], nums[high]] = [nums[high], nums[mid]];
+      high--; // DON'T advance mid — swapped element is unseen
+    }
+  }
 }
 
 // --- Quick inline tests ---
-const a1 = [2,0,2,1,1,0]; sortColors(a1); console.log(JSON.stringify(a1)==='[0,0,1,1,2,2]'); // true
-const a2 = [2,0,1]; sortColors(a2); console.log(JSON.stringify(a2)==='[0,1,2]'); // true
-const a3 = [1]; sortColors(a3); console.log(JSON.stringify(a3)==='[1]'); // true
-const a4 = [0,0,0]; sortColors(a4); console.log(JSON.stringify(a4)==='[0,0,0]'); // true
-{% endraw %}
+const a1 = [2, 0, 2, 1, 1, 0];
+sortColors(a1);
+console.log(JSON.stringify(a1) === "[0,0,1,1,2,2]"); // true
+const a2 = [2, 0, 1];
+sortColors(a2);
+console.log(JSON.stringify(a2) === "[0,1,2]"); // true
+const a3 = [1];
+sortColors(a3);
+console.log(JSON.stringify(a3) === "[1]"); // true
+const a4 = [0, 0, 0];
+sortColors(a4);
+console.log(JSON.stringify(a4) === "[0,0,0]"); // true
+```
 
 ---
 

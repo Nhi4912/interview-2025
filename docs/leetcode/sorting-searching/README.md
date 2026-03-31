@@ -23,7 +23,12 @@ tags: [Sorting/Searching, LeetCode, Interview Preparation]
 
 ## 📋 Problem List
 
-- [Merge Sorted Array](problems/01-merge-sorted-array.md) - **Easy** - [LeetCode](https://leetcode.com/problems/merge-sorted-array/)\n- [Kth Largest Element in an Array](problems/02-find-k-largest-elements.md) - **Easy** - [LeetCode](https://leetcode.com/problems/kth-largest-element-in-an-array/)\n- [First Bad Version](problems/02-first-bad-version.md) - **Hard** - [LeetCode](https://leetcode.com/problems/first-bad-version/)\n- [Search in Rotated Sorted Array](problems/03-search-in-rotated-sorted-array.md) - **Easy** - [LeetCode](https://leetcode.com/problems/search-in-rotated-sorted-array/)\n- [Sort Color](problems/03-sort-colors.md) - **Hard** - [LeetCode](https://leetcode.com/problems/sort-colors/)\n- [Median of Two Sorted Array](problems/04-median-of-two-sorted-arrays.md) - **Hard** - [LeetCode](https://leetcode.com/problems/median-of-two-sorted-array/)\n
+- [Merge Sorted Array](problems/01-merge-sorted-array.md) - **Easy** - [LeetCode](https://leetcode.com/problems/merge-sorted-array/)
+- [First Bad Version](problems/02-first-bad-version.md) - **Easy** - [LeetCode](https://leetcode.com/problems/first-bad-version/)
+- [Kth Largest Element in an Array](problems/02-find-k-largest-elements.md) - **Medium** - [LeetCode](https://leetcode.com/problems/kth-largest-element-in-an-array/)
+- [Sort Colors](problems/03-sort-colors.md) - **Medium** - [LeetCode](https://leetcode.com/problems/sort-colors/)
+- [Search in Rotated Sorted Array](problems/03-search-in-rotated-sorted-array.md) - **Medium** - [LeetCode](https://leetcode.com/problems/search-in-rotated-sorted-array/)
+- [Median of Two Sorted Arrays](problems/04-median-of-two-sorted-arrays.md) - **Hard** - [LeetCode](https://leetcode.com/problems/median-of-two-sorted-arrays/)
 
 ## 🎯 Key Concepts
 
@@ -36,18 +41,21 @@ tags: [Sorting/Searching, LeetCode, Interview Preparation]
 ## 📚 Study Strategy
 
 ### Beginner Level
+
 1. Start with Easy problems
 2. Understand basic patterns
 3. Focus on time complexity
 4. Practice implementation
 
 ### Intermediate Level
+
 1. Tackle Medium problems
 2. Learn optimization techniques
 3. Handle edge cases
 4. Practice multiple approaches
 
 ### Advanced Level
+
 1. Solve Hard problems
 2. Optimize space complexity
 3. Interview simulation
@@ -57,15 +65,6 @@ tags: [Sorting/Searching, LeetCode, Interview Preparation]
 
 - [Back to LeetCode Index](../index.md)
 - [All Categories](../index.md)
- other_name="Tree/Graph" ;;
-            "linked-list") other_name="Linked List" ;;
-            "dp") other_name="Dynamic Programming" ;;
-            "sorting-searching") other_name="Sorting/Searching" ;;
-            *) other_name="" ;;
-        esac
-        echo "- [](../index.md)"
-    fi
-done)
 
 ---
 
