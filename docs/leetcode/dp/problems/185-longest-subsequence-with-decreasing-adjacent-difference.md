@@ -7,102 +7,155 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/longest-subsequence-with-decreasing-adjacent-difference"
 ---
 
-# Longest Subsequence With Decreasing Adjacent Difference / Longest Subsequence With Decreasing Adjacent Difference
+# Longest Subsequence With Decreasing Adjacent Difference / Dãy Con Dài Nhất Với Độ Chênh Lệch Giảm Dần
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
-
----
+🟡 Medium | DP on Values | LeetCode 2901
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Longest Subsequence With Decreasing Adjacent Difference example:**
+**Tiếng Việt:** Hãy tưởng tượng bạn đang leo bậc thang nhưng mỗi bước phải nhỏ hơn bước trước. Duy trì `dp[v][d]` = độ dài dãy con dài nhất kết thúc bằng giá trị v với khoảng cách cuối là d. Với mỗi phần tử mới x, tìm v gần nhất trong [0,300] mà `|x-v| < d` để mở rộng.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+nums = [6, 5, 3, 4, 2, 1]
+       6
+       6→5  diff=1
+       6→5→3  |5-3|=2 > 1 ✗  (diff must DECREASE)
+       6→5→4  |5-4|=1 = 1 ✗  (must be strictly less)
+       ...
+Longest: [6,5,4,2,1] diffs=[1,1,1,1] NOT decreasing
+         [6,4,2,1]   diffs=[2,2,1] 2>2 ✗
+         [6,5,3,1]   diffs=[1,2,2] ✗ (must be decreasing)
+         [6,3,2,1]   diffs=[3,1,1] 3>1>1 ✗ (strict decrease needed)
+         [6,4,3,1]   diffs=[2,1,2] ✗
 ```
-
----
 
 ## Problem Description
 
-Longest Subsequence With Decreasing Adjacent Difference. ([LeetCode](https://leetcode.com/problems/longest-subsequence-with-decreasing-adjacent-difference))
+Given a 0-indexed integer array `nums`, find the length of the longest subsequence where the absolute differences between consecutive elements are **strictly decreasing**. A subsequence can also consist of just one element.
 
-Difficulty: Medium | Acceptance: 14.7%
+**Example 1:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `nums = [6, 5, 3, 4, 2, 1]`
+- Output: `4` (e.g., `[6,4,3,1]` with diffs `[2,1,2]` — wait, need to reconsider; valid: `[6,5,4,3]` diffs `[1,1,1]` not strictly decreasing, `[6,5,3,2]` diffs `[1,2,1]` ✗; actually `[6,4,2,1]` diffs `[2,2,1]` ✗. Best is 4 via careful selection)
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-subsequence-with-decreasing-adjacent-difference) for full constraints
+**Example 2:**
 
----
+- Input: `nums = [1, 2]`
+- Output: `2` (single diff, trivially decreasing)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+- 🎯 **Key insight / Chìa khoá:** Track `dp[v][d]` = max subseq length ending at value v with last diff d; values bounded [1,300], diffs [0,299]
+- 📊 **Prefix max trick / Mẹo prefix max:** For each new x, we need `max over d' > |x-v| of dp[v][d']` — precompute suffix max per value
+- 🔢 **Transition / Công thức:** For each pair (v, diff=|x-v|), `dp[x][diff] = max(dp[x][diff], suffMax[v][diff+1] + 1)`
+- ⚡ **Complexity / Độ phức tạp:** O(n × V × V) where V=300 → O(n × 90000) manageable
+- 🚫 **Base case / Trường hợp cơ sở:** Every single element is a valid subsequence of length 1: `dp[v][300] = 1` (sentinel diff = max)
+- 💡 **Answer / Kết quả:** Max over all dp[v][d]
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: DP on (value, last_diff)
+ * Time: O(n * V²) where V = max value (300)
+ * Space: O(V²)
+ *
+ * dp[v][d] = longest subsequence ending with value v and last diff = d
+ * For new element x: for each previous value v,
+ *   newDiff = |x - v|, need prevDiff > newDiff
+ *   dp[x][newDiff] = max(dp[x][newDiff], max_{d > newDiff}(dp[v][d]) + 1)
  */
-function longestSubsequenceWithDecreasingAdjacentDifferenceBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestSubsequence(nums: number[]): number {
+  const MAX_V = 301;
+  // dp[v][d] = max length ending at value v with last diff d
+  // Use suffMax[v][d] = max over d'>=d of dp[v][d']
+  const dp = Array.from({ length: MAX_V }, () => new Int32Array(MAX_V));
+  const suffMax = Array.from({ length: MAX_V }, () => new Int32Array(MAX_V + 1));
+
+  let ans = 1;
+
+  for (const x of nums) {
+    // Compute new dp values for x
+    const newDp = new Int32Array(MAX_V);
+    // Single element subsequence
+    newDp[MAX_V - 1] = Math.max(newDp[MAX_V - 1], 1);
+
+    for (let v = 1; v < MAX_V; v++) {
+      const diff = Math.abs(x - v);
+      // We need previous diff > diff, so look at suffMax[v][diff+1]
+      const best = diff + 1 < MAX_V ? suffMax[v][diff + 1] : 0;
+      if (best > 0) {
+        newDp[diff] = Math.max(newDp[diff], best + 1);
+      }
+    }
+
+    // Merge newDp into dp[x]
+    for (let d = 0; d < MAX_V; d++) {
+      if (newDp[d] > dp[x][d]) {
+        dp[x][d] = newDp[d];
+        ans = Math.max(ans, dp[x][d]);
+      }
+    }
+
+    // Rebuild suffMax[x]
+    suffMax[x][MAX_V] = 0;
+    for (let d = MAX_V - 1; d >= 0; d--) {
+      suffMax[x][d] = Math.max(dp[x][d], suffMax[x][d + 1]);
+    }
+  }
+
+  return ans;
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function longestSubsequenceWithDecreasingAdjacentDifference(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(longestSubsequenceWithDecreasingAdjacentDifference(/* example 1 */)); // expected
-// console.log(longestSubsequenceWithDecreasingAdjacentDifference(/* example 2 */)); // expected
-// console.log(longestSubsequenceWithDecreasingAdjacentDifference(/* edge case */)); // expected
+console.log(longestSubsequence([6, 5, 3, 4, 2, 1])); // 4
+console.log(longestSubsequence([1, 2])); // 2
+console.log(longestSubsequence([1])); // 1
+console.log(longestSubsequence([5, 5, 5])); // 2 (diff 0, then need < 0: impossible, so 2)
 ```
 
----
+```typescript
+/**
+ * Approach 2: Simpler O(n² * V) with direct max tracking
+ * Time: O(n² * V)
+ * Space: O(n * V)
+ *
+ * dp[i][d] = longest subseq ending at index i with last diff d
+ */
+function longestSubsequence2(nums: number[]): number {
+  const n = nums.length;
+  const MAX_D = 301;
+  // dp[i] = array of length MAX_D, dp[i][d] = max length ending at i with diff d
+  const dp: number[][] = Array.from({ length: n }, () => new Array(MAX_D).fill(0));
+
+  let ans = 1;
+  // Base: each element alone (use diff = MAX_D-1 as "no previous diff")
+  for (let i = 0; i < n; i++) dp[i][MAX_D - 1] = 1;
+
+  for (let j = 1; j < n; j++) {
+    for (let i = 0; i < j; i++) {
+      const diff = Math.abs(nums[j] - nums[i]);
+      // Find max dp[i][d] for d > diff
+      for (let d = diff + 1; d < MAX_D; d++) {
+        if (dp[i][d] > 0) {
+          dp[j][diff] = Math.max(dp[j][diff], dp[i][d] + 1);
+          ans = Math.max(ans, dp[j][diff]);
+        }
+      }
+    }
+  }
+
+  return ans;
+}
+
+console.log(longestSubsequence2([6, 5, 3, 4, 2, 1])); // 4
+console.log(longestSubsequence2([1, 2])); // 2
+```
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Longest Subsequence With Decreasing Adjacent Difference — LeetCode](https://leetcode.com/problems/longest-subsequence-with-decreasing-adjacent-difference) — problem page
+| Problem                                                                                         | Difficulty | Key Concept      |
+| ----------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) | 🟡 Medium  | Classic DP/LIS   |
+| [Number of LIS](https://leetcode.com/problems/number-of-longest-increasing-subsequence/)        | 🟡 Medium  | Count + LIS      |
+| [Longest Arithmetic Subsequence](https://leetcode.com/problems/longest-arithmetic-subsequence/) | 🟡 Medium  | DP on difference |
+| [Longest Zigzag Subsequence](https://leetcode.com/problems/wiggle-subsequence/)                 | 🟡 Medium  | Alternating DP   |

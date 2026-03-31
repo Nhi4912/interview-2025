@@ -7,100 +7,139 @@ tags: [Array, Two Pointers, Sorting]
 leetcode_url: "https://leetcode.com/problems/sort-array-by-parity"
 ---
 
-# Sort Array By Parity / Sort Array By Parity
+# Sort Array By Parity / Sắp Xếp Mảng Theo Tính Chẵn Lẻ
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [4Sum](https://leetcode.com/problems/4sum) | [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays)
-
----
+🟢 Easy | 🏷️ Array, Two Pointers, Sorting
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sort Array By Parity example:**
+**Vietnamese analogy:** Bạn có một hàng người — một số mặc áo chẵn (even), số khác mặc áo lẻ (odd). Đưa tất cả người áo chẵn ra phía trước, lẻ ra sau. Dùng hai con trỏ: trái từ đầu tìm số lẻ, phải từ cuối tìm số chẵn — hoán đổi cặp không đúng chỗ. O(n) thời gian, O(1) không gian.
 
 ```
-arr = [... sorted ...]
- L                 R
+nums = [3,1,2,4]
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+left=0(odd=3)  right=3(even=4) → swap → [4,1,2,3]
+left=1(odd=1)  right=2(even=2) → swap → [4,2,1,3]
+left=2 >= right=1 → stop
+
+Result: [4,2,1,3] ✓ (all evens before odds)
 ```
-
----
 
 ## Problem Description
 
-Sort Array By Parity. ([LeetCode](https://leetcode.com/problems/sort-array-by-parity))
+Given an integer array `nums`, move all **even integers** to the beginning and all **odd integers** to the end. Return any valid ordering; relative order within each group does not matter.
 
-Difficulty: Easy | Acceptance: 76.3%
+**Example 1:** `nums = [3,1,2,4]` → `[2,4,3,1]` (or any arrangement with evens first)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sort-array-by-parity) for full constraints
-
----
+**Example 2:** `nums = [0]` → `[0]`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+- 🔑 **Two-pointer / Hai con trỏ:** Left seeks odd, right seeks even — swap when both found; O(n) time O(1) space
+- 🔑 **Partition / Phân vùng:** This is exactly partition step of QuickSort with pivot = "even/odd"
+- 🔑 **In-place / Tại chỗ:** Avoid creating a new array; two-pointer does it in-place
+- ⚠️ **Order not required / Không cần thứ tự:** Relative order within evens/odds doesn't matter — simplifies to two-pointer
+- ⚠️ **All evens / Toàn chẵn:** If all even or all odd, two-pointer terminates immediately without swaps
+- 🔗 **Pattern / Mẫu:** Two-pointer partition is a building block for Dutch National Flag, QuickSelect, etc.
 
 ## Solutions
 
+### Solution 1: Two-Pointer In-Place (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Two pointers from both ends; swap misplaced pairs.
+ * Time: O(n)  Space: O(1)
  */
-function sortArrayByParityBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function sortArrayByParity(nums: number[]): number[] {
+  let left = 0,
+    right = nums.length - 1;
+
+  while (left < right) {
+    // Advance left past evens
+    while (left < right && nums[left] % 2 === 0) left++;
+    // Advance right past odds
+    while (left < right && nums[right] % 2 !== 0) right--;
+    // Swap odd at left with even at right
+    if (left < right) {
+      [nums[left], nums[right]] = [nums[right], nums[left]];
+      left++;
+      right--;
+    }
+  }
+
+  return nums;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sortArrayByParity(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(sortArrayByParity(/* example 1 */)); // expected
-// console.log(sortArrayByParity(/* example 2 */)); // expected
-// console.log(sortArrayByParity(/* edge case */)); // expected
+console.log(sortArrayByParity([3, 1, 2, 4])); // [4,2,1,3] or similar evens-first
+console.log(sortArrayByParity([0])); // [0]
+console.log(sortArrayByParity([1, 3, 5])); // [1,3,5] (all odd, already valid)
+console.log(sortArrayByParity([2, 4, 6])); // [2,4,6] (all even)
 ```
 
----
+### Solution 2: Stable Partition with Filter (Extra Space)
+
+```typescript
+/**
+ * Create two partitions, concatenate. Stable (preserves original order within groups).
+ * Time: O(n)  Space: O(n)
+ */
+function sortArrayByParityStable(nums: number[]): number[] {
+  const evens = nums.filter((x) => x % 2 === 0);
+  const odds = nums.filter((x) => x % 2 !== 0);
+  return [...evens, ...odds];
+}
+
+console.log(sortArrayByParityStable([3, 1, 2, 4])); // [2,4,3,1]
+console.log(sortArrayByParityStable([0])); // [0]
+```
+
+### Solution 3: Single Pass with Index Tracking
+
+```typescript
+/**
+ * One pass: write evens to front of result array, odds to back.
+ * Time: O(n)  Space: O(n)
+ */
+function sortArrayByParitySinglePass(nums: number[]): number[] {
+  const result = new Array(nums.length);
+  let lo = 0,
+    hi = nums.length - 1;
+
+  for (const num of nums) {
+    if (num % 2 === 0) result[lo++] = num;
+    else result[hi--] = num;
+  }
+
+  return result;
+}
+
+console.log(sortArrayByParitySinglePass([3, 1, 2, 4])); // [2,4,...] evens first
+console.log(sortArrayByParitySinglePass([0])); // [0]
+console.log(sortArrayByParitySinglePass([1, 3, 2, 4])); // [2,4,3,1] or similar
+```
+
+### Solution 4: Sort with Comparator
+
+```typescript
+/**
+ * Use sort() with custom comparator: even < odd.
+ * Time: O(n log n)  Space: O(log n) for sort stack
+ * Simple but not optimal; good for code golf.
+ */
+function sortArrayByParitySort(nums: number[]): number[] {
+  return [...nums].sort((a, b) => (a % 2) - (b % 2));
+}
+
+console.log(sortArrayByParitySort([3, 1, 2, 4])); // [2,4,3,1]
+console.log(sortArrayByParitySort([0])); // [0]
+```
 
 ## 🔗 Related Problems
 
-- [4Sum](https://leetcode.com/problems/4sum) — same pattern: Two Pointers
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [3Sum Closest](https://leetcode.com/problems/3sum-closest) — same pattern: Two Pointers
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Sort Array By Parity — LeetCode](https://leetcode.com/problems/sort-array-by-parity) — problem page
+| Problem                                                                                                             | Difficulty | Pattern                 |
+| ------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [Sort Array By Parity II](https://leetcode.com/problems/sort-array-by-parity-ii/)                                   | Easy       | Two-pointer interleaved |
+| [Move Zeroes](https://leetcode.com/problems/move-zeroes/)                                                           | Easy       | Partition / two-pointer |
+| [Partition Array According to Given Pivot](https://leetcode.com/problems/partition-array-according-to-given-pivot/) | Medium     | Stable partition        |
+| [Dutch National Flag](https://leetcode.com/problems/sort-colors/)                                                   | Medium     | Three-way partition     |

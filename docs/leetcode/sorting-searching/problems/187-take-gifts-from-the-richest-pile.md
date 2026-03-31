@@ -7,104 +7,154 @@ tags: [Array, Heap (Priority Queue), Simulation]
 leetcode_url: "https://leetcode.com/problems/take-gifts-from-the-richest-pile"
 ---
 
-# Take Gifts From the Richest Pile / Take Gifts From the Richest Pile
+# Take Gifts From the Richest Pile / Lấy Quà Từ Đống Lớn Nhất
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers) | [Number of Orders in the Backlog](https://leetcode.com/problems/number-of-orders-in-the-backlog)
-
----
+🟢 Easy | 🏷️ Array, Heap (Priority Queue), Simulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
-
-**Pattern Recognition:**
-
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Take Gifts From the Richest Pile example:**
+**Vietnamese analogy:** Bạn có nhiều đống kẹo. Mỗi giây bạn lấy đống lớn nhất, giữ lại `floor(sqrt(pile))` viên, và bỏ phần còn lại đi. Sau k giây, cộng tổng tất cả đống còn lại. Dùng max-heap để luôn lấy đống lớn nhất hiệu quả — không cần sort lại từ đầu mỗi lần.
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+gifts = [25,64,9,4,100], k=4
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+Step 1: max=100 → replace with floor(sqrt(100))=10  → [25,64,9,4,10]
+Step 2: max=64  → replace with floor(sqrt(64)) =8   → [25,8,9,4,10]
+Step 3: max=25  → replace with floor(sqrt(25)) =5   → [5,8,9,4,10]
+Step 4: max=10  → replace with floor(sqrt(10)) =3   → [5,8,9,4,3]
+Sum = 5+8+9+4+3 = 29
 ```
-
----
 
 ## Problem Description
 
-Take Gifts From the Richest Pile. ([LeetCode](https://leetcode.com/problems/take-gifts-from-the-richest-pile))
+You are given an integer array `gifts` representing gift piles and an integer `k`. In each second, pick the **largest** pile, leave `floor(sqrt(pile))` gifts, and discard the rest. After `k` seconds, return the **total** number of gifts remaining.
 
-Difficulty: Easy | Acceptance: 75.6%
+**Example 1:** `gifts = [25,64,9,4,100], k = 4` → `29`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/take-gifts-from-the-richest-pile) for full constraints
-
----
+**Example 2:** `gifts = [1,1,1,1], k = 4` → `4` (sqrt(1)=1, nothing changes)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **Data structure / Cấu trúc dữ liệu:** Max-heap (invert with negatives in JS) for O(log n) per operation
+- 🔑 **Early exit / Thoát sớm:** If `pile === 1`, sqrt(1)=1, heap never changes; can terminate early
+- 🔑 **Simulation / Mô phỏng:** k ≤ 10^3 and n ≤ 10^3; even O(nk) brute force fits in time
+- ⚠️ **Floor vs Round / Sàn vs Làm tròn:** Must use `Math.floor(Math.sqrt(pile))`, not `Math.round`
+- ⚠️ **Sum overflow / Tràn tổng:** Max sum = 10^3 × 10^9 = 10^12 → use `BigInt` or check bounds; fits in JS `number` (2^53)
+- 🔗 **Pattern / Mẫu:** Repeated max extraction and reinsertion → max-heap simulation
 
 ## Solutions
 
+### Solution 1: Max-Heap Simulation
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use a max-heap (via negated min-heap) to always access the largest pile.
+ * Time: O((n + k) log n)  Space: O(n)
  */
-function takeGiftsFromTheRichestPileBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function pickGifts(gifts: number[], k: number): number {
+  // Max-heap using negatives (JS has no built-in heap)
+  const heap = [...gifts].map((x) => -x);
+
+  // Heapify
+  const heapify = (arr: number[], i: number) => {
+    const n = arr.length;
+    while (true) {
+      let smallest = i;
+      const l = 2 * i + 1,
+        r = 2 * i + 2;
+      if (l < n && arr[l] < arr[smallest]) smallest = l;
+      if (r < n && arr[r] < arr[smallest]) smallest = r;
+      if (smallest === i) break;
+      [arr[i], arr[smallest]] = [arr[smallest], arr[i]];
+      i = smallest;
+    }
+  };
+
+  for (let i = Math.floor(heap.length / 2) - 1; i >= 0; i--) heapify(heap, i);
+
+  const pop = (): number => {
+    const top = -heap[0];
+    heap[0] = heap[heap.length - 1];
+    heap.pop();
+    heapify(heap, 0);
+    return top;
+  };
+
+  const push = (val: number) => {
+    heap.push(-val);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (heap[parent] > heap[i]) {
+        [heap[parent], heap[i]] = [heap[i], heap[parent]];
+        i = parent;
+      } else break;
+    }
+  };
+
+  for (let i = 0; i < k; i++) {
+    const max = pop();
+    if (max === 1) {
+      push(1);
+      break;
+    } // No more reduction possible
+    push(Math.floor(Math.sqrt(max)));
+  }
+
+  return heap.reduce((sum, v) => sum + -v, 0);
 }
 
-/**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function takeGiftsFromTheRichestPile(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(takeGiftsFromTheRichestPile(/* example 1 */)); // expected
-// console.log(takeGiftsFromTheRichestPile(/* example 2 */)); // expected
-// console.log(takeGiftsFromTheRichestPile(/* edge case */)); // expected
+console.log(pickGifts([25, 64, 9, 4, 100], 4)); // 29
+console.log(pickGifts([1, 1, 1, 1], 4)); // 4
+console.log(pickGifts([9], 1)); // 3
 ```
 
----
+### Solution 2: Sort Each Round (Simple, O(nk log n))
+
+```typescript
+/**
+ * Sort array each round, replace max, repeat.
+ * Time: O(k * n log n)  Space: O(1)
+ * Good for small inputs; easy to reason about correctness.
+ */
+function pickGiftsSimple(gifts: number[], k: number): number {
+  const arr = [...gifts];
+  for (let i = 0; i < k; i++) {
+    arr.sort((a, b) => b - a);
+    arr[0] = Math.floor(Math.sqrt(arr[0]));
+  }
+  return arr.reduce((s, v) => s + v, 0);
+}
+
+console.log(pickGiftsSimple([25, 64, 9, 4, 100], 4)); // 29
+console.log(pickGiftsSimple([1, 1, 1, 1], 4)); // 4
+```
+
+### Solution 3: One-liner with Array Max
+
+```typescript
+/**
+ * Find and replace max index each iteration.
+ * Time: O(n*k)  Space: O(n)
+ */
+function pickGiftsLinear(gifts: number[], k: number): number {
+  const arr = [...gifts];
+  for (let i = 0; i < k; i++) {
+    const maxIdx = arr.indexOf(Math.max(...arr));
+    arr[maxIdx] = Math.floor(Math.sqrt(arr[maxIdx]));
+  }
+  return arr.reduce((s, v) => s + v, 0);
+}
+
+console.log(pickGiftsLinear([25, 64, 9, 4, 100], 4)); // 29
+console.log(pickGiftsLinear([1, 1, 1, 1], 4)); // 4
+```
 
 ## 🔗 Related Problems
 
-- [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers) — same pattern: Two Pointers
-- [Number of Orders in the Backlog](https://leetcode.com/problems/number-of-orders-in-the-backlog) — same pattern: Heap / Priority Queue
-- [Car Pooling](https://leetcode.com/problems/car-pooling) — same pattern: Prefix Sum
-- [Mark Elements on Array by Performing Queries](https://leetcode.com/problems/mark-elements-on-array-by-performing-queries) — same pattern: Heap / Priority Queue
-- [Take Gifts From the Richest Pile — LeetCode](https://leetcode.com/problems/take-gifts-from-the-richest-pile) — problem page
+| Problem                                                                                           | Difficulty | Pattern                 |
+| ------------------------------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [Last Stone Weight](https://leetcode.com/problems/last-stone-weight/)                             | Easy       | Max-heap simulation     |
+| [K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin/)           | Medium     | Min-heap / partial sort |
+| [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/)       | Hard       | Two heaps               |
+| [Kth Largest Element in a Stream](https://leetcode.com/problems/kth-largest-element-in-a-stream/) | Easy       | Min-heap of size k      |

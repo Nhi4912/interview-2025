@@ -7,100 +7,180 @@ tags: [Math, Binary Search]
 leetcode_url: "https://leetcode.com/problems/kth-smallest-number-in-multiplication-table"
 ---
 
-# Kth Smallest Number in Multiplication Table / Kth Smallest Number in Multiplication Table
+# Kth Smallest Number in Multiplication Table / Số Nhỏ Thứ K Trong Bảng Nhân
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Sqrt(x)](https://leetcode.com/problems/sqrtx) | [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight)
-
----
+🔴 Hard | 🏷️ Math, Binary Search
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
-
-**Pattern Recognition:**
-
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Kth Smallest Number in Multiplication Table example:**
+**Vietnamese analogy:** Bảng nhân m×n: hàng i chứa i, 2i, 3i, ..., n×i. Tổng m×n phần tử. Binary search trên giá trị: với một giá trị `mid`, đếm bao nhiêu phần tử ≤ mid? Hàng i có `min(floor(mid/i), n)` phần tử ≤ mid. Tìm giá trị nhỏ nhất sao cho số phần tử ≤ nó ≥ k.
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+m=3, n=3, k=5
+Table:  1 2 3
+        2 4 6
+        3 6 9
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Binary search: mid=4
+  row1: min(4/1,3)=3  row2: min(4/2,3)=2  row3: min(4/3,3)=1
+  count=6 ≥ 5 → try smaller
+
+mid=3: row1=3, row2=1, row3=1 → count=5 ≥ 5 → answer=3
 ```
-
----
 
 ## Problem Description
 
-Kth Smallest Number in Multiplication Table. ([LeetCode](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table))
+Given `m`, `n`, and `k`, return the **k-th smallest** element in the m×n multiplication table. The table's cell `(i,j) = i*j`.
 
-Difficulty: Hard | Acceptance: 52.9%
+**Example 1:** `m=3, n=3, k=5` → `3`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table) for full constraints
-
----
+**Example 2:** `m=2, n=3, k=6` → `6`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
-
----
+- 🔑 **Key insight / Chìa khóa:** Binary search on value; count(val) = sum over rows of min(floor(val/i), n)
+- 🔑 **Count formula / Công thức đếm:** Row i contributes `min(⌊val/i⌋, n)` elements ≤ val
+- 🔑 **Answer is exact / Chính xác:** The binary search target (lo) is always an element that exists in the table
+- ⚠️ **Search space / Không gian tìm:** lo=1, hi=m\*n (max value in table)
+- ⚠️ **Strictly less / Chặt:** We search for smallest x where count(x) >= k; this x is in the table
+- 🔗 **Pattern / Mẫu:** "Kth in implicit sorted matrix" → binary search on answer value + counting function
 
 ## Solutions
 
+### Solution 1: Binary Search on Value
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Binary search on the multiplication table value range [1, m*n].
+ * Count elements <= mid across all rows in O(m) per step.
+ * Time: O(m * log(m*n))  Space: O(1)
  */
-function kthSmallestNumberInMultiplicationTableBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findKthNumber(m: number, n: number, k: number): number {
+  // Count how many elements in table are <= val
+  const countLE = (val: number): number => {
+    let count = 0;
+    for (let i = 1; i <= m; i++) {
+      count += Math.min(Math.floor(val / i), n);
+    }
+    return count;
+  };
+
+  let lo = 1,
+    hi = m * n;
+
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (countLE(mid) >= k) hi = mid;
+    else lo = mid + 1;
+  }
+
+  return lo;
 }
 
-/**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function kthSmallestNumberInMultiplicationTable(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(kthSmallestNumberInMultiplicationTable(/* example 1 */)); // expected
-// console.log(kthSmallestNumberInMultiplicationTable(/* example 2 */)); // expected
-// console.log(kthSmallestNumberInMultiplicationTable(/* edge case */)); // expected
+console.log(findKthNumber(3, 3, 5)); // 3
+console.log(findKthNumber(2, 3, 6)); // 6
+console.log(findKthNumber(1, 1, 1)); // 1
+console.log(findKthNumber(3, 3, 1)); // 1
+console.log(findKthNumber(3, 3, 9)); // 9
 ```
 
----
+### Solution 2: Heap-Based (For Verification, Less Efficient)
+
+```typescript
+/**
+ * Use a min-heap to extract elements one by one until kth.
+ * Time: O(k * log m)  Space: O(m)
+ * Only feasible for small k; here for comparison.
+ */
+function findKthNumberHeap(m: number, n: number, k: number): number {
+  // Heap: [value, row, col]  (col tracks position in each row)
+  type Entry = [number, number, number];
+  const heap: Entry[] = [];
+
+  const push = (entry: Entry) => {
+    heap.push(entry);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (heap[p][0] > heap[i][0]) {
+        [heap[p], heap[i]] = [heap[i], heap[p]];
+        i = p;
+      } else break;
+    }
+  };
+
+  const pop = (): Entry => {
+    const top = heap[0];
+    heap[0] = heap.pop()!;
+    let i = 0;
+    while (true) {
+      let s = i;
+      const l = 2 * i + 1,
+        r = 2 * i + 2;
+      if (l < heap.length && heap[l][0] < heap[s][0]) s = l;
+      if (r < heap.length && heap[r][0] < heap[s][0]) s = r;
+      if (s === i) break;
+      [heap[i], heap[s]] = [heap[s], heap[i]];
+      i = s;
+    }
+    return top;
+  };
+
+  // Push first element of each row
+  for (let i = 1; i <= m; i++) push([i, i, 1]);
+
+  let val = 0;
+  for (let i = 0; i < k; i++) {
+    const [v, row, col] = pop();
+    val = v;
+    if (col < n) push([row * (col + 1), row, col + 1]);
+  }
+  return val;
+}
+
+console.log(findKthNumberHeap(3, 3, 5)); // 3
+console.log(findKthNumberHeap(2, 3, 6)); // 6
+```
+
+### Solution 3: Annotated Binary Search with Proof
+
+```typescript
+/**
+ * Same as Solution 1 but with detailed commentary for interview explanation.
+ */
+function findKthNumberVerbose(m: number, n: number, k: number): number {
+  // Why does lo converge to the answer?
+  // Invariant: the kth smallest is always in [lo, hi]
+  // count(mid) >= k means there are at least k elements <= mid, so kth <= mid → hi = mid
+  // count(mid) < k means fewer than k elements <= mid, so kth > mid → lo = mid+1
+  // Loop terminates with lo = hi = smallest x with count(x) >= k
+  // This x IS in the table (proof: count(x) >= k > count(x-1), so x must appear)
+
+  const count = (val: number): number => {
+    let c = 0;
+    for (let i = 1; i <= m; i++) c += Math.min(Math.floor(val / i), n);
+    return c;
+  };
+
+  let lo = 1,
+    hi = m * n;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    count(mid) >= k ? (hi = mid) : (lo = mid + 1);
+  }
+  return lo;
+}
+
+console.log(findKthNumberVerbose(3, 3, 5)); // 3
+console.log(findKthNumberVerbose(2, 3, 6)); // 6
+console.log(findKthNumberVerbose(1, 1, 1)); // 1
+```
 
 ## 🔗 Related Problems
 
-- [Sqrt(x)](https://leetcode.com/problems/sqrtx) — same pattern: Binary Search
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Reach a Number](https://leetcode.com/problems/reach-a-number) — same pattern: Binary Search
-- [Kth Smallest Number in Multiplication Table — LeetCode](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table) — problem page
+| Problem                                                                                                           | Difficulty | Pattern                |
+| ----------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Kth Smallest Element in a Sorted Matrix](https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/) | Medium     | Binary search on value |
+| [Find K-th Smallest Pair Distance](https://leetcode.com/problems/find-k-th-smallest-pair-distance/)               | Hard       | Binary search + count  |
+| [Median of a Row Wise Sorted Matrix](https://leetcode.com/problems/median-of-a-row-wise-sorted-matrix/)           | Medium     | Binary search on value |
+| [Super Ugly Number](https://leetcode.com/problems/super-ugly-number/)                                             | Medium     | Heap / DP              |

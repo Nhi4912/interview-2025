@@ -7,97 +7,141 @@ tags: [Hash Table, String, Greedy, Sorting, Counting]
 leetcode_url: "https://leetcode.com/problems/minimum-deletions-to-make-string-k-special"
 ---
 
-# Minimum Deletions to Make String K-Special / Minimum Deletions to Make String K-Special
+# Minimum Deletions to Make String K-Special / Xóa Tối Thiểu Để Chuỗi K-Đặc Biệt
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Reorganize String](https://leetcode.com/problems/reorganize-string) | [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations)
-
----
+🟡 Medium | 🏷️ Hash Table, String, Greedy, Sorting
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Deletions to Make String K-Special example:**
+**Vietnamese analogy:** Bạn có nhiều loại kẹo. Một chuỗi là K-đặc biệt nếu với mọi cặp ký tự a,b: |freq(a) - freq(b)| ≤ k. Sắp xếp tần số theo thứ tự tăng dần. Với mỗi tần số nhỏ nhất làm "baseline", xóa tất cả ký tự có tần số nhỏ hơn baseline, và cắt tần số lớn hơn baseline+k.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+freq: [1, 2, 3, 5, 7], k=2
+Fix baseline=3: delete freq<3 → delete (1+2)=3, clip 5→5, 7→5 → total=3+0+2=5
+Fix baseline=2: delete freq<2 → delete 1=1, clip 3→4,5→4,7→4 → total=1+0+1+3=5
+Pick minimum over all baseline choices!
 ```
-
----
 
 ## Problem Description
 
-Minimum Deletions to Make String K-Special. ([LeetCode](https://leetcode.com/problems/minimum-deletions-to-make-string-k-special))
+Given a string `word` and an integer `k`, a string is **k-special** if for every pair of characters `a` and `b`, `|freq(a) - freq(b)| <= k`. Return the **minimum deletions** needed to make `word` k-special.
 
-Difficulty: Medium | Acceptance: 44.7%
+**Example 1:** `word = "aabcaba", k = 0` → `3` (delete all c and one b so all remaining letters have equal frequency)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-deletions-to-make-string-k-special) for full constraints
-
----
+**Example 2:** `word = "aabcaba", k = 2` → `2`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **Key insight / Chìa khóa:** Sort frequencies; enumerate each freq[i] as the minimum baseline — O(26²) is fine
+- 🔑 **Greedy choice / Tham lam:** For each baseline, total cost = sum of freq[j] for j<i (delete entirely) + sum of max(0, freq[j]-baseline-k) for j>i (trim excess)
+- 🔑 **Prefix sum / Tiền tố:** Pre-compute prefix sums of sorted frequencies to evaluate each baseline in O(1)
+- ⚠️ **Edge case / Trường hợp biên:** k ≥ max(freq) − min(freq) → answer is 0; single character → 0
+- ⚠️ **Off-by-one / Lỗi lệch 1:** Upper bound is `freq[i] + k`, not `freq[i] + k - 1`
+- 🔗 **Pattern / Mẫu:** Enumerate threshold + greedy trim is a common "frequency equalisation" template
 
 ## Solutions
 
+### Solution 1: Sort + Enumerate Baseline (Greedy)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort character frequencies, try each as the minimum baseline.
+ * Time: O(n + 26 log 26) = O(n)  Space: O(26) = O(1)
  */
-function minimumDeletionsToMakeStringKSpecialBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumDeletions(word: string, k: number): number {
+  // Count frequencies
+  const freq = new Array(26).fill(0);
+  for (const ch of word) freq[ch.charCodeAt(0) - 97]++;
+
+  // Keep only non-zero, sort ascending
+  const sorted = freq.filter((f) => f > 0).sort((a, b) => a - b);
+  const n = sorted.length;
+
+  // Prefix sum for O(1) range queries
+  const prefix = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + sorted[i];
+
+  let minDel = Infinity;
+
+  for (let i = 0; i < n; i++) {
+    const base = sorted[i]; // This freq becomes the minimum
+    const cap = base + k; // Maximum allowed frequency
+
+    // Delete all chars with freq < base (indices 0..i-1)
+    const deleteFull = prefix[i];
+
+    // Trim chars with freq > base+k (indices i+1..n-1)
+    let trimCost = 0;
+    for (let j = i + 1; j < n; j++) {
+      if (sorted[j] > cap) trimCost += sorted[j] - cap;
+    }
+
+    minDel = Math.min(minDel, deleteFull + trimCost);
+  }
+
+  // Also consider deleting everything except the largest group
+  minDel = Math.min(minDel, prefix[n] - sorted[n - 1]);
+
+  return minDel;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumDeletionsToMakeStringKSpecial(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumDeletionsToMakeStringKSpecial(/* example 1 */)); // expected
-// console.log(minimumDeletionsToMakeStringKSpecial(/* example 2 */)); // expected
-// console.log(minimumDeletionsToMakeStringKSpecial(/* edge case */)); // expected
+// Tests
+console.log(minimumDeletions("aabcaba", 0)); // 3
+console.log(minimumDeletions("aabcaba", 2)); // 2
+console.log(minimumDeletions("aaaaa", 1)); // 0
+console.log(minimumDeletions("abcde", 0)); // 4
 ```
 
----
+### Solution 2: Optimised with Binary Search for Trim
+
+```typescript
+/**
+ * Use binary search to find the first index exceeding cap, then use prefix sums.
+ * Time: O(n + 26 log 26)  Space: O(26)
+ */
+function minimumDeletionsOpt(word: string, k: number): number {
+  const freq = new Array(26).fill(0);
+  for (const ch of word) freq[ch.charCodeAt(0) - 97]++;
+
+  const sorted = freq.filter((f) => f > 0).sort((a, b) => a - b);
+  const n = sorted.length;
+  const prefix = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + sorted[i];
+
+  let minDel = Infinity;
+
+  for (let i = 0; i < n; i++) {
+    const cap = sorted[i] + k;
+
+    // Binary search for first index where sorted[j] > cap
+    let lo = i + 1,
+      hi = n;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (sorted[mid] <= cap) lo = mid + 1;
+      else hi = mid;
+    }
+    // lo = first index with sorted[lo] > cap
+    const trimStart = lo;
+    const deleteFull = prefix[i];
+    const trimCost = prefix[n] - prefix[trimStart] - (n - trimStart) * cap;
+
+    minDel = Math.min(minDel, deleteFull + trimCost);
+  }
+
+  return minDel;
+}
+
+console.log(minimumDeletionsOpt("aabcaba", 0)); // 3
+console.log(minimumDeletionsOpt("aabcaba", 2)); // 2
+console.log(minimumDeletionsOpt("aaaaa", 1)); // 0
+```
 
 ## 🔗 Related Problems
 
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Minimum Number of Pushes to Type Word II](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii) — same pattern: Greedy
-- [Minimum Number of Keypresses](https://leetcode.com/problems/minimum-number-of-keypresses) — same pattern: Greedy
-- [Minimum Deletions to Make String K-Special — LeetCode](https://leetcode.com/problems/minimum-deletions-to-make-string-k-special) — problem page
+| Problem                                                                                                                                         | Difficulty | Pattern                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Minimum Number of Operations to Make Array Continuous](https://leetcode.com/problems/minimum-number-of-operations-to-make-array-continuous/)   | Medium     | Sort + sliding window  |
+| [Minimum Deletions to Make Character Frequencies Unique](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique/) | Medium     | Greedy on frequencies  |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                                                                                 | Medium     | Frequency-based greedy |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string/)                                                                           | Medium     | Max heap + frequency   |

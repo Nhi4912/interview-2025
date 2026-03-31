@@ -7,97 +7,116 @@ tags: [Array, String]
 leetcode_url: "https://leetcode.com/problems/determine-if-two-events-have-conflict"
 ---
 
-# Determine if Two Events Have Conflict / Determine if Two Events Have Conflict
+# Determine if Two Events Have Conflict / Xác Định Hai Sự Kiện Có Xung Đột
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Largest Number](https://leetcode.com/problems/largest-number)
-
----
+🟢 Easy | Array, String
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Determine if Two Events Have Conflict example:**
+**Analogy / Tương tự:** Hai đoạn thẳng trên trục thời gian có giao nhau không? Hai sự kiện **không** xung đột chỉ khi sự kiện này kết thúc **trước** khi sự kiện kia bắt đầu.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
-```
+Event1: [─────────]      "01:15" → "02:00"
+Event2:        [──────]  "02:00" → "03:00"
 
----
+Overlap at 02:00 → CONFLICT = true
+
+Event1: [─────]          "01:15" → "01:59"
+Event2:         [──────] "02:00" → "03:00"
+
+No overlap → CONFLICT = false
+```
 
 ## Problem Description
 
-Determine if Two Events Have Conflict. ([LeetCode](https://leetcode.com/problems/determine-if-two-events-have-conflict))
+Given two events `event1 = [start1, end1]` and `event2 = [start2, end2]` where each time is a string `"HH:MM"`, determine if they **conflict** (have any overlapping time, inclusive of endpoints).
 
-Difficulty: Easy | Acceptance: 52.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/determine-if-two-events-have-conflict) for full constraints
-
----
+- **Example 1:** `event1 = ["01:15","02:00"]`, `event2 = ["02:00","03:00"]` → `true` (they share 02:00)
+- **Example 2:** `event1 = ["01:00","02:00"]`, `event2 = ["02:01","03:00"]` → `false`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🇻🇳 Phủ định dễ hơn** — hai đoạn không giao khi A kết trước B bắt đầu HOẶC B kết trước A bắt đầu / Negation is simpler
+- **🇻🇳 So sánh chuỗi** "HH:MM" hoạt động vì định dạng cố định / String comparison works — fixed "HH:MM" format is lexicographically consistent
+- **🇻🇳 Không cần chuyển sang phút** với bài này / No need to convert to minutes for this problem
+- **🇻🇳 Xung đột khi** start1 <= end2 AND start2 <= end1 / Conflict when start1 ≤ end2 AND start2 ≤ end1
+- **🇻🇳 Endpoint tính** — inclusive endpoints mean a single shared minute = conflict / Endpoints are inclusive
+- **🇻🇳 Classic interval overlap** pattern — memorize for interviews / Memorize the overlap formula
 
 ## Solutions
 
+### Solution 1: String Comparison (Simplest)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Direct string comparison — works because "HH:MM" is lexicographically ordered
+ * Time: O(1)  Space: O(1)
  */
-function determineIfTwoEventsHaveConflictBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function haveConflict(event1: string[], event2: string[]): boolean {
+  const [start1, end1] = event1;
+  const [start2, end2] = event2;
+
+  // Two events conflict if they overlap
+  // They do NOT conflict only if one ends before the other begins
+  return !(end1 < start2 || end2 < start1);
 }
 
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function determineIfTwoEventsHaveConflict(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(determineIfTwoEventsHaveConflict(/* example 1 */)); // expected
-// console.log(determineIfTwoEventsHaveConflict(/* example 2 */)); // expected
-// console.log(determineIfTwoEventsHaveConflict(/* edge case */)); // expected
+// Test cases
+console.log(haveConflict(["01:15", "02:00"], ["02:00", "03:00"])); // true
+console.log(haveConflict(["01:00", "02:00"], ["02:01", "03:00"])); // false
+console.log(haveConflict(["10:00", "11:00"], ["14:00", "15:00"])); // false
+console.log(haveConflict(["00:00", "23:59"], ["10:00", "11:00"])); // true
 ```
 
----
+### Solution 2: Overlap Condition (Positive Form)
+
+```typescript
+/**
+ * Positive overlap condition: start1 <= end2 AND start2 <= end1
+ * Time: O(1)  Space: O(1)
+ */
+function haveConflictV2(event1: string[], event2: string[]): boolean {
+  return event1[0] <= event2[1] && event2[0] <= event1[1];
+}
+
+// Test cases
+console.log(haveConflictV2(["01:15", "02:00"], ["02:00", "03:00"])); // true
+console.log(haveConflictV2(["01:00", "02:00"], ["02:01", "03:00"])); // false
+```
+
+### Solution 3: Convert to Minutes for Clarity
+
+```typescript
+/**
+ * Convert to minutes for explicit numeric comparison
+ * Time: O(1)  Space: O(1)
+ */
+function haveConflictV3(event1: string[], event2: string[]): boolean {
+  const toMin = (t: string): number => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const s1 = toMin(event1[0]),
+    e1 = toMin(event1[1]);
+  const s2 = toMin(event2[0]),
+    e2 = toMin(event2[1]);
+
+  // Overlap: max of starts <= min of ends
+  return Math.max(s1, s2) <= Math.min(e1, e2);
+}
+
+// Test cases
+console.log(haveConflictV3(["01:15", "02:00"], ["02:00", "03:00"])); // true
+console.log(haveConflictV3(["01:00", "02:00"], ["02:01", "03:00"])); // false
+console.log(haveConflictV3(["10:00", "11:00"], ["14:00", "15:00"])); // false
+```
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Determine if Two Events Have Conflict — LeetCode](https://leetcode.com/problems/determine-if-two-events-have-conflict) — problem page
+| Problem                                                                                                           | Difficulty | Similarity          |
+| ----------------------------------------------------------------------------------------------------------------- | ---------- | ------------------- |
+| [Meeting Rooms](https://leetcode.com/problems/meeting-rooms/)                                                     | 🟢 Easy    | Interval overlap    |
+| [Merge Intervals](https://leetcode.com/problems/merge-intervals/)                                                 | 🟡 Medium  | Interval merging    |
+| [Number of Full Rounds You Have Played](https://leetcode.com/problems/the-number-of-full-rounds-you-have-played/) | 🟡 Medium  | Time string math    |
+| [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals/)                             | 🟡 Medium  | Interval scheduling |

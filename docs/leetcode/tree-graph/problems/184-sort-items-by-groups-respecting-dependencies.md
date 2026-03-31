@@ -7,97 +7,156 @@ tags: [Depth-First Search, Breadth-First Search, Graph, Topological Sort]
 leetcode_url: "https://leetcode.com/problems/sort-items-by-groups-respecting-dependencies"
 ---
 
-# Sort Items by Groups Respecting Dependencies / Sort Items by Groups Respecting Dependencies
+# Sort Items by Groups Respecting Dependencies / Sắp Xếp Phần Tử Theo Nhóm Tôn Trọng Phụ Thuộc
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Topological Sort
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Course Schedule](https://leetcode.com/problems/course-schedule) | [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix)
-
----
+🔴 Hard | Graph | Topological Sort
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống sắp xếp thứ tự học môn — môn A prerequisite của B thì A phải học trước. Topological sort xếp thứ tự sao cho mọi dependency được thoả mãn.
-
-**Pattern Recognition:**
-
-- Signal: "dependency ordering" + "DAG" → **Topological Sort**
-- Bài này thuộc dạng Topological Sort — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sort Items by Groups Respecting Dependencies example:**
+**Analogy / Tương tự:** Giống như lập lịch thi công dự án — trước tiên sắp xếp thứ tự các **phòng ban** (nhóm), rồi trong mỗi phòng ban sắp xếp thứ tự **nhân viên** (phần tử). Hai lần topological sort lồng nhau.
 
 ```
-// TODO: Add step-by-step visual for Topological Sort
-// Show one complete example with state at each step
+Items: 0→1→2   Groups: A→B
+        ↓               ↓
+[group A: 0,1] → [group B: 2]
+ toposort inside    toposort between
 ```
 
----
+**Key insight:** Assign each ungrouped item its own unique group. Then do two topological sorts: one for groups (inter-group deps), one for items within each group (intra-group deps).
 
 ## Problem Description
 
-Sort Items by Groups Respecting Dependencies. ([LeetCode](https://leetcode.com/problems/sort-items-by-groups-respecting-dependencies))
+You have `n` items divided into `m` groups. Item `i` belongs to `group[i]` (or `-1` for no group). `beforeItems[i]` lists items that must come before item `i`. Return an ordering of all items satisfying all dependencies, or `[]` if impossible.
 
-Difficulty: Hard | Acceptance: 65.6%
+**Example 1:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- `n=8, m=2, group=[-1,-1,1,0,0,1,0,-1], beforeItems=[[],[6],[5],[6],[3,6],[],[],[]]`
+- Output: `[6,3,4,1,5,2,0,7]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sort-items-by-groups-respecting-dependencies) for full constraints
+**Example 2:**
 
----
+- `n=8, m=2, group=[-1,-1,1,0,0,1,0,-1], beforeItems=[[],[6],[5],[6],[3],[],[4],[]]`
+- Output: `[]` (cycle detected)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Q: Why two topological sorts? / Tại sao cần hai lần toposort?**
+  - A: One for ordering groups, one for ordering items within each group / Một cho thứ tự nhóm, một cho thứ tự phần tử trong nhóm.
+- **Q: How handle ungrouped items? / Xử lý phần tử không có nhóm?**
+  - A: Assign each a unique virtual group id `m, m+1, ...` / Gán mỗi phần tử một nhóm ảo riêng biệt.
+- **Q: When is result impossible? / Khi nào không có kết quả?**
+  - A: When either topological sort detects a cycle / Khi một trong hai toposort phát hiện chu trình.
+- **Q: Time complexity? / Độ phức tạp?**
+  - A: O(n + m + E) where E is total edges / O(n + m + E) với E là tổng số cạnh.
+- **Q: Edge case? / Trường hợp biên?**
+  - A: Dependencies that cross groups also create group-level edges / Phụ thuộc xuyên nhóm tạo cạnh cấp nhóm.
+- **Q: Can items in the same group have inter-group deps? / Phần tử cùng nhóm có thể tạo phụ thuộc nhóm khác không?**
+  - A: No — same group deps are intra-group only / Không — phụ thuộc cùng nhóm chỉ là nội bộ.
 
 ## Solutions
 
+### Solution 1: Double Topological Sort (Kahn's BFS)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort items respecting group and item dependencies.
+ * @param n - number of items
+ * @param m - number of groups
+ * @param group - group[i] = group of item i, -1 if ungrouped
+ * @param beforeItems - beforeItems[i] = list of items before i
+ * @returns valid order or [] if impossible
+ * Time: O(n + m + E)  Space: O(n + m + E)
  */
-function sortItemsByGroupsRespectingDependenciesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function sortItems(n: number, m: number, group: number[], beforeItems: number[][]): number[] {
+  // Assign each ungrouped item a unique group
+  let groupId = m;
+  for (let i = 0; i < n; i++) {
+    if (group[i] === -1) group[i] = groupId++;
+  }
+  const totalGroups = groupId;
+
+  // Build adjacency lists and in-degree counts
+  const itemGraph: number[][] = Array.from({ length: n }, () => []);
+  const groupGraph: number[][] = Array.from({ length: totalGroups }, () => []);
+  const itemIndegree = new Array(n).fill(0);
+  const groupIndegree = new Array(totalGroups).fill(0);
+  const groupEdges = new Set<string>();
+
+  for (let i = 0; i < n; i++) {
+    for (const pre of beforeItems[i]) {
+      itemGraph[pre].push(i);
+      itemIndegree[i]++;
+      // Add group edge if different groups
+      if (group[pre] !== group[i]) {
+        const key = `${group[pre]},${group[i]}`;
+        if (!groupEdges.has(key)) {
+          groupEdges.add(key);
+          groupGraph[group[pre]].push(group[i]);
+          groupIndegree[group[i]]++;
+        }
+      }
+    }
+  }
+
+  // Kahn's topological sort
+  function topoSort<T>(
+    nodes: T[],
+    indegree: number[],
+    graph: number[][],
+    getId: (x: T) => number,
+  ): T[] | null {
+    const queue: T[] = nodes.filter((x) => indegree[getId(x)] === 0);
+    const result: T[] = [];
+    while (queue.length) {
+      const cur = queue.shift()!;
+      result.push(cur);
+      for (const next of graph[getId(cur)]) {
+        if (--indegree[next] === 0) queue.push(next as T);
+      }
+    }
+    return result.length === nodes.length ? result : null;
+  }
+
+  // Sort groups
+  const groupOrder = topoSort(
+    Array.from({ length: totalGroups }, (_, i) => i),
+    groupIndegree,
+    groupGraph,
+    (x) => x,
+  );
+  if (!groupOrder) return [];
+
+  // Sort items within each group
+  const itemsByGroup: Map<number, number[]> = new Map();
+  for (let i = 0; i < n; i++) {
+    if (!itemsByGroup.has(group[i])) itemsByGroup.set(group[i], []);
+    itemsByGroup.get(group[i])!.push(i);
+  }
+
+  const result: number[] = [];
+  for (const g of groupOrder) {
+    const items = itemsByGroup.get(g) || [];
+    const sortedItems = topoSort(items, itemIndegree, itemGraph, (x) => x);
+    if (!sortedItems) return [];
+    result.push(...sortedItems);
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Topological Sort
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sortItemsByGroupsRespectingDependencies(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Topological Sort
-  // Hint: Use in-degree counting or DFS post-order
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(sortItemsByGroupsRespectingDependencies(/* example 1 */)); // expected
-// console.log(sortItemsByGroupsRespectingDependencies(/* example 2 */)); // expected
-// console.log(sortItemsByGroupsRespectingDependencies(/* edge case */)); // expected
+// Tests
+console.log(sortItems(8, 2, [-1, -1, 1, 0, 0, 1, 0, -1], [[], [6], [5], [6], [3, 6], [], [], []]));
+// → [6,3,4,1,5,2,0,7] or another valid order
+console.log(sortItems(8, 2, [-1, -1, 1, 0, 0, 1, 0, -1], [[], [6], [5], [6], [3], [], [4], []]));
+// → []
+console.log(sortItems(1, 1, [0], [[]]));
+// → [0]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Course Schedule](https://leetcode.com/problems/course-schedule) — same pattern: Topological Sort
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Minimum Height Trees](https://leetcode.com/problems/minimum-height-trees) — same pattern: Topological Sort
-- [Minimum Runes to Add to Cast Spell](https://leetcode.com/problems/minimum-runes-to-add-to-cast-spell) — same pattern: Topological Sort
-- [Sort Items by Groups Respecting Dependencies — LeetCode](https://leetcode.com/problems/sort-items-by-groups-respecting-dependencies) — problem page
+| #    | Problem              | Difficulty | Key Concept      |
+| ---- | -------------------- | ---------- | ---------------- |
+| 207  | Course Schedule      | Medium     | Topological Sort |
+| 210  | Course Schedule II   | Medium     | Kahn's BFS       |
+| 269  | Alien Dictionary     | Hard       | Topological Sort |
+| 1203 | Sort Items by Groups | Hard       | Double Toposort  |

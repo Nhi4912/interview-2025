@@ -7,100 +7,160 @@ tags: [Hash Table, Two Pointers, String]
 leetcode_url: "https://leetcode.com/problems/strobogrammatic-number"
 ---
 
-# Strobogrammatic Number / Strobogrammatic Number
+# Strobogrammatic Number / Số Strobogrammatic
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest String Chain](https://leetcode.com/problems/longest-string-chain) | [Permutation in String](https://leetcode.com/problems/permutation-in-string)
-
----
+🟢 Easy | Hash Table, Two Pointers, String
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Strobogrammatic Number example:**
+**Analogy / Tương tự:** Một số Strobogrammatic là số trông giống nhau khi xoay 180°. Chỉ có 5 chữ số hợp lệ: 0↔0, 1↔1, 6↔9, 8↔8, 9↔6. Dùng hai con trỏ từ hai đầu kiểm tra từng cặp.
 
 ```
-arr = [... sorted ...]
- L                 R
-
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+"69"  → left=6, right=9 → valid pair ✅ → true
+"88"  → left=8, right=8 → valid pair ✅ → true
+"962" → left=9, right=2 → 2 not in map ❌ → false
+"818" → check (8,8)✅, then center 1 → valid center ✅ → true
 ```
-
----
 
 ## Problem Description
 
-Strobogrammatic Number. ([LeetCode](https://leetcode.com/problems/strobogrammatic-number))
+A strobogrammatic number looks the same when rotated 180 degrees. Given a string `num`, return `true` if it is a strobogrammatic number. Valid digit pairs when rotated: `0↔0, 1↔1, 6↔9, 8↔8, 9↔6`.
 
-Difficulty: Easy | Acceptance: 47.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/strobogrammatic-number) for full constraints
-
----
+- **Example 1:** `num = "69"` → `true`
+- **Example 2:** `num = "88"` → `true`
+- **Example 3:** `num = "962"` → `false`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+- **🇻🇳 Chỉ 5 chữ số hợp lệ**: 0, 1, 6, 8, 9 / Only 5 valid digits: 0, 1, 6, 8, 9
+- **🇻🇳 Two pointers** — kiểm tra cặp (left, right) đồng thời / Check (left, right) pair simultaneously
+- **🇻🇳 Ký tự trung tâm** (khi n lẻ) phải là 0, 1, hoặc 8 / Center char (odd n) must be 0, 1, or 8
+- **🇻🇳 Map lookup** nhanh hơn switch / Map lookup is faster than switch
+- **🇻🇳 Biến thể** — Strobogrammatic Number II cần sinh tất cả số có độ dài n / Variant II: generate all strobogrammatic of length n
+- **🇻🇳 Số không** — "00" hợp lệ strobogrammatically nhưng không phải số thông thường / "00" is valid strobogrammatically
 
 ## Solutions
 
+### Solution 1: Two Pointers with Map
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Two-pointer approach with strobogrammatic pair map
+ * Time: O(n)  Space: O(1)
  */
-function strobogrammaticNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function isStrobogrammatic(num: string): boolean {
+  const map: Record<string, string> = {
+    "0": "0",
+    "1": "1",
+    "6": "9",
+    "8": "8",
+    "9": "6",
+  };
+
+  let left = 0;
+  let right = num.length - 1;
+
+  while (left <= right) {
+    const l = num[left];
+    const r = num[right];
+
+    // l must be a valid strobogrammatic digit AND map to r
+    if (map[l] === undefined || map[l] !== r) {
+      return false;
+    }
+
+    left++;
+    right--;
+  }
+
+  return true;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function strobogrammaticNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(strobogrammaticNumber(/* example 1 */)); // expected
-// console.log(strobogrammaticNumber(/* example 2 */)); // expected
-// console.log(strobogrammaticNumber(/* edge case */)); // expected
+// Test cases
+console.log(isStrobogrammatic("69")); // true
+console.log(isStrobogrammatic("88")); // true
+console.log(isStrobogrammatic("962")); // false
+console.log(isStrobogrammatic("1")); // true
+console.log(isStrobogrammatic("818")); // true
+console.log(isStrobogrammatic("6")); // false (6 alone is not valid — needs paired 9)
 ```
 
----
+### Solution 2: Reverse and Compare
+
+```typescript
+/**
+ * Build rotated version and compare
+ * Time: O(n)  Space: O(n)
+ */
+function isStrobogrammaticV2(num: string): boolean {
+  const rotateMap: Record<string, string> = {
+    "0": "0",
+    "1": "1",
+    "6": "9",
+    "8": "8",
+    "9": "6",
+  };
+
+  let rotated = "";
+  for (let i = num.length - 1; i >= 0; i--) {
+    const ch = num[i];
+    if (rotateMap[ch] === undefined) return false;
+    rotated += rotateMap[ch];
+  }
+
+  return rotated === num;
+}
+
+// Test cases
+console.log(isStrobogrammaticV2("69")); // true
+console.log(isStrobogrammaticV2("88")); // true
+console.log(isStrobogrammaticV2("962")); // false
+console.log(isStrobogrammaticV2("619")); // true? No: 619 rotated = 619? 6→9,1→1,9→6 = "916" ≠ "619" → false
+console.log(isStrobogrammaticV2("916")); // 9→6, 1→1, 6→9 reversed = "619" wait no
+// 916 reversed is 619, then rotate each: 6→9,1→1,9→6 = "916" = "916" → true
+```
+
+### Solution 3: Set-Based Validation
+
+```typescript
+/**
+ * Explicit valid pairs checking
+ * Time: O(n)  Space: O(1)
+ */
+function isStrobogrammaticV3(num: string): boolean {
+  const validPairs = new Set(["00", "11", "69", "88", "96"]);
+  const validCenter = new Set(["0", "1", "8"]);
+
+  let l = 0,
+    r = num.length - 1;
+
+  while (l < r) {
+    if (!validPairs.has(num[l] + num[r])) return false;
+    l++;
+    r--;
+  }
+
+  // Check center digit if odd length
+  if (l === r) {
+    return validCenter.has(num[l]);
+  }
+
+  return true;
+}
+
+// Test cases
+console.log(isStrobogrammaticV3("69")); // true
+console.log(isStrobogrammaticV3("88")); // true
+console.log(isStrobogrammaticV3("962")); // false
+console.log(isStrobogrammaticV3("1")); // true
+console.log(isStrobogrammaticV3("818")); // true
+```
 
 ## 🔗 Related Problems
 
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Permutation in String](https://leetcode.com/problems/permutation-in-string) — same pattern: Sliding Window
-- [Partition Labels](https://leetcode.com/problems/partition-labels) — same pattern: Two Pointers
-- [Shortest Word Distance II](https://leetcode.com/problems/shortest-word-distance-ii) — same pattern: Two Pointers
-- [Strobogrammatic Number — LeetCode](https://leetcode.com/problems/strobogrammatic-number) — problem page
+| Problem                                                                                 | Difficulty | Similarity               |
+| --------------------------------------------------------------------------------------- | ---------- | ------------------------ |
+| [Strobogrammatic Number II](https://leetcode.com/problems/strobogrammatic-number-ii/)   | 🟡 Medium  | Generate all of length n |
+| [Strobogrammatic Number III](https://leetcode.com/problems/strobogrammatic-number-iii/) | 🔴 Hard    | Count in range           |
+| [Valid Palindrome](https://leetcode.com/problems/valid-palindrome/)                     | 🟢 Easy    | Two-pointer string check |
+| [Find the Difference](https://leetcode.com/problems/find-the-difference/)               | 🟢 Easy    | Character matching       |

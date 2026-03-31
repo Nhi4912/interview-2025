@@ -7,100 +7,175 @@ tags: [Array, Depth-First Search, Breadth-First Search, Matrix]
 leetcode_url: "https://leetcode.com/problems/find-all-groups-of-farmland"
 ---
 
-# Find All Groups of Farmland / Find All Groups of Farmland
+# Find All Groups of Farmland / Tìm Tất Cả Nhóm Đất Nông Nghiệp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Max Area of Island](https://leetcode.com/problems/max-area-of-island) | [Making A Large Island](https://leetcode.com/problems/making-a-large-island)
-
----
+🟡 Medium | BFS/DFS | Matrix
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find All Groups of Farmland example:**
+**Analogy / Tương tự:** Giống như nhìn từ trên cao xuống các cánh đồng hình chữ nhật — mỗi cánh đồng là một khối ô `1` hình chữ nhật. Chỉ cần tìm **góc trên-trái** và **góc dưới-phải** của mỗi khối là xong.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
-
-BFS: process level by level using queue
+land:          Farmland groups:
+1 1 0 0        [0,0,1,1] ← rect from (0,0) to (1,1)
+1 1 0 0
+0 0 1 0        [2,2,2,2] ← single cell
+0 0 0 1        [3,3,3,3] ← single cell
 ```
 
----
+**Key insight:** Scan top-left to bottom-right. When you find a `1` cell, it must be the top-left corner of a new rectangle (since left and above are 0 or boundary). Expand right and down to find bottom-right corner, then mark all cells.
 
 ## Problem Description
 
-Find All Groups of Farmland. ([LeetCode](https://leetcode.com/problems/find-all-groups-of-farmland))
+Given a binary matrix `land` (0=forest, 1=farmland), find all rectangular farmland groups. Each group is a rectangular submatrix of 1s, not adjacent to other farmland. Return `[r1,c1,r2,c2]` for each group where `(r1,c1)` is top-left and `(r2,c2)` is bottom-right.
 
-Difficulty: Medium | Acceptance: 75.5%
+**Example 1:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `[[1,0,0],[0,1,1],[0,1,1]]`
+- Output: `[[0,0,0,0],[1,1,2,2]]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-all-groups-of-farmland) for full constraints
+**Example 2:**
 
----
+- Input: `[[1,1],[1,1]]`
+- Output: `[[0,0,1,1]]`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Q: Why scan only top-left corners? / Tại sao chỉ quét góc trên-trái?**
+  - A: Problem guarantees rectangles don't touch — the first unvisited 1 is always a new top-left corner / Đề bảo đảm các hình chữ nhật không tiếp xúc.
+- **Q: How find bottom-right? / Tìm góc dưới-phải thế nào?**
+  - A: Expand row and column until hitting a 0 or boundary / Mở rộng hàng và cột cho đến khi gặp 0 hoặc biên.
+- **Q: Time complexity? / Độ phức tạp?**
+  - A: O(m*n) — each cell visited at most twice / O(m*n) — mỗi ô được thăm tối đa hai lần.
+- **Q: Can we use BFS/DFS instead? / Có thể dùng BFS/DFS không?**
+  - A: Yes, but the direct expansion is simpler and faster / Có, nhưng mở rộng trực tiếp đơn giản và nhanh hơn.
+- **Q: What if land is all 0s? / Nếu ma trận toàn 0?**
+  - A: Return empty array / Trả về mảng rỗng.
+- **Q: Do we need to restore the matrix? / Có cần khôi phục ma trận không?**
+  - A: If modifying in-place, yes — or use visited array / Nếu sửa tại chỗ, cần khôi phục — hoặc dùng mảng visited.
 
 ## Solutions
 
+### Solution 1: Scan Top-Left Corners (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Find all rectangular farmland groups.
+ * Time: O(m*n)  Space: O(1) extra (modifies input)
  */
-function findAllGroupsOfFarmlandBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findFarmland(land: number[][]): number[][] {
+  const m = land.length,
+    n = land[0].length;
+  const result: number[][] = [];
+
+  for (let r1 = 0; r1 < m; r1++) {
+    for (let c1 = 0; c1 < n; c1++) {
+      if (land[r1][c1] !== 1) continue;
+
+      // Found top-left corner, find bottom-right
+      let r2 = r1,
+        c2 = c1;
+      while (r2 + 1 < m && land[r2 + 1][c1] === 1) r2++;
+      while (c2 + 1 < n && land[r1][c2 + 1] === 1) c2++;
+
+      result.push([r1, c1, r2, c2]);
+
+      // Mark entire rectangle as visited
+      for (let i = r1; i <= r2; i++) for (let j = c1; j <= c2; j++) land[i][j] = 0;
+    }
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findAllGroupsOfFarmland(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(findAllGroupsOfFarmland(/* example 1 */)); // expected
-// console.log(findAllGroupsOfFarmland(/* example 2 */)); // expected
-// console.log(findAllGroupsOfFarmland(/* edge case */)); // expected
+// Tests
+console.log(
+  JSON.stringify(
+    findFarmland([
+      [1, 0, 0],
+      [0, 1, 1],
+      [0, 1, 1],
+    ]),
+  ),
+);
+// [[0,0,0,0],[1,1,2,2]]
+console.log(
+  JSON.stringify(
+    findFarmland([
+      [1, 1],
+      [1, 1],
+    ]),
+  ),
+);
+// [[0,0,1,1]]
+console.log(JSON.stringify(findFarmland([[0]])));
+// []
 ```
 
----
+### Solution 2: BFS from Each Unvisited Cell
+
+```typescript
+/**
+ * Find farmland groups using BFS.
+ * Time: O(m*n)  Space: O(m*n)
+ */
+function findFarmlandBFS(land: number[][]): number[][] {
+  const m = land.length,
+    n = land[0].length;
+  const visited = Array.from({ length: m }, () => new Array(n).fill(false));
+  const result: number[][] = [];
+
+  for (let r = 0; r < m; r++) {
+    for (let c = 0; c < n; c++) {
+      if (land[r][c] !== 1 || visited[r][c]) continue;
+
+      // BFS to find all cells in this farmland group
+      const queue: [number, number][] = [[r, c]];
+      visited[r][c] = true;
+      let r2 = r,
+        c2 = c;
+
+      while (queue.length) {
+        const [cr, cc] = queue.shift()!;
+        r2 = Math.max(r2, cr);
+        c2 = Math.max(c2, cc);
+        for (const [dr, dc] of [
+          [0, 1],
+          [0, -1],
+          [1, 0],
+          [-1, 0],
+        ]) {
+          const nr = cr + dr,
+            nc = cc + dc;
+          if (nr >= 0 && nr < m && nc >= 0 && nc < n && land[nr][nc] === 1 && !visited[nr][nc]) {
+            visited[nr][nc] = true;
+            queue.push([nr, nc]);
+          }
+        }
+      }
+      result.push([r, c, r2, c2]);
+    }
+  }
+  return result;
+}
+
+// Tests
+console.log(
+  JSON.stringify(
+    findFarmlandBFS([
+      [1, 0, 0],
+      [0, 1, 1],
+      [0, 1, 1],
+    ]),
+  ),
+);
+// [[0,0,0,0],[1,1,2,2]]
+```
 
 ## 🔗 Related Problems
 
-- [Max Area of Island](https://leetcode.com/problems/max-area-of-island) — same pattern: Union Find
-- [Making A Large Island](https://leetcode.com/problems/making-a-large-island) — same pattern: Union Find
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Flood Fill](https://leetcode.com/problems/flood-fill) — same pattern: BFS
-- [Find All Groups of Farmland — LeetCode](https://leetcode.com/problems/find-all-groups-of-farmland) — problem page
+| #    | Problem                  | Difficulty | Key Concept |
+| ---- | ------------------------ | ---------- | ----------- |
+| 200  | Number of Islands        | Medium     | BFS/DFS     |
+| 695  | Max Area of Island       | Medium     | DFS         |
+| 1020 | Number of Enclaves       | Medium     | BFS         |
+| 1254 | Number of Closed Islands | Medium     | DFS         |

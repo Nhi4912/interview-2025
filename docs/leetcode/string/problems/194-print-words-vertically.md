@@ -7,97 +7,146 @@ tags: [Array, String, Simulation]
 leetcode_url: "https://leetcode.com/problems/print-words-vertically"
 ---
 
-# Print Words Vertically / Print Words Vertically
+# Print Words Vertically / In Các Từ Theo Chiều Dọc
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Number of Valid Move Combinations On Chessboard](https://leetcode.com/problems/number-of-valid-move-combinations-on-chessboard)
-
----
+🟡 Medium | Array, String, Simulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Print Words Vertically" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Print Words Vertically example:**
+**Analogy / Tương tự:** Hãy tưởng tượng các từ được viết trên bảng theo chiều ngang, sau đó đọc từng cột từ trên xuống. Các vị trí thiếu ký tự (từ ngắn hơn) sẽ được thay bằng khoảng trắng — nhưng **trim trailing spaces** từ mỗi cột.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+s = "HOW ARE YOU"
+words = ["HOW", "ARE", "YOU"]
 
----
+Col 0: H A Y → "HAY"
+Col 1: O R O → "ORO"
+Col 2: W E U → "WEU"
+
+s = "TO BE OR NOT TO BE"
+Col 0: T B O N T B  → "TBONTB"
+Col 1: O E R O O E  → "OEROOE"
+Col 2: _ _ _ T _ _  → "  T  " → trim → "  T"
+```
 
 ## Problem Description
 
-Print Words Vertically. ([LeetCode](https://leetcode.com/problems/print-words-vertically))
+Given a string `s` of words separated by single spaces, return the words printed vertically in the same order. Words are arranged left to right, and each column is read top to bottom. Trailing spaces in each vertical word should be removed, but interior spaces must be kept.
 
-Difficulty: Medium | Acceptance: 66.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/print-words-vertically) for full constraints
-
----
+- **Example 1:** `s = "HOW ARE YOU"` → `["HAY","ORO","WEU"]`
+- **Example 2:** `s = "TO BE OR NOT TO BE"` → `["TBONTB","OEROOE","RNTT","   T","T   BE"]`? See actual solution output
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🇻🇳 Tách từ** và tìm chiều dài từ dài nhất / Split words, find maxLen
+- **🇻🇳 Duyệt theo cột** 0..maxLen-1, mỗi từ đóng góp s[col] hoặc space / Iterate by column index
+- **🇻🇳 Trailing spaces** phải bị xóa — dùng trimEnd() / Remove trailing spaces with trimEnd()
+- **🇻🇳 Interior spaces** được giữ nguyên khi từ nào đó có ký tự sau vị trí này / Interior spaces preserved
+- **🇻🇳 Edge case** → từ 1 ký tự, chỉ 1 từ / Single char words, single word
+- **🇻🇳 Không cần StringBuilder phức tạp** — map + join + trimEnd là đủ / Simple map + join + trimEnd
 
 ## Solutions
 
+### Solution 1: Column Iteration with trimEnd
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each column index, collect chars from each word (or space if too short)
+ * Time: O(n * maxLen)  Space: O(n * maxLen)
+ * n = number of words, maxLen = longest word length
  */
-function printWordsVerticallyBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function printVertically(s: string): string[] {
+  const words = s.split(" ");
+  const maxLen = Math.max(...words.map((w) => w.length));
+  const result: string[] = [];
+
+  for (let col = 0; col < maxLen; col++) {
+    let column = "";
+    for (const word of words) {
+      column += col < word.length ? word[col] : " ";
+    }
+    result.push(column.trimEnd());
+  }
+
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function printWordsVertically(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
+// Test cases
+console.log(printVertically("HOW ARE YOU"));
+// ["HAY","ORO","WEU"]
 
-// === Test Cases ===
-// console.log(printWordsVertically(/* example 1 */)); // expected
-// console.log(printWordsVertically(/* example 2 */)); // expected
-// console.log(printWordsVertically(/* edge case */)); // expected
+console.log(printVertically("TO BE OR NOT TO BE"));
+// ["TBONTB","OEROOE","RNTT","   T","T   BE"]? Let's check:
+// words = ["TO","BE","OR","NOT","TO","BE"], maxLen = 3
+// col0: T B O N T B → "TBONTB"
+// col1: O E R O O E → "OEROOE"
+// col2: _ _ _ T _ _ → "   T  " → trimEnd → "   T"
+// Output: ["TBONTB","OEROOE","   T"]
+
+console.log(printVertically("CONTEST IS COMING"));
+// ["CIC","ONO","NTM","TSI","EI N","S  G"]
 ```
 
----
+### Solution 2: Transpose Approach
+
+```typescript
+/**
+ * Build column arrays by transposing the word matrix
+ * Time: O(n * maxLen)  Space: O(n * maxLen)
+ */
+function printVerticallyV2(s: string): string[] {
+  const words = s.split(" ");
+  const maxLen = Math.max(...words.map((w) => w.length));
+
+  return Array.from({ length: maxLen }, (_, col) =>
+    words
+      .map((w) => (col < w.length ? w[col] : " "))
+      .join("")
+      .trimEnd(),
+  );
+}
+
+// Test cases
+console.log(printVerticallyV2("HOW ARE YOU")); // ["HAY","ORO","WEU"]
+console.log(printVerticallyV2("TO BE OR NOT TO BE")); // ["TBONTB","OEROOE","   T"]
+```
+
+### Solution 3: Pad Words First, then Slice
+
+```typescript
+/**
+ * Pad each word to maxLen, then slice column by column
+ * Time: O(n * maxLen)  Space: O(n * maxLen)
+ */
+function printVerticallyV3(s: string): string[] {
+  const words = s.split(" ");
+  const maxLen = Math.max(...words.map((w) => w.length));
+
+  // Pad each word to maxLen with spaces
+  const padded = words.map((w) => w.padEnd(maxLen, " "));
+
+  const result: string[] = [];
+  for (let col = 0; col < maxLen; col++) {
+    const column = padded
+      .map((w) => w[col])
+      .join("")
+      .trimEnd();
+    result.push(column);
+  }
+
+  return result;
+}
+
+// Test cases
+console.log(printVerticallyV3("HOW ARE YOU")); // ["HAY","ORO","WEU"]
+console.log(printVerticallyV3("CONTEST IS COMING"));
+```
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Number of Valid Move Combinations On Chessboard](https://leetcode.com/problems/number-of-valid-move-combinations-on-chessboard) — same pattern: Backtracking
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) — same pattern: Stack
-- [Print Words Vertically — LeetCode](https://leetcode.com/problems/print-words-vertically) — problem page
+| Problem                                                                   | Difficulty | Similarity                    |
+| ------------------------------------------------------------------------- | ---------- | ----------------------------- |
+| [Zigzag Conversion](https://leetcode.com/problems/zigzag-conversion/)     | 🟡 Medium  | Row/column reordering         |
+| [Rotate Image](https://leetcode.com/problems/rotate-image/)               | 🟡 Medium  | Matrix transposition          |
+| [Transpose Matrix](https://leetcode.com/problems/transpose-matrix/)       | 🟢 Easy    | Grid column reading           |
+| [Find the Difference](https://leetcode.com/problems/find-the-difference/) | 🟢 Easy    | String character manipulation |

@@ -7,97 +7,161 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/find-nearest-point-that-has-the-same-x-or-y-coordinate"
 ---
 
-# Find Nearest Point That Has the Same X or Y Coordinate / Find Nearest Point That Has the Same X or Y Coordinate
+# Find Nearest Point That Has the Same X or Y Coordinate / Tìm Điểm Gần Nhất Cùng Tọa Độ X Hoặc Y
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
-
----
+🟢 Easy | Array
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Find Nearest Point That Has the Same X or Y Coordinate" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find Nearest Point That Has the Same X or Y Coordinate example:**
+**Vietnamese analogy**: Bạn đứng tại điểm (x, y) trên bản đồ. Một điểm "hợp lệ" là điểm nằm trên cùng hàng ngang hoặc cùng cột dọc với bạn. Trong tất cả điểm hợp lệ, tìm điểm gần nhất theo khoảng cách Manhattan.
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+(x=3, y=4), points=[(1,4),(3,1),(3,4)]
+  (1,4): same y=4 ✓, dist=|3-1|+|4-4|=2
+  (3,1): same x=3 ✓, dist=|3-3|+|4-1|=3
+  (3,4): same x AND y ✓, dist=0
+Min dist=0 at index 2 → return 2
 ```
-
----
 
 ## Problem Description
 
-Find Nearest Point That Has the Same X or Y Coordinate. ([LeetCode](https://leetcode.com/problems/find-nearest-point-that-has-the-same-x-or-y-coordinate))
+Given point `(x, y)` and array `points`, find the **index** of the nearest "valid" point where valid means `points[i][0] === x` or `points[i][1] === y`. Use Manhattan distance. Return `-1` if no valid point.
 
-Difficulty: Easy | Acceptance: 69.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-nearest-point-that-has-the-same-x-or-y-coordinate) for full constraints
-
----
+- **Example 1**: `x=3, y=4, points=[[1,4],[3,1],[3,4]]` → `2` (distance 0)
+- **Example 2**: `x=3, y=4, points=[[2,3]]` → `-1` (no valid point)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 💡 **Valid = same row or col / Hợp lệ = cùng hàng hoặc cột**: Check px===x || py===y / kiểm tra cùng x hoặc cùng y
+- 🔍 **Manhattan distance / Khoảng cách Manhattan**: |x-px| + |y-py|, but since one coord matches, it simplifies / vì một tọa độ bằng nhau nên đơn giản hơn
+- ⚠️ **Index not value / Chỉ số không phải giá trị**: Return the index in points, not the point itself / trả chỉ số, không phải giá trị
+- 🧮 **O(n) linear scan / Quét tuyến tính**: Visit each point once / duyệt mỗi điểm một lần
+- 📊 **Tiebreaker / Ưu tiên**: If equal distance, return smaller index / khoảng cách bằng nhau → chỉ số nhỏ hơn
+- 🎯 **Distance simplification / Đơn giản hóa khoảng cách**: Same x → dist = |y - py|; same y → dist = |x - px| / cùng x thì dist = |y - py|
 
 ## Solutions
 
+### Solution 1: Linear Scan (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Find nearest valid point sharing x or y coordinate
+ * Time: O(n) | Space: O(1)
  */
-function findNearestPointThatHasTheSameXOrYCoordinateBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function nearestValidPoint(x: number, y: number, points: number[][]): number {
+  let bestIdx = -1;
+  let bestDist = Infinity;
+
+  for (let i = 0; i < points.length; i++) {
+    const [px, py] = points[i];
+    if (px === x || py === y) {
+      const dist = Math.abs(x - px) + Math.abs(y - py);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    }
+  }
+  return bestIdx;
 }
 
-/**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findNearestPointThatHasTheSameXOrYCoordinate(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(findNearestPointThatHasTheSameXOrYCoordinate(/* example 1 */)); // expected
-// console.log(findNearestPointThatHasTheSameXOrYCoordinate(/* example 2 */)); // expected
-// console.log(findNearestPointThatHasTheSameXOrYCoordinate(/* edge case */)); // expected
+// Tests
+console.log(
+  nearestValidPoint(3, 4, [
+    [1, 4],
+    [3, 1],
+    [3, 4],
+  ]),
+); // 2
+console.log(nearestValidPoint(3, 4, [[2, 3]])); // -1
+console.log(nearestValidPoint(3, 4, [[3, 4]])); // 0
+console.log(
+  nearestValidPoint(1, 2, [
+    [3, 2],
+    [1, 5],
+    [2, 2],
+  ]),
+); // 0 (dist=2)
 ```
 
----
+### Solution 2: Filter then minimize
+
+```typescript
+/**
+ * Filter valid points, then find minimum distance
+ * Time: O(n) | Space: O(n)
+ */
+function nearestValidPointFilter(x: number, y: number, points: number[][]): number {
+  let bestIdx = -1;
+  let bestDist = Infinity;
+
+  points
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => p[0] === x || p[1] === y)
+    .forEach(({ p, i }) => {
+      const dist = Math.abs(x - p[0]) + Math.abs(y - p[1]);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    });
+
+  return bestIdx;
+}
+
+// Tests
+console.log(
+  nearestValidPointFilter(3, 4, [
+    [1, 4],
+    [3, 1],
+    [3, 4],
+  ]),
+); // 2
+console.log(nearestValidPointFilter(3, 4, [[2, 3]])); // -1
+```
+
+### Solution 3: Reduce approach
+
+```typescript
+/**
+ * Reduce over points collecting (bestIdx, bestDist)
+ * Time: O(n) | Space: O(1)
+ */
+function nearestValidPointReduce(x: number, y: number, points: number[][]): number {
+  const { idx } = points.reduce(
+    (acc, [px, py], i) => {
+      if (px !== x && py !== y) return acc;
+      const dist = Math.abs(x - px) + Math.abs(y - py);
+      return dist < acc.dist ? { idx: i, dist } : acc;
+    },
+    { idx: -1, dist: Infinity },
+  );
+  return idx;
+}
+
+// Tests
+console.log(
+  nearestValidPointReduce(3, 4, [
+    [1, 4],
+    [3, 1],
+    [3, 4],
+  ]),
+); // 2
+console.log(nearestValidPointReduce(3, 4, [[2, 3]])); // -1
+console.log(
+  nearestValidPointReduce(0, 0, [
+    [0, 5],
+    [5, 0],
+    [0, 0],
+  ]),
+); // 2
+```
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Find Nearest Point That Has the Same X or Y Coordinate — LeetCode](https://leetcode.com/problems/find-nearest-point-that-has-the-same-x-or-y-coordinate) — problem page
+| #    | Problem                                 | Difficulty | Tags           |
+| ---- | --------------------------------------- | ---------- | -------------- |
+| 973  | K Closest Points to Origin              | Medium     | Array, Sorting |
+| 1030 | Matrix Cells in Distance Order          | Easy       | Array, Sorting |
+| 1266 | Minimum Time Visiting All Points        | Easy       | Array          |
+| 2280 | Minimum Lines to Represent a Line Chart | Medium     | Array, Math    |

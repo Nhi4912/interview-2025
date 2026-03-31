@@ -7,97 +7,128 @@ tags: [Array, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-operations-to-make-the-array-increasing"
 ---
 
-# Minimum Operations to Make the Array Increasing / Minimum Operations to Make the Array Increasing
+# Minimum Operations to Make the Array Increasing / Số Thao Tác Tối Thiểu Để Mảng Tăng Dần
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Largest Number](https://leetcode.com/problems/largest-number)
-
----
+🟢 Easy | Array · Greedy
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Operations to Make the Array Increasing example:**
+**Vietnamese analogy**: Bạn có một dãy số và muốn nó tăng nghiêm ngặt. Mỗi thao tác tăng một phần tử lên 1. Với mỗi phần tử nhỏ hơn hoặc bằng phần tử trước, hãy nâng nó lên `prev + 1` — đây là cách tốt nhất vì tăng ít nhất có thể.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
-```
+nums = [1, 1, 1]
+  i=0: base, keep 1
+  i=1: 1 ≤ 1 → raise to 2, ops += 2-1 = 1
+  i=2: 1 ≤ 2 → raise to 3, ops += 3-1 = 2
+Total ops = 3
 
----
+nums = [3, 1, 2]
+  i=0: base, keep 3
+  i=1: 1 ≤ 3 → raise to 4, ops += 4-1 = 3
+  i=2: 2 ≤ 4 → raise to 5, ops += 5-2 = 3
+Total ops = 6
+```
 
 ## Problem Description
 
-Minimum Operations to Make the Array Increasing. ([LeetCode](https://leetcode.com/problems/minimum-operations-to-make-the-array-increasing))
+Given array `nums`, in one operation you can increment any element by 1. Return the minimum number of operations to make `nums` **strictly increasing**.
 
-Difficulty: Easy | Acceptance: 81.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-operations-to-make-the-array-increasing) for full constraints
-
----
+- **Example 1**: `nums = [1,1,1]` → `3` (make it [1,2,3])
+- **Example 2**: `nums = [1,5,2,4,1]` → `14` (make it [1,5,6,7,8])
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 💡 **Greedy minimum / Tham lam tối thiểu**: Only raise to exactly `prev+1` when needed — never raise more / chỉ nâng đúng `prev+1`
+- 🔍 **In-place tracking / Theo dõi tại chỗ**: Track what the current element "should be" after raising / theo dõi giá trị hiện tại sau khi nâng
+- ⚠️ **Operations count / Đếm thao tác**: ops += max(0, prev + 1 - current) / công thức đơn giản
+- 🧮 **O(n) single pass / Một lượt O(n)**: Scan left to right, update prev / quét từ trái sang phải
+- 📊 **No extra space / Không gian O(1)**: Only need previous value / chỉ cần giá trị trước
+- 🎯 **Edge case / Trường hợp đặc biệt**: Already strictly increasing → 0 operations / đã tăng dần → 0 thao tác
 
 ## Solutions
 
+### Solution 1: Greedy Single Pass (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Raise each element to at least prev+1 when needed
+ * Time: O(n) | Space: O(1)
  */
-function minimumOperationsToMakeTheArrayIncreasingBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minOperations(nums: number[]): number {
+  let ops = 0;
+  let prev = nums[0];
+  for (let i = 1; i < nums.length; i++) {
+    const needed = prev + 1;
+    if (nums[i] <= prev) {
+      ops += needed - nums[i];
+      prev = needed;
+    } else {
+      prev = nums[i];
+    }
+  }
+  return ops;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumOperationsToMakeTheArrayIncreasing(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumOperationsToMakeTheArrayIncreasing(/* example 1 */)); // expected
-// console.log(minimumOperationsToMakeTheArrayIncreasing(/* example 2 */)); // expected
-// console.log(minimumOperationsToMakeTheArrayIncreasing(/* edge case */)); // expected
+// Tests
+console.log(minOperations([1, 1, 1])); // 3
+console.log(minOperations([1, 5, 2, 4, 1])); // 14
+console.log(minOperations([8])); // 0
+console.log(minOperations([1, 2, 3])); // 0
+console.log(minOperations([3, 1, 2])); // 6
 ```
 
----
+### Solution 2: Accumulate Required Value
+
+```typescript
+/**
+ * Track required minimum value at each position
+ * Time: O(n) | Space: O(1)
+ */
+function minOperationsV2(nums: number[]): number {
+  let ops = 0;
+  let minRequired = nums[0];
+  for (let i = 1; i < nums.length; i++) {
+    minRequired = Math.max(nums[i], minRequired + 1);
+    ops += minRequired - nums[i];
+  }
+  return ops;
+}
+
+// Tests
+console.log(minOperationsV2([1, 1, 1])); // 3
+console.log(minOperationsV2([1, 5, 2, 4, 1])); // 14
+console.log(minOperationsV2([3, 1, 2])); // 6
+```
+
+### Solution 3: Reduce functional style
+
+```typescript
+/**
+ * Functional reduce approach
+ * Time: O(n) | Space: O(1)
+ */
+function minOperationsReduce(nums: number[]): number {
+  const { ops } = nums.reduce(
+    ({ ops, prev }, cur) => {
+      const needed = Math.max(cur, prev + 1);
+      return { ops: ops + needed - cur, prev: needed };
+    },
+    { ops: 0, prev: nums[0] - 1 },
+  );
+  return ops;
+}
+
+// Tests
+console.log(minOperationsReduce([1, 1, 1])); // 3
+console.log(minOperationsReduce([1, 5, 2, 4, 1])); // 14
+console.log(minOperationsReduce([1])); // 0
+```
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Gas Station](https://leetcode.com/problems/gas-station) — same pattern: Greedy
-- [Candy](https://leetcode.com/problems/candy) — same pattern: Greedy
-- [Minimum Operations to Make the Array Increasing — LeetCode](https://leetcode.com/problems/minimum-operations-to-make-the-array-increasing) — problem page
+| #    | Problem                                         | Difficulty | Tags            |
+| ---- | ----------------------------------------------- | ---------- | --------------- |
+| 665  | Non-decreasing Array                            | Medium     | Greedy          |
+| 1827 | Minimum Operations to Make the Array Increasing | Easy       | Greedy          |
+| 2126 | Destroying Asteroids                            | Medium     | Greedy, Sorting |
+| 2214 | Minimum Health to Beat Game                     | Medium     | Greedy          |

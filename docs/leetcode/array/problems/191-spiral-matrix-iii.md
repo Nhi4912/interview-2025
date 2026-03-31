@@ -7,97 +7,135 @@ tags: [Array, Matrix, Simulation]
 leetcode_url: "https://leetcode.com/problems/spiral-matrix-iii"
 ---
 
-# Spiral Matrix III / Spiral Matrix III
+# Spiral Matrix III / Ma Trận Xoắn Ốc III
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii)
-
----
+🟡 Medium | Array · Matrix · Simulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Spiral Matrix III" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Spiral Matrix III example:**
+**Vietnamese analogy**: Tưởng tượng bạn đứng ở ô (r0, c0) và đi theo hình xoắn ốc theo chiều kim đồng hồ: phải → xuống → trái → lên, mỗi hướng đi thêm một bước sau mỗi hai lần rẽ. Thu thập tất cả ô nằm trong lưới.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+Directions: E→S→W→N→E→...
+Steps per direction grow: 1,1,2,2,3,3,4,4,...
+     ↓ step increases every 2 turns
 
----
+(r0,c0) → go E 1 step → go S 1 step
+       → go W 2 steps → go N 2 steps
+       → go E 3 steps → ...
+```
 
 ## Problem Description
 
-Spiral Matrix III. ([LeetCode](https://leetcode.com/problems/spiral-matrix-iii))
+Given `rows x cols` grid and starting position `(r0, c0)`, walk clockwise in a spiral and return all cell coordinates in order of visit (skipping out-of-bounds cells).
 
-Difficulty: Medium | Acceptance: 84.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/spiral-matrix-iii) for full constraints
-
----
+- **Example 1**: `rows=1, cols=4, r0=0, c0=0` → `[[0,0],[0,1],[0,2],[0,3]]`
+- **Example 2**: `rows=5, cols=6, r0=1, c0=4` → all 30 cells in spiral order from (1,4)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 💡 **Direction cycle / Chu kỳ hướng**: E→S→W→N (dR=0,1,0,-1 / dC=1,0,-1,0) / hướng tuần hoàn
+- 🔍 **Step pattern / Mẫu bước**: Steps go 1,1,2,2,3,3,... — increase by 1 every 2 turns / bước tăng sau mỗi 2 lần rẽ
+- ⚠️ **Out-of-bounds / Ngoài lưới**: Continue walking even if out of bounds, only collect in-bounds cells / tiếp tục đi dù ra ngoài
+- 🧮 **Termination / Dừng lại**: Stop when collected rows×cols cells / dừng khi đủ ô
+- 📊 **Time O(max(r,c)²) / Độ phức tạp**: Spiral path can go far out of bounds / đường xoắn có thể ra ngoài nhiều
+- 🎯 **Index check / Kiểm tra biên**: 0 ≤ r < rows && 0 ≤ c < cols / kiểm tra biên trước khi thu thập
 
 ## Solutions
 
+### Solution 1: Simulation with Step Count
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Walk spiral, collect in-bounds cells
+ * Time: O(max(rows,cols)^2) | Space: O(rows*cols)
  */
-function spiralMatrixIiiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function spiralMatrixIII(rows: number, cols: number, r0: number, c0: number): number[][] {
+  const result: number[][] = [];
+  // Directions: East, South, West, North
+  const dr = [0, 1, 0, -1];
+  const dc = [1, 0, -1, 0];
+
+  let r = r0,
+    c = c0;
+  let dir = 0; // start going East
+  let steps = 1; // current segment length
+  const total = rows * cols;
+
+  result.push([r, c]);
+
+  while (result.length < total) {
+    // Each step count is used twice (for two opposite directions)
+    for (let turn = 0; turn < 2; turn++) {
+      for (let s = 0; s < steps; s++) {
+        r += dr[dir];
+        c += dc[dir];
+        if (r >= 0 && r < rows && c >= 0 && c < cols) {
+          result.push([r, c]);
+          if (result.length === total) return result;
+        }
+      }
+      dir = (dir + 1) % 4;
+    }
+    steps++;
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function spiralMatrixIii(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(spiralMatrixIii(/* example 1 */)); // expected
-// console.log(spiralMatrixIii(/* example 2 */)); // expected
-// console.log(spiralMatrixIii(/* edge case */)); // expected
+// Tests
+console.log(spiralMatrixIII(1, 4, 0, 0));
+// [[0,0],[0,1],[0,2],[0,3]]
+console.log(spiralMatrixIII(5, 6, 1, 4).length); // 30
+console.log(spiralMatrixIII(1, 1, 0, 0));
+// [[0,0]]
 ```
 
----
+### Solution 2: Layer-by-layer explicit spiral
+
+```typescript
+/**
+ * Explicit direction array with step tracking
+ * Time: O(max(rows,cols)^2) | Space: O(rows*cols)
+ */
+function spiralMatrixIIIv2(rows: number, cols: number, r0: number, c0: number): number[][] {
+  const result: number[][] = [[r0, c0]];
+  if (rows * cols === 1) return result;
+
+  let r = r0,
+    c = c0,
+    dir = 0,
+    steps = 1;
+  const DR = [0, 1, 0, -1];
+  const DC = [1, 0, -1, 0];
+
+  while (result.length < rows * cols) {
+    for (let repeat = 0; repeat < 2 && result.length < rows * cols; repeat++) {
+      for (let i = 0; i < steps; i++) {
+        r += DR[dir];
+        c += DC[dir];
+        if (r >= 0 && r < rows && c >= 0 && c < cols) {
+          result.push([r, c]);
+        }
+      }
+      dir = (dir + 1) % 4;
+    }
+    steps++;
+  }
+  return result;
+}
+
+// Tests
+console.log(spiralMatrixIIIv2(1, 4, 0, 0));
+// [[0,0],[0,1],[0,2],[0,3]]
+console.log(spiralMatrixIIIv2(2, 2, 0, 0));
+// [[0,0],[0,1],[1,1],[1,0]]
+```
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Game of Life](https://leetcode.com/problems/game-of-life) — same pattern: Matrix / Simulation
-- [Candy Crush](https://leetcode.com/problems/candy-crush) — same pattern: Two Pointers
-- [Spiral Matrix III — LeetCode](https://leetcode.com/problems/spiral-matrix-iii) — problem page
+| #    | Problem           | Difficulty | Tags               |
+| ---- | ----------------- | ---------- | ------------------ |
+| 54   | Spiral Matrix     | Medium     | Matrix, Simulation |
+| 59   | Spiral Matrix II  | Medium     | Matrix, Simulation |
+| 885  | Spiral Matrix III | Medium     | Matrix, Simulation |
+| 2326 | Spiral Matrix IV  | Medium     | Matrix, Simulation |

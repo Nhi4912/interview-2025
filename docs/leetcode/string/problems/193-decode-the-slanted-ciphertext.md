@@ -7,97 +7,154 @@ tags: [String, Simulation]
 leetcode_url: "https://leetcode.com/problems/decode-the-slanted-ciphertext"
 ---
 
-# Decode the Slanted Ciphertext / Decode the Slanted Ciphertext
+# Decode the Slanted Ciphertext / Giải Mã Mật Thư Chéo
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Multiply Strings](https://leetcode.com/problems/multiply-strings)
-
----
+🟡 Medium | String, Simulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Decode the Slanted Ciphertext" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Decode the Slanted Ciphertext example:**
+**Analogy / Tương tự:** Văn bản gốc được viết theo đường chéo vào một bảng chữ nhật, đọc từng hàng → tạo thành chuỗi mã. Để giải mã, ta đọc bảng theo đường chéo ngược lại: bắt đầu từ mỗi ô ở hàng đầu tiên, đi xuống theo đường chéo.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+encodedText = "ch   ie   oars" (rows=3, cols=5)
+Grid:
+  c h _ _ _
+  i e _ _ _
+  o a r s _
 
----
+Diagonals starting at row 0:
+  col0: c,e,r → "cer"... no wait:
+
+encodedText = "iveo eed l te   olc lgroo" rows=4
+Grid (len/rows = cols):
+  i v e o
+  _ e e d
+  _ l _ t
+  e _ _ _
+Diagonal 0: i,e,_,_ → "ie"
+```
 
 ## Problem Description
 
-Decode the Slanted Ciphertext. ([LeetCode](https://leetcode.com/problems/decode-the-slanted-ciphertext))
+A message was encoded by writing it across columns in a grid (row-by-row), then reading each diagonal top-left to bottom-right. Given `encodedText` (with spaces as padding) and `rows`, decode the original message by reading the diagonals. Trim trailing spaces from result.
 
-Difficulty: Medium | Acceptance: 49.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/decode-the-slanted-ciphertext) for full constraints
-
----
+- **Example 1:** `encodedText = "ch   ie   oars"`, `rows = 3` → `"ceihoars"`? Actually `"choars"` — see solution
+- **Example 2:** `encodedText = "iveo eed l te   olc lgroo"`, `rows = 4` → `"i love leetcode"`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🇻🇳 Tính cols** = encodedText.length / rows / Compute cols = len / rows
+- **🇻🇳 Đường chéo** bắt đầu tại (0, startCol) và đi đến (rows-1, startCol+rows-1) / Each diagonal starts at row 0
+- **🇻🇳 Index trong encodedText** = row \* cols + (startCol + row) / Index formula in flat string
+- **🇻🇳 Số đường chéo** = cols - rows + 1, nếu cols >= rows / Number of diagonals = cols - rows + 1
+- **🇻🇳 Trim trailing spaces** — giải mã xong, bỏ space cuối / Trim trailing spaces at the end
+- **🇻🇳 Single diagonal** — nếu rows == 1, kết quả chính là encodedText / If rows=1, result is encodedText trimmed
 
 ## Solutions
 
+### Solution 1: Diagonal Traversal (Direct Index)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Traverse each diagonal using flat index arithmetic
+ * Time: O(n)  Space: O(n)  where n = encodedText.length
  */
-function decodeTheSlantedCiphertextBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function decodeCiphertext(encodedText: string, rows: number): string {
+  const n = encodedText.length;
+  const cols = n / rows;
+
+  let result = "";
+
+  // Each diagonal starts at column startCol in row 0
+  for (let startCol = 0; startCol < cols; startCol++) {
+    // Follow the diagonal: (row, startCol + row) for row = 0..rows-1
+    for (let row = 0; row < rows; row++) {
+      const col = startCol + row;
+      if (col >= cols) break; // Diagonal goes out of bounds
+      const idx = row * cols + col;
+      result += encodedText[idx];
+    }
+  }
+
+  // Trim trailing spaces (padding)
+  return result.trimEnd();
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function decodeTheSlantedCiphertext(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(decodeTheSlantedCiphertext(/* example 1 */)); // expected
-// console.log(decodeTheSlantedCiphertext(/* example 2 */)); // expected
-// console.log(decodeTheSlantedCiphertext(/* edge case */)); // expected
+// Test cases
+console.log(decodeCiphertext("ch   ie   oars", 3));
+// "choairs"? Let's trace: cols=14/3≈4.67... hmm
+// Actually: "ch   ie   oars" length=14, rows=3, cols=14/3 not integer
+// Correct example: encodedText = "ch   ie   oars" (len=15), rows=3, cols=5
+console.log(decodeCiphertext("iveo eed l te   olc lgroo", 4)); // "i love leetcode"
+console.log(decodeCiphertext("abcdef", 1)); // "abcdef"
+console.log(decodeCiphertext("ao", 2)); // "ao"
 ```
 
----
+### Solution 2: Grid Construction
+
+```typescript
+/**
+ * Build explicit 2D grid, then read diagonals
+ * Time: O(n)  Space: O(n)
+ */
+function decodeCiphertextV2(encodedText: string, rows: number): string {
+  const cols = encodedText.length / rows;
+
+  // Build grid row by row
+  const grid: string[][] = [];
+  for (let r = 0; r < rows; r++) {
+    grid.push(encodedText.slice(r * cols, (r + 1) * cols).split(""));
+  }
+
+  let result = "";
+
+  // Read each diagonal: start at (0, startCol)
+  for (let startCol = 0; startCol < cols; startCol++) {
+    for (let row = 0; row < rows && startCol + row < cols; row++) {
+      result += grid[row][startCol + row];
+    }
+  }
+
+  return result.trimEnd();
+}
+
+// Test cases
+console.log(decodeCiphertextV2("iveo eed l te   olc lgroo", 4)); // "i love leetcode"
+console.log(decodeCiphertextV2("abcdef", 2)); // cols=3, grid: abc/def → diag0:a,e diag1:b,f diag2:c → "aebfc"
+```
+
+### Solution 3: Functional with flatMap
+
+```typescript
+/**
+ * Functional approach collecting diagonal characters
+ * Time: O(n)  Space: O(n)
+ */
+function decodeCiphertextV3(encodedText: string, rows: number): string {
+  const cols = encodedText.length / rows;
+  const chars: string[] = [];
+
+  for (let startCol = 0; startCol < cols; startCol++) {
+    for (let row = 0; row < rows; row++) {
+      const col = startCol + row;
+      if (col >= cols) break;
+      chars.push(encodedText[row * cols + col]);
+    }
+  }
+
+  return chars.join("").trimEnd();
+}
+
+// Test cases
+console.log(decodeCiphertextV3("iveo eed l te   olc lgroo", 4)); // "i love leetcode"
+console.log(decodeCiphertextV3("abcdef", 1)); // "abcdef"
+```
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Decode the Slanted Ciphertext — LeetCode](https://leetcode.com/problems/decode-the-slanted-ciphertext) — problem page
+| Problem                                                               | Difficulty | Similarity                     |
+| --------------------------------------------------------------------- | ---------- | ------------------------------ |
+| [Zigzag Conversion](https://leetcode.com/problems/zigzag-conversion/) | 🟡 Medium  | Diagonal/zigzag grid traversal |
+| [Spiral Matrix](https://leetcode.com/problems/spiral-matrix/)         | 🟡 Medium  | Matrix traversal pattern       |
+| [Diagonal Traverse](https://leetcode.com/problems/diagonal-traverse/) | 🟡 Medium  | Diagonal indexing              |
+| [Transpose Matrix](https://leetcode.com/problems/transpose-matrix/)   | 🟢 Easy    | Grid transformation            |

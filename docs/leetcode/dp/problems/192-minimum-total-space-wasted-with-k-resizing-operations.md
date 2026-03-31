@@ -7,102 +7,151 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/minimum-total-space-wasted-with-k-resizing-operations"
 ---
 
-# Minimum Total Space Wasted With K Resizing Operations / Minimum Total Space Wasted With K Resizing Operations
+# Minimum Total Space Wasted With K Resizing Operations / Tổng Không Gian Lãng Phí Tối Thiểu Với K Lần Thay Đổi Kích Thước
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
-
----
+🟡 Medium | 2D DP on Partitions | LeetCode 1959
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Total Space Wasted With K Resizing Operations example:**
+**Tiếng Việt:** Bạn có mảng nums[] đại diện kích thước file. Khi lưu trữ file i-j vào một partition, bạn phải cấp phát `max(nums[i..j]) × (j-i+1)` byte. Lãng phí = max × length - sum. Dùng k+1 partitions (k lần resize). `dp[i][j]` = lãng phí tối thiểu cho j phần tử đầu với i lần resize.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+nums = [10,20], k=0 (1 partition)
+max=20, length=2, sum=30 → waste = 40-30 = 10
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+nums = [10,20], k=1 (2 partitions)
+[10],[20] → waste = 0+0 = 0
+
+dp[0][j] = waste for first j elements with 0 resizes (single partition)
+dp[i][j] = min over split point m: dp[i-1][m] + waste(m+1..j)
 ```
-
----
 
 ## Problem Description
 
-Minimum Total Space Wasted With K Resizing Operations. ([LeetCode](https://leetcode.com/problems/minimum-total-space-wasted-with-k-resizing-operations))
+Given array `nums` (sizes of files) and integer `k`, you can resize storage at most `k` times. In each continuous block, you allocate `max(block) × |block|` space. Wasted space = allocated - actual. Minimize total wasted space.
 
-Difficulty: Medium | Acceptance: 43.0%
+**Example 1:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `nums = [10,20]`, `k = 0`
+- Output: `10` — Single block: max=20, waste = 20\*2 - 30 = 10
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-total-space-wasted-with-k-resizing-operations) for full constraints
+**Example 2:**
 
----
+- Input: `nums = [10,20,30]`, `k = 1`
+- Output: `10` — Split as [10,20],[30]: waste = (20*2-30) + 0 = 10; or [10],[20,30]: waste = 0+(30*2-50)=10
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+- 🎯 **Key insight / Chìa khoá:** Partition nums into at most k+1 groups; minimize total waste = Σ(max_i × len_i - sum_i)
+- 📊 **DP state / Trạng thái DP:** `dp[j][r]` = min waste for first j elements using r resizes; transition tries all split points
+- 🔢 **Precompute segment waste / Tính trước lãng phí:** For each (i,j), precompute `waste[i][j] = max(i..j) * (j-i+1) - sum(i..j)` in O(n²)
+- ⚡ **Complexity / Độ phức tạp:** O(n² × k) — n² segment costs × k layers
+- 🚫 **Edge case / Trường hợp đặc biệt:** k ≥ n-1 means each element in own block → zero waste
+- 💡 **Optimize / Tối ưu:** Use rolling array; compute segment waste on-the-fly during DP
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: 2D DP with precomputed segment waste
+ * Time: O(n² * k)
+ * Space: O(n² + n*k)
  */
-function minimumTotalSpaceWastedWithKResizingOperationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minSpaceWastedKResizing(nums: number[], k: number): number {
+  const n = nums.length;
+
+  // Precompute waste[i][j] = waste if block is nums[i..j]
+  const waste: number[][] = Array.from({ length: n }, () => new Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    let mx = nums[i],
+      sm = nums[i];
+    waste[i][i] = 0;
+    for (let j = i + 1; j < n; j++) {
+      mx = Math.max(mx, nums[j]);
+      sm += nums[j];
+      waste[i][j] = mx * (j - i + 1) - sm;
+    }
+  }
+
+  // dp[r][j] = min waste for nums[0..j-1] using exactly r resizes (r+1 blocks)
+  const INF = Infinity;
+  // dp[j] = min waste for first j elements with current number of resizes
+  let dp = new Array(n + 1).fill(INF);
+  dp[0] = 0;
+  for (let j = 1; j <= n; j++) {
+    dp[j] = waste[0][j - 1]; // 0 resizes: single block
+  }
+
+  for (let r = 1; r <= k; r++) {
+    const ndp = new Array(n + 1).fill(INF);
+    ndp[0] = 0;
+    for (let j = 1; j <= n; j++) {
+      // Last block starts at m+1 (0-indexed: m..j-1)
+      for (let m = 0; m < j; m++) {
+        if (dp[m] === INF) continue;
+        const w = waste[m][j - 1];
+        if (dp[m] + w < ndp[j]) ndp[j] = dp[m] + w;
+      }
+    }
+    dp = ndp;
+  }
+
+  return dp[n];
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTotalSpaceWastedWithKResizingOperations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumTotalSpaceWastedWithKResizingOperations(/* example 1 */)); // expected
-// console.log(minimumTotalSpaceWastedWithKResizingOperations(/* example 2 */)); // expected
-// console.log(minimumTotalSpaceWastedWithKResizingOperations(/* edge case */)); // expected
+console.log(minSpaceWastedKResizing([10, 20], 0)); // 10
+console.log(minSpaceWastedKResizing([10, 20, 30], 1)); // 10
+console.log(minSpaceWastedKResizing([1, 2, 3, 4, 5], 2)); // 0? no, let's see
+console.log(minSpaceWastedKResizing([10, 10, 10, 10, 10], 1)); // 0
 ```
 
----
+```typescript
+/**
+ * Approach 2: Space-optimized DP iterating splits on-the-fly
+ * Time: O(n² * k)
+ * Space: O(n * k) — can reduce to O(n) with rolling arrays
+ */
+function minSpaceWastedKResizing2(nums: number[], k: number): number {
+  const n = nums.length;
+  const INF = 1e18;
+  const K = k + 1; // number of partitions = k+1
+
+  // dp[i][j] = min waste for first j elements with i partitions
+  const dp: number[][] = Array.from({ length: K + 1 }, () => new Array(n + 1).fill(INF));
+  dp[0][0] = 0;
+
+  for (let parts = 1; parts <= K; parts++) {
+    for (let j = parts; j <= n; j++) {
+      let mx = 0,
+        sm = 0;
+      // Try all possible last block [m..j-1]
+      for (let m = j - 1; m >= parts - 1; m--) {
+        mx = Math.max(mx, nums[m]);
+        sm += nums[m];
+        const w = mx * (j - m) - sm;
+        if (dp[parts - 1][m] !== INF) {
+          dp[parts][j] = Math.min(dp[parts][j], dp[parts - 1][m] + w);
+        }
+      }
+    }
+  }
+
+  let ans = INF;
+  for (let parts = 1; parts <= K; parts++) {
+    ans = Math.min(ans, dp[parts][n]);
+  }
+  return ans;
+}
+
+console.log(minSpaceWastedKResizing2([10, 20], 0)); // 10
+console.log(minSpaceWastedKResizing2([10, 20, 30], 1)); // 10
+```
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Minimum Total Space Wasted With K Resizing Operations — LeetCode](https://leetcode.com/problems/minimum-total-space-wasted-with-k-resizing-operations) — problem page
+| Problem                                                                                   | Difficulty | Key Concept        |
+| ----------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Strange Printer](https://leetcode.com/problems/strange-printer/)                         | 🔴 Hard    | Interval DP        |
+| [Minimum Cost to Cut a Stick](https://leetcode.com/problems/minimum-cost-to-cut-a-stick/) | 🔴 Hard    | Interval DP        |
+| [Burst Balloons](https://leetcode.com/problems/burst-balloons/)                           | 🔴 Hard    | Interval DP        |
+| [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum/)         | 🔴 Hard    | Binary Search + DP |

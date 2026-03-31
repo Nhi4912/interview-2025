@@ -7,100 +7,128 @@ tags: [Array, Hash Table]
 leetcode_url: "https://leetcode.com/problems/counting-elements"
 ---
 
-# Counting Elements / Counting Elements
+# Counting Elements / Đếm Phần Tử
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [First Missing Positive](https://leetcode.com/problems/first-missing-positive) | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence)
-
----
+🟢 Easy | Array · Hash Table
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Counting Elements example:**
+**Vietnamese analogy**: Tưởng tượng bạn có một bộ chìa khoá. Mỗi chìa khoá x chỉ "hợp lệ" nếu trong bộ có chiếc x+1. Bạn đếm xem có bao nhiêu chìa khoá hợp lệ.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
+arr = [1, 2, 3]
+Set = {1, 2, 3}
+  x=1: 2 in Set? ✓ → count 1
+  x=2: 3 in Set? ✓ → count 2
+  x=3: 4 in Set? ✗ → skip
+Result = 2
 ```
-
----
 
 ## Problem Description
 
-Counting Elements. ([LeetCode](https://leetcode.com/problems/counting-elements))
+Given an integer array `arr`, count how many elements `x` exist such that `x + 1` also exists in `arr`. Duplicates are counted separately.
 
-Difficulty: Easy | Acceptance: 60.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/counting-elements) for full constraints
-
----
+- **Example 1**: `arr = [1,2,3]` → `2` (1→2 ✓, 2→3 ✓, 3→4 ✗)
+- **Example 2**: `arr = [1,1,2]` → `2` (each 1 counts since 2 exists, 2→3 ✗)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 💡 **Hash Set lookup / Tra cứu Set**: O(1) lookup vs O(n) linear scan — always use a Set here / dùng Set để tra O(1)
+- 🔍 **Duplicates count / Trùng lặp được tính**: If arr=[1,1,2] both 1s count because 2 exists / cả hai số 1 đều được tính
+- ⚠️ **Off-by-one / Lệch một**: Check x+1, not x-1 or 2x / kiểm tra x+1, không phải x-1
+- 🧮 **Time complexity / Độ phức tạp**: O(n) build set + O(n) scan = O(n) total / O(n) tổng
+- 📊 **Space / Không gian**: O(u) where u = unique elements / O(u) với u là số phần tử duy nhất
+- 🎯 **Edge case / Trường hợp đặc biệt**: Empty array → 0; single element → 0 / mảng rỗng hoặc 1 phần tử → 0
 
 ## Solutions
 
+### Solution 1: Hash Set (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count elements x where x+1 also appears in the array
+ * Time: O(n) | Space: O(n)
  */
-function countingElementsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countElements(arr: number[]): number {
+  const set = new Set(arr);
+  let count = 0;
+  for (const x of arr) {
+    if (set.has(x + 1)) count++;
+  }
+  return count;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countingElements(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(countingElements(/* example 1 */)); // expected
-// console.log(countingElements(/* example 2 */)); // expected
-// console.log(countingElements(/* edge case */)); // expected
+// Tests
+console.log(countElements([1, 2, 3])); // 2
+console.log(countElements([1, 1, 2])); // 2
+console.log(countElements([1, 3, 2, 3, 5, 0])); // 3 (0→1, 1 wait...) let's trace
+// 0→1✓, 1→2✓, 2→3✓, 3→4✗, 3→4✗, 5→6✗ → 3
+console.log(countElements([1, 2, 3, 4, 5])); // 4
 ```
 
----
+### Solution 2: Sort + Binary Search
+
+```typescript
+/**
+ * Sort then binary search for x+1
+ * Time: O(n log n) | Space: O(1)
+ */
+function countElementsSort(arr: number[]): number {
+  const sorted = [...arr].sort((a, b) => a - b);
+
+  const bsHas = (val: number): boolean => {
+    let lo = 0,
+      hi = sorted.length - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (sorted[mid] === val) return true;
+      else if (sorted[mid] < val) lo = mid + 1;
+      else hi = mid - 1;
+    }
+    return false;
+  };
+
+  let count = 0;
+  for (const x of arr) {
+    if (bsHas(x + 1)) count++;
+  }
+  return count;
+}
+
+// Tests
+console.log(countElementsSort([1, 2, 3])); // 2
+console.log(countElementsSort([1, 1, 2])); // 2
+```
+
+### Solution 3: Frequency Map (Extra insight)
+
+```typescript
+/**
+ * Frequency map — also shows occurrence count
+ * Time: O(n) | Space: O(n)
+ */
+function countElementsFreq(arr: number[]): number {
+  const freq = new Map<number, number>();
+  for (const x of arr) freq.set(x, (freq.get(x) ?? 0) + 1);
+
+  let count = 0;
+  for (const [x, cnt] of freq) {
+    if (freq.has(x + 1)) count += cnt; // each occurrence of x counts
+  }
+  return count;
+}
+
+// Tests
+console.log(countElementsFreq([1, 1, 2])); // 2
+console.log(countElementsFreq([1, 2, 3])); // 2
+console.log(countElementsFreq([5])); // 0
+```
 
 ## 🔗 Related Problems
 
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence) — same pattern: Union Find
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Counting Elements — LeetCode](https://leetcode.com/problems/counting-elements) — problem page
+| #    | Problem                      | Difficulty | Tags       |
+| ---- | ---------------------------- | ---------- | ---------- |
+| 1    | Two Sum                      | Easy       | Hash Table |
+| 128  | Longest Consecutive Sequence | Medium     | Hash Table |
+| 532  | K-diff Pairs in an Array     | Medium     | Hash Table |
+| 1207 | Unique Number of Occurrences | Easy       | Hash Table |

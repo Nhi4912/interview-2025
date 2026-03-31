@@ -7,97 +7,134 @@ tags: [Hash Table, String, Greedy, Sorting, Counting]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii"
 ---
 
-# Minimum Number of Pushes to Type Word II / Minimum Number of Pushes to Type Word II
+# Minimum Number of Pushes to Type Word II / Số Lần Nhấn Tối Thiểu Để Gõ Từ II
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Reorganize String](https://leetcode.com/problems/reorganize-string) | [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations)
-
----
+🟡 Medium | 🏷️ Hash Table, String, Greedy, Sorting, Counting
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Number of Pushes to Type Word II example:**
+**Vietnamese analogy:** Bàn phím điện thoại có 8 phím (2-9). Mỗi phím có thể gán nhiều chữ cái. Chữ cái thứ nhất trên phím cần 1 lần nhấn, thứ hai cần 2 lần, v.v. Để tối thiểu tổng nhấn: sắp xếp tần số giảm dần, gán 8 chữ phổ biến nhất vào vị trí 1 (1 lần), 8 tiếp theo vào vị trí 2 (2 lần), ...
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+word = "xyzxyzxyzxyz"
+freq: x=4, y=4, z=4
+Sorted desc: [4,4,4]
+Keys 2-9 = 8 keys:
+  x → key2 pos1 → 4×1 = 4
+  y → key3 pos1 → 4×1 = 4
+  z → key4 pos1 → 4×1 = 4
+Total = 12
 ```
-
----
 
 ## Problem Description
 
-Minimum Number of Pushes to Type Word II. ([LeetCode](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii))
+You have a phone keypad with keys **2–9** (8 keys). Reassign 26 letters to keys freely. Typing a letter costs `ceil` pushes equal to its **position** on the key (1st letter = 1 push, 2nd = 2 pushes, etc.). Given `word`, return the **minimum** total pushes needed.
 
-Difficulty: Medium | Acceptance: 79.9%
+**Example 1:** `word = "abcde"` → `5` (one letter per key, each 1 push)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii) for full constraints
-
----
+**Example 2:** `word = "xyzxyzxyzxyz"` → `12`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **Greedy key / Tham lam:** Sort distinct letter frequencies descending; assign first 8 to cost×1, next 8 to cost×2, etc.
+- 🔑 **Formula / Công thức:** For letter ranked `i` (0-indexed), cost multiplier = `floor(i / 8) + 1`
+- 🔑 **Distinct letters / Chữ phân biệt:** Count distinct letters first; if ≤ 8 they all get multiplier 1
+- ⚠️ **Word II vs I / Phân biệt:** Word I has distinct letters; Word II has repeated letters — count frequencies
+- ⚠️ **Zero frequency / Tần số 0:** Skip letters with count=0 to avoid spurious assignments
+- 🔗 **Pattern / Mẫu:** Frequency sort + greedy assignment is the "bucket assignment" template
 
 ## Solutions
 
+### Solution 1: Greedy with Frequency Sort
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count character frequencies, sort descending, assign to 8 keys greedily.
+ * Time: O(n + 26 log 26) = O(n)  Space: O(26)
  */
-function minimumNumberOfPushesToTypeWordIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumPushes(word: string): number {
+  // Count frequencies
+  const freq = new Array(26).fill(0);
+  for (const ch of word) freq[ch.charCodeAt(0) - 97]++;
+
+  // Sort descending (only non-zero)
+  const sorted = freq.filter((f) => f > 0).sort((a, b) => b - a);
+
+  let total = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const multiplier = Math.floor(i / 8) + 1; // keys 2-9 = 8 keys
+    total += sorted[i] * multiplier;
+  }
+
+  return total;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfPushesToTypeWordIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumNumberOfPushesToTypeWordIi(/* example 1 */)); // expected
-// console.log(minimumNumberOfPushesToTypeWordIi(/* example 2 */)); // expected
-// console.log(minimumNumberOfPushesToTypeWordIi(/* edge case */)); // expected
+console.log(minimumPushes("abcde")); // 5
+console.log(minimumPushes("xyzxyzxyzxyz")); // 12
+console.log(minimumPushes("aabbccddeeffgghhiiiiii")); // 24
+console.log(minimumPushes("aaaaaaaaabbbbbbbbbccc")); // 3+3+3 * something
 ```
 
----
+### Solution 2: Bucket Counting (No Sort Needed)
+
+```typescript
+/**
+ * Since frequencies fit in known range, use bucket sort for O(n) total.
+ * Time: O(n + maxFreq)  Space: O(26 + maxFreq)
+ */
+function minimumPushesLinear(word: string): number {
+  const freq = new Array(26).fill(0);
+  for (const ch of word) freq[ch.charCodeAt(0) - 97]++;
+
+  // Bucket sort: index = frequency value
+  const maxF = Math.max(...freq);
+  const buckets = new Array(maxF + 1).fill(0);
+  for (const f of freq) if (f > 0) buckets[f]++;
+
+  let total = 0;
+  let rank = 0; // how many letters assigned so far
+
+  for (let f = maxF; f >= 1; f--) {
+    for (let b = 0; b < buckets[f]; b++) {
+      const multiplier = Math.floor(rank / 8) + 1;
+      total += f * multiplier;
+      rank++;
+    }
+  }
+
+  return total;
+}
+
+console.log(minimumPushesLinear("abcde")); // 5
+console.log(minimumPushesLinear("xyzxyzxyzxyz")); // 12
+```
+
+### Solution 3: One-liner style
+
+```typescript
+/**
+ * Concise version combining count + sort + reduce.
+ * Time: O(n)  Space: O(26)
+ */
+function minimumPushesCompact(word: string): number {
+  const cnt = new Array(26).fill(0);
+  for (const c of word) cnt[c.charCodeAt(0) - 97]++;
+  return cnt
+    .filter(Boolean)
+    .sort((a, b) => b - a)
+    .reduce((sum, f, i) => sum + f * (Math.floor(i / 8) + 1), 0);
+}
+
+console.log(minimumPushesCompact("abcde")); // 5
+console.log(minimumPushesCompact("xyzxyzxyzxyz")); // 12
+console.log(minimumPushesCompact("aaaa")); // 4
+```
 
 ## 🔗 Related Problems
 
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Minimum Deletions to Make String K-Special](https://leetcode.com/problems/minimum-deletions-to-make-string-k-special) — same pattern: Greedy
-- [Minimum Number of Keypresses](https://leetcode.com/problems/minimum-number-of-keypresses) — same pattern: Greedy
-- [Minimum Number of Pushes to Type Word II — LeetCode](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-ii) — problem page
+| Problem                                                                                                           | Difficulty | Pattern                    |
+| ----------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------- |
+| [Minimum Number of Pushes to Type Word I](https://leetcode.com/problems/minimum-number-of-pushes-to-type-word-i/) | Easy       | Same greedy, distinct only |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                                                   | Medium     | Frequency-based greedy     |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string/)                                             | Medium     | Greedy frequency placement |
+| [Distribute Candies Among Children II](https://leetcode.com/problems/distribute-candies-among-children-ii/)       | Medium     | Counting + greedy          |

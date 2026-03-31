@@ -7,97 +7,180 @@ tags: [Array, Union Find, Graph, Topological Sort, Sorting]
 leetcode_url: "https://leetcode.com/problems/rank-transform-of-a-matrix"
 ---
 
-# Rank Transform of a Matrix / Rank Transform of a Matrix
+# Rank Transform of a Matrix / Biến Đổi Thứ Hạng Ma Trận
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Topological Sort
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) | [Design Excel Sum Formula](https://leetcode.com/problems/design-excel-sum-formula)
-
----
+🔴 Hard | Union Find | Topological Sort
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống sắp xếp thứ tự học môn — môn A prerequisite của B thì A phải học trước. Topological sort xếp thứ tự sao cho mọi dependency được thoả mãn.
-
-**Pattern Recognition:**
-
-- Signal: "dependency ordering" + "DAG" → **Topological Sort**
-- Bài này thuộc dạng Topological Sort — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Rank Transform of a Matrix example:**
+**Analogy / Tương tự:** Giống như xếp hạng học sinh: nếu hai học sinh cùng lớp hoặc cùng trường có điểm bằng nhau, họ phải có cùng thứ hạng. Dùng Union-Find để nhóm các ô bằng nhau trong cùng hàng/cột, sau đó gán thứ hạng theo thứ tự tăng dần của giá trị.
 
 ```
-// TODO: Add step-by-step visual for Topological Sort
-// Show one complete example with state at each step
+Matrix:       After ranking:
+[1, 2]        [1, 2]
+[3, 4]        [2, 3]
+
+Same value in row/col → same rank group → rank = max(row_rank, col_rank) + 1
 ```
 
----
+**Key insight:** Process cells sorted by value. For equal values in the same row/col, they must get the same rank. Union-Find groups them, then assign `max rank in group + 1`.
 
 ## Problem Description
 
-Rank Transform of a Matrix. ([LeetCode](https://leetcode.com/problems/rank-transform-of-a-matrix))
+Given an `m x n` integer matrix, return a rank matrix where `answer[i][j]` is the rank of `matrix[i][j]`. The rank is an integer from 1 to `maxVal`. Ranks in the same row/column must reflect the relative order of values.
 
-Difficulty: Hard | Acceptance: 41.4%
+**Example 1:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `[[1,2],[3,4]]`
+- Output: `[[1,2],[2,3]]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/rank-transform-of-a-matrix) for full constraints
+**Example 2:**
 
----
+- Input: `[[7,7],[7,7]]`
+- Output: `[[1,1],[1,1]]`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **Q: Why Union-Find? / Tại sao dùng Union-Find?**
+  - A: Equal values in same row/col must share rank — UF groups them / Giá trị bằng nhau cùng hàng/cột phải có cùng hạng.
+- **Q: How assign rank after grouping? / Gán hạng sau khi nhóm như thế nào?**
+  - A: rank = max existing rank in the group's rows and cols + 1 / Hạng = max hạng hiện tại trong hàng và cột của nhóm + 1.
+- **Q: Why sort by value first? / Tại sao sắp xếp theo giá trị trước?**
+  - A: Process smaller values first to ensure rank constraint / Xử lý giá trị nhỏ trước để đảm bảo ràng buộc thứ hạng.
+- **Q: Time complexity? / Độ phức tạp?**
+  - A: O(m*n*log(m*n)) for sorting / O(m*n*log(m*n)) cho việc sắp xếp.
+- **Q: Can ranks repeat? / Thứ hạng có thể lặp không?**
+  - A: Yes, if two equal-value cells are not in same row/col they may get different ranks / Có, nếu không cùng hàng/cột.
+- **Q: Edge case? / Trường hợp biên?**
+  - A: All equal values — all get rank 1 / Tất cả bằng nhau — tất cả hạng 1.
 
 ## Solutions
 
+### Solution 1: Union-Find + Sort by Value
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Compute rank transform of matrix.
+ * Time: O(m*n*log(m*n))  Space: O(m*n)
  */
-function rankTransformOfAMatrixBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function matrixRankTransform(matrix: number[][]): number[][] {
+  const m = matrix.length,
+    n = matrix[0].length;
+  const parent = Array.from({ length: m * n }, (_, i) => i);
+  const rank = new Array(m * n).fill(0);
+
+  function find(x: number): number {
+    if (parent[x] !== x) parent[x] = find(parent[x]);
+    return parent[x];
+  }
+  function union(a: number, b: number): void {
+    const pa = find(a),
+      pb = find(b);
+    if (pa !== pb) {
+      parent[pa] = pb;
+      rank[pb] = Math.max(rank[pa], rank[pb]);
+    }
+  }
+
+  // rowRank[i] = current max rank used in row i
+  const rowRank = new Array(m).fill(0);
+  const colRank = new Array(n).fill(0);
+
+  // Group cells by value, sorted ascending
+  const valueMap = new Map<number, [number, number][]>();
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      const v = matrix[i][j];
+      if (!valueMap.has(v)) valueMap.set(v, []);
+      valueMap.get(v)!.push([i, j]);
+    }
+  }
+  const sortedVals = [...valueMap.keys()].sort((a, b) => a - b);
+
+  const result: number[][] = Array.from({ length: m }, () => new Array(n).fill(0));
+
+  for (const val of sortedVals) {
+    const cells = valueMap.get(val)!;
+    // Reset union-find for this batch
+    const localParent = new Map<number, number>();
+    function lFind(x: number): number {
+      if (!localParent.has(x)) localParent.set(x, x);
+      if (localParent.get(x) !== x) localParent.set(x, lFind(localParent.get(x)!));
+      return localParent.get(x)!;
+    }
+    function lUnion(a: number, b: number): void {
+      const pa = lFind(a),
+        pb = lFind(b);
+      if (pa !== pb) localParent.set(pa, pb);
+    }
+
+    for (const [i, j] of cells) {
+      const id = i * n + j;
+      localParent.set(id, id);
+    }
+    for (const [i, j] of cells) {
+      // Union with other cells in same row/col with same value
+      for (const [i2, j2] of cells) {
+        if (i === i2 || j === j2) lUnion(i * n + j, i2 * n + j2);
+      }
+    }
+
+    // For each group, determine rank = max(rowRank, colRank) + 1
+    const groupRank = new Map<number, number>();
+    for (const [i, j] of cells) {
+      const root = lFind(i * n + j);
+      const cur = groupRank.get(root) ?? 0;
+      groupRank.set(root, Math.max(cur, rowRank[i], colRank[j]));
+    }
+    for (const [root, baseRank] of groupRank) {
+      groupRank.set(root, baseRank + 1);
+    }
+
+    // Assign ranks and update rowRank/colRank
+    for (const [i, j] of cells) {
+      const r = groupRank.get(lFind(i * n + j))!;
+      result[i][j] = r;
+      rowRank[i] = Math.max(rowRank[i], r);
+      colRank[j] = Math.max(colRank[j], r);
+    }
+  }
+
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Topological Sort
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function rankTransformOfAMatrix(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Topological Sort
-  // Hint: Use in-degree counting or DFS post-order
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(rankTransformOfAMatrix(/* example 1 */)); // expected
-// console.log(rankTransformOfAMatrix(/* example 2 */)); // expected
-// console.log(rankTransformOfAMatrix(/* edge case */)); // expected
+// Tests
+console.log(
+  JSON.stringify(
+    matrixRankTransform([
+      [1, 2],
+      [3, 4],
+    ]),
+  ),
+); // [[1,2],[2,3]]
+console.log(
+  JSON.stringify(
+    matrixRankTransform([
+      [7, 7],
+      [7, 7],
+    ]),
+  ),
+); // [[1,1],[1,1]]
+console.log(
+  JSON.stringify(
+    matrixRankTransform([
+      [20, -21],
+      [14, -99],
+    ]),
+  ),
+);
+// [[4,2],[3,1]]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Design Excel Sum Formula](https://leetcode.com/problems/design-excel-sum-formula) — same pattern: Topological Sort
-- [Minimum Runes to Add to Cast Spell](https://leetcode.com/problems/minimum-runes-to-add-to-cast-spell) — same pattern: Topological Sort
-- [Maximum Number of Points From Grid Queries](https://leetcode.com/problems/maximum-number-of-points-from-grid-queries) — same pattern: Union Find
-- [Rank Transform of a Matrix — LeetCode](https://leetcode.com/problems/rank-transform-of-a-matrix) — problem page
+| #    | Problem                                 | Difficulty | Key Concept |
+| ---- | --------------------------------------- | ---------- | ----------- |
+| 128  | Longest Consecutive Sequence            | Medium     | Union Find  |
+| 1061 | Lexicographically Smallest Equiv String | Medium     | Union Find  |
+| 1632 | Rank Transform of an Array              | Easy       | Sorting     |
+| 1202 | Smallest String With Swaps              | Medium     | Union Find  |

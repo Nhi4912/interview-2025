@@ -7,100 +7,179 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/vowel-spellchecker"
 ---
 
-# Vowel Spellchecker / Vowel Spellchecker
+# Vowel Spellchecker / Kiểm Tra Chính Tả Nguyên Âm
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
-
----
+🟡 Medium | Array, Hash Table, String
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Vowel Spellchecker example:**
+**Analogy / Tương tự:** Như một từ điển thông minh với 3 cấp ưu tiên: (1) khớp hoàn hảo, (2) khớp không phân biệt hoa/thường, (3) khớp khi thay nguyên âm. Dùng HashMap cho mỗi cấp.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+wordlist = ["KiTe","KiTe","KiTe","Hare","Hare"]
 
-Key insight: store complement for O(1) lookup
+Exact set:    {KiTe, Hare}
+Lower map:    {kite→KiTe, hare→Hare}
+Vowel map:    {k_t_→KiTe, h_r_→Hare}  (_ = any vowel)
+
+Query "kite" → lower("kite")="kite" found → "KiTe"
+Query "KiTe" → exact match "KiTe" → "KiTe"
+Query "KaIE" → not exact, lower="kaie" not found
+             → vowel("kaie") = "k__e" matches "k_t_"? No
+             → vowel("KaIE") = "k__e" → check vowel map
 ```
-
----
 
 ## Problem Description
 
-Vowel Spellchecker. ([LeetCode](https://leetcode.com/problems/vowel-spellchecker))
+Given a `wordlist` and `queries`, for each query return: (1) the word itself if it exists exactly, (2) the first dictionary word that matches case-insensitively, (3) the first word matching after replacing all vowels, or (4) `""` if nothing matches.
 
-Difficulty: Medium | Acceptance: 51.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/vowel-spellchecker) for full constraints
-
----
+- **Example 1:** `wordlist=["KiTe","KiTe"]`, `queries=["kite","Kite","KiTe","Hare","hare","Hare","harez"]` → `["KiTe","KiTe","KiTe","Hare","Hare","Hare",""]`
+- **Example 2:** `wordlist=["yellow"]`, `queries=["YellOw"]` → `["yellow"]`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- **🇻🇳 Ba cấp ưu tiên** — exact > case-insensitive > vowel-insensitive / Three priority levels
+- **🇻🇳 Xây HashMap trước** — O(n) build, O(1) query mỗi từ / Pre-build HashMaps for O(1) query
+- **🇻🇳 Vowel key** — thay a,e,i,o,u bằng '_' để chuẩn hóa / Replace vowels with '_' to normalize
+- **🇻🇳 Thứ tự wordlist** — first occurrence wins (Map preserves insertion order) / First occurrence wins
+- **🇻🇳 Exact Set** tách biệt với lower/vowel Maps / Keep exact match as a Set
+- **🇻🇳 Vowels** = a, e, i, o, u (lowercase) — nhớ cả hoa khi chuẩn hóa / Lowercase vowels for normalization
 
 ## Solutions
 
+### Solution 1: Three-Level HashMap (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Build exact set, lowercase map, and vowel-pattern map
+ * Time: O(n + q) where n=wordlist.length, q=queries.length
+ * Space: O(n)
  */
-function vowelSpellcheckerBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function spellchecker(wordlist: string[], queries: string[]): string[] {
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+
+  const toVowelKey = (word: string): string => word.toLowerCase().replace(/[aeiou]/g, "*");
+
+  // Build lookup structures
+  const exactSet = new Set(wordlist);
+  const lowerMap = new Map<string, string>(); // lowercase → first word
+  const vowelMap = new Map<string, string>(); // vowel-key → first word
+
+  // Process in reverse so first occurrence wins in forward iteration
+  for (const word of wordlist) {
+    const lower = word.toLowerCase();
+    const vKey = toVowelKey(word);
+
+    // Use set to ensure first occurrence wins (overwrite = last wins, so iterate forward = last stored)
+    // We want first occurrence → only set if not already present
+    if (!lowerMap.has(lower)) lowerMap.set(lower, word);
+    if (!vowelMap.has(vKey)) vowelMap.set(vKey, word);
+  }
+
+  return queries.map((query) => {
+    // Level 1: exact match
+    if (exactSet.has(query)) return query;
+
+    // Level 2: case-insensitive match
+    const lowerQuery = query.toLowerCase();
+    if (lowerMap.has(lowerQuery)) return lowerMap.get(lowerQuery)!;
+
+    // Level 3: vowel-insensitive match
+    const vKey = toVowelKey(query);
+    if (vowelMap.has(vKey)) return vowelMap.get(vKey)!;
+
+    // No match
+    return "";
+  });
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function vowelSpellchecker(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
-}
+// Test cases
+console.log(
+  spellchecker(
+    ["KiTe", "KiTe", "KiTe", "Hare", "Hare"],
+    ["kite", "Kite", "KiTe", "Hare", "hare", "Hare", "harez"],
+  ),
+);
+// ["KiTe","KiTe","KiTe","Hare","Hare","Hare",""]
 
-// === Test Cases ===
-// console.log(vowelSpellchecker(/* example 1 */)); // expected
-// console.log(vowelSpellchecker(/* example 2 */)); // expected
-// console.log(vowelSpellchecker(/* edge case */)); // expected
+console.log(spellchecker(["yellow"], ["YellOw"])); // ["yellow"]
 ```
 
----
+### Solution 2: Functional Single-Pass Query
+
+```typescript
+/**
+ * Same approach, more functional style
+ * Time: O(n + q)  Space: O(n)
+ */
+function spellcheckerV2(wordlist: string[], queries: string[]): string[] {
+  const normalize = (w: string) => w.toLowerCase().replace(/[aeiou]/g, "#");
+
+  const exact = new Set(wordlist);
+  const caseMap: Record<string, string> = {};
+  const vowelMap: Record<string, string> = {};
+
+  for (const w of wordlist) {
+    const lk = w.toLowerCase();
+    const vk = normalize(w);
+    if (!caseMap[lk]) caseMap[lk] = w;
+    if (!vowelMap[vk]) vowelMap[vk] = w;
+  }
+
+  return queries.map((q) => {
+    if (exact.has(q)) return q;
+    if (caseMap[q.toLowerCase()]) return caseMap[q.toLowerCase()];
+    if (vowelMap[normalize(q)]) return vowelMap[normalize(q)];
+    return "";
+  });
+}
+
+// Test cases
+console.log(spellcheckerV2(["ae", "aa"], ["UU"])); // ["ae"] vowel key "*" matches
+```
+
+### Solution 3: Explicit Priority Chain with Helper
+
+```typescript
+/**
+ * Explicit priority with named helper functions
+ * Time: O(n + q)  Space: O(n)
+ */
+function spellcheckerV3(wordlist: string[], queries: string[]): string[] {
+  const isVowel = (c: string) => "aeiouAEIOU".includes(c);
+  const toKey = (w: string) =>
+    w
+      .split("")
+      .map((c) => (isVowel(c) ? "." : c.toLowerCase()))
+      .join("");
+
+  const exactSet = new Set(wordlist);
+  const lc = new Map<string, string>();
+  const vk = new Map<string, string>();
+
+  for (const w of wordlist) {
+    const lKey = w.toLowerCase();
+    const vKey = toKey(w);
+    if (!lc.has(lKey)) lc.set(lKey, w);
+    if (!vk.has(vKey)) vk.set(vKey, w);
+  }
+
+  return queries.map((q) => {
+    if (exactSet.has(q)) return q;
+    return lc.get(q.toLowerCase()) ?? vk.get(toKey(q)) ?? "";
+  });
+}
+
+// Test cases
+console.log(spellcheckerV3(["KiTe", "KiTe"], ["kite"])); // ["KiTe"]
+console.log(spellcheckerV3(["yellow"], ["YellOw"])); // ["yellow"]
+```
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Vowel Spellchecker — LeetCode](https://leetcode.com/problems/vowel-spellchecker) — problem page
+| Problem                                                                             | Difficulty | Similarity                     |
+| ----------------------------------------------------------------------------------- | ---------- | ------------------------------ |
+| [Unique Word Abbreviation](https://leetcode.com/problems/unique-word-abbreviation/) | 🟡 Medium  | Word pattern matching          |
+| [Word Pattern](https://leetcode.com/problems/word-pattern/)                         | 🟢 Easy    | HashMap mapping                |
+| [Find and Replace Pattern](https://leetcode.com/problems/find-and-replace-pattern/) | 🟡 Medium  | Pattern normalization          |
+| [Group Anagrams](https://leetcode.com/problems/group-anagrams/)                     | 🟡 Medium  | Key normalization for grouping |
