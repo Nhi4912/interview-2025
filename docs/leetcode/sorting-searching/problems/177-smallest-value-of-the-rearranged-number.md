@@ -7,97 +7,161 @@ tags: [Math, Sorting]
 leetcode_url: "https://leetcode.com/problems/smallest-value-of-the-rearranged-number"
 ---
 
-# Smallest Value of the Rearranged Number / Smallest Value of the Rearranged Number
+# Smallest Value of the Rearranged Number / Giá Trị Nhỏ Nhất Của Số Sắp Xếp Lại
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sorting
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Missing Number](https://leetcode.com/problems/missing-number) | [Maximum Product of Three Numbers](https://leetcode.com/problems/maximum-product-of-three-numbers)
+🟡 Medium | Math, Sorting | [LeetCode 2165](https://leetcode.com/problems/smallest-value-of-the-rearranged-number)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Sau khi sắp xếp, nhiều bài toán trở nên đơn giản hơn — phần tử giống nhau nằm cạnh nhau, có thể dùng binary search, two pointers.
+**EN:** For **negative** numbers: to get the smallest (most negative) value, we want the largest absolute value → sort digits **descending** and negate. For **positive** numbers: sort digits **ascending** but move the smallest non-zero digit to the front to avoid a leading zero.
 
-**Pattern Recognition:**
-
-- Signal: "order matters" + "grouping/dedup" → **Sorting**
-- Bài này thuộc dạng Sorting — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Smallest Value of the Rearranged Number example:**
+**VI:** Với số **âm**: muốn số nhỏ nhất (âm nhất) → giá trị tuyệt đối lớn nhất → sắp xếp chữ số **giảm dần** rồi phủ định. Với số **dương**: sắp xếp **tăng dần** nhưng chuyển chữ số khác 0 nhỏ nhất lên đầu để tránh số 0 đứng đầu.
 
 ```
-// TODO: Add step-by-step visual for Sorting
-// Show one complete example with state at each step
+num = -7605  →  digits: [7,6,0,5]
+  negative → sort descending: [7,6,5,0] → -7650  ✓ smallest negative
+
+num = 310    →  digits: [3,1,0]
+  positive → sort ascending: [0,1,3] → has leading zero!
+  swap first non-zero (1) to front: [1,0,3] → 103  ✓
+
+num = -1      →  digits: [1]
+  negative → -1  ✓
+
+num = 0       →  return 0
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Smallest Value of the Rearranged Number. ([LeetCode](https://leetcode.com/problems/smallest-value-of-the-rearranged-number))
-
-Difficulty: Medium | Acceptance: 52.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/smallest-value-of-the-rearranged-number) for full constraints
+- ➕➖ **EN:** Three cases: zero, negative, positive. Handle `num === 0` separately. **VI:** Ba trường hợp: không, âm, dương. Xử lý `num === 0` riêng.
+- 🔢 **EN:** For negative: sort absolute value digits descending → largest abs value → most negative. **VI:** Số âm: sắp giảm dần → giá trị tuyệt đối lớn nhất → số âm nhỏ nhất.
+- 🔢 **EN:** For positive: sort ascending first, then swap first `'0'` position with first non-zero digit. **VI:** Số dương: sắp tăng dần, rồi hoán đổi '0' đầu tiên với chữ số khác 0 nhỏ nhất.
+- 🚫 **EN:** `Math.abs(num).toString()` extracts digits cleanly; `split('')` + `sort()` handles multi-digit. **VI:** Dùng `Math.abs(num).toString()` để lấy chữ số sạch.
+- ⚠️ **EN:** Edge case: num = 0 → return 0 without sorting. Also num with all zeros except one digit. **VI:** Trường hợp đặc biệt: num = 0. Số chỉ có một chữ số khác 0 cùng nhiều số 0.
+- 🧪 **EN:** Verify: for num = -10, result should be -10 (digits [1,0] → sort desc [1,0] → -10). **VI:** Kiểm tra: num = -10 → kết quả là -10.
 
 ---
 
-## 📝 Interview Tips
+## 💡 Solutions / Giải Pháp
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Solution 1 — Sort Digits, Handle Sign (Clean)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort digits of abs(num) in order per sign, handle leading zero for positive
+ * Time: O(d log d) where d = number of digits  Space: O(d)
  */
-function smallestValueOfTheRearrangedNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function smallestNumber(num: number): number {
+  if (num === 0) return 0;
+
+  const digits = Math.abs(num).toString().split("");
+
+  if (num < 0) {
+    // Largest absolute value = smallest negative → sort descending
+    digits.sort((a, b) => Number(b) - Number(a));
+    return -Number(digits.join(""));
+  } else {
+    // Smallest positive value → sort ascending, fix leading zero
+    digits.sort((a, b) => Number(a) - Number(b));
+    // Find first non-zero digit and move it to front
+    const firstNonZero = digits.findIndex((d) => d !== "0");
+    if (firstNonZero > 0) {
+      [digits[0], digits[firstNonZero]] = [digits[firstNonZero], digits[0]];
+    }
+    return Number(digits.join(""));
+  }
 }
 
+// Tests
+console.log(smallestNumber(310)); // 103
+console.log(smallestNumber(-7605)); // -7650
+console.log(smallestNumber(0)); // 0
+console.log(smallestNumber(-1)); // -1
+console.log(smallestNumber(100200)); // 100002
+console.log(smallestNumber(-100)); // -100 (sort desc [1,0,0] → "100" → -100)
+```
+
+### Solution 2 — Digit Frequency Count (O(d) sort for digits 0-9)
+
+```typescript
 /**
- * Solution 2: Optimized — Sorting
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count digit frequencies; build result by reading freq array in order.
+ * Effectively counting sort — O(d) time for digit processing.
+ * Time: O(d)  Space: O(10) = O(1)
  */
-function smallestValueOfTheRearrangedNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sorting
-  // Hint: Sort first, then use property of sorted order
-  throw new Error('Not implemented');
+function smallestNumber2(num: number): number {
+  if (num === 0) return 0;
+
+  const freq = new Array(10).fill(0);
+  let n = Math.abs(num);
+  while (n > 0) {
+    freq[n % 10]++;
+    n = Math.floor(n / 10);
+  }
+
+  let result = "";
+  if (num > 0) {
+    // Ascending: find smallest non-zero digit first, then all digits asc
+    for (let d = 1; d <= 9; d++) {
+      if (freq[d] > 0) {
+        result += d.toString();
+        freq[d]--;
+        break; // place one non-zero digit at front
+      }
+    }
+    // Fill remaining: 0-9 in order
+    for (let d = 0; d <= 9; d++) {
+      result += d.toString().repeat(freq[d]);
+    }
+    return Number(result);
+  } else {
+    // Descending: 9 → 0
+    for (let d = 9; d >= 0; d--) {
+      result += d.toString().repeat(freq[d]);
+    }
+    return -Number(result);
+  }
 }
 
-// === Test Cases ===
-// console.log(smallestValueOfTheRearrangedNumber(/* example 1 */)); // expected
-// console.log(smallestValueOfTheRearrangedNumber(/* example 2 */)); // expected
-// console.log(smallestValueOfTheRearrangedNumber(/* edge case */)); // expected
+// Tests
+console.log(smallestNumber2(310)); // 103
+console.log(smallestNumber2(-7605)); // -7650
+console.log(smallestNumber2(100200)); // 100002
+```
+
+### Solution 3 — One-liner Style (Readable)
+
+```typescript
+/**
+ * Functional style using spread + sort with sign correction
+ * Time: O(d log d)  Space: O(d)
+ */
+function smallestNumber3(num: number): number {
+  if (num === 0) return 0;
+  const sign = num < 0 ? -1 : 1;
+  const digits = Math.abs(num).toString().split("").sort();
+  if (sign === 1 && digits[0] === "0") {
+    const nz = digits.findIndex((d) => d !== "0");
+    [digits[0], digits[nz]] = [digits[nz], digits[0]];
+    return Number(digits.join(""));
+  }
+  return sign * Number(sign === -1 ? digits.reverse().join("") : digits.join(""));
+}
+
+console.log(smallestNumber3(-7605)); // -7650
+console.log(smallestNumber3(310)); // 103
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Maximum Product of Three Numbers](https://leetcode.com/problems/maximum-product-of-three-numbers) — same pattern: Sorting
-- [K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin) — same pattern: Heap / Priority Queue
-- [Maximum Number of Visible Points](https://leetcode.com/problems/maximum-number-of-visible-points) — same pattern: Sliding Window
-- [Smallest Value of the Rearranged Number — LeetCode](https://leetcode.com/problems/smallest-value-of-the-rearranged-number) — problem page
+| #   | Problem                         | Difficulty | Pattern             |
+| --- | ------------------------------- | ---------- | ------------------- |
+| 1   | Largest Number                  | 🟡 Medium  | custom digit sort   |
+| 2   | Next Permutation                | 🟡 Medium  | digit rearrangement |
+| 3   | Smallest Number in Infinite Set | 🟡 Medium  | greedy construction |

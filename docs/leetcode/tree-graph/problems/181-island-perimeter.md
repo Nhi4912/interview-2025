@@ -7,100 +7,181 @@ tags: [Array, Depth-First Search, Breadth-First Search, Matrix]
 leetcode_url: "https://leetcode.com/problems/island-perimeter"
 ---
 
-# Island Perimeter / Island Perimeter
+# Island Perimeter / Chu Vi Hòn Đảo
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Max Area of Island](https://leetcode.com/problems/max-area-of-island) | [Making A Large Island](https://leetcode.com/problems/making-a-large-island)
+🟢 Easy | Count Exposed Edges: 4×land − 2×adjacencies | [LeetCode 463](https://leetcode.com/problems/island-perimeter)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực giác
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Island Perimeter example:**
+**Vietnamese:** Mỗi ô đất đóng góp 4 cạnh vào chu vi. Nhưng mỗi cạnh chung giữa hai ô đất liền kề làm giảm chu vi đi 2 (mỗi phía mất 1 cạnh). Công thức: `chu vi = 4 × số ô đất - 2 × số cặp liền kề`.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+grid:
+0 1 0 0
+1 1 1 0
+0 1 0 0
+0 1 0 0
 
-BFS: process level by level using queue
+Land cells = 5
+Adjacencies (shared edges between two land cells):
+  (0,1)-(1,1), (1,0)-(1,1), (1,1)-(1,2), (1,1)-(2,1), (2,1)-(3,1) = 5 pairs
+
+Perimeter = 4×5 - 2×5 = 20 - 10 = 10  ✓
+Alternative: count exposed edges per cell = 12
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Gợi ý phỏng vấn
 
-Island Perimeter. ([LeetCode](https://leetcode.com/problems/island-perimeter))
-
-Difficulty: Easy | Acceptance: 73.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/island-perimeter) for full constraints
+- 🔑 **EN:** Formula: perimeter = 4*land - 2*shared_edges is O(m*n) one-pass | **VI:** Công thức 4*đất - 2*cạnh_chung, một lần duyệt O(m*n)
+- 🔑 **EN:** Only check right and down neighbors to avoid double-counting pairs | **VI:** Chỉ kiểm tra phải và dưới để tránh đếm trùng
+- 🔑 **EN:** Alternative: for each land cell count exposed edges (4 - num_land_neighbors) | **VI:** Cách khác: đếm cạnh lộ = 4 - số hàng xóm là đất
+- 🔑 **EN:** DFS/BFS also works but O(m\*n) with overhead — formula is simpler | **VI:** DFS/BFS cũng được nhưng công thức đơn giản hơn
+- 🔑 **EN:** Problem guarantees exactly one island (no holes) | **VI:** Bài đảm bảo đúng một hòn đảo không có lỗ
+- 🔑 **EN:** Edge cells bordering grid boundary already don't have a neighbor there | **VI:** Ô biên lưới tự nhiên không có hàng xóm
 
 ---
 
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+## 💡 Solutions / Giải pháp
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Formula: 4*land - 2*shared_edges (one pass)
+ * Time: O(m*n)  Space: O(1)
  */
-function islandPerimeterBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function islandPerimeter(grid: number[][]): number {
+  const m = grid.length,
+    n = grid[0].length;
+  let land = 0,
+    shared = 0;
+
+  for (let r = 0; r < m; r++) {
+    for (let c = 0; c < n; c++) {
+      if (grid[r][c] === 1) {
+        land++;
+        // Only check right and down to avoid double-counting
+        if (c + 1 < n && grid[r][c + 1] === 1) shared++;
+        if (r + 1 < m && grid[r + 1][c] === 1) shared++;
+      }
+    }
+  }
+
+  return 4 * land - 2 * shared;
 }
 
+// Test cases
+console.log(
+  islandPerimeter([
+    [0, 1, 0, 0],
+    [1, 1, 1, 0],
+    [0, 1, 0, 0],
+    [1, 1, 0, 0],
+  ]),
+); // 16
+console.log(islandPerimeter([[1]])); // 4
+console.log(islandPerimeter([[1, 0]])); // 4
+console.log(
+  islandPerimeter([
+    [1, 1],
+    [1, 1],
+  ]),
+); // 8
+```
+
+```typescript
 /**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Per-cell exposed edges count — equally clean
+ * Time: O(m*n)  Space: O(1)
  */
-function islandPerimeter(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function islandPerimeterV2(grid: number[][]): number {
+  const m = grid.length,
+    n = grid[0].length;
+  const dirs = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+  let perimeter = 0;
+
+  for (let r = 0; r < m; r++) {
+    for (let c = 0; c < n; c++) {
+      if (grid[r][c] !== 1) continue;
+      // Each exposed edge (no neighbor or out-of-bounds) contributes 1
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr,
+          nc = c + dc;
+        if (nr < 0 || nr >= m || nc < 0 || nc >= n || grid[nr][nc] === 0) {
+          perimeter++;
+        }
+      }
+    }
+  }
+
+  return perimeter;
 }
 
-// === Test Cases ===
-// console.log(islandPerimeter(/* example 1 */)); // expected
-// console.log(islandPerimeter(/* example 2 */)); // expected
-// console.log(islandPerimeter(/* edge case */)); // expected
+console.log(
+  islandPerimeterV2([
+    [0, 1, 0, 0],
+    [1, 1, 1, 0],
+    [0, 1, 0, 0],
+    [1, 1, 0, 0],
+  ]),
+); // 16
+console.log(islandPerimeterV2([[1]])); // 4
+```
+
+```typescript
+/**
+ * DFS approach — traverse island from first land cell
+ * Time: O(m*n)  Space: O(m*n) recursion stack
+ */
+function islandPerimeterDFS(grid: number[][]): number {
+  const m = grid.length,
+    n = grid[0].length;
+  const visited = Array.from({ length: m }, () => new Array(n).fill(false));
+  const dirs = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+
+  const dfs = (r: number, c: number): number => {
+    if (r < 0 || r >= m || c < 0 || c >= n || grid[r][c] === 0) return 1;
+    if (visited[r][c]) return 0;
+    visited[r][c] = true;
+    let p = 0;
+    for (const [dr, dc] of dirs) p += dfs(r + dr, c + dc);
+    return p;
+  };
+
+  for (let r = 0; r < m; r++) for (let c = 0; c < n; c++) if (grid[r][c] === 1) return dfs(r, c);
+
+  return 0;
+}
+
+console.log(
+  islandPerimeterDFS([
+    [0, 1, 0, 0],
+    [1, 1, 1, 0],
+    [0, 1, 0, 0],
+    [1, 1, 0, 0],
+  ]),
+); // 16
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài liên quan
 
-- [Max Area of Island](https://leetcode.com/problems/max-area-of-island) — same pattern: Union Find
-- [Making A Large Island](https://leetcode.com/problems/making-a-large-island) — same pattern: Union Find
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Flood Fill](https://leetcode.com/problems/flood-fill) — same pattern: BFS
-- [Island Perimeter — LeetCode](https://leetcode.com/problems/island-perimeter) — problem page
+| Problem                                                                                 | Difficulty | Key Idea                |
+| --------------------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [Max Area of Island 695](https://leetcode.com/problems/max-area-of-island)              | Medium     | BFS/DFS area counting   |
+| [Count Sub Islands 1905](https://leetcode.com/problems/count-sub-islands)               | Medium     | BFS island membership   |
+| [Number of Closed Islands 1254](https://leetcode.com/problems/number-of-closed-islands) | Medium     | BFS/DFS avoid border    |
+| [Number of Islands 200](https://leetcode.com/problems/number-of-islands)                | Medium     | BFS/DFS component count |

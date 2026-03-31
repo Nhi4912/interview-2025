@@ -7,100 +7,155 @@ tags: [Array, Two Pointers, Binary Search, Sorting]
 leetcode_url: "https://leetcode.com/problems/minimum-time-to-eat-all-grains"
 ---
 
-# Minimum Time to Eat All Grains / Minimum Time to Eat All Grains
+# Minimum Time to Eat All Grains / Thời Gian Tối Thiểu Để Ăn Hết Ngũ Cốc
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) | [Heaters](https://leetcode.com/problems/heaters)
+🔴 Hard | Binary Search + Greedy | [LeetCode 2513](https://leetcode.com/problems/minimum-time-to-eat-all-grains)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**EN:** Binary search on time `t`. For a given `t`, greedily check: sort both hens and grains. Each hen covers a range of grains — if grains are to the right only, reach is `h + t`; if grains extend left, the hen must travel left then right (or right then left), computed as `max(t - 2*leftDist, floor((t-leftDist)/2))` extra rightward reach.
 
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Time to Eat All Grains example:**
+**VI:** Binary search trên thời gian `t`. Với `t` cho trước, kiểm tra tham lam: sắp xếp cả gà và ngũ cốc. Mỗi con gà phủ một dải ngũ cốc — nếu chỉ bên phải thì đến `h + t`; nếu có phía trái, phải tính đường đi trái-rồi-phải.
 
 ```
-arr = [... sorted ...]
- L                 R
+hens = [3, 6, 7]   grains = [2, 4, 7, 9]   t = 2
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Sorted hens: [3,6,7]   grains: [2,4,7,9]
+
+Hen 3: leftDist=1 (grain 2), reach right = 3 + max(2-2, (2-1)/2) = 3 + max(0,0) = 3
+  Eats grain 2 (=2<3? no, 2≤3 yes) and grain 4 (4≤3? no, skip)
+  Wait: reach = 3+max(0,0)=3. Grain 4 > 3, not eaten. j=1 (grain 2 eaten)
+
+Hen 6: grain 4, leftDist=0 (4>6? no, 4<6, leftDist=2), reach=6+max(-2,0)=6
+  Eats grain 4 (≤6 ✓). j=2
+
+Hen 7: grain 7, rightOnly, reach=7+2=9. Eats grains 7,9. j=4
+
+All grains eaten in t=2 ✓
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Minimum Time to Eat All Grains. ([LeetCode](https://leetcode.com/problems/minimum-time-to-eat-all-grains))
-
-Difficulty: Hard | Acceptance: 39.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-time-to-eat-all-grains) for full constraints
+- 🔍 **EN:** Binary search range: `lo=0`, `hi=max(grains) + max(hens)` (safe upper bound). **VI:** Phạm vi binary search: `lo=0`, `hi` là khoảng cách tối đa có thể.
+- 🐔 **EN:** Sort both arrays — greedy assignment only works when both are sorted left to right. **VI:** Phải sắp xếp cả hai mảng — tham lam chỉ đúng khi cả hai đã được sắp xếp.
+- ↔️ **EN:** When a grain is to the hen's left: `leftDist = h - grain`. Two travel options give rightward reach of `max(t - 2*leftDist, floor((t-leftDist)/2))`. Take the max. **VI:** Khi ngũ cốc nằm bên trái: tính khoảng cách trái, rồi lấy tối đa của hai chiến lược di chuyển.
+- 📌 **EN:** If `leftDist > t`, the grain is unreachable by this hen — since hens are sorted, earlier hens were closer and couldn't eat it either → return false. **VI:** Nếu `leftDist > t`, ngũ cốc không đến được → return false ngay.
+- ✅ **EN:** A hen always eats at least the grains directly to its right up to `h + t`. Grains to the left may shrink this rightward reach. **VI:** Mỗi con gà luôn ăn được những ngũ cốc bên phải trong vòng `h + t`. Ngũ cốc bên trái có thể giảm tầm với phải.
+- ⏱️ **EN:** The feasibility check is O(h + g) two-pointer; overall O((h+g) log(maxDist)). **VI:** Kiểm tra khả thi O(h+g) two-pointer; tổng O((h+g) log(maxDist)).
 
 ---
 
-## 📝 Interview Tips
+## 💡 Solutions / Giải Pháp
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
-
-## Solutions
+### Solution 1 — Binary Search + Greedy Two-Pointer
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Binary search on time t. Greedy: each hen eats leftmost remaining grains
+ * it can reach within t seconds.
+ * Time: O((H+G) log D)  H=hens, G=grains, D=max distance
+ * Space: O(1) after sorting
  */
-function minimumTimeToEatAllGrainsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumTime(hens: number[], grains: number[]): number {
+  hens.sort((a, b) => a - b);
+  grains.sort((a, b) => a - b);
+
+  function canFinish(t: number): boolean {
+    let j = 0; // next unassigned grain index
+    for (let i = 0; i < hens.length && j < grains.length; i++) {
+      const h = hens[i];
+
+      if (grains[j] >= h) {
+        // All remaining grains start at or right of hen — go right
+        while (j < grains.length && grains[j] <= h + t) j++;
+      } else {
+        // Leftmost grain is to the left of hen
+        const leftDist = h - grains[j];
+        if (leftDist > t) return false; // unreachable
+
+        // Option A: go left first, then right
+        //   rightward reach = h + (t - 2*leftDist)
+        // Option B: go right first, then left
+        //   rightward reach = h + floor((t - leftDist) / 2)
+        const reach = h + Math.max(t - 2 * leftDist, Math.floor((t - leftDist) / 2));
+        while (j < grains.length && grains[j] <= reach) j++;
+      }
+    }
+    return j >= grains.length;
+  }
+
+  const maxDist = Math.max(...hens, ...grains);
+  let lo = 0,
+    hi = 2 * maxDist;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (canFinish(mid)) hi = mid;
+    else lo = mid + 1;
+  }
+  return lo;
 }
 
+// Tests
+console.log(minimumTime([3, 6, 7], [2, 4, 7, 9])); // 2
+console.log(minimumTime([4, 6, 109], [5, 6])); // 1
+console.log(minimumTime([10], [1, 2, 3, 4, 5])); // 9
+```
+
+### Solution 2 — Binary Search with Explicit Bounds Calculation
+
+```typescript
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Same logic but computes hi more precisely from constraints
+ * Time: O((H+G) log D)  Space: O(H+G) for sorted copies
  */
-function minimumTimeToEatAllGrains(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function minimumTime2(hens: number[], grains: number[]): number {
+  const H = [...hens].sort((a, b) => a - b);
+  const G = [...grains].sort((a, b) => a - b);
+
+  function feasible(t: number): boolean {
+    let g = 0;
+    for (let h = 0; h < H.length && g < G.length; h++) {
+      if (G[g] >= H[h]) {
+        while (g < G.length && G[g] <= H[h] + t) g++;
+      } else {
+        const d = H[h] - G[g];
+        if (d > t) return false;
+        const reach = H[h] + Math.max(t - 2 * d, Math.floor((t - d) / 2));
+        while (g < G.length && G[g] <= reach) g++;
+      }
+    }
+    return g >= G.length;
+  }
+
+  // Upper bound: one hen eats all from leftmost grain to rightmost grain
+  let lo = 0;
+  let hi =
+    G[G.length - 1] -
+    G[0] +
+    Math.max(Math.abs(H[0] - G[0]), Math.abs(H[H.length - 1] - G[G.length - 1]));
+
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (feasible(mid)) hi = mid;
+    else lo = mid + 1;
+  }
+  return lo;
 }
 
-// === Test Cases ===
-// console.log(minimumTimeToEatAllGrains(/* example 1 */)); // expected
-// console.log(minimumTimeToEatAllGrains(/* example 2 */)); // expected
-// console.log(minimumTimeToEatAllGrains(/* edge case */)); // expected
+console.log(minimumTime2([3, 6, 7], [2, 4, 7, 9])); // 2
+console.log(minimumTime2([10], [1, 2, 3, 4, 5])); // 9
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Heaters](https://leetcode.com/problems/heaters) — same pattern: Two Pointers
-- [Find K Closest Elements](https://leetcode.com/problems/find-k-closest-elements) — same pattern: Sliding Window
-- [Maximum Number of Tasks You Can Assign](https://leetcode.com/problems/maximum-number-of-tasks-you-can-assign) — same pattern: Monotonic Queue
-- [Minimum Time to Eat All Grains — LeetCode](https://leetcode.com/problems/minimum-time-to-eat-all-grains) — problem page
+| #   | Problem                | Difficulty | Pattern                     |
+| --- | ---------------------- | ---------- | --------------------------- |
+| 1   | Koko Eating Bananas    | 🟡 Medium  | binary search on answer     |
+| 2   | Minimum Number of Days | 🔴 Hard    | binary search + greedy      |
+| 3   | Swim in Rising Water   | 🔴 Hard    | binary search + feasibility |

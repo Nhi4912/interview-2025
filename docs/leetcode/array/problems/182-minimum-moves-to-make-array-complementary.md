@@ -7,97 +7,128 @@ tags: [Array, Hash Table, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/minimum-moves-to-make-array-complementary"
 ---
 
-# Minimum Moves to Make Array Complementary / Minimum Moves to Make Array Complementary
+# Minimum Moves to Make Array Complementary / Số Bước Tối Thiểu Để Làm Mảng Bổ Sung
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) | [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom)
+🟡 Medium | Tags: Array, Hash Table, Prefix Sum
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+**VN:** Với mỗi cặp `(a, b)` (a ≤ b), số lần di chuyển cần thiết phụ thuộc vào tổng đích T:
 
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Moves to Make Array Complementary example:**
+- `[2, a]`: 2 moves; `[a+1, a+b]`: 1 move; `a+b`: 0 moves; `[a+b+1, b+limit]`: 1 move; `[b+limit+1, 2*limit]`: 2 moves.
+  Dùng mảng hiệu (difference array) trên khoảng `[2, 2*limit]`.
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+Ranges on T for pair (a=1, b=3), limit=4:
+[2,1]  → 2 moves (base)
+[2,4]  → subtract 1 → 1 move
+ [4]   → subtract 1 → 0 moves
+[5,7]  → still 1 move (add back 1 at position 5, add 1 at 8)
 ```
-
----
-
-## Problem Description
-
-Minimum Moves to Make Array Complementary. ([LeetCode](https://leetcode.com/problems/minimum-moves-to-make-array-complementary))
-
-Difficulty: Medium | Acceptance: 42.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-moves-to-make-array-complementary) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Base = n (n/2 cặp × 2 bước mỗi cặp). Dùng diff array để trừ dần.
+- 🇺🇸 Start from base = n (each of n/2 pairs costs 2), use diff array to subtract.
+- 🇻🇳 Cho mỗi cặp: trừ 1 trong `[a+1, b+limit]`, trừ 1 thêm tại `a+b`.
+- 🇺🇸 Per pair: -1 over `[a+1, b+limit]`, then -1 more at exactly `a+b`.
+- 🇻🇳 Prefix sum qua diff array để tìm giá trị nhỏ nhất trong khoảng `[2, 2*limit]`.
+- 🇺🇸 Run prefix sum over diff array and track minimum across `[2, 2*limit]`.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Difference Array on Target Range
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each mirror pair, mark savings on diff array; find min with prefix sum.
+ * Time: O(n + limit) | Space: O(limit)
  */
-function minimumMovesToMakeArrayComplementaryBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minMoves(nums: number[], limit: number): number {
+  const n = nums.length;
+  // diff indexed [0 .. 2*limit+1], covering target sums [2 .. 2*limit]
+  const diff = new Array<number>(2 * limit + 2).fill(0);
+
+  for (let i = 0; i < n / 2; i++) {
+    const a = Math.min(nums[i], nums[n - 1 - i]);
+    const b = Math.max(nums[i], nums[n - 1 - i]);
+
+    // Range [a+1, b+limit]: 1 move (subtract 1 from base of 2)
+    diff[a + 1] -= 1;
+    diff[b + limit + 1] += 1;
+
+    // Exact target a+b: 0 moves (subtract 1 more)
+    diff[a + b] -= 1;
+    diff[a + b + 1] += 1;
+  }
+
+  // Base cost = n (each of n/2 pairs needs 2 moves)
+  let cur = 0,
+    ans = Infinity;
+  for (let t = 2; t <= 2 * limit; t++) {
+    cur += diff[t];
+    ans = Math.min(ans, n + cur);
+  }
+
+  return ans;
 }
 
+console.log(minMoves([1, 2, 4, 3], 4)); // 1
+console.log(minMoves([1, 2, 2, 1], 2)); // 0
+console.log(minMoves([1, 2, 1, 2], 2)); // 0
+```
+
+### Solution 2: HashMap Approach (Explicit per-target counting)
+
+```typescript
 /**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each pair record exact 0-move target and 1-move range in a map.
+ * Slightly less elegant but shows the logic clearly.
+ * Time: O(n + limit) | Space: O(n)
  */
-function minimumMovesToMakeArrayComplementary(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+function minMoves2(nums: number[], limit: number): number {
+  const n = nums.length;
+  const delta = new Map<number, number>();
+
+  const add = (k: number, v: number) => delta.set(k, (delta.get(k) ?? 0) + v);
+
+  for (let i = 0; i < n / 2; i++) {
+    const a = Math.min(nums[i], nums[n - 1 - i]);
+    const b = Math.max(nums[i], nums[n - 1 - i]);
+
+    add(2, 2); // start region at T=2 with cost 2
+    add(a + 1, -1); // cost drops to 1 at T=a+1
+    add(a + b, -1); // cost drops to 0 at T=a+b
+    add(a + b + 1, 1); // cost back to 1 at T=a+b+1
+    add(b + limit + 1, 1); // cost back to 2 at T=b+limit+1
+  }
+
+  let cur = 0,
+    ans = Infinity;
+  for (let t = 2; t <= 2 * limit; t++) {
+    cur += delta.get(t) ?? 0;
+    ans = Math.min(ans, cur);
+  }
+
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(minimumMovesToMakeArrayComplementary(/* example 1 */)); // expected
-// console.log(minimumMovesToMakeArrayComplementary(/* example 2 */)); // expected
-// console.log(minimumMovesToMakeArrayComplementary(/* edge case */)); // expected
+console.log(minMoves2([1, 2, 4, 3], 4)); // 1
+console.log(minMoves2([1, 2, 2, 1], 2)); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom) — same pattern: Prefix Sum
-- [Subarray Sums Divisible by K](https://leetcode.com/problems/subarray-sums-divisible-by-k) — same pattern: Prefix Sum
-- [Maximum Good Subarray Sum](https://leetcode.com/problems/maximum-good-subarray-sum) — same pattern: Prefix Sum
-- [Minimum Moves to Make Array Complementary — LeetCode](https://leetcode.com/problems/minimum-moves-to-make-array-complementary) — problem page
+| Problem                                                             | Difficulty | Pattern          |
+| ------------------------------------------------------------------- | ---------- | ---------------- |
+| [Range Addition](https://leetcode.com/problems/range-addition/)     | 🟡 Medium  | Difference Array |
+| [Car Pooling](https://leetcode.com/problems/car-pooling/)           | 🟡 Medium  | Difference Array |
+| [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) | 🟡 Medium  | Sweep Line       |

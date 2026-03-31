@@ -7,102 +7,138 @@ tags: [Math, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/number-of-beautiful-integers-in-the-range"
 ---
 
-# Number of Beautiful Integers in the Range / Number of Beautiful Integers in the Range
+# Number of Beautiful Integers in the Range / Số Nguyên Đẹp Trong Khoảng
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) | [Fibonacci Number](https://leetcode.com/problems/fibonacci-number)
+🔴 Hard | Digit DP · Mathematics
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**EN:** A "beautiful" integer has `#even_digits == #odd_digits` and is divisible by `k`. Use **digit DP**: `answer = count(high) - count(low - 1)`. State = `(pos, tight, balance, rem, leadZero)`.
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Number of Beautiful Integers in the Range example:**
+**VI:** Số "đẹp" có `#chữ_số_chẵn == #chữ_số_lẻ` và chia hết cho `k`. Dùng **DP chữ số**: `kết_quả = đếm(high) - đếm(low−1)`. Trạng thái gồm (vị trí, tight, cân bằng chẵn−lẻ, số dư mod k, số 0 đầu).
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+State: (pos, tight, balance=even-odd, rem mod k, leadZero)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+For digit d at pos:
+  newBal = balance + (d%2==0 ? +1 : -1)   (only when not leadZero)
+  newRem = (rem*10 + d) % k
+  newTight = tight && d == digits[pos]
+
+Valid at end: !leadZero && balance==0 && rem==0
+
+Answer = count(high) - count(low - 1)
 ```
-
----
-
-## Problem Description
-
-Number of Beautiful Integers in the Range. ([LeetCode](https://leetcode.com/problems/number-of-beautiful-integers-in-the-range))
-
-Difficulty: Hard | Acceptance: 19.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-beautiful-integers-in-the-range) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🔑 **EN:** Digit DP template: count valid numbers ≤ limit. Use `count(high) - count(low-1)`. **VI:** Mẫu DP chữ số: đếm số hợp lệ ≤ limit. Dùng count(high) − count(low−1).
+- 🔑 **EN:** `balance = even_count - odd_count`, must equal 0 at end; range is `[−D, +D]` with offset. **VI:** balance = số_chẵn − số_lẻ, phải bằng 0 ở cuối; dùng offset +D để lập chỉ mục.
+- 🔑 **EN:** Only cache non-tight states; tight=true states are specific to each number. **VI:** Chỉ cache trạng thái tight=false; tight=true phụ thuộc vào số cụ thể.
+- 🔑 **EN:** `leadZero` flag prevents counting leading zeros as even digits. **VI:** Cờ leadZero tránh đếm số 0 đầu là chữ số chẵn.
+- 🔑 **EN:** `rem = (rem * 10 + d) % k` tracks divisibility. Valid when `rem === 0`. **VI:** rem = (rem\*10 + d) % k theo dõi tính chia hết. Hợp lệ khi rem === 0.
+- 🔑 **EN:** Balance range `[-n..+n]` for n-digit number; max n=10, so balance ∈ [-10..10]. **VI:** Balance từ -10 đến +10 với số 10 chữ số; dùng offset +10.
 
 ---
 
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Digit DP: count beautiful integers in [low, high]
+ * Time: O(D * 2D * k)  Space: O(D * 2D * k)  where D=10 digits
  */
-function numberOfBeautifulIntegersInTheRangeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numberOfBeautifulIntegers(low: number, high: number, k: number): number {
+  function countUpTo(limit: number): number {
+    const s = String(limit);
+    const n = s.length;
+    // cache[pos][balance+n][rem] for non-tight non-leadZero states
+    const cache: number[][][] = Array.from({ length: n }, () =>
+      Array.from({ length: 2 * n + 1 }, () => new Array(k).fill(-1)),
+    );
+
+    // Returns count of beautiful integers in [1..limit] (no leading zeros)
+    function dp(pos: number, tight: boolean, bal: number, rem: number, lead: boolean): number {
+      if (pos === n) {
+        return !lead && bal === 0 && rem === 0 ? 1 : 0;
+      }
+      const cacheKey = bal + n; // offset to keep non-negative
+      if (!tight && !lead && cache[pos][cacheKey][rem] !== -1) {
+        return cache[pos][cacheKey][rem];
+      }
+      const maxD = tight ? +s[pos] : 9;
+      let res = 0;
+      for (let d = 0; d <= maxD; d++) {
+        const newLead = lead && d === 0;
+        const newBal = newLead ? 0 : bal + (d % 2 === 0 ? 1 : -1);
+        const newRem = (rem * 10 + d) % k;
+        res += dp(pos + 1, tight && d === maxD, newBal, newRem, newLead);
+      }
+      if (!tight && !lead) cache[pos][cacheKey][rem] = res;
+      return res;
+    }
+
+    return dp(0, true, 0, 0, true);
+  }
+
+  return countUpTo(high) - countUpTo(low - 1);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Iterative bottom-up digit DP (alternative)
+ * Time: O(D * 2D * k * 10)  Space: O(2D * k)
  */
-function numberOfBeautifulIntegersInTheRange(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function numberOfBeautifulIntegersV2(low: number, high: number, k: number): number {
+  function countUpTo(limit: number): number {
+    const digits = String(limit).split("").map(Number);
+    const D = digits.length;
+    let result = 0;
+    let prevRem = 0,
+      prevBal = 0;
+    // Use recursive memoization (same as above but with Map for clarity)
+    const memo = new Map<string, number>();
+
+    function go(i: number, tight: boolean, bal: number, rem: number, lead: boolean): number {
+      if (i === D) return !lead && bal === 0 && rem === 0 ? 1 : 0;
+      const key = `${i}|${tight ? 1 : 0}|${bal}|${rem}|${lead ? 1 : 0}`;
+      if (memo.has(key)) return memo.get(key)!;
+      const cap = tight ? digits[i] : 9;
+      let r = 0;
+      for (let d = 0; d <= cap; d++) {
+        const nl = lead && d === 0;
+        r += go(
+          i + 1,
+          tight && d === cap,
+          nl ? 0 : bal + (d % 2 === 0 ? 1 : -1),
+          (rem * 10 + d) % k,
+          nl,
+        );
+      }
+      memo.set(key, r);
+      return r;
+    }
+    return go(0, true, 0, 0, true);
+  }
+
+  return countUpTo(high) - countUpTo(low - 1);
 }
 
-// === Test Cases ===
-// console.log(numberOfBeautifulIntegersInTheRange(/* example 1 */)); // expected
-// console.log(numberOfBeautifulIntegersInTheRange(/* example 2 */)); // expected
-// console.log(numberOfBeautifulIntegersInTheRange(/* edge case */)); // expected
+// Tests
+console.log(numberOfBeautifulIntegers(10, 20, 3)); // 2  → [12, 18]
+console.log(numberOfBeautifulIntegers(1, 10, 1)); // 1  → [10]
+console.log(numberOfBeautifulIntegers(1, 1000, 2)); // 32
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) — same pattern: Dynamic Programming
-- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — same pattern: Dynamic Programming
-- [Perfect Squares](https://leetcode.com/problems/perfect-squares) — same pattern: Dynamic Programming
-- [N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number) — same pattern: Dynamic Programming
-- [Number of Beautiful Integers in the Range — LeetCode](https://leetcode.com/problems/number-of-beautiful-integers-in-the-range) — problem page
+| Problem                                                                                               | Difficulty | Pattern  |
+| ----------------------------------------------------------------------------------------------------- | ---------- | -------- |
+| [Count Digit One](https://leetcode.com/problems/number-of-digit-one/)                                 | 🔴 Hard    | Digit DP |
+| [Numbers At Most N Given Digit Set](https://leetcode.com/problems/numbers-at-most-n-given-digit-set/) | 🔴 Hard    | Digit DP |
+| [Count Special Integers](https://leetcode.com/problems/count-special-integers/)                       | 🔴 Hard    | Digit DP |

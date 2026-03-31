@@ -7,100 +7,218 @@ tags: [Array, Depth-First Search, Breadth-First Search, Matrix]
 leetcode_url: "https://leetcode.com/problems/coloring-a-border"
 ---
 
-# Coloring A Border / Coloring A Border
+# Coloring A Border / Tô Màu Viền
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Max Area of Island](https://leetcode.com/problems/max-area-of-island) | [Making A Large Island](https://leetcode.com/problems/making-a-large-island)
+🟡 Medium | BFS/DFS: Find Connected Component, Color Border Cells | [LeetCode 1034](https://leetcode.com/problems/coloring-a-border)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực giác
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Coloring A Border example:**
+**Vietnamese:** Tìm thành phần liên thông chứa ô (row, col). Một ô là "viền" nếu nó nằm ở rìa lưới HOẶC có ít nhất một hàng xóm không cùng thành phần. Chỉ tô màu các ô viền — nội tâm giữ nguyên.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+grid=[[1,1],[1,2]]  (row=0,col=0)  color=3
+Connected component of (0,0): {(0,0),(0,1),(1,0)}  (all 1s reachable)
 
-BFS: process level by level using queue
+Border cells:
+  (0,0): edge of grid → border ✓
+  (0,1): right neighbor (1,1) is value 2, not in component → border ✓
+  (1,0): bottom edge of grid → border ✓
+  (1,1): value 2, not in component → skip
+
+Result: color (0,0),(0,1),(1,0) with 3 → [[3,3],[3,2]]
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Gợi ý phỏng vấn
 
-Coloring A Border. ([LeetCode](https://leetcode.com/problems/coloring-a-border))
-
-Difficulty: Medium | Acceptance: 49.8%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/coloring-a-border) for full constraints
+- 🔑 **EN:** Step 1: BFS/DFS from (row,col) to collect all cells with same original color | **VI:** BFS/DFS để tìm tất cả ô cùng màu kết nối
+- 🔑 **EN:** Step 2: border cell = in component AND (at grid edge OR has out-of-component neighbor) | **VI:** Ô viền = trong thành phần VÀ (ở rìa lưới HOẶC có hàng xóm ngoài thành phần)
+- 🔑 **EN:** Color ONLY border cells — interior cells keep original color | **VI:** Chỉ tô viền — ô bên trong giữ màu gốc
+- 🔑 **EN:** Use visited set to avoid reprocessing; original grid value as component membership check | **VI:** Dùng visited set, kiểm tra màu gốc để xác định thành phần
+- 🔑 **EN:** Don't modify grid during BFS — color after collecting component | **VI:** Không đổi màu khi đang BFS — tô sau khi thu thập xong
+- 🔑 **EN:** Edge case: if color == original color, still need to apply (grid may look same) | **VI:** Dù màu mới = màu cũ vẫn phải xử lý đúng
 
 ---
 
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+## 💡 Solutions / Giải pháp
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * BFS: collect connected component, then color border cells
+ * Time: O(m*n)  Space: O(m*n)
  */
-function coloringABorderBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function colorBorder(grid: number[][], row: number, col: number, color: number): number[][] {
+  const m = grid.length,
+    n = grid[0].length;
+  const origColor = grid[row][col];
+  const component = new Set<number>();
+  const dirs = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+
+  // BFS to find all cells in connected component
+  const queue: [number, number][] = [[row, col]];
+  component.add(row * n + col);
+
+  while (queue.length > 0) {
+    const [r, c] = queue.shift()!;
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr,
+        nc = c + dc;
+      const key = nr * n + nc;
+      if (
+        nr >= 0 &&
+        nr < m &&
+        nc >= 0 &&
+        nc < n &&
+        !component.has(key) &&
+        grid[nr][nc] === origColor
+      ) {
+        component.add(key);
+        queue.push([nr, nc]);
+      }
+    }
+  }
+
+  // Identify border cells and color them
+  for (const key of component) {
+    const r = Math.floor(key / n),
+      c = key % n;
+    const isBorder =
+      r === 0 ||
+      r === m - 1 ||
+      c === 0 ||
+      c === n - 1 ||
+      dirs.some(([dr, dc]) => {
+        const nr = r + dr,
+          nc = c + dc;
+        return !component.has(nr * n + nc);
+      });
+    if (isBorder) grid[r][c] = color;
+  }
+
+  return grid;
 }
 
+// Test cases
+console.log(
+  colorBorder(
+    [
+      [1, 1],
+      [1, 2],
+    ],
+    0,
+    0,
+    3,
+  ),
+); // [[3,3],[3,2]]
+console.log(
+  colorBorder(
+    [
+      [1, 2, 2],
+      [2, 3, 2],
+    ],
+    0,
+    1,
+    3,
+  ),
+); // [[1,3,3],[2,3,3]]
+console.log(
+  colorBorder(
+    [
+      [1, 1, 1],
+      [1, 1, 1],
+      [1, 1, 1],
+    ],
+    1,
+    1,
+    2,
+  ),
+); // border 2, interior 1
+```
+
+```typescript
 /**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * DFS variant — same logic, recursive traversal
+ * Time: O(m*n)  Space: O(m*n) recursion stack
  */
-function coloringABorder(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function colorBorderDFS(grid: number[][], row: number, col: number, color: number): number[][] {
+  const m = grid.length,
+    n = grid[0].length;
+  const origColor = grid[row][col];
+  const visited = Array.from({ length: m }, () => new Array(n).fill(false));
+  const component: [number, number][] = [];
+  const dirs = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+
+  const dfs = (r: number, c: number): void => {
+    visited[r][c] = true;
+    component.push([r, c]);
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr,
+        nc = c + dc;
+      if (
+        nr >= 0 &&
+        nr < m &&
+        nc >= 0 &&
+        nc < n &&
+        !visited[nr][nc] &&
+        grid[nr][nc] === origColor
+      ) {
+        dfs(nr, nc);
+      }
+    }
+  };
+
+  dfs(row, col);
+
+  for (const [r, c] of component) {
+    const isBorder =
+      r === 0 ||
+      r === m - 1 ||
+      c === 0 ||
+      c === n - 1 ||
+      dirs.some(([dr, dc]) => {
+        const nr = r + dr,
+          nc = c + dc;
+        return nr >= 0 && nr < m && nc >= 0 && nc < n && !visited[nr][nc];
+      });
+    if (isBorder) grid[r][c] = color;
+  }
+
+  return grid;
 }
 
-// === Test Cases ===
-// console.log(coloringABorder(/* example 1 */)); // expected
-// console.log(coloringABorder(/* example 2 */)); // expected
-// console.log(coloringABorder(/* edge case */)); // expected
+console.log(
+  colorBorderDFS(
+    [
+      [1, 1],
+      [1, 2],
+    ],
+    0,
+    0,
+    3,
+  ),
+); // [[3,3],[3,2]]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài liên quan
 
-- [Max Area of Island](https://leetcode.com/problems/max-area-of-island) — same pattern: Union Find
-- [Making A Large Island](https://leetcode.com/problems/making-a-large-island) — same pattern: Union Find
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Flood Fill](https://leetcode.com/problems/flood-fill) — same pattern: BFS
-- [Coloring A Border — LeetCode](https://leetcode.com/problems/coloring-a-border) — problem page
+| Problem                                                                    | Difficulty | Key Idea                       |
+| -------------------------------------------------------------------------- | ---------- | ------------------------------ |
+| [Flood Fill 733](https://leetcode.com/problems/flood-fill)                 | Easy       | BFS/DFS color all connected    |
+| [Number of Islands 200](https://leetcode.com/problems/number-of-islands)   | Medium     | BFS/DFS connected components   |
+| [Max Area of Island 695](https://leetcode.com/problems/max-area-of-island) | Medium     | BFS component size             |
+| [Surrounded Regions 130](https://leetcode.com/problems/surrounded-regions) | Medium     | BFS from border, mark interior |

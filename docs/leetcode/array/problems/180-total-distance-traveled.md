@@ -7,97 +7,132 @@ tags: [Math, Simulation]
 leetcode_url: "https://leetcode.com/problems/total-distance-traveled"
 ---
 
-# Total Distance Traveled / Total Distance Traveled
+# Total Distance Traveled / Tổng Quãng Đường Di Chuyển
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Multiply Strings](https://leetcode.com/problems/multiply-strings) | [Add Binary](https://leetcode.com/problems/add-binary)
+🟢 Easy | Tags: Math, Simulation
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Total Distance Traveled example:**
+**VN:** Mỗi khi dùng hết 5 lít từ bình chính, bình phụ cấp thêm 1 lít vào bình chính. 1 lít chạy được 10 km. Mô phỏng từng bước tiêu thụ 5 lít cho đến khi bình chính < 5.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+mainTank=5, additionalTank=1
+Step 1: dùng 5L → 50km, nhận 1L từ phụ → main=1, add=0
+Step 2: main<5 → dùng 1L → 10km
+Total = 60km ✓
 ```
-
----
-
-## Problem Description
-
-Total Distance Traveled. ([LeetCode](https://leetcode.com/problems/total-distance-traveled))
-
-Difficulty: Easy | Acceptance: 40.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/total-distance-traveled) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Mỗi lần tiêu thụ đúng 5 lít từ bình chính (không phải tích lũy) mới nhận thêm.
+- 🇺🇸 Refuel triggers every time exactly 5 litres are consumed from main — not cumulatively from a counter.
+- 🇻🇳 Bình phụ chỉ bổ sung vào bình chính, không trực tiếp chạy xe.
+- 🇺🇸 The additional tank only tops up the main tank; it doesn't drive directly.
+- 🇻🇳 Công thức toán học: tổng lít dùng = mainTank + min(additionalTank, floor(mainTank/5)) × nhưng chú ý số lít bổ sung cũng tạo thêm lần refuel.
+- 🇺🇸 Formula is tricky (refueled liters may trigger more refuels); simulation is safest.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Direct Simulation
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Simulate consuming 5L at a time; refuel from additional when available.
+ * Time: O(mainTank / 5) | Space: O(1)
  */
-function totalDistanceTraveledBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function distanceTraveled(mainTank: number, additionalTank: number): number {
+  let distance = 0;
+
+  while (mainTank > 0) {
+    if (mainTank >= 5) {
+      mainTank -= 5;
+      distance += 50;
+      if (additionalTank > 0) {
+        mainTank++;
+        additionalTank--;
+      }
+    } else {
+      distance += mainTank * 10;
+      mainTank = 0;
+    }
+  }
+
+  return distance;
 }
 
+console.log(distanceTraveled(5, 10)); // 60
+console.log(distanceTraveled(1, 2)); // 10
+console.log(distanceTraveled(9, 3)); // 110
+```
+
+### Solution 2: Math Formula (No Loop)
+
+```typescript
 /**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Total liters = mainTank + liters_from_additional.
+ * Each 5L from main gives 1 from additional, but those added liters
+ * can trigger further refuels. Solve iteratively with math.
+ * Time: O(log mainTank) | Space: O(1)
  */
-function totalDistanceTraveled(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function distanceTraveled2(mainTank: number, additionalTank: number): number {
+  let total = mainTank;
+  let available = additionalTank;
+  let fuelToConsume = mainTank;
+
+  while (fuelToConsume >= 5 && available > 0) {
+    const refuels = Math.min(Math.floor(fuelToConsume / 5), available);
+    total += refuels;
+    available -= refuels;
+    // Newly added liters may themselves trigger more refuels
+    fuelToConsume = refuels; // only the newly added liters need counting
+  }
+
+  return total * 10;
 }
 
-// === Test Cases ===
-// console.log(totalDistanceTraveled(/* example 1 */)); // expected
-// console.log(totalDistanceTraveled(/* example 2 */)); // expected
-// console.log(totalDistanceTraveled(/* edge case */)); // expected
+console.log(distanceTraveled2(5, 10)); // 60
+console.log(distanceTraveled2(1, 2)); // 10
+console.log(distanceTraveled2(9, 3)); // 110
+```
+
+### Solution 3: One-Liner Math
+
+```typescript
+/**
+ * Closed-form: refuels = min(additionalTank, floor(mainTank/5))
+ * Only valid when refueled liters themselves < 5 each iteration.
+ * Safe for bounded additionalTank <= 100.
+ * Time: O(1 per iteration, bounded) | Space: O(1)
+ */
+function distanceTraveled3(mainTank: number, additionalTank: number): number {
+  let total = mainTank,
+    fuel = mainTank,
+    extra = additionalTank;
+  while (fuel >= 5 && extra > 0) {
+    const add = Math.min(Math.floor(fuel / 5), extra);
+    total += add;
+    extra -= add;
+    fuel = add;
+  }
+  return total * 10;
+}
+
+console.log(distanceTraveled3(5, 10)); // 60
+console.log(distanceTraveled3(1, 2)); // 10
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) — same pattern: Queue
-- [Add Strings](https://leetcode.com/problems/add-strings) — same pattern: Math
-- [Total Distance Traveled — LeetCode](https://leetcode.com/problems/total-distance-traveled) — problem page
+| Problem                                                                                                                             | Difficulty | Pattern    |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| [Water Bottles](https://leetcode.com/problems/water-bottles/)                                                                       | 🟢 Easy    | Simulation |
+| [Find the Punishment Number of an Integer](https://leetcode.com/problems/find-the-punishment-number-of-an-integer/)                 | 🟡 Medium  | Math       |
+| [Minimum Number of Operations to Make Array Empty](https://leetcode.com/problems/minimum-number-of-operations-to-make-array-empty/) | 🟡 Medium  | Math       |

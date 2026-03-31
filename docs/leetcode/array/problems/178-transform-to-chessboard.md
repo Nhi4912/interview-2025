@@ -7,97 +7,172 @@ tags: [Array, Math, Bit Manipulation, Matrix]
 leetcode_url: "https://leetcode.com/problems/transform-to-chessboard"
 ---
 
-# Transform to Chessboard / Transform to Chessboard
+# Transform to Chessboard / Biến Đổi Thành Bàn Cờ
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Bit Manipulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Missing Number](https://leetcode.com/problems/missing-number) | [Best Meeting Point](https://leetcode.com/problems/best-meeting-point)
+🔴 Hard | Tags: Array, Math, Bit Manipulation, Matrix
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Làm việc trực tiếp với bit (0/1) — nhanh hơn phép toán thông thường. XOR, AND, OR, shift là các công cụ chính.
-
-**Pattern Recognition:**
-
-- Signal: "binary representation" + "XOR/AND/OR properties" → **Bit Manipulation**
-- Bài này thuộc dạng Bit Manipulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Transform to Chessboard example:**
+**VN:** Bàn cờ hợp lệ chỉ có 2 loại hàng (đảo của nhau). Kiểm tra tính hợp lệ bằng XOR. Đếm số vị trí sai so với mẫu `i%2` để tính số lần hoán đổi cần thiết cho hàng và cột.
 
 ```
-// TODO: Add step-by-step visual for Bit Manipulation
-// Show one complete example with state at each step
+Chessboard pattern A:  1 0 1 0     Pattern B:  0 1 0 1
+                        0 1 0 1                 1 0 1 0
+
+Key validity check: board[i][j] XOR board[0][0]
+                  = board[i][0] XOR board[0][j]
 ```
-
----
-
-## Problem Description
-
-Transform to Chessboard. ([LeetCode](https://leetcode.com/problems/transform-to-chessboard))
-
-Difficulty: Hard | Acceptance: 50.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/transform-to-chessboard) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Điều kiện hợp lệ: `board[i][j] ^ board[0][0] == board[i][0] ^ board[0][j]` với mọi i, j.
+- 🇺🇸 Validity: `board[i][j] ^ board[0][0] == board[i][0] ^ board[0][j]` for all i, j.
+- 🇻🇳 Số lần hoán đổi = số vị trí sai / 2 (mỗi swap sửa 2 vị trí).
+- 🇺🇸 Swaps = mismatches / 2 — one swap fixes exactly 2 mismatched positions.
+- 🇻🇳 Với n lẻ, số vị trí sai phải chẵn; với n chẵn, chọn min(mis, n-mis).
+- 🇺🇸 For odd n, mismatch count must be even; for even n take min(mis, n-mis).
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: XOR Validity + Mismatch Counting
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Validate board structure, then count row/col mismatches to compute min swaps.
+ * Time: O(n²) | Space: O(1)
  */
-function transformToChessboardBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function movesToChessboard(board: number[][]): number {
+  const n = board.length;
+
+  // Validity check: all 2x2 sub-squares must sum to 0, 2, or 4 → XOR rule
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if ((board[i][j] ^ board[0][0] ^ board[i][0] ^ board[0][j]) !== 0) {
+        return -1;
+      }
+    }
+  }
+
+  // Count 1s in first row and first col
+  let rowOnes = 0,
+    colOnes = 0;
+  let rowMis = 0,
+    colMis = 0; // mismatches vs pattern i%2
+
+  for (let i = 0; i < n; i++) {
+    rowOnes += board[0][i];
+    colOnes += board[i][0];
+    if (board[i][0] !== i % 2) rowMis++;
+    if (board[0][i] !== i % 2) colMis++;
+  }
+
+  // Each row/col must have floor(n/2) or ceil(n/2) ones
+  if (Math.abs(2 * rowOnes - n) > 1 || Math.abs(2 * colOnes - n) > 1) {
+    return -1;
+  }
+
+  if (n % 2 === 1) {
+    // For odd n, mismatch count must be even; fix by taking n-mis if odd
+    if (rowMis % 2 === 1) rowMis = n - rowMis;
+    if (colMis % 2 === 1) colMis = n - colMis;
+  } else {
+    // For even n, both patterns are valid; take whichever needs fewer swaps
+    rowMis = Math.min(rowMis, n - rowMis);
+    colMis = Math.min(colMis, n - colMis);
+  }
+
+  // Each swap fixes 2 mismatches
+  return (rowMis + colMis) / 2;
 }
 
+console.log(
+  movesToChessboard([
+    [0, 1, 1, 0],
+    [0, 1, 1, 0],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+  ]),
+); // 2
+console.log(
+  movesToChessboard([
+    [0, 1],
+    [1, 0],
+  ]),
+); // 0
+console.log(
+  movesToChessboard([
+    [1, 0],
+    [1, 0],
+  ]),
+); // -1
+```
+
+### Solution 2: Bit Mask Representation
+
+```typescript
 /**
- * Solution 2: Optimized — Bit Manipulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Represent rows as bitmasks for compact comparison; same logic.
+ * Time: O(n²) | Space: O(n)
  */
-function transformToChessboard(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Bit Manipulation
-  // Hint: Use XOR, AND, OR, shift operations on bits
-  throw new Error('Not implemented');
+function movesToChessboard2(board: number[][]): number {
+  const n = board.length;
+  const rowMasks: number[] = board.map((row) => row.reduce((mask, v, j) => mask | (v << j), 0));
+
+  // Only two distinct row patterns allowed (and they must be complements)
+  const mask0 = rowMasks[0];
+  const complement = ((1 << n) - 1) ^ mask0;
+
+  for (const m of rowMasks) {
+    if (m !== mask0 && m !== complement) return -1;
+  }
+
+  // Check columns similarly via first-row and first-col sums
+  let rowOnes = 0,
+    colOnes = 0,
+    rowMis = 0,
+    colMis = 0;
+  for (let i = 0; i < n; i++) {
+    rowOnes += board[0][i];
+    colOnes += board[i][0];
+    if (board[i][0] !== i % 2) rowMis++;
+    if (board[0][i] !== i % 2) colMis++;
+  }
+
+  if (Math.abs(2 * rowOnes - n) > 1 || Math.abs(2 * colOnes - n) > 1) return -1;
+
+  if (n % 2 === 1) {
+    if (rowMis % 2 === 1) rowMis = n - rowMis;
+    if (colMis % 2 === 1) colMis = n - colMis;
+  } else {
+    rowMis = Math.min(rowMis, n - rowMis);
+    colMis = Math.min(colMis, n - colMis);
+  }
+
+  return (rowMis + colMis) / 2;
 }
 
-// === Test Cases ===
-// console.log(transformToChessboard(/* example 1 */)); // expected
-// console.log(transformToChessboard(/* example 2 */)); // expected
-// console.log(transformToChessboard(/* edge case */)); // expected
+console.log(
+  movesToChessboard2([
+    [0, 1, 1, 0],
+    [0, 1, 1, 0],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+  ]),
+); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Best Meeting Point](https://leetcode.com/problems/best-meeting-point) — same pattern: Sorting
-- [Shortest Path to Get All Keys](https://leetcode.com/problems/shortest-path-to-get-all-keys) — same pattern: BFS
-- [The Number of Good Subsets](https://leetcode.com/problems/the-number-of-good-subsets) — same pattern: Dynamic Programming
-- [Transform to Chessboard — LeetCode](https://leetcode.com/problems/transform-to-chessboard) — problem page
+| Problem                                                                                                                                       | Difficulty | Pattern           |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------- |
+| [Valid Sudoku](https://leetcode.com/problems/valid-sudoku/)                                                                                   | 🟡 Medium  | Matrix Validation |
+| [Minimum Number of Operations to Make Array Continuous](https://leetcode.com/problems/minimum-number-of-operations-to-make-array-continuous/) | 🔴 Hard    | Sorting           |
+| [Flip Columns For Maximum Number of Equal Rows](https://leetcode.com/problems/flip-columns-for-maximum-number-of-equal-rows/)                 | 🟡 Medium  | Hashing           |

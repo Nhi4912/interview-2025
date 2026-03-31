@@ -7,97 +7,148 @@ tags: [Hash Table, String, Greedy]
 leetcode_url: "https://leetcode.com/problems/optimal-partition-of-string"
 ---
 
-# Optimal Partition of String / Optimal Partition of String
+# Optimal Partition of String / Phân Chia Chuỗi Tối Ưu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Reorganize String](https://leetcode.com/problems/reorganize-string) | [Longest Palindrome](https://leetcode.com/problems/longest-palindrome)
+**Difficulty:** 🟡 Medium | **Tags:** Hash Table, String, Greedy
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Optimal Partition of String example:**
+Bài toán giống **cắt bánh**: cắt sớm nhất khi có ký tự lặp, để mỗi miếng có ký tự không trùng.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+s = "abacaba"
+
+Greedy scan — current partition chars:
+  a  → {a}           ok
+  b  → {a,b}         ok
+  a  → CONFLICT! 'a' already in set
+     → cut (parts=2), new part {a}
+  c  → {a,c}         ok
+  a  → CONFLICT!
+     → cut (parts=3), new part {a}
+  b  → {a,b}         ok
+  a  → CONFLICT!
+     → cut (parts=4), new part {a}
+
+Answer: 4
 ```
+
+**Greedy proof:** Cutting as late as possible (when we must) minimises the number of cuts, hence minimises partitions.
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Optimal Partition of String. ([LeetCode](https://leetcode.com/problems/optimal-partition-of-string))
-
-Difficulty: Medium | Acceptance: 78.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/optimal-partition-of-string) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Greedy cắt trễ nhất**: khi gặp ký tự trùng mới cắt — tối ưu vì cắt sớm chỉ tăng số lượng
+- 🇺🇸 **Greedy cut latest**: cut only when forced — earlier cuts never reduce total count
+- 🇻🇳 **Set hoặc bitmask**: Set cho đọc dễ, bitmask cho tốc độ (26 bit int)
+- 🇺🇸 **Set or bitmask**: Set is readable; 26-bit integer is faster
+- 🇻🇳 **Reset tập khi cắt**: sau mỗi lần cắt, xoá tập và thêm ký tự hiện tại
+- 🇺🇸 **Reset set on cut**: clear the set and add current char after each partition
+- 🇻🇳 **Đếm partitions, không cần lưu chuỗi**: chỉ cần đếm số lần cắt + 1
+- 🇺🇸 **Count partitions, not substrings**: track cut count + 1, no need to build strings
+- 🇻🇳 **Bitmask trick**: `seen |= (1 << (c - 97))`, conflict khi `seen & bit !== 0`
+- 🇺🇸 **Bitmask trick**: `seen |= (1 << charCode)`, conflict when `seen & bit !== 0`
+- 🇻🇳 **Độ phức tạp**: O(n) time, O(26) = O(1) space
+- 🇺🇸 **Complexity**: O(n) time, O(26) = O(1) space
 
 ---
 
-## Solutions
+## 💻 Solutions
+
+### Solution 1 — Greedy with Set (Recommended)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Greedily extend partition; cut when duplicate found.
+ * Time: O(n)  Space: O(26) = O(1)
  */
-function optimalPartitionOfStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function partitionString(s: string): number {
+  let parts = 1;
+  let seen = new Set<string>();
+
+  for (const c of s) {
+    if (seen.has(c)) {
+      parts++;
+      seen = new Set<string>();
+    }
+    seen.add(c);
+  }
+
+  return parts;
 }
 
+console.log(partitionString("abacaba")); // 4
+console.log(partitionString("ssssss")); // 6
+console.log(partitionString("abcde")); // 1
+```
+
+### Solution 2 — Greedy with Bitmask (Faster)
+
+```typescript
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use 26-bit integer instead of Set for O(1) ops with smaller constant.
+ * Time: O(n)  Space: O(1)
  */
-function optimalPartitionOfString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function partitionString2(s: string): number {
+  let parts = 1;
+  let seen = 0; // bitmask of chars in current partition
+
+  for (let i = 0; i < s.length; i++) {
+    const bit = 1 << (s.charCodeAt(i) - 97);
+    if (seen & bit) {
+      parts++;
+      seen = 0;
+    }
+    seen |= bit;
+  }
+
+  return parts;
 }
 
-// === Test Cases ===
-// console.log(optimalPartitionOfString(/* example 1 */)); // expected
-// console.log(optimalPartitionOfString(/* example 2 */)); // expected
-// console.log(optimalPartitionOfString(/* edge case */)); // expected
+console.log(partitionString2("abacaba")); // 4
+console.log(partitionString2("ssssss")); // 6
+console.log(partitionString2("abcde")); // 1
+```
+
+### Solution 3 — Sliding Window with Array
+
+```typescript
+/**
+ * Explicit sliding window tracking start of current partition.
+ * Time: O(n)  Space: O(26) = O(1)
+ */
+function partitionString3(s: string): number {
+  const lastSeen = new Array(26).fill(-1);
+  let partStart = 0;
+  let parts = 0;
+
+  for (let i = 0; i < s.length; i++) {
+    const idx = s.charCodeAt(i) - 97;
+    if (lastSeen[idx] >= partStart) {
+      // Current char was seen in this partition — cut before i
+      parts++;
+      partStart = i;
+    }
+    lastSeen[idx] = i;
+  }
+
+  return parts + 1; // +1 for the last partition
+}
+
+console.log(partitionString3("abacaba")); // 4
+console.log(partitionString3("ssssss")); // 6
+console.log(partitionString3("abcde")); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Longest Palindrome](https://leetcode.com/problems/longest-palindrome) — same pattern: Greedy
-- [Largest Palindromic Number](https://leetcode.com/problems/largest-palindromic-number) — same pattern: Greedy
-- [Minimum Deletions to Make Character Frequencies Unique](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique) — same pattern: Greedy
-- [Optimal Partition of String — LeetCode](https://leetcode.com/problems/optimal-partition-of-string) — problem page
+| Problem                                                                                                                                           | Difficulty | Pattern         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Partition Labels](https://leetcode.com/problems/partition-labels/)                                                                               | 🟡 Medium  | Greedy interval |
+| [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/)                   | 🟡 Medium  | Sliding window  |
+| [Maximum Number of Vowels in a Substring of Given Length](https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length/) | 🟡 Medium  | Sliding window  |

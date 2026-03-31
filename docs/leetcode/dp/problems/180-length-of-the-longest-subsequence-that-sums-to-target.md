@@ -7,102 +7,132 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/length-of-the-longest-subsequence-that-sums-to-target"
 ---
 
-# Length of the Longest Subsequence That Sums to Target / Length of the Longest Subsequence That Sums to Target
+# Length of the Longest Subsequence That Sums to Target / Độ Dài Dãy Con Dài Nhất Có Tổng Bằng Target
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+🟡 Medium | Dynamic Programming · 0/1 Knapsack
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**EN:** Classic **0/1 knapsack** variant: instead of maximizing value, maximize the count of elements used. `dp[t]` = maximum number of elements we can pick that sum exactly to `t`. Process each number backwards (prevent reuse).
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Length of the Longest Subsequence That Sums to Target example:**
+**VI:** Biến thể **ba lô 0/1 cổ điển**: thay vì tối đa hóa giá trị, tối đa hóa số phần tử đã dùng. `dp[t]` = số phần tử tối đa có thể chọn sao cho tổng đúng bằng `t`. Duyệt ngược để tránh dùng lại.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+nums = [1, 1, 5, 4, 5], target = 3
+dp[t] = max elements summing to t, init = -Infinity (impossible)
+dp[0] = 0
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Process 1: dp[1] = max(dp[1], dp[0]+1) = 1
+Process 1: dp[2] = max(dp[2], dp[1]+1) = 2, dp[1] = max(1, dp[0]+1) = 1
+Process 5: dp[t>=5] updates...
+Process 4: dp[4] = max(dp[4], dp[0]+1) = 1
+...
+dp[3] = 3 → answer is 3 (using 1,1,... wait target=3, 1+1+... no)
+Actually dp[3] = 2 (using both 1s + ... no = 1+1+1 impossible since no third 1)
+
+Return dp[target] if dp[target] > 0 else -1
 ```
-
----
-
-## Problem Description
-
-Length of the Longest Subsequence That Sums to Target. ([LeetCode](https://leetcode.com/problems/length-of-the-longest-subsequence-that-sums-to-target))
-
-Difficulty: Medium | Acceptance: 37.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/length-of-the-longest-subsequence-that-sums-to-target) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🔑 **EN:** `dp[t]` = max length of subsequence summing to `t`, initialized to `-Infinity` (impossible). `dp[0] = 0`. **VI:** dp[t] = độ dài tối đa dãy con có tổng t, khởi tạo -Infinity. dp[0] = 0.
+- 🔑 **EN:** Transition: `dp[t] = max(dp[t], dp[t - num] + 1)` if `dp[t - num] != -Infinity`. **VI:** Chuyển tiếp: dp[t] = max(dp[t], dp[t-num]+1) nếu dp[t-num] khác -Infinity.
+- 🔑 **EN:** Iterate `t` from `target` down to `num` (backwards = 0/1 knapsack, no reuse). **VI:** Duyệt t từ target xuống num (ngược = 0/1 knapsack, không dùng lại).
+- 🔑 **EN:** Return `-1` if `dp[target]` remains `-Infinity` (no valid subsequence). **VI:** Trả -1 nếu dp[target] vẫn là -Infinity (không có dãy con hợp lệ).
+- 🔑 **EN:** This differs from coin change: each element used at most once. **VI:** Khác với bài đổi xu: mỗi phần tử chỉ dùng tối đa một lần.
+- 🔑 **EN:** Space O(target), time O(n _ target). **VI:** Không gian O(target), thời gian O(n _ target).
 
 ---
 
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * 0/1 Knapsack: maximize element count for exact sum = target
+ * Time: O(n * target)  Space: O(target)
  */
-function lengthOfTheLongestSubsequenceThatSumsToTargetBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function lengthOfLongestSubsequence(nums: number[], target: number): number {
+  // dp[t] = max number of elements summing to exactly t
+  const dp = new Array(target + 1).fill(-Infinity);
+  dp[0] = 0;
+
+  for (const num of nums) {
+    // Iterate backwards: 0/1 knapsack (use each element at most once)
+    for (let t = target; t >= num; t--) {
+      if (dp[t - num] !== -Infinity) {
+        dp[t] = Math.max(dp[t], dp[t - num] + 1);
+      }
+    }
+  }
+
+  return dp[target] <= 0 ? -1 : dp[target];
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Top-down memoization version
+ * Time: O(n * target)  Space: O(n * target)
  */
-function lengthOfTheLongestSubsequenceThatSumsToTarget(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function lengthOfLongestSubsequenceMemo(nums: number[], target: number): number {
+  const n = nums.length;
+  const memo = new Map<string, number>();
+
+  // Returns max length of subsequence using nums[i..] that sums to rem
+  function dp(i: number, rem: number): number {
+    if (rem === 0) return 0;
+    if (i === n || rem < 0) return -Infinity;
+    const key = `${i},${rem}`;
+    if (memo.has(key)) return memo.get(key)!;
+
+    // Skip nums[i]
+    const skip = dp(i + 1, rem);
+    // Take nums[i]
+    const take = dp(i + 1, rem - nums[i]);
+    const res = Math.max(skip, take === -Infinity ? -Infinity : take + 1);
+    memo.set(key, res);
+    return res;
+  }
+
+  const result = dp(0, target);
+  return result <= 0 ? -1 : result;
 }
 
-// === Test Cases ===
-// console.log(lengthOfTheLongestSubsequenceThatSumsToTarget(/* example 1 */)); // expected
-// console.log(lengthOfTheLongestSubsequenceThatSumsToTarget(/* example 2 */)); // expected
-// console.log(lengthOfTheLongestSubsequenceThatSumsToTarget(/* edge case */)); // expected
+/**
+ * Space-efficient: same 1D DP, more explicit handling
+ * Time: O(n * target)  Space: O(target)
+ */
+function lengthOfLongestSubsequenceV3(nums: number[], target: number): number {
+  // Use -1 for impossible, 0 for "achievable with 0 elements" (only sum=0)
+  const dp = new Array(target + 1).fill(-1);
+  dp[0] = 0;
+
+  for (const num of nums) {
+    for (let t = target; t >= num; t--) {
+      if (dp[t - num] !== -1) {
+        dp[t] = Math.max(dp[t], dp[t - num] + 1);
+      }
+    }
+  }
+  return dp[target];
+}
+
+// Tests
+console.log(lengthOfLongestSubsequence([1, 1, 5, 4, 5], 3)); // -1  (no subseq sums to 3)
+console.log(lengthOfLongestSubsequence([4, 1, 3, 2, 1, 5], 7)); // 4   (1+3+2+1)
+console.log(lengthOfLongestSubsequence([1, 2, 3], 6)); // 3   (1+2+3)
+console.log(lengthOfLongestSubsequence([1, 1, 1, 1], 3)); // 3   (1+1+1)
+console.log(lengthOfLongestSubsequenceV3([4, 1, 3, 2, 1, 5], 7)); // 4  (cross-check)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Length of the Longest Subsequence That Sums to Target — LeetCode](https://leetcode.com/problems/length-of-the-longest-subsequence-that-sums-to-target) — problem page
+| Problem                                                                                 | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum/) | 🟡 Medium  | 0/1 Knapsack       |
+| [Target Sum](https://leetcode.com/problems/target-sum/)                                 | 🟡 Medium  | 0/1 Knapsack       |
+| [Coin Change](https://leetcode.com/problems/coin-change/)                               | 🟡 Medium  | Unbounded Knapsack |

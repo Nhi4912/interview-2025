@@ -7,97 +7,112 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/non-decreasing-array"
 ---
 
-# Non-decreasing Array / Non-decreasing Array
+# Non-decreasing Array / Mảng Không Giảm
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Array
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
+🟡 Medium | Tags: Array
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Phân tích bài "Non-decreasing Array" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Non-decreasing Array example:**
+**VN:** Cho phép sửa đúng một phần tử. Khi gặp `nums[i] > nums[i+1]`, có hai lựa chọn: hạ `nums[i]` xuống hoặc nâng `nums[i+1]` lên. Kiểm tra xem lựa chọn nào hợp lệ với phần tử trước đó.
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+[3, 4, 2, 3]
+       ↑ gặp 4 > 2, hai lựa chọn:
+  A: hạ 4 → 2: [3, 2, 2, 3] → 3 > 2 ✗ không hợp lệ
+  B: nâng 2 → 4: [3, 4, 4, 3] → tiếp tục kiểm tra
 ```
-
----
-
-## Problem Description
-
-Non-decreasing Array. ([LeetCode](https://leetcode.com/problems/non-decreasing-array))
-
-Difficulty: Medium | Acceptance: 25.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/non-decreasing-array) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Khi `nums[i-1] > nums[i+1]`, ta buộc phải nâng `nums[i+1]` (không thể hạ `nums[i]`).
+- 🇺🇸 If `nums[i-1] > nums[i+1]`, we must raise `nums[i+1]`, not lower `nums[i]`.
+- 🇻🇳 Chỉ được sửa đúng một lần — dùng biến `count` để theo dõi.
+- 🇺🇸 Use a `count` flag; return false on the second violation.
+- 🇻🇳 Sửa in-place để phần kiểm tra tiếp theo dùng giá trị đã cập nhật.
+- 🇺🇸 Mutate the array in-place so subsequent checks use updated values.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Greedy In-Place Check
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Allow at most one modification; check both removal options greedily.
+ * Time: O(n) | Space: O(1)
  */
-function nonDecreasingArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function checkPossibility(nums: number[]): boolean {
+  let violations = 0;
+
+  for (let i = 0; i < nums.length - 1; i++) {
+    if (nums[i] > nums[i + 1]) {
+      violations++;
+      if (violations > 1) return false;
+
+      // Option A: lower nums[i] to nums[i+1] (safe if i==0 or nums[i-1] <= nums[i+1])
+      // Option B: raise nums[i+1] to nums[i]
+      if (i > 0 && nums[i - 1] > nums[i + 1]) {
+        nums[i + 1] = nums[i]; // must raise right element
+      } else {
+        nums[i] = nums[i + 1]; // lower left element (safer default)
+      }
+    }
+  }
+
+  return true;
 }
 
+console.log(checkPossibility([4, 2, 3])); // true  (lower 4→2)
+console.log(checkPossibility([4, 2, 1])); // false (two violations)
+console.log(checkPossibility([3, 4, 2, 3])); // false
+console.log(checkPossibility([5, 7, 1, 8])); // true  (raise 1→7)
+```
+
+### Solution 2: Try Both Options Without Mutation
+
+```typescript
 /**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * When a violation is found, try skipping index i or i+1 and verify the rest.
+ * Time: O(n) | Space: O(1)
  */
-function nonDecreasingArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function checkPossibility2(nums: number[]): boolean {
+  const isNonDecreasing = (arr: number[], skip: number): boolean => {
+    let prev = -Infinity;
+    for (let i = 0; i < arr.length; i++) {
+      if (i === skip) continue;
+      if (arr[i] < prev) return false;
+      prev = arr[i];
+    }
+    return true;
+  };
+
+  for (let i = 0; i < nums.length - 1; i++) {
+    if (nums[i] > nums[i + 1]) {
+      // Try removing nums[i] OR nums[i+1]
+      return isNonDecreasing(nums, i) || isNonDecreasing(nums, i + 1);
+    }
+  }
+
+  return true; // already non-decreasing
 }
 
-// === Test Cases ===
-// console.log(nonDecreasingArray(/* example 1 */)); // expected
-// console.log(nonDecreasingArray(/* example 2 */)); // expected
-// console.log(nonDecreasingArray(/* edge case */)); // expected
+console.log(checkPossibility2([4, 2, 3])); // true
+console.log(checkPossibility2([4, 2, 1])); // false
+console.log(checkPossibility2([3, 4, 2, 3])); // false
+console.log(checkPossibility2([1, 5, 3])); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Non-decreasing Array — LeetCode](https://leetcode.com/problems/non-decreasing-array) — problem page
+| Problem                                                                                                                           | Difficulty | Pattern        |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Longest Non-Decreasing Subarray From Two Arrays](https://leetcode.com/problems/longest-non-decreasing-subarray-from-two-arrays/) | 🟡 Medium  | DP / Array     |
+| [Maximum Sum of 3 Non-Overlapping Subarrays](https://leetcode.com/problems/maximum-sum-of-3-non-overlapping-subarrays/)           | 🔴 Hard    | Sliding Window |
+| [Make Array Non-decreasing or Non-increasing](https://leetcode.com/problems/make-array-non-decreasing-or-non-increasing/)         | 🟡 Medium  | Greedy         |

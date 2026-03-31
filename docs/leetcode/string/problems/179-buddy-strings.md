@@ -7,100 +7,156 @@ tags: [Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/buddy-strings"
 ---
 
-# Buddy Strings / Buddy Strings
+# Buddy Strings / Chuỗi Bạn Đồng Hành
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree)
+**Difficulty:** 🟢 Easy | **Tags:** Hash Table, String
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Buddy Strings example:**
+Hai chuỗi là "buddy" nếu **hoán đổi đúng một cặp** ký tự trong `s` ra được `goal`.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+s = "ab"   goal = "ba"   → swap(0,1): "ba" ✓
+s = "ab"   goal = "ab"   → already equal, need a duplicate char
+                           freq: a=1, b=1  → NO duplicate → false
+s = "aa"   goal = "aa"   → equal + 'a' appears twice → swap(0,1)="aa" ✓
+s = "aaaaaaabc" goal = "aaaaaaab" → diff lengths → false
 
-Key insight: store complement for O(1) lookup
+Case analysis:
+  len(s) ≠ len(goal)           → false
+  s == goal                    → true iff s has any duplicate char
+  diffs = positions where s[i]≠goal[i]
+    |diffs| ≠ 2                → false
+    |diffs| == 2, i & j:       → s[i]=goal[j] AND s[j]=goal[i]
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Buddy Strings. ([LeetCode](https://leetcode.com/problems/buddy-strings))
-
-Difficulty: Easy | Acceptance: 33.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/buddy-strings) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Trường hợp s == goal**: cần ký tự trùng → hoán đổi hai vị trí giống nhau
+- 🇺🇸 **s == goal case**: need a duplicate char — swap two identical chars keeps string same
+- 🇻🇳 **Đúng 2 vị trí khác**: kiểm tra chéo `s[i]=goal[j]` và `s[j]=goal[i]`
+- 🇺🇸 **Exactly 2 diffs**: cross-check `s[i]=goal[j]` and `s[j]=goal[i]`
+- 🇻🇳 **Khác bài 178**: bài này xét thêm nhánh s==goal với duplicate chars
+- 🇺🇸 **Vs problem 178**: this one also handles the s==goal with duplicate branch
+- 🇻🇳 **Chiều dài khác → false ngay**: early return tiết kiệm thời gian
+- 🇺🇸 **Unequal length → false early**: quick guard before any char comparison
+- 🇻🇳 **Phát hiện duplicate nhanh**: `new Set(s).size < s.length`
+- 🇺🇸 **Fast duplicate check**: `new Set(s).size < s.length` detects any duplicate
+- 🇻🇳 **1 diff không thể fix**: một swap tạo ra đúng 2 vị trí thay đổi
+- 🇺🇸 **1 diff is unfixable**: one swap always changes exactly 2 positions
 
 ---
 
-## Solutions
+## 💻 Solutions
+
+### Solution 1 — Three-case Analysis (Recommended)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Handle: unequal lengths, equal strings, and exactly-2-diffs.
+ * Time: O(n)  Space: O(1)
  */
-function buddyStringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function buddyStrings(s: string, goal: string): boolean {
+  if (s.length !== goal.length) return false;
+
+  if (s === goal) {
+    // Need at least one duplicate character to swap
+    return new Set(s).size < s.length;
+  }
+
+  // Find differing positions
+  const diffs: number[] = [];
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] !== goal[i]) {
+      diffs.push(i);
+      if (diffs.length > 2) return false;
+    }
+  }
+
+  if (diffs.length !== 2) return false;
+  const [i, j] = diffs;
+  return s[i] === goal[j] && s[j] === goal[i];
 }
 
+console.log(buddyStrings("ab", "ba")); // true
+console.log(buddyStrings("ab", "ab")); // false (no duplicate)
+console.log(buddyStrings("aa", "aa")); // true  (duplicate 'a')
+console.log(buddyStrings("aaaaaaabc", "aaaaaaacb")); // true
+console.log(buddyStrings("abcd", "badc")); // false (4 diffs)
+```
+
+### Solution 2 — Explicit freq map for duplicate check
+
+```typescript
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use frequency array instead of Set for duplicate detection.
+ * Time: O(n)  Space: O(26)
  */
-function buddyStrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function buddyStrings2(s: string, goal: string): boolean {
+  if (s.length !== goal.length) return false;
+
+  const diffs: Array<[string, string]> = [];
+  const freq = new Array(26).fill(0);
+  let hasDuplicate = false;
+
+  for (let i = 0; i < s.length; i++) {
+    const idx = s.charCodeAt(i) - 97;
+    freq[idx]++;
+    if (freq[idx] === 2) hasDuplicate = true;
+
+    if (s[i] !== goal[i]) {
+      diffs.push([s[i], goal[i]]);
+      if (diffs.length > 2) return false;
+    }
+  }
+
+  if (diffs.length === 0) return hasDuplicate;
+  if (diffs.length !== 2) return false;
+  return diffs[0][0] === diffs[1][1] && diffs[0][1] === diffs[1][0];
 }
 
-// === Test Cases ===
-// console.log(buddyStrings(/* example 1 */)); // expected
-// console.log(buddyStrings(/* example 2 */)); // expected
-// console.log(buddyStrings(/* edge case */)); // expected
+console.log(buddyStrings2("ab", "ba")); // true
+console.log(buddyStrings2("aa", "aa")); // true
+console.log(buddyStrings2("ab", "ab")); // false
+```
+
+### Solution 3 — Compact with sorted diff check
+
+```typescript
+/**
+ * Sort the two diff-pairs and compare; duplicate via char count.
+ * Time: O(n)  Space: O(n)
+ */
+function buddyStrings3(s: string, goal: string): boolean {
+  if (s.length !== goal.length) return false;
+
+  const diffs = [...s].reduce<number[]>((acc, c, i) => {
+    if (c !== goal[i]) acc.push(i);
+    return acc;
+  }, []);
+
+  if (diffs.length === 0) return new Set(s).size < s.length;
+  if (diffs.length !== 2) return false;
+
+  const [i, j] = diffs;
+  return s[i] === goal[j] && s[j] === goal[i];
+}
+
+console.log(buddyStrings3("ab", "ba")); // true
+console.log(buddyStrings3("ab", "ab")); // false
+console.log(buddyStrings3("aa", "aa")); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree) — same pattern: Trie
-- [Isomorphic Strings](https://leetcode.com/problems/isomorphic-strings) — same pattern: Hash Map
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Buddy Strings — LeetCode](https://leetcode.com/problems/buddy-strings) — problem page
+| Problem                                                                                                                           | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Check if One String Swap Can Make Strings Equal](https://leetcode.com/problems/check-if-one-string-swap-can-make-strings-equal/) | 🟢 Easy    | Swap validation    |
+| [Determine if Two Strings Are Close](https://leetcode.com/problems/determine-if-two-strings-are-close/)                           | 🟡 Medium  | Frequency analysis |
+| [Check if a String Can Break Another String](https://leetcode.com/problems/check-if-a-string-can-break-another-string/)           | 🟡 Medium  | String comparison  |

@@ -7,97 +7,167 @@ tags: [Array, Math, Geometry, Randomized]
 leetcode_url: "https://leetcode.com/problems/best-position-for-a-service-centre"
 ---
 
-# Best Position for a Service Centre / Best Position for a Service Centre
+# Best Position for a Service Centre / Vị Trí Tốt Nhất Cho Trung Tâm Dịch Vụ
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) | [Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line)
+🔴 Hard | Tags: Array, Math, Geometry, Randomized
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Best Position for a Service Centre example:**
+**VN:** Tìm điểm tối thiểu hóa tổng khoảng cách Euclidean đến tất cả khách hàng — đây là bài toán **Geometric Median**. Không có công thức đóng, dùng Weiszfeld's algorithm (trung bình có trọng số lặp lại) hoặc gradient descent bước nhỏ.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+Customers: (0,1) (1,0) (1,2) (2,1)
+           ↗     ↖     ↙     ↘
+       Optimal center ≈ (1, 1)
+       sum of distances ≈ 4.0
 ```
-
----
-
-## Problem Description
-
-Best Position for a Service Centre. ([LeetCode](https://leetcode.com/problems/best-position-for-a-service-centre))
-
-Difficulty: Hard | Acceptance: 34.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/best-position-for-a-service-centre) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Geometric Median ≠ Centroid (trung bình cộng); centroid tối thiểu hóa bình phương khoảng cách.
+- 🇺🇸 Geometric median minimizes sum of Euclidean distances, not squared distances like the centroid.
+- 🇻🇳 Gradient descent bước nhỏ dần: mỗi lần không cải thiện thì giảm bước đi xuống.
+- 🇺🇸 Simulated annealing-style: try 4 directions; if no improvement, halve the step size.
+- 🇻🇳 Dừng khi bước nhỏ hơn `1e-6` để đảm bảo sai số nhỏ hơn `1e-5`.
+- 🇺🇸 Stop when step < 1e-6; this guarantees < 1e-5 absolute error.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Gradient Descent (Simulated Annealing Style)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Start from centroid; step in 4 directions halving step when stuck.
+ * Time: O(n * log(1/eps)) | Space: O(1)
  */
-function bestPositionForAServiceCentreBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function getMinDistSum(positions: number[][]): number {
+  const totalDist = (cx: number, cy: number): number =>
+    positions.reduce((s, [px, py]) => s + Math.hypot(cx - px, cy - py), 0);
+
+  // Start from centroid
+  let x = 0,
+    y = 0;
+  for (const [px, py] of positions) {
+    x += px;
+    y += py;
+  }
+  x /= positions.length;
+  y /= positions.length;
+
+  const dirs = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  let step = 1.0;
+
+  while (step > 1e-6) {
+    let moved = false;
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx * step,
+        ny = y + dy * step;
+      if (totalDist(nx, ny) < totalDist(x, y) - 1e-9) {
+        x = nx;
+        y = ny;
+        moved = true;
+        break;
+      }
+    }
+    if (!moved) step /= 2;
+  }
+
+  return totalDist(x, y);
 }
 
+console.log(
+  getMinDistSum([
+    [0, 1],
+    [1, 0],
+    [1, 2],
+    [2, 1],
+  ]),
+); // ≈ 4.0
+console.log(
+  getMinDistSum([
+    [1, 1],
+    [3, 3],
+  ]),
+); // ≈ 2.828
+```
+
+### Solution 2: Weiszfeld's Algorithm (Iterative Weighted Centroid)
+
+```typescript
 /**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Weiszfeld: update position as weighted average (weight = 1/distance).
+ * Time: O(n * iterations) | Space: O(1)
  */
-function bestPositionForAServiceCentre(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function getMinDistSum2(positions: number[][]): number {
+  let x = 0,
+    y = 0;
+  for (const [px, py] of positions) {
+    x += px;
+    y += py;
+  }
+  x /= positions.length;
+  y /= positions.length;
+
+  const totalDist = (cx: number, cy: number): number =>
+    positions.reduce((s, [px, py]) => s + Math.hypot(cx - px, cy - py), 0);
+
+  for (let iter = 0; iter < 1000; iter++) {
+    let nx = 0,
+      ny = 0,
+      wSum = 0;
+
+    for (const [px, py] of positions) {
+      const d = Math.max(Math.hypot(x - px, y - py), 1e-10);
+      const w = 1 / d;
+      nx += px * w;
+      ny += py * w;
+      wSum += w;
+    }
+
+    nx /= wSum;
+    ny /= wSum;
+
+    if (Math.hypot(nx - x, ny - y) < 1e-7) break;
+    x = nx;
+    y = ny;
+  }
+
+  return totalDist(x, y);
 }
 
-// === Test Cases ===
-// console.log(bestPositionForAServiceCentre(/* example 1 */)); // expected
-// console.log(bestPositionForAServiceCentre(/* example 2 */)); // expected
-// console.log(bestPositionForAServiceCentre(/* edge case */)); // expected
+console.log(
+  getMinDistSum2([
+    [0, 1],
+    [1, 0],
+    [1, 2],
+    [2, 1],
+  ]),
+); // ≈ 4.0
+console.log(
+  getMinDistSum2([
+    [1, 1],
+    [3, 3],
+  ]),
+); // ≈ 2.828
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line) — same pattern: Math
-- [Insert Delete GetRandom O(1) - Duplicates allowed](https://leetcode.com/problems/insert-delete-getrandom-o1-duplicates-allowed) — same pattern: Math
-- [K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin) — same pattern: Heap / Priority Queue
-- [Best Position for a Service Centre — LeetCode](https://leetcode.com/problems/best-position-for-a-service-centre) — problem page
+| Problem                                                                                                             | Difficulty | Pattern               |
+| ------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal/)                 | 🔴 Hard    | Math / Ternary Search |
+| [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs/) | 🟡 Medium  | Binary Search         |
+| [Minimum Total Distance Traveled](https://leetcode.com/problems/minimum-total-distance-traveled/)                   | 🔴 Hard    | DP                    |

@@ -7,100 +7,155 @@ tags: [Array, Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/most-common-word"
 ---
 
-# Most Common Word / Most Common Word
+# Most Common Word / Từ Xuất Hiện Nhiều Nhất
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Subdomain Visit Count](https://leetcode.com/problems/subdomain-visit-count)
+**Difficulty:** 🟢 Easy | **Tags:** Array, Hash Table, String, Counting
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Most Common Word example:**
+Bài toán giống như **đếm phiếu bầu**: loại trừ ứng viên bị cấm, ai nhiều phiếu nhất thắng.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+paragraph = "Bob hit a ball, the hit BALL flew far after it was hit."
+banned    = ["hit"]
 
-Key insight: store complement for O(1) lookup
+Step 1 – Normalize:   "bob hit a ball  the hit ball flew far after it was hit"
+Step 2 – Filter ban:  hit(×) hit(×) hit(×)
+Step 3 – Count:       bob(1) a(1) ball(2★) the(1) flew(1) far(1) after(1) it(2)
+Step 4 – Max count:   "ball" → 2  ← answer
 ```
+
+**Key steps:**
+
+1. `toLowerCase()` + replace non-alpha with spaces (`[^a-z]` → `' '`)
+2. Split on whitespace, filter empty tokens
+3. Build frequency map, skip banned words (use a `Set` for O(1) lookup)
+4. Return word with maximum count
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Most Common Word. ([LeetCode](https://leetcode.com/problems/most-common-word))
-
-Difficulty: Easy | Acceptance: 44.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/most-common-word) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Chuẩn hoá trước**: lowercase + xóa dấu câu là bước hay bị bỏ quên nhất
+- 🇺🇸 **Normalize first**: lowercasing + stripping punctuation is the #1 missed step
+- 🇻🇳 **Banned dùng Set**: tra cứu O(1) thay vì O(m) như Array
+- 🇺🇸 **Banned as Set**: O(1) lookup instead of O(m) linear scan
+- 🇻🇳 **Regex gọn**: `paragraph.replace(/[^a-z]/gi, ' ')` xử lý mọi dấu câu
+- 🇺🇸 **Clean regex**: `/[^a-z]/gi` handles all punctuation in one pass
+- 🇻🇳 **split + filter**: `split(/\s+/).filter(Boolean)` loại chuỗi rỗng đầu/cuối
+- 🇺🇸 **split + filter**: `split(/\s+/).filter(Boolean)` removes empty tokens
+- 🇻🇳 **Edge case**: paragraph chứa toàn ký tự đặc biệt → từ là chuỗi rỗng sau split
+- 🇺🇸 **Edge case**: leading/trailing spaces after replace can produce empty tokens — always filter
+- 🇻🇳 **Độ phức tạp**: O(n + m) với n = độ dài paragraph, m = số từ banned
+- 🇺🇸 **Complexity**: O(n + m) where n = paragraph length, m = banned count
 
 ---
 
-## Solutions
+## 💻 Solutions
+
+### Solution 1 — HashMap + Regex (Recommended)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Normalize, split, count, exclude banned.
+ * Time: O(n + m)  Space: O(n + m)
  */
-function mostCommonWordBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function mostCommonWord(paragraph: string, banned: string[]): string {
+  const bannedSet = new Set(banned.map((w) => w.toLowerCase()));
+  const words = paragraph
+    .toLowerCase()
+    .replace(/[^a-z]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const freq = new Map<string, number>();
+  for (const word of words) {
+    if (!bannedSet.has(word)) {
+      freq.set(word, (freq.get(word) ?? 0) + 1);
+    }
+  }
+
+  let best = "";
+  let maxCount = 0;
+  for (const [word, count] of freq) {
+    if (count > maxCount) {
+      maxCount = count;
+      best = word;
+    }
+  }
+  return best;
 }
 
+console.log(mostCommonWord("Bob hit a ball, the hit BALL flew far after it was hit.", ["hit"])); // "ball"
+console.log(mostCommonWord("a.", [])); // "a"
+console.log(mostCommonWord("Bob. hIt, baLl", ["bob", "hit"])); // "ball"
+```
+
+### Solution 2 — Functional One-liner
+
+```typescript
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Reduce-based pipeline.
+ * Time: O(n + m)  Space: O(n)
  */
-function mostCommonWord(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function mostCommonWord2(paragraph: string, banned: string[]): string {
+  const ban = new Set(banned.map((w) => w.toLowerCase()));
+  const freq = paragraph
+    .toLowerCase()
+    .replace(/[^a-z]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 0 && !ban.has(w))
+    .reduce((map, w) => map.set(w, (map.get(w) ?? 0) + 1), new Map<string, number>());
+
+  return [...freq.entries()].reduce((a, b) => (b[1] > a[1] ? b : a))[0];
 }
 
-// === Test Cases ===
-// console.log(mostCommonWord(/* example 1 */)); // expected
-// console.log(mostCommonWord(/* example 2 */)); // expected
-// console.log(mostCommonWord(/* edge case */)); // expected
+console.log(mostCommonWord2("Bob hit a ball, the hit BALL flew far after it was hit.", ["hit"])); // "ball"
+```
+
+### Solution 3 — Character-by-Character (No Regex)
+
+```typescript
+/**
+ * Manual parsing without regex for environments that restrict it.
+ * Time: O(n + m)  Space: O(n)
+ */
+function mostCommonWord3(paragraph: string, banned: string[]): string {
+  const ban = new Set(banned.map((w) => w.toLowerCase()));
+  const freq = new Map<string, number>();
+  let word = "";
+
+  for (let i = 0; i <= paragraph.length; i++) {
+    const ch = i < paragraph.length ? paragraph[i].toLowerCase() : "";
+    if (ch >= "a" && ch <= "z") {
+      word += ch;
+    } else if (word.length > 0) {
+      if (!ban.has(word)) freq.set(word, (freq.get(word) ?? 0) + 1);
+      word = "";
+    }
+  }
+
+  let best = "";
+  let max = 0;
+  for (const [w, c] of freq)
+    if (c > max) {
+      max = c;
+      best = w;
+    }
+  return best;
+}
+
+console.log(mostCommonWord3("Bob hit a ball, the hit BALL flew far after it was hit.", ["hit"])); // "ball"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Subdomain Visit Count](https://leetcode.com/problems/subdomain-visit-count) — same pattern: Hash Map
-- [Rank Teams by Votes](https://leetcode.com/problems/rank-teams-by-votes) — same pattern: Sorting
-- [Find Words That Can Be Formed by Characters](https://leetcode.com/problems/find-words-that-can-be-formed-by-characters) — same pattern: Hash Map
-- [Most Common Word — LeetCode](https://leetcode.com/problems/most-common-word) — problem page
+| Problem                                                                                                 | Difficulty | Pattern        |
+| ------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words/)                             | 🟡 Medium  | HashMap + heap |
+| [First Unique Character in a String](https://leetcode.com/problems/first-unique-character-in-a-string/) | 🟢 Easy    | Frequency map  |
+| [Word Frequency](https://leetcode.com/problems/word-frequency/)                                         | 🟡 Medium  | Shell counting |

@@ -7,102 +7,178 @@ tags: [String, Dynamic Programming, Stack, Breadth-First Search, Memoization]
 leetcode_url: "https://leetcode.com/problems/zuma-game"
 ---
 
-# Zuma Game / Zuma Game
+# Zuma Game / Trò Chơi Zuma
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [The Score of Students Solving Math Expression](https://leetcode.com/problems/the-score-of-students-solving-math-expression) | [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses)
+🔴 Hard | DFS with Memoization on Board State | [LeetCode 488](https://leetcode.com/problems/zuma-game)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực giác
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Zuma Game example:**
+**Vietnamese:** Trò Zuma: chèn bi vào bảng để tạo nhóm 3+ bi cùng màu liên tiếp, nhóm đó tự xóa (cascade). Tìm số bi tối thiểu cần dùng. Ý tưởng: DFS/BFS trên trạng thái bảng với memoization. Mỗi bước: chọn vị trí và màu bi chèn vào, collapse bảng, đệ quy.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+board="RBYYBBRRB" hand="YRBGB"
+Try insert Y at position 3 (before YY → YYY):
+  board="RBYYYBBRRB" → collapse → "RBBBRRB" → collapse → "RRRB"→"B"
+  Need 1 more R → insert R → "RRR"+"B" → collapse → "B" → need 2 more...
+Key: merge adjacent same-color groups to reduce state space
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Gợi ý phỏng vấn
 
-Zuma Game. ([LeetCode](https://leetcode.com/problems/zuma-game))
-
-Difficulty: Hard | Acceptance: 31.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/zuma-game) for full constraints
+- 🔑 **EN:** Collapse board after each insertion (remove 3+ consecutive same color) | **VI:** Sau mỗi lần chèn, xóa liên tiếp 3+ cùng màu
+- 🔑 **EN:** Memoize on (board_state, hand_remaining) as string key | **VI:** Memo theo (trạng thái bảng, tay còn lại)
+- 🔑 **EN:** Key optimization: only insert at start of each group of same color | **VI:** Chỉ chèn vào đầu mỗi nhóm màu giống nhau
+- 🔑 **EN:** Count needed balls per group: group of 1 needs 2 more, group of 2 needs 1 more | **VI:** Nhóm 1 cần 2 bi, nhóm 2 cần 1 bi thêm
+- 🔑 **EN:** Return -1 if impossible (hand insufficient) | **VI:** Trả -1 nếu không thể xóa hết
+- 🔑 **EN:** Worst case board length ≤ 16, hand ≤ 5 → state space manageable | **VI:** Board ≤ 16, hand ≤ 5 → state space đủ nhỏ
 
 ---
 
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
-
-## Solutions
+## 💡 Solutions / Giải pháp
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * DFS with Memoization — insert balls to clear board
+ * Time: O(board_states * hand_size) — exponential but bounded by small input
+ * Space: O(states) for memo cache
  */
-function zumaGameBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findMinStep(board: string, hand: string): number {
+  // Count available balls in hand
+  const handCount = new Array(26).fill(0);
+  for (const ch of hand) handCount[ch.charCodeAt(0) - 65]++;
+
+  // Collapse: remove 3+ consecutive same-color groups repeatedly
+  const collapse = (s: string): string => {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      let i = 0;
+      while (i < s.length) {
+        let j = i;
+        while (j < s.length && s[j] === s[i]) j++;
+        if (j - i >= 3) {
+          s = s.slice(0, i) + s.slice(j);
+          changed = true;
+          break;
+        }
+        i = j;
+      }
+    }
+    return s;
+  };
+
+  const memo = new Map<string, number>();
+
+  const dfs = (b: string, h: number[]): number => {
+    if (b.length === 0) return 0;
+    const key = b + "|" + h.join(",");
+    if (memo.has(key)) return memo.get(key)!;
+
+    let ans = Infinity;
+    let i = 0;
+    while (i < b.length) {
+      // Find end of current group
+      let j = i;
+      while (j < b.length && b[j] === b[i]) j++;
+
+      const color = b.charCodeAt(i) - 65;
+      const groupLen = j - i;
+      const need = 3 - groupLen; // balls needed to complete this group
+
+      if (h[color] >= need) {
+        h[color] -= need;
+        const newBoard = collapse(b.slice(0, i) + b.slice(j));
+        const sub = dfs(newBoard, h);
+        if (sub !== -1) ans = Math.min(ans, sub + need);
+        h[color] += need;
+      }
+
+      i = j;
+    }
+
+    const result = ans === Infinity ? -1 : ans;
+    memo.set(key, result);
+    return result;
+  };
+
+  return dfs(board, handCount);
 }
 
+// Test cases
+console.log(findMinStep("WRRBBW", "RB")); // -1
+console.log(findMinStep("WWRRBBWW", "WRBRW")); // 2
+console.log(findMinStep("G", "GGGGG")); // 2
+console.log(findMinStep("RBYYBBRRB", "YRBGB")); // 3
+```
+
+```typescript
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * BFS approach — explore all possible insertion states level by level
+ * Time: O(B! * H!) bounded — practical with deduplication
+ * Space: O(states) for visited set
  */
-function zumaGame(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function findMinStepBFS(board: string, hand: string): number {
+  const collapse = (s: string): string => {
+    let prev = "";
+    while (prev !== s) {
+      prev = s;
+      s = s.replace(/(.)\1\1+/g, "");
+    }
+    return s;
+  };
+
+  const sortedHand = hand.split("").sort().join("");
+  const queue: Array<[string, string, number]> = [[board, sortedHand, 0]];
+  const visited = new Set<string>([board + "|" + sortedHand]);
+
+  while (queue.length > 0) {
+    const [b, h, steps] = queue.shift()!;
+    if (b.length === 0) return steps;
+
+    // Try inserting each unique hand ball at each group position
+    const usedColors = new Set<string>();
+    let i = 0;
+    while (i < b.length) {
+      let j = i;
+      while (j < b.length && b[j] === b[i]) j++;
+
+      for (let hi = 0; hi < h.length; hi++) {
+        if (hi > 0 && h[hi] === h[hi - 1]) continue; // skip duplicate hand balls
+        const hIdx = h.indexOf(b[i]); // only insert matching color
+        if (hIdx === -1) {
+          i = j;
+          continue;
+        }
+
+        const newH = h.slice(0, hIdx) + h.slice(hIdx + 1);
+        const newB = collapse(b.slice(0, i) + b[i] + b.slice(i));
+        const key = newB + "|" + newH;
+        if (!visited.has(key)) {
+          visited.add(key);
+          queue.push([newB, newH, steps + 1]);
+        }
+        break;
+      }
+      i = j;
+    }
+  }
+  return -1;
 }
 
-// === Test Cases ===
-// console.log(zumaGame(/* example 1 */)); // expected
-// console.log(zumaGame(/* example 2 */)); // expected
-// console.log(zumaGame(/* edge case */)); // expected
+console.log(findMinStepBFS("WWRRBBWW", "WRBRW")); // 2
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài liên quan
 
-- [The Score of Students Solving Math Expression](https://leetcode.com/problems/the-score-of-students-solving-math-expression) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Zuma Game — LeetCode](https://leetcode.com/problems/zuma-game) — problem page
+| Problem                                                              | Difficulty | Key Idea                       |
+| -------------------------------------------------------------------- | ---------- | ------------------------------ |
+| [Remove Boxes 546](https://leetcode.com/problems/remove-boxes)       | Hard       | Interval DP with group merging |
+| [Strange Printer 664](https://leetcode.com/problems/strange-printer) | Hard       | Interval DP                    |
+| [Burst Balloons 312](https://leetcode.com/problems/burst-balloons)   | Hard       | Interval DP                    |
+| [Word Ladder 127](https://leetcode.com/problems/word-ladder)         | Hard       | BFS on state space             |

@@ -7,97 +7,158 @@ tags: [Array, Math, Geometry]
 leetcode_url: "https://leetcode.com/problems/find-the-largest-area-of-square-inside-two-rectangles"
 ---
 
-# Find the Largest Area of Square Inside Two Rectangles / Find the Largest Area of Square Inside Two Rectangles
+# Find the Largest Area of Square Inside Two Rectangles / Diện Tích Hình Vuông Lớn Nhất Trong Hai Hình Chữ Nhật
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line) | [K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin)
+🟡 Medium | Tags: Array, Math, Geometry
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find the Largest Area of Square Inside Two Rectangles example:**
+**VN:** Với mỗi cặp hình chữ nhật, tính phần giao nhau. Cạnh hình vuông lớn nhất bên trong phần giao là `min(chiều rộng, chiều cao)` của phần giao đó.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+Rect A: bottomLeft=[1,1] topRight=[3,3]
+Rect B: bottomLeft=[2,2] topRight=[4,4]
+
+Intersection:
+  x: max(1,2)=2 → min(3,4)=3 → width=1
+  y: max(1,2)=2 → min(3,4)=3 → height=1
+  side = min(1,1) = 1  → area = 1
 ```
-
----
-
-## Problem Description
-
-Find the Largest Area of Square Inside Two Rectangles. ([LeetCode](https://leetcode.com/problems/find-the-largest-area-of-square-inside-two-rectangles))
-
-Difficulty: Medium | Acceptance: 45.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-largest-area-of-square-inside-two-rectangles) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Phần giao của hai hình chữ nhật: `x_overlap = min(r1,r2) - max(l1,l2)`, tương tự cho y.
+- 🇺🇸 Intersection width = `min(r1,r2) - max(l1,l2)`; height same for y-axis.
+- 🇻🇳 Nếu chiều rộng hoặc chiều cao ≤ 0, không có giao nhau.
+- 🇺🇸 If either dimension ≤ 0 the rectangles don't intersect — skip the pair.
+- 🇻🇳 Thời gian O(n²) vì cần duyệt mọi cặp; n ≤ 1000 nên chấp nhận được.
+- 🇺🇸 O(n²) brute-force over pairs is fine; n ≤ 1000 gives ≤ 500 000 ops.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Brute Force All Pairs
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For every pair of rectangles, compute intersection and track max square area.
+ * Time: O(n²) | Space: O(1)
  */
-function findTheLargestAreaOfSquareInsideTwoRectanglesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function largestSquareArea(bottomLeft: number[][], topRight: number[][]): number {
+  let maxArea = 0;
+  const n = bottomLeft.length;
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      // Intersection rectangle
+      const w =
+        Math.min(topRight[i][0], topRight[j][0]) - Math.max(bottomLeft[i][0], bottomLeft[j][0]);
+      const h =
+        Math.min(topRight[i][1], topRight[j][1]) - Math.max(bottomLeft[i][1], bottomLeft[j][1]);
+
+      if (w > 0 && h > 0) {
+        const side = Math.min(w, h);
+        maxArea = Math.max(maxArea, side * side);
+      }
+    }
+  }
+
+  return maxArea;
 }
 
+console.log(
+  largestSquareArea(
+    [
+      [1, 1],
+      [2, 2],
+      [3, 1],
+    ],
+    [
+      [3, 3],
+      [4, 4],
+      [6, 6],
+    ],
+  ),
+); // 1
+console.log(
+  largestSquareArea(
+    [
+      [1, 1],
+      [2, 2],
+    ],
+    [
+      [3, 3],
+      [4, 4],
+    ],
+  ),
+); // 1
+console.log(
+  largestSquareArea(
+    [
+      [0, 0],
+      [1, 0],
+    ],
+    [
+      [2, 2],
+      [3, 2],
+    ],
+  ),
+); // 0
+```
+
+### Solution 2: Same Logic — Destructured for Clarity
+
+```typescript
 /**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Identical algorithm, destructured for readability.
+ * Time: O(n²) | Space: O(1)
  */
-function findTheLargestAreaOfSquareInsideTwoRectangles(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function largestSquareArea2(bottomLeft: number[][], topRight: number[][]): number {
+  const n = bottomLeft.length;
+  let best = 0;
+
+  for (let i = 0; i < n; i++) {
+    const [l1, b1] = bottomLeft[i],
+      [r1, t1] = topRight[i];
+    for (let j = i + 1; j < n; j++) {
+      const [l2, b2] = bottomLeft[j],
+        [r2, t2] = topRight[j];
+      const w = Math.min(r1, r2) - Math.max(l1, l2);
+      const h = Math.min(t1, t2) - Math.max(b1, b2);
+      if (w > 0 && h > 0) best = Math.max(best, Math.min(w, h) ** 2);
+    }
+  }
+
+  return best;
 }
 
-// === Test Cases ===
-// console.log(findTheLargestAreaOfSquareInsideTwoRectangles(/* example 1 */)); // expected
-// console.log(findTheLargestAreaOfSquareInsideTwoRectangles(/* example 2 */)); // expected
-// console.log(findTheLargestAreaOfSquareInsideTwoRectangles(/* edge case */)); // expected
+console.log(
+  largestSquareArea2(
+    [
+      [1, 1],
+      [2, 2],
+      [3, 1],
+    ],
+    [
+      [3, 3],
+      [4, 4],
+      [6, 6],
+    ],
+  ),
+); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line) — same pattern: Math
-- [K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin) — same pattern: Heap / Priority Queue
-- [Maximum Number of Visible Points](https://leetcode.com/problems/maximum-number-of-visible-points) — same pattern: Sliding Window
-- [Minimum Area Rectangle](https://leetcode.com/problems/minimum-area-rectangle) — same pattern: Sorting
-- [Find the Largest Area of Square Inside Two Rectangles — LeetCode](https://leetcode.com/problems/find-the-largest-area-of-square-inside-two-rectangles) — problem page
+| Problem                                                                                         | Difficulty | Pattern          |
+| ----------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Rectangle Area](https://leetcode.com/problems/rectangle-area/)                                 | 🟡 Medium  | Geometry         |
+| [Rectangle Overlap](https://leetcode.com/problems/rectangle-overlap/)                           | 🟢 Easy    | Geometry         |
+| [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/) | 🔴 Hard    | Stack / Geometry |

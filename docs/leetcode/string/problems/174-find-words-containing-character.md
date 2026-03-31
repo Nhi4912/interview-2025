@@ -7,97 +7,111 @@ tags: [Array, String]
 leetcode_url: "https://leetcode.com/problems/find-words-containing-character"
 ---
 
-# Find Words Containing Character / Find Words Containing Character
+# Find Words Containing Character / Tìm Từ Chứa Ký Tự
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Largest Number](https://leetcode.com/problems/largest-number)
+**Difficulty:** 🟢 Easy | **Tags:** Array, String
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find Words Containing Character example:**
+Bài toán đơn giản như **lọc danh sách**: giữ lại những từ có chứa ký tự `x`.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
+words = ["leet","code","leetcode"]   x = 'e'
+
+Index  Word        Contains 'e'?
+  0    "leet"      l-[e]-[e]-t  →  ✓ include
+  1    "code"      c-o-d-[e]    →  ✓ include
+  2    "leetcode"  has 'e'      →  ✓ include
+
+Output: [0, 1, 2]
+
+words = ["abc","bcd","aaaa"]  x = 'z'
+All words → no 'z' found     Output: []
 ```
+
+**Single insight:** `word.includes(x)` — collect indices where this is `true`.
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Find Words Containing Character. ([LeetCode](https://leetcode.com/problems/find-words-containing-character))
-
-Difficulty: Easy | Acceptance: 90.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-words-containing-character) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Trả về index, không phải từ**: đề hỏi indices, đừng nhầm trả về words
+- 🇺🇸 **Return indices, not words**: the question asks for position numbers
+- 🇻🇳 **`includes` vs `indexOf`**: cả hai hoạt động; `includes` rõ nghĩa hơn
+- 🇺🇸 **`includes` vs `indexOf`**: both work; `includes` expresses intent clearly
+- 🇻🇳 **`x` là ký tự đơn**: không cần lo về multi-char search
+- 🇺🇸 **`x` is a single char**: no need to worry about multi-character search
+- 🇻🇳 **filter + map hoặc reduce**: một lần duyệt là đủ
+- 🇺🇸 **filter + map or reduce**: one pass through words is sufficient
+- 🇻🇳 **Case-sensitive**: 'e' ≠ 'E', không cần chuẩn hoá
+- 🇺🇸 **Case-sensitive**: the match is exact, no normalization needed
+- 🇻🇳 **Độ phức tạp**: O(n × L) với n = số từ, L = độ dài từ trung bình
+- 🇺🇸 **Complexity**: O(n × L) where n = word count, L = average word length
 
 ---
 
-## Solutions
+## 💻 Solutions
+
+### Solution 1 — Filter + indexOf (Recommended)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Collect indices of words that contain character x.
+ * Time: O(n × L)  Space: O(k) where k = result size
  */
-function findWordsContainingCharacterBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findWordsContaining(words: string[], x: string): number[] {
+  const result: number[] = [];
+  for (let i = 0; i < words.length; i++) {
+    if (words[i].includes(x)) result.push(i);
+  }
+  return result;
 }
 
+console.log(findWordsContaining(["leet", "code", "leetcode"], "e")); // [0, 1, 2]
+console.log(findWordsContaining(["abc", "bcd", "aaaa", "cbc"], "z")); // []
+console.log(findWordsContaining(["abc", "bcd", "aaaa", "cbc"], "a")); // [0, 2]
+```
+
+### Solution 2 — Functional reduce
+
+```typescript
 /**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Accumulate matching indices with reduce.
+ * Time: O(n × L)  Space: O(k)
  */
-function findWordsContainingCharacter(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function findWordsContaining2(words: string[], x: string): number[] {
+  return words.reduce<number[]>((acc, word, i) => {
+    if (word.includes(x)) acc.push(i);
+    return acc;
+  }, []);
 }
 
-// === Test Cases ===
-// console.log(findWordsContainingCharacter(/* example 1 */)); // expected
-// console.log(findWordsContainingCharacter(/* example 2 */)); // expected
-// console.log(findWordsContainingCharacter(/* edge case */)); // expected
+console.log(findWordsContaining2(["leet", "code", "leetcode"], "e")); // [0, 1, 2]
+```
+
+### Solution 3 — flatMap one-liner
+
+```typescript
+/**
+ * flatMap trick: return [i] or [] per element.
+ * Time: O(n × L)  Space: O(k)
+ */
+function findWordsContaining3(words: string[], x: string): number[] {
+  return words.flatMap((word, i) => (word.includes(x) ? [i] : []));
+}
+
+console.log(findWordsContaining3(["abc", "bcd", "aaaa", "cbc"], "a")); // [0, 2]
+console.log(findWordsContaining3(["abc", "bcd", "aaaa", "cbc"], "b")); // [0, 1, 3]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Find Words Containing Character — LeetCode](https://leetcode.com/problems/find-words-containing-character) — problem page
+| Problem                                                                                                                                 | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/) | 🟢 Easy    | String search      |
+| [Check if the Sentence Is Pangram](https://leetcode.com/problems/check-if-the-sentence-is-pangram/)                                     | 🟢 Easy    | Character presence |
+| [Counting Words With a Given Prefix](https://leetcode.com/problems/counting-words-with-a-given-prefix/)                                 | 🟢 Easy    | startsWith filter  |

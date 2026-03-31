@@ -7,104 +7,136 @@ tags: [Math, Dynamic Programming, Backtracking]
 leetcode_url: "https://leetcode.com/problems/count-numbers-with-unique-digits"
 ---
 
-# Count Numbers with Unique Digits / Count Numbers with Unique Digits
+# Count Numbers with Unique Digits / Đếm Số Có Chữ Số Không Lặp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Flip Game II](https://leetcode.com/problems/flip-game-ii) | [The Number of Beautiful Subsets](https://leetcode.com/problems/the-number-of-beautiful-subsets)
+🟡 Medium | Dynamic Programming · Combinatorics
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**EN:** For exactly `d` digits (d≥2): first digit has 9 choices (1-9), second has 9 (0-9 minus first), third has 8, etc. Sum over `d` from 1 to `n`. For `n=0` answer is 1 (just the number 0). For `n=1` answer is 10 (0–9).
 
-**Pattern Recognition:**
-
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count Numbers with Unique Digits example:**
+**VI:** Với đúng `d` chữ số (d≥2): chữ số đầu có 9 lựa chọn (1-9), chữ số hai có 9 (0-9 trừ chữ số đầu), chữ số ba có 8, v.v. Cộng tổng từ d=1 đến n. n=0 → 1 (chỉ số 0). n=1 → 10 (0–9).
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+Exactly d unique digits (d >= 2):
+  count(d) = 9 * 9 * 8 * 7 * ... * (9 - d + 2)
+               ^   ^   ^           ^
+             1st  2nd 3rd        d-th digit
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+  1-digit: 9 numbers (1-9), plus 0 → handled separately
+  2-digit: 9 * 9 = 81
+  3-digit: 9 * 9 * 8 = 648
+  ...
+  10-digit: 9 * 9 * 8 * 7 * 6 * 5 * 4 * 3 * 2 * 1 = 3265920
+
+Total for n digits = 1 (for 0) + Σ count(d) for d=1..n
 ```
-
----
-
-## Problem Description
-
-Count Numbers with Unique Digits. ([LeetCode](https://leetcode.com/problems/count-numbers-with-unique-digits))
-
-Difficulty: Medium | Acceptance: 54.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-numbers-with-unique-digits) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+- 🔑 **EN:** For d-digit numbers: first digit 9 choices (1-9), then remaining d-1 digits from remaining 9,8,7... **VI:** Số d chữ số: chữ số đầu có 9 cách (1-9), các chữ số tiếp theo từ 9,8,7... còn lại.
+- 🔑 **EN:** Beyond 10 digits: `count = 0` (only 10 distinct digits, can't have 11+ unique). **VI:** Hơn 10 chữ số: count = 0 (chỉ có 10 chữ số phân biệt).
+- 🔑 **EN:** Formula: `count(d) = 9 * product(9 down to 9-d+2)` for d≥2, `count(1)=9`. **VI:** Công thức: count(d) = 9 \* tích từ 9 xuống (9-d+2) với d≥2, count(1)=9.
+- 🔑 **EN:** Add 1 for the number 0 itself (covered by `n≥0`). **VI:** Cộng thêm 1 cho số 0 (n≥0 thì 0 luôn được tính).
+- 🔑 **EN:** Cumulative sum: answer for n = answer for n-1 + count(n). **VI:** Tổng tích lũy: kết quả n = kết quả n-1 + count(n).
+- 🔑 **EN:** Digit DP also works but closed-form is O(n). **VI:** DP chữ số cũng được, nhưng công thức đóng là O(n).
 
 ---
 
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Combinatorics: count d-digit numbers with all unique digits
+ * Time: O(n)  Space: O(1)
  */
-function countNumbersWithUniqueDigitsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countNumbersWithUniqueDigits(n: number): number {
+  if (n === 0) return 1; // only 0
+
+  let total = 10; // 1-digit: 0..9
+  let uniqueCount = 9; // first non-trivial digit choices
+  let available = 9; // remaining digit choices (after first digit)
+
+  for (let d = 2; d <= Math.min(n, 10); d++) {
+    uniqueCount *= available; // d-digit unique numbers
+    total += uniqueCount;
+    available--;
+  }
+
+  return total;
 }
 
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Explicit formula version (same logic, more verbose)
+ * Time: O(n)  Space: O(1)
  */
-function countNumbersWithUniqueDigits(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function countNumbersWithUniqueDigitsV2(n: number): number {
+  if (n === 0) return 1;
+
+  // count[d] = number of d-digit numbers with all unique digits
+  // count[1] = 9 (1..9; 0 is counted separately)
+  // count[2] = 9*9 = 81
+  // count[d] = 9 * 9 * 8 * 7 * ... * (9-d+2)  for 2<=d<=10
+  let result = 1; // for 0
+  result += 9; // for 1-digit numbers 1..9
+
+  let factor = 9 * 9; // start with 2-digit factor = 9*9
+  let remaining = 8; // next multiplier for 3-digit etc.
+
+  for (let d = 2; d <= Math.min(n, 10); d++) {
+    result += factor;
+    if (d < 10) {
+      factor *= remaining;
+      remaining--;
+    }
+  }
+
+  return result;
 }
 
-// === Test Cases ===
-// console.log(countNumbersWithUniqueDigits(/* example 1 */)); // expected
-// console.log(countNumbersWithUniqueDigits(/* example 2 */)); // expected
-// console.log(countNumbersWithUniqueDigits(/* edge case */)); // expected
+/**
+ * DP approach (bottom-up for illustration)
+ * Time: O(n)  Space: O(n)
+ */
+function countNumbersWithUniqueDigitsDP(n: number): number {
+  if (n === 0) return 1;
+
+  const dp = new Array(n + 1).fill(0);
+  dp[0] = 1; // just the number 0
+  dp[1] = 10; // 0..9
+
+  for (let d = 2; d <= Math.min(n, 10); d++) {
+    // d-digit unique: 9 * (9 * 8 * ... * (9-d+2))
+    let ways = 9; // first digit: 1-9
+    let pool = 9; // remaining pool for subsequent digits
+    for (let k = 1; k < d; k++) {
+      ways *= pool;
+      pool--;
+    }
+    dp[d] = dp[d - 1] + ways;
+  }
+
+  return dp[n];
+}
+
+// Tests
+console.log(countNumbersWithUniqueDigits(0)); // 1
+console.log(countNumbersWithUniqueDigits(1)); // 10
+console.log(countNumbersWithUniqueDigits(2)); // 91
+console.log(countNumbersWithUniqueDigits(3)); // 739
+console.log(countNumbersWithUniqueDigitsDP(2)); // 91
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Flip Game II](https://leetcode.com/problems/flip-game-ii) — same pattern: Backtracking
-- [The Number of Beautiful Subsets](https://leetcode.com/problems/the-number-of-beautiful-subsets) — same pattern: Backtracking
-- [Minimum Number of Lines to Cover Points](https://leetcode.com/problems/minimum-number-of-lines-to-cover-points) — same pattern: Backtracking
-- [Maximize Score After N Operations](https://leetcode.com/problems/maximize-score-after-n-operations) — same pattern: Backtracking
-- [Count Numbers with Unique Digits — LeetCode](https://leetcode.com/problems/count-numbers-with-unique-digits) — problem page
+| Problem                                                                                                               | Difficulty | Pattern       |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | ------------- |
+| [The Number of Beautiful Subsets](https://leetcode.com/problems/the-number-of-beautiful-subsets/)                     | 🟡 Medium  | Combinatorics |
+| [Permutations](https://leetcode.com/problems/permutations/)                                                           | 🟡 Medium  | Backtracking  |
+| [Numbers With Same Consecutive Differences](https://leetcode.com/problems/numbers-with-same-consecutive-differences/) | 🟡 Medium  | Digit DP      |

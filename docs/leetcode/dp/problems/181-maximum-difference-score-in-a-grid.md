@@ -7,102 +7,143 @@ tags: [Array, Dynamic Programming, Matrix]
 leetcode_url: "https://leetcode.com/problems/maximum-difference-score-in-a-grid"
 ---
 
-# Maximum Difference Score in a Grid / Maximum Difference Score in a Grid
+# Maximum Difference Score in a Grid / Điểm Chênh Lệch Tối Đa Trong Lưới
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Maximal Square](https://leetcode.com/problems/maximal-square) | [Unique Paths II](https://leetcode.com/problems/unique-paths-ii)
+🟡 Medium | Dynamic Programming · Matrix
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**EN:** You can move right or down. The score of a path from cell A to cell B is `grid[B] - grid[A]`. Maximize over all valid paths. Key insight: for each cell (i,j), find the **minimum value** in any cell you could have come from (i.e., any cell (r,c) where r≤i, c≤j, not equal to (i,j)). Track this with `minDP[i][j]`.
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Difference Score in a Grid example:**
+**VI:** Di chuyển phải hoặc xuống. Điểm từ A đến B là `grid[B] - grid[A]`. Tối đa hóa qua mọi đường đi hợp lệ. Chìa khóa: với mỗi ô (i,j), tìm giá trị **tối thiểu** trong mọi ô có thể đến từ đó (r≤i, c≤j, khác (i,j)). Theo dõi bằng `minDP[i][j]`.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Grid:     minDP (min value reachable to reach this cell):
+9 5 7 3    ∞  ∞  ∞  ∞
+8 9 6 1    9  5  5  3  ← min(9,5,7) etc.
+6 7 5 2    6  5  5  1
+5 3 2 4    5  3  2  1
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+For cell (i,j): best score = grid[i][j] - minDP[i][j]
+minDP[i][j] = min(grid[i][j-1], minDP[i][j-1],
+                  grid[i-1][j], minDP[i-1][j])
 ```
-
----
-
-## Problem Description
-
-Maximum Difference Score in a Grid. ([LeetCode](https://leetcode.com/problems/maximum-difference-score-in-a-grid))
-
-Difficulty: Medium | Acceptance: 46.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-difference-score-in-a-grid) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🔑 **EN:** Score of a single move from (r,c)→(i,j) = `grid[i][j] - grid[r][c]`. Best = maximize `grid[i][j] - min_value_in_upper_left`. **VI:** Điểm di chuyển = grid[i][j] - grid[r][c]. Tối đa = grid[i][j] - giá trị_nhỏ_nhất_trên_trái.
+- 🔑 **EN:** `minDP[i][j]` = minimum `grid` value in rectangle `[0..i-1][0..j] ∪ [0..i][0..j-1]` (all reachable predecessors). **VI:** minDP[i][j] = giá trị nhỏ nhất trong hình chữ nhật bên trên-bên trái (không bao gồm (i,j)).
+- 🔑 **EN:** Transition: `minDP[i][j] = min(minDP[i-1][j], minDP[i][j-1], grid[i-1][j], grid[i][j-1])`. **VI:** Chuyển tiếp: lấy min của các ô liền kề từ trên/trái cùng minDP của chúng.
+- 🔑 **EN:** Answer = max over all (i,j) of `grid[i][j] - minDP[i][j]`. **VI:** Kết quả = max qua mọi (i,j) của grid[i][j] - minDP[i][j].
+- 🔑 **EN:** Can collapse minDP into the grid itself if mutation is allowed. **VI:** Có thể gộp minDP vào grid nếu được phép sửa đổi.
+- 🔑 **EN:** Edge: first row/col — predecessor only from left or top, handle separately. **VI:** Biên: hàng/cột đầu — chỉ có một phía, xử lý riêng.
 
 ---
 
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * DP: track minimum value in upper-left region for each cell
+ * Time: O(m * n)  Space: O(m * n)
  */
-function maximumDifferenceScoreInAGridBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxScore(grid: number[][]): number {
+  const m = grid.length;
+  const n = grid[0].length;
+  const INF = Infinity;
+
+  // minDP[i][j] = min grid value among all valid predecessors of (i,j)
+  const minDP: number[][] = Array.from({ length: m }, () => new Array(n).fill(INF));
+  let ans = -INF;
+
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      // Gather min predecessor values
+      const fromTop = i > 0 ? Math.min(grid[i - 1][j], minDP[i - 1][j]) : INF;
+      const fromLeft = j > 0 ? Math.min(grid[i][j - 1], minDP[i][j - 1]) : INF;
+      minDP[i][j] = Math.min(fromTop, fromLeft);
+
+      // Score at this cell: current - best predecessor min
+      if (minDP[i][j] !== INF) {
+        ans = Math.max(ans, grid[i][j] - minDP[i][j]);
+      }
+    }
+  }
+
+  return ans;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Space-optimized version using a single prev-row array
+ * Time: O(m * n)  Space: O(n)
  */
-function maximumDifferenceScoreInAGrid(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function maxScoreOpt(grid: number[][]): number {
+  const m = grid.length;
+  const n = grid[0].length;
+  const INF = Infinity;
+  let ans = -INF;
+
+  // minPrev[j] = minDP value of previous row at column j
+  let minPrev = new Array(n).fill(INF);
+
+  for (let i = 0; i < m; i++) {
+    const minCur = new Array(n).fill(INF);
+    let rowMin = INF; // running min from left within this row
+
+    for (let j = 0; j < n; j++) {
+      // Best predecessor: from top (minPrev[j] or grid[i-1][j])
+      // or from left (rowMin tracking grid[i][j-1] and minCur[j-1])
+      const fromTop = i > 0 ? Math.min(grid[i - 1][j], minPrev[j]) : INF;
+      const best = Math.min(fromTop, rowMin);
+      minCur[j] = best;
+
+      if (best !== INF) ans = Math.max(ans, grid[i][j] - best);
+
+      // Update rowMin for next column in this row
+      rowMin = Math.min(rowMin, grid[i][j], minPrev[j] === INF ? INF : minPrev[j]);
+    }
+
+    minPrev = minCur;
+  }
+
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(maximumDifferenceScoreInAGrid(/* example 1 */)); // expected
-// console.log(maximumDifferenceScoreInAGrid(/* example 2 */)); // expected
-// console.log(maximumDifferenceScoreInAGrid(/* edge case */)); // expected
+// Tests
+console.log(
+  maxScore([
+    [9, 5, 7, 3],
+    [8, 9, 6, 1],
+    [6, 7, 5, 2],
+    [5, 3, 2, 4],
+  ]),
+); // 9
+console.log(
+  maxScore([
+    [4, 3],
+    [2, 1],
+  ]),
+); // -1 (all moves decrease)
+console.log(
+  maxScoreOpt([
+    [9, 5, 7, 3],
+    [8, 9, 6, 1],
+    [6, 7, 5, 2],
+    [5, 3, 2, 4],
+  ]),
+); // 9
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle) — same pattern: Monotonic Stack
-- [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum) — same pattern: Dynamic Programming
-- [Maximum Difference Score in a Grid — LeetCode](https://leetcode.com/problems/maximum-difference-score-in-a-grid) — problem page
+| Problem                                                                                           | Difficulty | Pattern              |
+| ------------------------------------------------------------------------------------------------- | ---------- | -------------------- |
+| [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum/)                               | 🟡 Medium  | Grid DP              |
+| [Maximal Square](https://leetcode.com/problems/maximal-square/)                                   | 🟡 Medium  | Grid DP              |
+| [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | 🟢 Easy    | Track Min + Max Diff |

@@ -7,104 +7,156 @@ tags: [Array, Greedy, Sorting, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/maximum-subsequence-score"
 ---
 
-# Maximum Subsequence Score / Maximum Subsequence Score
+# Maximum Subsequence Score / Điểm Số Dãy Con Lớn Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Task Scheduler](https://leetcode.com/problems/task-scheduler) | [IPO](https://leetcode.com/problems/ipo)
+🟡 Medium | Sort + Min-Heap | [LeetCode 2542](https://leetcode.com/problems/maximum-subsequence-score)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
+**EN:** Score = (sum of chosen nums1 values) × (minimum nums2 value). Sort indices by nums2 descending — as we iterate, nums2[i] becomes the current minimum multiplier. Maintain a min-heap of size k on nums1 values to maximize their sum. Update answer at each step where heap size reaches k.
 
-**Pattern Recognition:**
-
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Subsequence Score example:**
+**VI:** Điểm = (tổng các giá trị nums1 chọn) × (giá trị nhỏ nhất nums2 tương ứng). Sắp xếp theo nums2 giảm dần — khi duyệt, nums2[i] là hệ số nhân nhỏ nhất hiện tại. Dùng min-heap kích thước k trên nums1 để tối đa tổng. Cập nhật kết quả khi heap đủ k phần tử.
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+nums1=[1,3,3,2]  nums2=[2,1,3,4]  k=3
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+Sort by nums2 desc: idx → [3(4), 2(3), 0(2), 1(1)]
+
+i=3: heap=[2], sum=2. size<k, skip
+i=2: heap=[2,3], sum=5. size<k, skip
+i=0: heap=[1,2,3], sum=6. size==3 → score=6×2=12  ← min of nums2 so far is 2
+i=1: heap=[2,3,3] (evict 1, add 3), sum=8. size==3 → score=8×1=8
+
+Max = 12 ✓
+
+Min-heap lets us evict the smallest nums1 value to maximize sum.
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Maximum Subsequence Score. ([LeetCode](https://leetcode.com/problems/maximum-subsequence-score))
-
-Difficulty: Medium | Acceptance: 54.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-subsequence-score) for full constraints
+- 📊 **EN:** Sorting by nums2 descending means the minimum nums2 encountered so far is always `nums2[i]` (current iteration). **VI:** Sắp xếp nums2 giảm dần → giá trị nhỏ nhất nums2 đến thời điểm hiện tại luôn là `nums2[i]`.
+- 🔢 **EN:** Use a min-heap of size k: when adding a new nums1 value, if heap size exceeds k, remove the minimum. **VI:** Heap min kích thước k: khi thêm phần tử mới, nếu heap vượt k thì loại bỏ phần tử nhỏ nhất.
+- ✅ **EN:** Only record answer when heap exactly has k elements (after potentially evicting one). **VI:** Chỉ cập nhật kết quả khi heap đúng k phần tử.
+- 🧮 **EN:** Track running sum alongside heap — avoids re-summing heap contents each iteration. **VI:** Duy trì tổng chạy cùng heap — tránh tính lại tổng mỗi bước.
+- ⚠️ **EN:** JavaScript has no built-in priority queue — implement min-heap or use sorted array trick. **VI:** JavaScript không có priority queue tích hợp — cần tự cài min-heap.
+- 🎯 **EN:** Greedy correctness: once nums2[i] is the multiplier, picking the k largest nums1 values from indices 0..i maximizes the sum factor. **VI:** Tính đúng đắn: khi nums2[i] là hệ số, chọn k giá trị nums1 lớn nhất trong 0..i tối đa hoá tổng.
 
 ---
 
-## 📝 Interview Tips
+## 💡 Solutions / Giải Pháp
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Solution 1 — Sort + Min-Heap (Optimal)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort by nums2 desc; maintain min-heap of k nums1 values.
+ * Time: O(n log k)  Space: O(k)
  */
-function maximumSubsequenceScoreBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxScore(nums1: number[], nums2: number[], k: number): number {
+  const n = nums1.length;
+  // Sort indices by nums2 descending
+  const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => nums2[b] - nums2[a]);
+
+  // Min-heap operations
+  const heap: number[] = [];
+
+  function heapPush(val: number): void {
+    heap.push(val);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (heap[p] <= heap[i]) break;
+      [heap[p], heap[i]] = [heap[i], heap[p]];
+      i = p;
+    }
+  }
+
+  function heapPop(): number {
+    const top = heap[0];
+    const last = heap.pop()!;
+    if (heap.length > 0) {
+      heap[0] = last;
+      let i = 0;
+      while (true) {
+        let s = i;
+        const l = 2 * i + 1,
+          r = 2 * i + 2;
+        if (l < heap.length && heap[l] < heap[s]) s = l;
+        if (r < heap.length && heap[r] < heap[s]) s = r;
+        if (s === i) break;
+        [heap[i], heap[s]] = [heap[s], heap[i]];
+        i = s;
+      }
+    }
+    return top;
+  }
+
+  let sum = 0,
+    ans = 0;
+  for (const i of order) {
+    heapPush(nums1[i]);
+    sum += nums1[i];
+    if (heap.length > k) sum -= heapPop(); // evict smallest
+    if (heap.length === k) ans = Math.max(ans, sum * nums2[i]);
+  }
+  return ans;
 }
 
+// Tests
+console.log(maxScore([1, 3, 3, 2], [2, 1, 3, 4], 3)); // 12
+console.log(maxScore([4, 2, 3, 1, 1], [7, 5, 10, 9, 6], 1)); // 30  (idx=2: 3×10)
+```
+
+### Solution 2 — Brute Force O(n² log n) for Validation
+
+```typescript
 /**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Try all combinations of k indices — only feasible for small n.
+ * Used to verify Solution 1 is correct.
+ * Time: O(C(n,k) * k)  Space: O(k)
  */
-function maximumSubsequenceScore(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
+function maxScoreBrute(nums1: number[], nums2: number[], k: number): number {
+  const n = nums1.length;
+  let best = 0;
+
+  function combine(start: number, chosen: number[]): void {
+    if (chosen.length === k) {
+      const minN2 = Math.min(...chosen.map((i) => nums2[i]));
+      const sumN1 = chosen.reduce((s, i) => s + nums1[i], 0);
+      best = Math.max(best, sumN1 * minN2);
+      return;
+    }
+    for (let i = start; i < n; i++) {
+      chosen.push(i);
+      combine(i + 1, chosen);
+      chosen.pop();
+    }
+  }
+
+  combine(0, []);
+  return best;
 }
 
-// === Test Cases ===
-// console.log(maximumSubsequenceScore(/* example 1 */)); // expected
-// console.log(maximumSubsequenceScore(/* example 2 */)); // expected
-// console.log(maximumSubsequenceScore(/* edge case */)); // expected
+// Verify
+console.log(maxScoreBrute([1, 3, 3, 2], [2, 1, 3, 4], 3)); // 12
+console.log(maxScoreBrute([4, 2, 3, 1, 1], [7, 5, 10, 9, 6], 1)); // 30
+
+// Cross-check
+const t1 = [1, 3, 3, 2],
+  t2 = [2, 1, 3, 4];
+console.log(maxScore(t1, t2, 3) === maxScoreBrute(t1, t2, 3)); // true
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [IPO](https://leetcode.com/problems/ipo) — same pattern: Heap / Priority Queue
-- [Smallest Range Covering Elements from K Lists](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists) — same pattern: Sliding Window
-- [Maximum Performance of a Team](https://leetcode.com/problems/maximum-performance-of-a-team) — same pattern: Heap / Priority Queue
-- [Maximum Subsequence Score — LeetCode](https://leetcode.com/problems/maximum-subsequence-score) — problem page
+| #   | Problem                         | Difficulty | Pattern         |
+| --- | ------------------------------- | ---------- | --------------- |
+| 1   | K Closest Points to Origin      | 🟡 Medium  | heap top-k      |
+| 2   | IPO                             | 🔴 Hard    | two-heap greedy |
+| 3   | Find K Pairs with Smallest Sums | 🟡 Medium  | heap + sorting  |

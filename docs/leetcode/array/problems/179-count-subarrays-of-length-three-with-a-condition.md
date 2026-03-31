@@ -7,97 +7,112 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/count-subarrays-of-length-three-with-a-condition"
 ---
 
-# Count Subarrays of Length Three With a Condition / Count Subarrays of Length Three With a Condition
+# Count Subarrays of Length Three With a Condition / Đếm Mảng Con Độ Dài Ba Với Điều Kiện
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
+🟢 Easy | Tags: Array
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Phân tích bài "Count Subarrays of Length Three With a Condition" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count Subarrays of Length Three With a Condition example:**
+**VN:** Với mỗi bộ ba liên tiếp `[a, b, c]`, kiểm tra `a + c == b / 2`, tức là `2*(a + c) == b`. Nhân với 2 để tránh số thực dấu phẩy động.
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+nums = [1, 2, 1, 4, 1]
+        a  b  c → 2*(1+1)=4 == 2 → NO
+
+        2  1  4 → 2*(2+4)=12 ≠ 1 → NO
+
+        1  4  1 → 2*(1+1)=4 == 4 → YES ✓
+count = 1
 ```
-
----
-
-## Problem Description
-
-Count Subarrays of Length Three With a Condition. ([LeetCode](https://leetcode.com/problems/count-subarrays-of-length-three-with-a-condition))
-
-Difficulty: Easy | Acceptance: 61.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-subarrays-of-length-three-with-a-condition) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Dùng `2*(a+c) == b` thay vì `a+c == b/2` để tránh lỗi chia số nguyên.
+- 🇺🇸 Use `2*(a+c) === b` to avoid integer division pitfalls.
+- 🇻🇳 Chỉ cần một vòng lặp O(n); không cần cửa sổ trượt phức tạp.
+- 🇺🇸 A single O(n) loop suffices — no complex sliding window needed.
+- 🇻🇳 Chú ý dừng vòng lặp ở `nums.length - 2` để tránh out-of-bounds.
+- 🇺🇸 Loop up to `length - 2` (inclusive) to avoid out-of-bounds access.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Linear Scan
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Check each triple (a, b, c): 2*(a+c) == b.
+ * Time: O(n) | Space: O(1)
  */
-function countSubarraysOfLengthThreeWithAConditionBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countSubarrays(nums: number[]): number {
+  let count = 0;
+
+  for (let i = 0; i < nums.length - 2; i++) {
+    if (2 * (nums[i] + nums[i + 2]) === nums[i + 1]) {
+      count++;
+    }
+  }
+
+  return count;
 }
 
+console.log(countSubarrays([1, 2, 1, 4, 1])); // 1
+console.log(countSubarrays([1, 1, 1])); // 0
+console.log(countSubarrays([2, 4, 2, 8, 4])); // 2
+console.log(countSubarrays([0, 0, 0])); // 1
+```
+
+### Solution 2: Destructured Sliding Window (Readable)
+
+```typescript
 /**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use explicit variable names for the triple.
+ * Time: O(n) | Space: O(1)
  */
-function countSubarraysOfLengthThreeWithACondition(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function countSubarrays2(nums: number[]): number {
+  let count = 0;
+
+  for (let i = 1; i < nums.length - 1; i++) {
+    const [left, mid, right] = [nums[i - 1], nums[i], nums[i + 1]];
+    if (2 * (left + right) === mid) count++;
+  }
+
+  return count;
 }
 
-// === Test Cases ===
-// console.log(countSubarraysOfLengthThreeWithACondition(/* example 1 */)); // expected
-// console.log(countSubarraysOfLengthThreeWithACondition(/* example 2 */)); // expected
-// console.log(countSubarraysOfLengthThreeWithACondition(/* edge case */)); // expected
+console.log(countSubarrays2([1, 2, 1, 4, 1])); // 1
+console.log(countSubarrays2([1, 1, 1])); // 0
+console.log(countSubarrays2([2, 4, 2, 8, 4])); // 2
+```
+
+### Solution 3: Functional (filter + map)
+
+```typescript
+/**
+ * Functional style: build index array and filter.
+ * Time: O(n) | Space: O(n) for index array
+ */
+function countSubarrays3(nums: number[]): number {
+  return Array.from({ length: nums.length - 2 }, (_, i) => i).filter(
+    (i) => 2 * (nums[i] + nums[i + 2]) === nums[i + 1],
+  ).length;
+}
+
+console.log(countSubarrays3([1, 2, 1, 4, 1])); // 1
+console.log(countSubarrays3([2, 4, 2, 8, 4])); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Count Subarrays of Length Three With a Condition — LeetCode](https://leetcode.com/problems/count-subarrays-of-length-three-with-a-condition) — problem page
+| Problem                                                                                                                   | Difficulty | Pattern |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | ------- |
+| [Number of Good Pairs](https://leetcode.com/problems/number-of-good-pairs/)                                               | 🟢 Easy    | Array   |
+| [Count Equal and Divisible Pairs in an Array](https://leetcode.com/problems/count-equal-and-divisible-pairs-in-an-array/) | 🟢 Easy    | Array   |
+| [Find the K-th Character in String Game I](https://leetcode.com/problems/find-the-k-th-character-in-string-game-i/)       | 🟢 Easy    | Array   |

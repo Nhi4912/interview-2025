@@ -7,97 +7,125 @@ tags: [Array, String, String Matching]
 leetcode_url: "https://leetcode.com/problems/counting-words-with-a-given-prefix"
 ---
 
-# Counting Words With a Given Prefix / Counting Words With a Given Prefix
+# Counting Words With a Given Prefix / Đếm Từ Có Tiền Tố Cho Trước
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Matching
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Count Prefix and Suffix Pairs II](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) | [Count Prefix and Suffix Pairs I](https://leetcode.com/problems/count-prefix-and-suffix-pairs-i)
+**Difficulty:** 🟢 Easy | **Tags:** Array, String, String Matching
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Tìm pattern trong text — KMP, Rabin-Karp, hoặc Z-algorithm cho O(n+m) thay vì O(n*m) brute force.
-
-**Pattern Recognition:**
-
-- Signal: "find pattern in text" → **String Matching (KMP/Rabin-Karp)**
-- Bài này thuộc dạng String Matching — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Counting Words With a Given Prefix example:**
+Bài toán đơn giản: **lọc và đếm** những từ bắt đầu bằng `pref`.
 
 ```
-// TODO: Add step-by-step visual for String Matching
-// Show one complete example with state at each step
+words = ["pay","attention","practice","attend"]   pref = "at"
+
+Scan each word:
+  "pay"       → starts with "at"? No
+  "attention" → starts with "at"? Yes ✓
+  "practice"  → starts with "at"? No
+  "attend"    → starts with "at"? Yes ✓
+
+Count = 2
 ```
+
+**Three equivalent approaches:**
+
+- `word.startsWith(pref)` — built-in, clearest
+- `word.slice(0, pref.length) === pref` — explicit slice
+- `word.indexOf(pref) === 0` — position check
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Counting Words With a Given Prefix. ([LeetCode](https://leetcode.com/problems/counting-words-with-a-given-prefix))
-
-Difficulty: Easy | Acceptance: 84.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/counting-words-with-a-given-prefix) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **`startsWith` là cách đọc rõ nhất**: ưu tiên dùng trong phỏng vấn
+- 🇺🇸 **`startsWith` is most readable**: prefer it in interview for clarity
+- 🇻🇳 **Edge case: pref dài hơn word**: `startsWith` xử lý đúng, trả về false
+- 🇺🇸 **Edge case: pref longer than word**: `startsWith` handles correctly, returns false
+- 🇻🇳 **`slice` vs `substring`**: cả hai đều hoạt động, `slice` thông dụng hơn
+- 🇺🇸 **`slice` vs `substring`**: both work; `slice` is more commonly used
+- 🇻🇳 **Tránh `indexOf`**: `indexOf(pref) === 0` đúng nhưng không rõ bằng `startsWith`
+- 🇺🇸 **Avoid `indexOf`**: correct but less obvious than `startsWith` for this intent
+- 🇻🇳 **Regex cũng được**: `new RegExp('^' + pref).test(word)` nhưng chậm hơn
+- 🇺🇸 **Regex works too**: `new RegExp('^' + pref).test(word)` but slower + escape issues
+- 🇻🇳 **Độ phức tạp**: O(n × L) với n = số từ, L = độ dài tiền tố
+- 🇺🇸 **Complexity**: O(n × L) where n = word count, L = prefix length
 
 ---
 
-## Solutions
+## 💻 Solutions
+
+### Solution 1 — filter + startsWith (Recommended)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count words that start with the given prefix.
+ * Time: O(n × |pref|)  Space: O(1)
  */
-function countingWordsWithAGivenPrefixBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function prefixCount(words: string[], pref: string): number {
+  return words.filter((w) => w.startsWith(pref)).length;
 }
 
+console.log(prefixCount(["pay", "attention", "practice", "attend"], "at")); // 2
+console.log(prefixCount(["leetcode", "win", "loops", "success"], "code")); // 0
+console.log(prefixCount(["a", "b", "c", "ab", "bc", "abc"], "a")); // 3
+```
+
+### Solution 2 — Imperative counter
+
+```typescript
 /**
- * Solution 2: Optimized — String Matching
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Single for-loop with explicit counter.
+ * Time: O(n × |pref|)  Space: O(1)
  */
-function countingWordsWithAGivenPrefix(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Matching
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function prefixCount2(words: string[], pref: string): number {
+  let count = 0;
+  for (const word of words) {
+    if (word.startsWith(pref)) count++;
+  }
+  return count;
 }
 
-// === Test Cases ===
-// console.log(countingWordsWithAGivenPrefix(/* example 1 */)); // expected
-// console.log(countingWordsWithAGivenPrefix(/* example 2 */)); // expected
-// console.log(countingWordsWithAGivenPrefix(/* edge case */)); // expected
+console.log(prefixCount2(["pay", "attention", "practice", "attend"], "at")); // 2
+console.log(prefixCount2(["leetcode", "win", "loops", "success"], "code")); // 0
+```
+
+### Solution 3 — Manual slice comparison (no built-ins)
+
+```typescript
+/**
+ * Manually compare prefix chars — useful in constrained environments.
+ * Time: O(n × |pref|)  Space: O(1)
+ */
+function prefixCount3(words: string[], pref: string): number {
+  let count = 0;
+  const pl = pref.length;
+
+  for (const word of words) {
+    if (word.length < pl) continue;
+    let match = true;
+    for (let i = 0; i < pl; i++) {
+      if (word[i] !== pref[i]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) count++;
+  }
+  return count;
+}
+
+console.log(prefixCount3(["pay", "attention", "practice", "attend"], "at")); // 2
+console.log(prefixCount3(["a", "b", "c", "ab", "bc", "abc"], "a")); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Count Prefix and Suffix Pairs II](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) — same pattern: Trie
-- [Count Prefix and Suffix Pairs I](https://leetcode.com/problems/count-prefix-and-suffix-pairs-i) — same pattern: Trie
-- [Camelcase Matching](https://leetcode.com/problems/camelcase-matching) — same pattern: Trie
-- [Add Bold Tag in String](https://leetcode.com/problems/add-bold-tag-in-string) — same pattern: Trie
-- [Counting Words With a Given Prefix — LeetCode](https://leetcode.com/problems/counting-words-with-a-given-prefix) — problem page
+| Problem                                                                                                 | Difficulty | Pattern         |
+| ------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Find Words Containing Character](https://leetcode.com/problems/find-words-containing-character/)       | 🟢 Easy    | String filter   |
+| [Longest Common Prefix](https://leetcode.com/problems/longest-common-prefix/)                           | 🟢 Easy    | Prefix matching |
+| [Implement strStr()](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/) | 🟢 Easy    | String search   |

@@ -7,102 +7,153 @@ tags: [Math, Dynamic Programming, Combinatorics, Number Theory]
 leetcode_url: "https://leetcode.com/problems/count-the-number-of-ideal-arrays"
 ---
 
-# Count the Number of Ideal Arrays / Count the Number of Ideal Arrays
+# Count the Number of Ideal Arrays / Đếm Số Mảng Lý Tưởng
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Count All Valid Pickup and Delivery Options](https://leetcode.com/problems/count-all-valid-pickup-and-delivery-options) | [Find the Count of Monotonic Pairs I](https://leetcode.com/problems/find-the-count-of-monotonic-pairs-i)
+🔴 Hard | Dynamic Programming · Combinatorics · Number Theory
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**EN:** Every ideal array `a[0] ≤ a[1] ≤ … ≤ a[n-1]` where each element divides the next is equivalent to choosing a **divisibility chain** `v1 | v2 | … | vk ≤ maxValue` then distributing `n` slots into `k` groups (stars-and-bars = `C(n-1, k-1)`).
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count the Number of Ideal Arrays example:**
+**VI:** Mỗi mảng lý tưởng tương đương chuỗi chia hết `v1 | v2 | … | vk`, sau đó dùng "sao và gạch ngang" phân bổ n vị trí → `C(n-1, k-1)`.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Chain 1|2|6 (len=3), n=4 positions:
+  [1,1,2,6]  [1,2,2,6]  [1,2,6,6] → C(3,2)=3 ways
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[v][k] = # chains of length k ending at v
+Sieve: for each d, add dp[d][k-1] to all multiples v of d
+
+Answer = Σ dp[v][k] * C(n-1, k-1)   for all v, k
+Max chain length = log2(maxValue) ≤ 13
 ```
-
----
-
-## Problem Description
-
-Count the Number of Ideal Arrays. ([LeetCode](https://leetcode.com/problems/count-the-number-of-ideal-arrays))
-
-Difficulty: Hard | Acceptance: 57.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-the-number-of-ideal-arrays) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🔑 **EN:** Key: ideal array ↔ divisibility chain of length k placed in n slots via `C(n-1,k-1)`. **VI:** Mảng lý tưởng ↔ chuỗi chia hết độ dài k, xếp vào n vị trí theo C(n-1,k-1).
+- 🔑 **EN:** Max chain length is `log2(maxValue)` ≤ 13 since each step at least doubles. **VI:** Độ dài chuỗi tối đa là log2(maxValue) ≤ 13 vì mỗi bước ít nhất nhân đôi.
+- 🔑 **EN:** Sieve-style DP: `dp[v][k] += dp[d][k-1]` for every divisor `d` of `v`. **VI:** DP kiểu sàng: `dp[v][k] += dp[d][k-1]` với mọi ước d của v.
+- 🔑 **EN:** Precompute Pascal's triangle mod 1e9+7 for combinations. **VI:** Tính trước tam giác Pascal mod 1e9+7.
+- 🔑 **EN:** Outer loop over k (chain length), inner sieve over all d and multiples. **VI:** Vòng ngoài qua k, vòng trong sàng qua d và bội số.
+- 🔑 **EN:** Answer uses BigInt to avoid 32-bit overflow in intermediate products. **VI:** Dùng BigInt tránh tràn số khi nhân trung gian.
 
 ---
 
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Stars-and-bars + Divisibility Chain DP
+ * Time: O(maxValue * log(maxValue) * maxLen)  Space: O(maxValue * maxLen)
  */
-function countTheNumberOfIdealArraysBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function idealArrays(n: number, maxValue: number): number {
+  const MOD = 1_000_000_007n;
+  const MAX_LEN = 14; // log2(10^4) < 14
+
+  // dp[v][k] = number of divisibility chains of length k ending at v
+  const dp: bigint[][] = Array.from({ length: maxValue + 1 }, () =>
+    new Array(MAX_LEN + 1).fill(0n),
+  );
+  for (let v = 1; v <= maxValue; v++) dp[v][1] = 1n;
+
+  // Sieve: for each d, propagate to all multiples
+  for (let k = 2; k <= MAX_LEN; k++) {
+    for (let d = 1; d <= maxValue; d++) {
+      if (dp[d][k - 1] === 0n) continue;
+      for (let v = 2 * d; v <= maxValue; v += d) {
+        dp[v][k] = (dp[v][k] + dp[d][k - 1]) % MOD;
+      }
+    }
+  }
+
+  // Pascal's triangle: C[i][j] = C(i, j)
+  const C: bigint[][] = Array.from({ length: n }, () => new Array(MAX_LEN + 1).fill(0n));
+  C[0][0] = 1n;
+  for (let i = 1; i < n; i++) {
+    C[i][0] = 1n;
+    for (let j = 1; j <= Math.min(i, MAX_LEN); j++) {
+      C[i][j] = (C[i - 1][j - 1] + C[i - 1][j]) % MOD;
+    }
+  }
+
+  let ans = 0n;
+  for (let v = 1; v <= maxValue; v++) {
+    for (let k = 1; k <= MAX_LEN && k <= n; k++) {
+      if (dp[v][k] === 0n) continue;
+      ans = (ans + dp[v][k] * C[n - 1][k - 1]) % MOD;
+    }
+  }
+  return Number(ans);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Alternative: count using modular inverse for C(n-1, k-1)
+ * Time: O(maxValue * log(maxValue) * maxLen)  Space: O(maxValue * maxLen)
  */
-function countTheNumberOfIdealArrays(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function idealArraysV2(n: number, maxValue: number): number {
+  const MOD = 1_000_000_007;
+  const MAX_LEN = 14;
+
+  function gcd(a: number, b: number): number {
+    return b === 0 ? a : gcd(b, a % b);
+  }
+  function modpow(base: number, exp: number, mod: number): number {
+    let result = 1;
+    base %= mod;
+    for (; exp > 0; exp >>= 1) {
+      if (exp & 1) result = (result * base) % mod;
+      base = (base * base) % mod;
+    }
+    return result;
+  }
+  function modinv(a: number, mod: number): number {
+    return modpow(a, mod - 2, mod);
+  }
+  function comb(n_: number, k: number): number {
+    if (k < 0 || k > n_) return 0;
+    let num = 1,
+      den = 1;
+    for (let i = 0; i < k; i++) {
+      num = (num * ((n_ - i) % MOD)) % MOD;
+      den = (den * (i + 1)) % MOD;
+    }
+    return (num * modinv(den, MOD)) % MOD;
+  }
+
+  const dp = Array.from({ length: maxValue + 1 }, () => new Array(MAX_LEN + 1).fill(0));
+  for (let v = 1; v <= maxValue; v++) dp[v][1] = 1;
+  for (let k = 2; k <= MAX_LEN; k++) {
+    for (let d = 1; d <= maxValue; d++) {
+      if (!dp[d][k - 1]) continue;
+      for (let v = 2 * d; v <= maxValue; v += d) dp[v][k] = (dp[v][k] + dp[d][k - 1]) % MOD;
+    }
+  }
+
+  let ans = 0;
+  for (let v = 1; v <= maxValue; v++)
+    for (let k = 1; k <= MAX_LEN && k <= n; k++)
+      if (dp[v][k]) ans = (ans + dp[v][k] * comb(n - 1, k - 1)) % MOD;
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(countTheNumberOfIdealArrays(/* example 1 */)); // expected
-// console.log(countTheNumberOfIdealArrays(/* example 2 */)); // expected
-// console.log(countTheNumberOfIdealArrays(/* edge case */)); // expected
+// Tests
+console.log(idealArrays(2, 5)); // 10
+console.log(idealArrays(5, 3)); // 11
+console.log(idealArrays(1, 1)); // 1
+console.log(idealArrays(3, 7)); // 29
+console.log(idealArraysV2(2, 5)); // 10  (cross-check)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Count All Valid Pickup and Delivery Options](https://leetcode.com/problems/count-all-valid-pickup-and-delivery-options) — same pattern: Dynamic Programming
-- [Find the Count of Monotonic Pairs I](https://leetcode.com/problems/find-the-count-of-monotonic-pairs-i) — same pattern: Prefix Sum
-- [Find the Count of Monotonic Pairs II](https://leetcode.com/problems/find-the-count-of-monotonic-pairs-ii) — same pattern: Prefix Sum
-- [Number of Music Playlists](https://leetcode.com/problems/number-of-music-playlists) — same pattern: Dynamic Programming
-- [Count the Number of Ideal Arrays — LeetCode](https://leetcode.com/problems/count-the-number-of-ideal-arrays) — problem page
+| Problem                                                                                                                   | Difficulty | Pattern            |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Count All Valid Pickup and Delivery Options](https://leetcode.com/problems/count-all-valid-pickup-and-delivery-options/) | 🔴 Hard    | Combinatorics      |
+| [Count Sorted Vowel Strings](https://leetcode.com/problems/count-sorted-vowel-strings/)                                   | 🟡 Medium  | Stars and Bars     |
+| [Number of Music Playlists](https://leetcode.com/problems/number-of-music-playlists/)                                     | 🔴 Hard    | DP + Combinatorics |

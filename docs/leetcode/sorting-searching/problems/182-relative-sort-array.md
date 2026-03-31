@@ -7,97 +7,142 @@ tags: [Array, Hash Table, Sorting, Counting Sort]
 leetcode_url: "https://leetcode.com/problems/relative-sort-array"
 ---
 
-# Relative Sort Array / Relative Sort Array
+# Relative Sort Array / Sắp Xếp Mảng Theo Thứ Tự Tương Đối
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Sorting
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [How Many Numbers Are Smaller Than the Current Number](https://leetcode.com/problems/how-many-numbers-are-smaller-than-the-current-number) | [Majority Element](https://leetcode.com/problems/majority-element)
+🟢 Easy | Custom Sort | [LeetCode 1122](https://leetcode.com/problems/relative-sort-array)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Sau khi sắp xếp, nhiều bài toán trở nên đơn giản hơn — phần tử giống nhau nằm cạnh nhau, có thể dùng binary search, two pointers.
+**EN:** Elements in arr1 that appear in arr2 should come first, in the same order as arr2. Elements not in arr2 come last, sorted in ascending order. Build a rank map from arr2, then sort arr1 with a custom comparator: if both in arr2, compare by rank; otherwise, elements not in arr2 sort after with their natural value.
 
-**Pattern Recognition:**
-
-- Signal: "order matters" + "grouping/dedup" → **Sorting**
-- Bài này thuộc dạng Sorting — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Relative Sort Array example:**
+**VI:** Phần tử trong arr1 xuất hiện trong arr2 thì theo thứ tự của arr2. Phần tử không có trong arr2 xếp cuối theo thứ tự tăng dần. Tạo bảng rank từ arr2, rồi sắp xếp arr1 với comparator tùy chỉnh.
 
 ```
-// TODO: Add step-by-step visual for Sorting
-// Show one complete example with state at each step
+arr1 = [2,3,1,3,2,4,6,7,9,2,19]
+arr2 = [2,1,4,3,9,6]
+
+rank: {2→0, 1→1, 4→2, 3→3, 9→4, 6→5}
+
+Sort arr1:
+  In arr2: 2(r0),2(r0),2(r0),1(r1),4(r2),3(r3),3(r3),9(r4),6(r5)
+  Not in arr2: 7, 19  → sorted asc
+
+Result: [2,2,2,1,4,3,3,9,6,7,19]
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Relative Sort Array. ([LeetCode](https://leetcode.com/problems/relative-sort-array))
-
-Difficulty: Easy | Acceptance: 74.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/relative-sort-array) for full constraints
+- 🗺️ **EN:** Build rank map `{value → position in arr2}` first — O(m) build, O(1) lookup. **VI:** Xây dựng bảng rank `{giá trị → vị trí trong arr2}` trước — xây dựng O(m), tra cứu O(1).
+- 🔢 **EN:** Comparator: if both have rank → compare ranks. If only one has rank → ranked one comes first. If neither → compare natural values. **VI:** So sánh: cả hai có rank → so rank; một trong hai có rank → cái có rank lên trước; không cái nào có rank → so tự nhiên.
+- 📊 **EN:** Alternative: counting sort — since values ≤ 1000, use count array + two-pass reconstruction. O(n + k) time. **VI:** Cách khác: counting sort — giá trị ≤ 1000, dùng mảng đếm và tái tạo hai lần. O(n+k).
+- ✅ **EN:** arr2 has distinct values (guaranteed) so rank map has no duplicates. **VI:** arr2 có giá trị phân biệt (đảm bảo bởi đề) nên bảng rank không có trùng lặp.
+- 🎯 **EN:** For elements not in arr2, assigning rank = `arr2.length + value` makes the single comparator work cleanly. **VI:** Với phần tử không trong arr2, gán rank = `arr2.length + value` để comparator hoạt động gọn gàng.
+- ⚡ **EN:** In JavaScript, `Array.sort` is stable (since V8), so equal-rank elements maintain relative order. **VI:** Trong JavaScript, `Array.sort` ổn định (từ V8), nên các phần tử cùng rank giữ thứ tự tương đối.
 
 ---
 
-## 📝 Interview Tips
+## 💡 Solutions / Giải Pháp
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Solution 1 — Rank Map + Custom Sort (Clean)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Map arr2 values to their rank. Sort arr1 using rank comparator.
+ * Elements not in arr2 get rank = arr2.length + value (sorts after and asc).
+ * Time: O(n log n)  Space: O(m)  m = arr2.length
  */
-function relativeSortArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function relativeSortArray(arr1: number[], arr2: number[]): number[] {
+  const rank = new Map<number, number>();
+  arr2.forEach((v, i) => rank.set(v, i));
+
+  return arr1.sort((a, b) => {
+    const ra = rank.has(a) ? rank.get(a)! : arr2.length + a;
+    const rb = rank.has(b) ? rank.get(b)! : arr2.length + b;
+    return ra - rb;
+  });
 }
 
+// Tests
+console.log(relativeSortArray([2, 3, 1, 3, 2, 4, 6, 7, 9, 2, 19], [2, 1, 4, 3, 9, 6])); // [2,2,2,1,4,3,3,9,6,7,19]
+
+console.log(relativeSortArray([28, 6, 22, 8, 44, 17], [22, 28, 8, 6])); // [22,28,8,6,17,44]
+```
+
+### Solution 2 — Counting Sort (O(n + k))
+
+```typescript
 /**
- * Solution 2: Optimized — Sorting
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Since values ≤ 1000, use counting sort.
+ * Pass 1: count frequencies. Pass 2: place arr2 elements first, then rest asc.
+ * Time: O(n + k)  Space: O(k)  k = max value = 1000
  */
-function relativeSortArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sorting
-  // Hint: Sort first, then use property of sorted order
-  throw new Error('Not implemented');
+function relativeSortArray2(arr1: number[], arr2: number[]): number[] {
+  const MAX_VAL = 1001;
+  const count = new Array(MAX_VAL).fill(0);
+  for (const v of arr1) count[v]++;
+
+  const result: number[] = [];
+
+  // First: place arr2 elements in order
+  for (const v of arr2) {
+    while (count[v]-- > 0) result.push(v);
+  }
+
+  // Then: place remaining elements in ascending order
+  for (let v = 0; v < MAX_VAL; v++) {
+    while (count[v]-- > 0) result.push(v);
+  }
+
+  return result;
 }
 
-// === Test Cases ===
-// console.log(relativeSortArray(/* example 1 */)); // expected
-// console.log(relativeSortArray(/* example 2 */)); // expected
-// console.log(relativeSortArray(/* edge case */)); // expected
+console.log(relativeSortArray2([2, 3, 1, 3, 2, 4, 6, 7, 9, 2, 19], [2, 1, 4, 3, 9, 6])); // [2,2,2,1,4,3,3,9,6,7,19]
+```
+
+### Solution 3 — Two-Array Split + Merge
+
+```typescript
+/**
+ * Explicitly separate arr1 into "in arr2" and "not in arr2" groups.
+ * Time: O(n log n)  Space: O(n)
+ */
+function relativeSortArray3(arr1: number[], arr2: number[]): number[] {
+  const inArr2 = new Set(arr2);
+  const grouped = new Map<number, number[]>();
+  const extra: number[] = [];
+
+  for (const v of arr1) {
+    if (inArr2.has(v)) {
+      if (!grouped.has(v)) grouped.set(v, []);
+      grouped.get(v)!.push(v);
+    } else {
+      extra.push(v);
+    }
+  }
+
+  extra.sort((a, b) => a - b);
+
+  const result: number[] = [];
+  for (const v of arr2) {
+    result.push(...(grouped.get(v) ?? []));
+  }
+  result.push(...extra);
+  return result;
+}
+
+console.log(relativeSortArray3([28, 6, 22, 8, 44, 17], [22, 28, 8, 6])); // [22,28,8,6,17,44]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [How Many Numbers Are Smaller Than the Current Number](https://leetcode.com/problems/how-many-numbers-are-smaller-than-the-current-number) — same pattern: Sorting
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Relative Sort Array — LeetCode](https://leetcode.com/problems/relative-sort-array) — problem page
+| #   | Problem                      | Difficulty | Pattern         |
+| --- | ---------------------------- | ---------- | --------------- |
+| 1   | Sort Array by Parity         | 🟢 Easy    | custom sort     |
+| 2   | Custom Sort String           | 🟡 Medium  | rank-based sort |
+| 3   | Sort Characters by Frequency | 🟡 Medium  | frequency sort  |

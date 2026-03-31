@@ -7,100 +7,151 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/check-if-one-string-swap-can-make-strings-equal"
 ---
 
-# Check if One String Swap Can Make Strings Equal / Check if One String Swap Can Make Strings Equal
+# Check if One String Swap Can Make Strings Equal / Kiểm Tra Một Lần Hoán Đổi Làm Chuỗi Bằng Nhau
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
+**Difficulty:** 🟢 Easy | **Tags:** Hash Table, String, Counting
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Check if One String Swap Can Make Strings Equal example:**
+Tìm **đúng vị trí khác nhau** giữa hai chuỗi, sau đó kiểm tra swap có hợp lệ không.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+s1 = "bank"  s2 = "kanb"
 
-Key insight: store complement for O(1) lookup
+Compare char by char:
+  i=0  b ≠ k  → diff[0] = (b, k)
+  i=1  a = a
+  i=2  n = n
+  i=3  k ≠ b  → diff[1] = (k, b)
+
+diff.length === 2  AND  diff[0] == reverse(diff[1])?
+  diff[0] = ('b','k')  diff[1] = ('k','b')  → YES → return true
+
+Cases:
+  0 diffs → strings already equal → true (swap same pos with itself)
+  1 diff  → impossible (swap creates 2 diffs at minimum)
+  2 diffs → check cross-swap
+  >2 diffs→ false
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Check if One String Swap Can Make Strings Equal. ([LeetCode](https://leetcode.com/problems/check-if-one-string-swap-can-make-strings-equal))
-
-Difficulty: Easy | Acceptance: 49.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/check-if-one-string-swap-can-make-strings-equal) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Chiều dài khác nhau**: trả về false ngay lập tức
+- 🇺🇸 **Unequal lengths**: return false immediately
+- 🇻🇳 **0 vị trí khác**: chuỗi đã bằng nhau → true (hoán đổi vị trí với chính nó)
+- 🇺🇸 **0 diffs**: strings already equal → true (swap any char with itself)
+- 🇻🇳 **Đúng 2 vị trí khác**: kiểm tra `s1[i]=s2[j]` và `s1[j]=s2[i]`
+- 🇺🇸 **Exactly 2 diffs**: verify `s1[i]=s2[j]` and `s1[j]=s2[i]` for cross-match
+- 🇻🇳 **1 hoặc >2 vị trí khác**: không thể dùng một lần swap → false
+- 🇺🇸 **1 or >2 diffs**: a single swap can't fix 1 diff or 3+ diffs → false
+- 🇻🇳 **Swap trên một chuỗi**: chỉ được swap trong s1 HOẶC s2, không phải cả hai
+- 🇺🇸 **Swap on one string**: swap applies to one string only, not both
+- 🇻🇳 **Phân biệt bài này với Buddy Strings**: bài 179 còn xét trường hợp s1=s2
+- 🇺🇸 **vs Buddy Strings (#859)**: buddy strings also handles s==goal with duplicate char
 
 ---
 
-## Solutions
+## 💻 Solutions
+
+### Solution 1 — Collect Diffs and Validate (Recommended)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Find all differing positions; valid iff 0 or exactly 2 with cross-match.
+ * Time: O(n)  Space: O(1)
  */
-function checkIfOneStringSwapCanMakeStringsEqualBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function areAlmostEqual(s1: string, s2: string): boolean {
+  if (s1.length !== s2.length) return false;
+
+  const diffs: number[] = [];
+  for (let i = 0; i < s1.length; i++) {
+    if (s1[i] !== s2[i]) {
+      diffs.push(i);
+      if (diffs.length > 2) return false; // early exit
+    }
+  }
+
+  if (diffs.length === 0) return true;
+  if (diffs.length !== 2) return false;
+
+  const [i, j] = diffs;
+  return s1[i] === s2[j] && s1[j] === s2[i];
 }
 
+console.log(areAlmostEqual("bank", "kanb")); // true
+console.log(areAlmostEqual("attack", "defend")); // false
+console.log(areAlmostEqual("kelb", "kelb")); // true  (0 diffs)
+console.log(areAlmostEqual("abcd", "dcba")); // false (4 diffs)
+console.log(areAlmostEqual("aa", "ac")); // false (1 diff)
+```
+
+### Solution 2 — Early-return with tuple pair
+
+```typescript
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Track first and second diff as tuples; validate at end.
+ * Time: O(n)  Space: O(1)
  */
-function checkIfOneStringSwapCanMakeStringsEqual(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function areAlmostEqual2(s1: string, s2: string): boolean {
+  if (s1 === s2) return true;
+
+  let first = -1,
+    second = -1;
+  for (let i = 0; i < s1.length; i++) {
+    if (s1[i] !== s2[i]) {
+      if (first === -1) first = i;
+      else if (second === -1) second = i;
+      else return false; // 3rd diff
+    }
+  }
+
+  if (second === -1) return false; // exactly 1 diff
+  return s1[first] === s2[second] && s1[second] === s2[first];
 }
 
-// === Test Cases ===
-// console.log(checkIfOneStringSwapCanMakeStringsEqual(/* example 1 */)); // expected
-// console.log(checkIfOneStringSwapCanMakeStringsEqual(/* example 2 */)); // expected
-// console.log(checkIfOneStringSwapCanMakeStringsEqual(/* edge case */)); // expected
+console.log(areAlmostEqual2("bank", "kanb")); // true
+console.log(areAlmostEqual2("attack", "defend")); // false
+```
+
+### Solution 3 — Character frequency + diff count
+
+```typescript
+/**
+ * Multi-check: same frequency map AND at most 2 diffs.
+ * Time: O(n)  Space: O(26)
+ */
+function areAlmostEqual3(s1: string, s2: string): boolean {
+  if (s1.length !== s2.length) return false;
+
+  let diffCount = 0;
+  const freq = new Array(26).fill(0);
+
+  for (let i = 0; i < s1.length; i++) {
+    freq[s1.charCodeAt(i) - 97]++;
+    freq[s2.charCodeAt(i) - 97]--;
+    if (s1[i] !== s2[i]) diffCount++;
+  }
+
+  // Same chars overall AND exactly 0 or 2 positional diffs
+  const sameFreq = freq.every((f) => f === 0);
+  return sameFreq && (diffCount === 0 || diffCount === 2);
+}
+
+console.log(areAlmostEqual3("bank", "kanb")); // true
+console.log(areAlmostEqual3("attack", "defend")); // false
+console.log(areAlmostEqual3("aa", "ac")); // false
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Check if One String Swap Can Make Strings Equal — LeetCode](https://leetcode.com/problems/check-if-one-string-swap-can-make-strings-equal) — problem page
+| Problem                                                                                                               | Difficulty | Pattern           |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------- |
+| [Buddy Strings](https://leetcode.com/problems/buddy-strings/)                                                         | 🟢 Easy    | Swap validation   |
+| [Determine if Two Strings Are Close](https://leetcode.com/problems/determine-if-two-strings-are-close/)               | 🟡 Medium  | Frequency map     |
+| [Check if Two String Arrays are Equivalent](https://leetcode.com/problems/check-if-two-string-arrays-are-equivalent/) | 🟢 Easy    | String comparison |

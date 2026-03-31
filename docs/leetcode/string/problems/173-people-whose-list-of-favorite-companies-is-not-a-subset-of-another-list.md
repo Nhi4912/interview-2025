@@ -7,100 +7,163 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/people-whose-list-of-favorite-companies-is-not-a-subset-of-another-list"
 ---
 
-# People Whose List of Favorite Companies Is Not a Subset of Another List / People Whose List of Favorite Companies Is Not a Subset of Another List
+# People Whose List of Favorite Companies Is Not a Subset of Another List / Người Có Danh Sách Không Phải Tập Con
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
+**Difficulty:** 🟡 Medium | **Tags:** Array, Hash Table, String
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — People Whose List of Favorite Companies Is Not a Subset of Another List example:**
+Bài toán giống như **kiểm tra thành viên CLB**: nếu CLB A có mọi thành viên của CLB B thì B không cần tồn tại riêng.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+i=0: {leetcode, google, facebook}
+i=1: {google, microsoft}
+i=2: {google, facebook}        ← subset of i=0  → excluded
+i=3: {google}                  ← subset of i=0 and i=1 → excluded
+i=4: {amazon}                  ← not a subset of any other → included
 
-Key insight: store complement for O(1) lookup
+Output: [0, 1, 4]
 ```
+
+**Algorithm:**
+
+1. Convert each list to a `Set<string>` for O(1) lookups
+2. For each person `i`, check all `j ≠ i`: is every company of `i` contained in `j`?
+3. If no `j` is a superset of `i` → include `i` in result
+4. Subset check: `setI.size ≤ setJ.size` AND every element of `i` is in `j`
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-People Whose List of Favorite Companies Is Not a Subset of Another List. ([LeetCode](https://leetcode.com/problems/people-whose-list-of-favorite-companies-is-not-a-subset-of-another-list))
-
-Difficulty: Medium | Acceptance: 59.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/people-whose-list-of-favorite-companies-is-not-a-subset-of-another-list) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Subset vs superset**: bạn cần loại i nếu _tồn tại_ j sao cho i ⊆ j, không phải j ⊆ i
+- 🇺🇸 **Direction**: exclude i if ANY j is a superset of i (not the other way around)
+- 🇻🇳 **Tối ưu bằng kích thước**: nếu |setI| > |setJ| thì i không thể là tập con của j
+- 🇺🇸 **Size pruning**: skip j if setJ.size < setI.size — i can't be a subset
+- 🇻🇳 **Chuyển list → Set sớm**: tránh chuyển đổi lặp lại O(n) trong vòng lặp lồng nhau
+- 🇺🇸 **Pre-convert to Sets**: avoids repeated O(k) conversions inside nested loop
+- 🇻🇳 **Complexity**: O(n² × k) với n = số người, k = kích thước list trung bình
+- 🇺🇸 **Complexity**: O(n² × k) where n = people count, k = avg list size
+- 🇻🇳 **Index trả về**: đề bài yêu cầu **index**, không phải tên người
+- 🇺🇸 **Return indices**: the problem asks for indices, not company names
+- 🇻🇳 **Tối ưu hơn**: dùng bitmask hoặc sort+hash để giảm còn O(n² × k/64)
+- 🇺🇸 **Further opt**: bitmask encoding reduces inner check to single bitwise AND
 
 ---
 
-## Solutions
+## 💻 Solutions
+
+### Solution 1 — Set Subset Check (Recommended)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Pre-convert lists to Sets, then for each i check all j for superset.
+ * Time: O(n² × k)  Space: O(n × k)
  */
-function peopleWhoseListOfFavoriteCompaniesIsNotASubsetOfAnotherListBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function peopleIndexes(favoriteCompanies: string[][]): number[] {
+  const sets = favoriteCompanies.map((list) => new Set(list));
+  const result: number[] = [];
+
+  for (let i = 0; i < sets.length; i++) {
+    const setI = sets[i];
+    let isSubset = false;
+
+    for (let j = 0; j < sets.length; j++) {
+      if (i === j) continue;
+      const setJ = sets[j];
+      if (setJ.size < setI.size) continue; // pruning
+
+      let allIn = true;
+      for (const company of setI) {
+        if (!setJ.has(company)) {
+          allIn = false;
+          break;
+        }
+      }
+      if (allIn) {
+        isSubset = true;
+        break;
+      }
+    }
+
+    if (!isSubset) result.push(i);
+  }
+
+  return result;
 }
 
+const companies = [
+  ["leetcode", "google", "facebook"],
+  ["google", "microsoft"],
+  ["google", "facebook"],
+  ["google"],
+  ["amazon"],
+];
+console.log(peopleIndexes(companies)); // [0, 1, 4]
+console.log(
+  peopleIndexes([["leetcode"], ["google"], ["facebook"], ["leetcode", "google", "facebook"]]),
+); // [3]
+```
+
+### Solution 2 — Every / Some Functional
+
+```typescript
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Functional style using Array.every and Array.some.
+ * Time: O(n² × k)  Space: O(n × k)
  */
-function peopleWhoseListOfFavoriteCompaniesIsNotASubsetOfAnotherList(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function peopleIndexes2(favoriteCompanies: string[][]): number[] {
+  const sets = favoriteCompanies.map((l) => new Set(l));
+
+  return favoriteCompanies
+    .map((_, i) => i)
+    .filter(
+      (i) =>
+        !sets.some(
+          (setJ, j) =>
+            j !== i && setJ.size >= sets[i].size && [...sets[i]].every((c) => setJ.has(c)),
+        ),
+    );
 }
 
-// === Test Cases ===
-// console.log(peopleWhoseListOfFavoriteCompaniesIsNotASubsetOfAnotherList(/* example 1 */)); // expected
-// console.log(peopleWhoseListOfFavoriteCompaniesIsNotASubsetOfAnotherList(/* example 2 */)); // expected
-// console.log(peopleWhoseListOfFavoriteCompaniesIsNotASubsetOfAnotherList(/* edge case */)); // expected
+console.log(peopleIndexes2(companies)); // [0, 1, 4]
+```
+
+### Solution 3 — Sorted String Fingerprint
+
+```typescript
+/**
+ * Encode each list as a sorted string; use indexOf to check containment.
+ * Works when company names are distinct tokens.
+ * Time: O(n² × k log k)  Space: O(n × k)
+ */
+function peopleIndexes3(favoriteCompanies: string[][]): number[] {
+  const sorted = favoriteCompanies.map((l) => [...l].sort());
+  const sets = sorted.map((l) => new Set(l));
+  const result: number[] = [];
+
+  for (let i = 0; i < sorted.length; i++) {
+    let dominated = false;
+    for (let j = 0; j < sorted.length && !dominated; j++) {
+      if (i === j || sets[j].size < sets[i].size) continue;
+      if (sorted[i].every((c) => sets[j].has(c))) dominated = true;
+    }
+    if (!dominated) result.push(i);
+  }
+  return result;
+}
+
+console.log(peopleIndexes3(companies)); // [0, 1, 4]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [People Whose List of Favorite Companies Is Not a Subset of Another List — LeetCode](https://leetcode.com/problems/people-whose-list-of-favorite-companies-is-not-a-subset-of-another-list) — problem page
+| Problem                                                                                                     | Difficulty | Pattern          |
+| ----------------------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Sentence Similarity II](https://leetcode.com/problems/sentence-similarity-ii/)                             | 🟡 Medium  | Set / Union-Find |
+| [Find Common Characters](https://leetcode.com/problems/find-common-characters/)                             | 🟢 Easy    | Set intersection |
+| [Check if Array Is Sorted and Rotated](https://leetcode.com/problems/check-if-array-is-sorted-and-rotated/) | 🟢 Easy    | Linear scan      |

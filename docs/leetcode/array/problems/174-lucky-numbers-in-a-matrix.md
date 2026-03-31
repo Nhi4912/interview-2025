@@ -7,97 +7,141 @@ tags: [Array, Matrix]
 leetcode_url: "https://leetcode.com/problems/lucky-numbers-in-a-matrix"
 ---
 
-# Lucky Numbers in a Matrix / Lucky Numbers in a Matrix
+# Lucky Numbers in a Matrix / Số May Mắn Trong Ma Trận
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Rotting Oranges](https://leetcode.com/problems/rotting-oranges)
+🟢 Easy | Tags: Array, Matrix
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Phân tích bài "Lucky Numbers in a Matrix" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Lucky Numbers in a Matrix example:**
+**VN:** Số may mắn là số nhỏ nhất trong hàng VÀ lớn nhất trong cột. Tìm tập hợp min mỗi hàng, tìm tập hợp max mỗi cột, giao điểm chính là đáp án.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+matrix = [[3, 7, 8],
+           [9, 11, 13],
+           [15, 16, 17]]
+
+row-mins: {3, 9, 15}
+col-maxes: {15, 16, 17}
+intersection: {15} ← lucky number
 ```
-
----
-
-## Problem Description
-
-Lucky Numbers in a Matrix. ([LeetCode](https://leetcode.com/problems/lucky-numbers-in-a-matrix))
-
-Difficulty: Easy | Acceptance: 79.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/lucky-numbers-in-a-matrix) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Một số lucky luôn là unique — chứng minh: nếu có 2 số lucky trong cùng cột, chúng cùng là max của cột đó, mâu thuẫn.
+- 🇺🇸 At most one lucky number exists — if two were in the same col, both would be col-max, contradiction.
+- 🇻🇳 Dùng Set cho row-mins để lookup O(1) khi duyệt col-maxes.
+- 🇺🇸 Store row-mins in a Set for O(1) lookup when iterating col-maxes.
+- 🇻🇳 Nếu không có giao điểm, trả về mảng rỗng.
+- 🇺🇸 Return empty array if no intersection is found.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Solution 1: Row-Min Set × Col-Max Scan
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Collect min of each row into a Set; check if any col-max is in that Set.
+ * Time: O(m*n) | Space: O(m)
  */
-function luckyNumbersInAMatrixBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function luckyNumbers(matrix: number[][]): number[] {
+  const m = matrix.length,
+    n = matrix[0].length;
+
+  // Collect minimum value of each row
+  const rowMins = new Set<number>();
+  for (let i = 0; i < m; i++) {
+    let minVal = matrix[i][0];
+    for (let j = 1; j < n; j++) minVal = Math.min(minVal, matrix[i][j]);
+    rowMins.add(minVal);
+  }
+
+  // Find maximum of each column; check against rowMins
+  const result: number[] = [];
+  for (let j = 0; j < n; j++) {
+    let colMax = matrix[0][j];
+    for (let i = 1; i < m; i++) colMax = Math.max(colMax, matrix[i][j]);
+    if (rowMins.has(colMax)) result.push(colMax);
+  }
+
+  return result;
 }
 
+console.log(
+  luckyNumbers([
+    [3, 7, 8],
+    [9, 11, 13],
+    [15, 16, 17],
+  ]),
+); // [15]
+console.log(
+  luckyNumbers([
+    [1, 10, 4, 2],
+    [9, 3, 8, 7],
+    [15, 16, 17, 12],
+  ]),
+); // [12]
+console.log(
+  luckyNumbers([
+    [7, 8],
+    [1, 2],
+  ]),
+); // [7]
+```
+
+### Solution 2: Two-Pass with Row-Min Array
+
+```typescript
 /**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Explicit two-pass: collect row mins array, collect col maxes array, intersect.
+ * Time: O(m*n) | Space: O(m + n)
  */
-function luckyNumbersInAMatrix(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function luckyNumbers2(matrix: number[][]): number[] {
+  const m = matrix.length,
+    n = matrix[0].length;
+
+  const rowMin = matrix.map((row) => Math.min(...row));
+  const colMax = Array.from({ length: n }, (_, j) => Math.max(...matrix.map((row) => row[j])));
+
+  const result: number[] = [];
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      if (matrix[i][j] === rowMin[i] && matrix[i][j] === colMax[j]) {
+        result.push(matrix[i][j]);
+      }
+    }
+  }
+
+  return result;
 }
 
-// === Test Cases ===
-// console.log(luckyNumbersInAMatrix(/* example 1 */)); // expected
-// console.log(luckyNumbersInAMatrix(/* example 2 */)); // expected
-// console.log(luckyNumbersInAMatrix(/* edge case */)); // expected
+console.log(
+  luckyNumbers2([
+    [3, 7, 8],
+    [9, 11, 13],
+    [15, 16, 17],
+  ]),
+); // [15]
+console.log(
+  luckyNumbers2([
+    [1, 10, 4, 2],
+    [9, 3, 8, 7],
+    [15, 16, 17, 12],
+  ]),
+); // [12]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Rotting Oranges](https://leetcode.com/problems/rotting-oranges) — same pattern: BFS
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix) — same pattern: Binary Search
-- [Lucky Numbers in a Matrix — LeetCode](https://leetcode.com/problems/lucky-numbers-in-a-matrix) — problem page
+| Problem                                                                                                                   | Difficulty | Pattern     |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- |
+| [Special Positions in a Binary Matrix](https://leetcode.com/problems/special-positions-in-a-binary-matrix/)               | 🟢 Easy    | Matrix Scan |
+| [Row With Maximum Ones](https://leetcode.com/problems/row-with-maximum-ones/)                                             | 🟢 Easy    | Matrix      |
+| [Find the Maximum Element Along the Diagonal](https://leetcode.com/problems/find-the-maximum-element-along-the-diagonal/) | 🟢 Easy    | Matrix      |

@@ -7,100 +7,190 @@ tags: [String, Binary Search, Sliding Window, Rolling Hash, Suffix Array]
 leetcode_url: "https://leetcode.com/problems/longest-duplicate-substring"
 ---
 
-# Longest Duplicate Substring / Longest Duplicate Substring
+# Longest Duplicate Substring / Chuỗi Con Trùng Lặp Dài Nhất
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Sliding Window
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest Repeating Substring](https://leetcode.com/problems/longest-repeating-substring) | [Number of Distinct Substrings in a String](https://leetcode.com/problems/number-of-distinct-substrings-in-a-string)
+🔴 Hard | Binary Search + Rolling Hash | [LeetCode 1044](https://leetcode.com/problems/longest-duplicate-substring)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+**EN:** Binary search on the duplicate substring length `L`. For each `L`, use Rabin-Karp rolling hash to find if any two substrings of length `L` have the same hash (with string verification to avoid false positives). Double hashing reduces collision probability.
 
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Longest Duplicate Substring example:**
+**VI:** Binary search trên độ dài `L` của chuỗi con trùng lặp. Với mỗi `L`, dùng Rabin-Karp rolling hash để tìm hai chuỗi con có cùng hash (xác minh chuỗi thực tế để tránh collision). Dùng hai hàm hash để giảm khả năng va chạm.
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+s = "banana"   Binary search: L in [0,5]
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+L=3: check substrings of len 3
+  "ban"(h1), "ana"(h2), "nan"(h3), "ana"(h4)
+   h2 == h4 AND s[1..3] == s[3..5] → duplicate "ana" ✓
+
+L=4: "bana","anan","nana" — no duplicate ✗
+
+Answer: "ana"
+
+Rolling Hash:
+  h_new = (h_old - s[i-1]*BASE^(L-1)) * BASE + s[i+L-1]
+  Window slides in O(1) per step
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Longest Duplicate Substring. ([LeetCode](https://leetcode.com/problems/longest-duplicate-substring))
-
-Difficulty: Hard | Acceptance: 30.8%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-duplicate-substring) for full constraints
+- 🔑 **EN:** Binary search is on length L (monotone: if dup of len L exists, dup of len L-1 also exists). **VI:** Binary search trên độ dài L (đơn điệu: nếu có dup dài L thì cũng có dup dài L-1).
+- 🧮 **EN:** Double hashing: use two different (mod, base) pairs to minimize collision probability. **VI:** Dùng hai hàm hash khác nhau để giảm xác suất va chạm giả.
+- ✅ **EN:** Always verify string equality on hash collision — prevents wrong answers from hash collision. **VI:** Luôn xác minh bằng so sánh chuỗi khi hash trùng — tránh kết quả sai do collision.
+- 📦 **EN:** Store starting indices in a Map keyed by hash. On collision, compare actual substrings. **VI:** Lưu chỉ số bắt đầu trong Map theo hash. Khi collision, so sánh chuỗi thực tế.
+- ⚡ **EN:** Precompute `BASE^(L-1) mod MOD` to allow O(1) rolling update. **VI:** Tính trước `BASE^(L-1) mod MOD` để cập nhật O(1) khi trượt cửa sổ.
+- 🔢 **EN:** Suffix array with LCP is the canonical O(n log n) solution but complex; rolling hash is interview-friendly. **VI:** Suffix array với LCP là giải pháp chuẩn O(n log n) nhưng phức tạp; rolling hash dễ cài đặt trong phỏng vấn.
 
 ---
 
-## 📝 Interview Tips
+## 💡 Solutions / Giải Pháp
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
-
----
-
-## Solutions
+### Solution 1 — Binary Search + Double Rolling Hash (Rabin-Karp)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Binary search on length L; rolling hash with two mods to check duplicates.
+ * Time: O(n log n) average  Space: O(n)
  */
-function longestDuplicateSubstringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestDupSubstring(s: string): string {
+  const n = s.length;
+  const MOD1 = 1_000_000_007,
+    MOD2 = 998_244_353;
+  const B1 = 31,
+    B2 = 37;
+
+  /**
+   * Returns start index of duplicate substring of length `len`, or -1 if none.
+   */
+  function check(len: number): number {
+    if (len === 0) return 0;
+    let h1 = 0,
+      h2 = 0,
+      p1 = 1,
+      p2 = 1;
+
+    // Build initial hash for s[0..len-1] and compute BASE^(len-1)
+    for (let i = 0; i < len; i++) {
+      const c = s.charCodeAt(i) - 96;
+      h1 = (h1 * B1 + c) % MOD1;
+      h2 = (h2 * B2 + c) % MOD2;
+      if (i < len - 1) {
+        p1 = (p1 * B1) % MOD1;
+        p2 = (p2 * B2) % MOD2;
+      }
+    }
+
+    // Map combined hash to list of start indices for collision verification
+    const seen = new Map<string, number[]>();
+    const key0 = `${h1},${h2}`;
+    seen.set(key0, [0]);
+
+    for (let i = 1; i + len <= n; i++) {
+      const leave = s.charCodeAt(i - 1) - 96;
+      const enter = s.charCodeAt(i + len - 1) - 96;
+      h1 = ((h1 - ((leave * p1) % MOD1) + MOD1) * B1 + enter) % MOD1;
+      h2 = ((h2 - ((leave * p2) % MOD2) + MOD2) * B2 + enter) % MOD2;
+
+      const key = `${h1},${h2}`;
+      if (seen.has(key)) {
+        const cur = s.slice(i, i + len);
+        for (const prev of seen.get(key)!) {
+          if (s.slice(prev, prev + len) === cur) return i; // found real duplicate
+        }
+      }
+      if (!seen.has(key)) seen.set(key, []);
+      seen.get(key)!.push(i);
+    }
+    return -1;
+  }
+
+  let lo = 0,
+    hi = n - 1;
+  let result = "";
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const idx = check(mid);
+    if (idx >= 0) {
+      result = s.slice(idx, idx + mid);
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return result;
 }
 
+// Tests
+console.log(longestDupSubstring("banana")); // "ana"
+console.log(longestDupSubstring("abcd")); // ""
+console.log(longestDupSubstring("aababaa")); // "abaa" or "aaba"
+```
+
+### Solution 2 — Binary Search + Single Hash with Verification
+
+```typescript
 /**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Simpler single-hash version; relies on string verification for correctness
+ * Time: O(n log n) average  Space: O(n)
  */
-function longestDuplicateSubstring(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function longestDupSubstring2(s: string): string {
+  const n = s.length;
+  const MOD = 1_000_000_007n,
+    BASE = 31n;
+
+  function findDup(len: number): string {
+    let h = 0n,
+      pw = 1n;
+    for (let i = 0; i < len; i++) {
+      h = (h * BASE + BigInt(s.charCodeAt(i) - 96)) % MOD;
+      if (i < len - 1) pw = (pw * BASE) % MOD;
+    }
+    const seen = new Map<bigint, number[]>([[h, [0]]]);
+
+    for (let i = 1; i + len <= n; i++) {
+      h = (h - ((BigInt(s.charCodeAt(i - 1) - 96) * pw) % MOD) + MOD) % MOD;
+      h = (h * BASE + BigInt(s.charCodeAt(i + len - 1) - 96)) % MOD;
+      if (seen.has(h)) {
+        const sub = s.slice(i, i + len);
+        for (const j of seen.get(h)!) {
+          if (s.slice(j, j + len) === sub) return sub;
+        }
+      }
+      if (!seen.has(h)) seen.set(h, []);
+      seen.get(h)!.push(i);
+    }
+    return "";
+  }
+
+  let lo = 0,
+    hi = n - 1,
+    result = "";
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const dup = findDup(mid);
+    if (dup) {
+      result = dup;
+      lo = mid + 1;
+    } else hi = mid - 1;
+  }
+  return result;
 }
 
-// === Test Cases ===
-// console.log(longestDuplicateSubstring(/* example 1 */)); // expected
-// console.log(longestDuplicateSubstring(/* example 2 */)); // expected
-// console.log(longestDuplicateSubstring(/* edge case */)); // expected
+console.log(longestDupSubstring2("banana")); // "ana"
+console.log(longestDupSubstring2("abcd")); // ""
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Longest Repeating Substring](https://leetcode.com/problems/longest-repeating-substring) — same pattern: Dynamic Programming
-- [Number of Distinct Substrings in a String](https://leetcode.com/problems/number-of-distinct-substrings-in-a-string) — same pattern: Trie
-- [Repeated DNA Sequences](https://leetcode.com/problems/repeated-dna-sequences) — same pattern: Sliding Window
-- [Find Beautiful Indices in the Given Array I](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i) — same pattern: Two Pointers
-- [Longest Duplicate Substring — LeetCode](https://leetcode.com/problems/longest-duplicate-substring) — problem page
+| #   | Problem                     | Difficulty | Pattern            |
+| --- | --------------------------- | ---------- | ------------------ |
+| 1   | Longest Common Substring    | 🟡 Medium  | rolling hash       |
+| 2   | Repeated DNA Sequences      | 🟡 Medium  | rolling hash + set |
+| 3   | String Matching in an Array | 🟢 Easy    | substring search   |
