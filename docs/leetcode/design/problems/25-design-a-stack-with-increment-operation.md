@@ -1,0 +1,105 @@
+---
+layout: page
+title: "Design a Stack With Increment Operation"
+difficulty: Medium
+category: Design
+tags: [Array, Stack, Design]
+leetcode_url: "https://leetcode.com/problems/design-a-stack-with-increment-operation"
+---
+
+# Design a Stack With Increment Operation / Design a Stack With Increment Operation
+
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
+> **Frequency**: 📘 Tier 3 — Gặp ở 4 companies
+> **See also**: [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram) | [Asteroid Collision](https://leetcode.com/problems/asteroid-collision)
+
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+
+**Pattern Recognition:**
+
+- Signal: "matching/nesting" + "most recent element" → **Stack**
+- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
+- Key insight: xác định state/transition phù hợp trước khi code
+
+**Visual — Design a Stack With Increment Operation example:**
+
+```
+stack = []
+
+push/pop from right →
+Process: scan left to right, stack maintains invariant
+```
+
+---
+
+## Problem Description
+
+Design a Stack With Increment Operation. ([LeetCode](https://leetcode.com/problems/design-a-stack-with-increment-operation))
+
+Difficulty: Medium | Acceptance: 80.1%
+
+```
+// TODO: Add concise problem statement (2-4 sentences)
+// Example 1: input → output
+// Example 2: input → output
+```
+
+Constraints:
+- See [LeetCode problem page](https://leetcode.com/problems/design-a-stack-with-increment-operation) for full constraints
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
+2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
+3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
+4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
+5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+
+---
+
+## Solutions
+
+```typescript
+/**
+ * Solution 1: Brute Force
+ * Time: O(?) — TODO: analyze
+ * Space: O(?) — TODO: analyze
+ */
+function designAStackWithIncrementOperationBruteForce(/* TODO: params */): unknown {
+  // TODO: Implement brute force approach
+  // Hint: Start with the most straightforward solution
+  throw new Error('Not implemented');
+}
+
+/**
+ * Solution 2: Optimized — Stack
+ * Time: O(?) — TODO: analyze
+ * Space: O(?) — TODO: analyze
+ */
+function designAStackWithIncrementOperation(/* TODO: params */): unknown {
+  // TODO: Implement optimal approach using Stack
+  // Hint: Push/pop to maintain invariant, process when stack condition changes
+  throw new Error('Not implemented');
+}
+
+// === Test Cases ===
+// console.log(designAStackWithIncrementOperation(/* example 1 */)); // expected
+// console.log(designAStackWithIncrementOperation(/* example 2 */)); // expected
+// console.log(designAStackWithIncrementOperation(/* edge case */)); // expected
+```
+
+---
+
+## 🔗 Related Problems
+
+- [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram) — same pattern: Monotonic Stack
+- [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) — same pattern: Stack
+- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle) — same pattern: Monotonic Stack
+- [Flatten Nested List Iterator](https://leetcode.com/problems/flatten-nested-list-iterator) — same pattern: DFS
+- [Design a Stack With Increment Operation — LeetCode](https://leetcode.com/problems/design-a-stack-with-increment-operation) — problem page
