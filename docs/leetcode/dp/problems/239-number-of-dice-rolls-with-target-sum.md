@@ -7,9 +7,9 @@ tags: [Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/number-of-dice-rolls-with-target-sum"
 ---
 
-# Number of Dice Rolls With Target Sum / Number of Dice Rolls With Target Sum
+# Number of Dice Rolls With Target Sum / Số Cách Tung Xúc Xắc Ra Tổng Mục Tiêu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming (Knapsack)
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
 > **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
 
@@ -17,92 +17,150 @@ leetcode_url: "https://leetcode.com/problems/number-of-dice-rolls-with-target-su
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Vietnamese Analogy:** Như đếm số cách tung n con xúc xắc để được tổng điểm đúng bằng target. Mỗi con xúc xắc có k mặt (1..k). Bài này giống bài đếm số cách đổi tiền nhưng mỗi đồng xu chỉ được dùng đúng 1 lần (mỗi xúc xắc tung 1 lần), và mỗi lần dùng đồng xu từ 1 đến k.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: n items each contributing [1..k] to a target sum, count arrangements → **DP Knapsack (bounded)**
+- Key insight: `dp[i][j]` = ways to get sum `j` using exactly `i` dice. `dp[i][j] = sum(dp[i-1][j-f])` for `f` in `1..k`. Can optimize to 1D with rolling array.
 
-**Visual — Number of Dice Rolls With Target Sum example:**
+**Visual — n=2, k=6, target=7 example:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+dp[0] = [1, 0, 0, 0, 0, 0, 0, 0]  (0 dice: only sum=0 possible)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+After dice 1 (faces 1..6):
+dp[1] = [0, 1, 1, 1, 1, 1, 1, 0]  (each face once)
+
+After dice 2 (faces 1..6):
+dp[2][7] = dp[1][6]+dp[1][5]+dp[1][4]+dp[1][3]+dp[1][2]+dp[1][1]
+         =  1  +  1  +  1  +  1  +  1  +  1  = 6
+
+6 ways to roll 7 with 2 dice: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) ✓
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Number of Dice Rolls With Target Sum. ([LeetCode](https://leetcode.com/problems/number-of-dice-rolls-with-target-sum))
+You have `n` dice, each with `k` faces numbered `1` to `k`. Return the number of ways to roll the dice so that the face sum equals `target`. Answer modulo `10^9 + 7`.
 
-Difficulty: Medium | Acceptance: 61.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-dice-rolls-with-target-sum) for full constraints
+- **Example 1:** `n=1, k=6, target=3` → `1`
+- **Example 2:** `n=2, k=6, target=7` → `6`
+- **Example 3:** `n=30, k=30, target=500` → `222616187`
+- **Constraints:** `1 ≤ n, k ≤ 30`, `1 ≤ target ≤ 1000`
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Bounded knapsack** / Knapsack có giới hạn: mỗi con xúc xắc tung đúng 1 lần, mỗi lần chọn 1 trong k mặt
+2. **Rolling array** / Mảng cuộn: dp chỉ cần hàng dice i dựa vào hàng dice i-1 → dùng 2 mảng hoặc 1D + reverse
+3. **Prefix sum optimization** / Tối ưu tổng tiền tố: `dp[i][j] = prefix[j-1] - prefix[j-k-1]` → O(n×target) không có k trong inner loop
+4. **MOD arithmetic** / Phép mod: nhớ mod mỗi phép cộng để tránh overflow với n=target=1000
+5. **Early termination** / Dừng sớm: nếu `i*k < target` thì dp[i][target] = 0 (không thể đạt được)
+6. **Space optimization** / Tối ưu không gian: từ O(n×target) xuống O(target) bằng rolling array
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: 2D DP — Clear but More Memory
+
+/\*_ @complexity Time: O(n × target × k) | Space: O(n × target) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfDiceRollsWithTargetSumBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function numRollsToTargetFull(n: number, k: number, target: number): number {
+  const MOD = 1_000_000_007;
+  // dp[i][j] = ways to get sum j using exactly i dice
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(target + 1).fill(0));
+  dp[0][0] = 1;
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfDiceRollsWithTargetSum(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= target; j++) {
+      for (let face = 1; face <= Math.min(k, j); face++) {
+        dp[i][j] = (dp[i][j] + dp[i - 1][j - face]) % MOD;
+      }
+    }
+  }
+  return dp[n][target];
 }
+```
 
-// === Test Cases ===
-// console.log(numberOfDiceRollsWithTargetSum(/* example 1 */)); // expected
-// console.log(numberOfDiceRollsWithTargetSum(/* example 2 */)); // expected
-// console.log(numberOfDiceRollsWithTargetSum(/* edge case */)); // expected
+### Approach 2: Rolling Array + Prefix Sum — Optimal
+
+/\*_ @complexity Time: O(n × target) | Space: O(target) _/
+
+```typescript
+function numRollsToTarget(n: number, k: number, target: number): number {
+  const MOD = 1_000_000_007;
+  let dp = new Array(target + 1).fill(0);
+  dp[0] = 1; // base: 0 dice, sum=0
+
+  for (let i = 0; i < n; i++) {
+    const ndp = new Array(target + 1).fill(0);
+    // Use prefix sum to compute sum over a sliding window of size k
+    let prefix = 0;
+    for (let j = 1; j <= target; j++) {
+      // Add dp[j-1] (face value j would need dp[0..j-1] — wait, we want dp[j-f] for f=1..k)
+      // prefix[j] = dp[0] + dp[1] + ... + dp[j] (old dp)
+      // ndp[j] = prefix[j-1] - prefix[j-k-1]  (sum of dp[j-k..j-1])
+      prefix = (prefix + dp[j - 1]) % MOD;
+      if (j > k) prefix = (prefix - dp[j - 1 - k] + MOD) % MOD;
+      ndp[j] = prefix;
+    }
+    for (let j = 0; j <= target; j++) dp[j] = ndp[j];
+  }
+
+  return dp[target];
+}
+```
+
+### Approach 3: Memoization (Top-Down) — Intuitive
+
+/\*_ @complexity Time: O(n × target × k) | Space: O(n × target) _/
+
+```typescript
+function numRollsToTargetMemo(n: number, k: number, target: number): number {
+  const MOD = 1_000_000_007;
+  const memo = new Map<string, number>();
+
+  function dp(diceLeft: number, remaining: number): number {
+    if (diceLeft === 0) return remaining === 0 ? 1 : 0;
+    if (remaining <= 0) return 0;
+    const key = `${diceLeft},${remaining}`;
+    if (memo.has(key)) return memo.get(key)!;
+    let ways = 0;
+    for (let f = 1; f <= Math.min(k, remaining); f++) {
+      ways = (ways + dp(diceLeft - 1, remaining - f)) % MOD;
+    }
+    memo.set(key, ways);
+    return ways;
+  }
+
+  return dp(n, target);
+}
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Number of Dice Rolls With Target Sum — LeetCode](https://leetcode.com/problems/number-of-dice-rolls-with-target-sum) — problem page
+```typescript
+console.log(numRollsToTarget(1, 6, 3)); // → 1
+console.log(numRollsToTarget(2, 6, 7)); // → 6
+console.log(numRollsToTarget(2, 5, 10)); // → 1  (only 5+5)
+console.log(numRollsToTarget(1, 2, 3)); // → 0  (max sum = 2 < 3)
+console.log(numRollsToTarget(30, 30, 500)); // → 222616187
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                | Difficulty | Pattern      |
+| -------------------------------------------------------------------------------------- | ---------- | ------------ |
+| [Coin Change II](https://leetcode.com/problems/coin-change-ii)                         | Medium     | DP Knapsack  |
+| [Combination Sum IV](https://leetcode.com/problems/combination-sum-iv)                 | Medium     | DP (ordered) |
+| [Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum) | Medium     | DP Knapsack  |
+| [Unique Paths](https://leetcode.com/problems/unique-paths)                             | Medium     | DP Grid      |

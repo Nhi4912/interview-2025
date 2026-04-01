@@ -7,7 +7,7 @@ tags: [Tree, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/check-completeness-of-a-binary-tree"
 ---
 
-# Check Completeness of a Binary Tree / Check Completeness of a Binary Tree
+# Check Completeness of a Binary Tree / Kiểm Tra Cây Nhị Phân Đầy Đủ
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,90 +17,153 @@ leetcode_url: "https://leetcode.com/problems/check-completeness-of-a-binary-tree
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Vietnamese Analogy:** Giống xếp hàng ở siêu thị — khách đứng từ trái sang phải, không được có chỗ trống ở giữa. Nếu có người đứng sau chỗ trống, hàng đó "không hoàn chỉnh". BFS duyệt từng tầng, hễ thấy `null` thì đặt cờ; nếu sau đó còn gặp node thực, là không hợp lệ.
 
 **Pattern Recognition:**
 
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "complete binary tree validation" → **BFS with null-sentinel flag**
+- Key insight: trong BFS level-order, khi gặp `null` lần đầu, tất cả phần tử tiếp theo phải là `null`
 
 **Visual — Check Completeness of a Binary Tree example:**
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
-
-BFS: process level by level using queue
+Valid (complete):       Invalid (incomplete):
+      1                       1
+     / \                     / \
+    2   3                   2   3
+   / \  /                  / \    \
+  4  5 6                  4   5    7
+                                  ↑ gap here!
+BFS queue for invalid:
+  [1] → [2,3] → [4,5,null,7]
+  After seeing null(3's left), next node is 7 → NOT complete!
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Check Completeness of a Binary Tree. ([LeetCode](https://leetcode.com/problems/check-completeness-of-a-binary-tree))
+Given the root of a binary tree, determine if it is a **complete binary tree** — all levels are fully filled except possibly the last, and the last level has all nodes as **far left** as possible.
 
-Difficulty: Medium | Acceptance: 58.4%
+**Example 1:** Tree `[1,2,3,4,5,6]` → `true`
+**Example 2:** Tree `[1,2,3,4,5,null,7]` → `false` (gap at position 6)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/check-completeness-of-a-binary-tree) for full constraints
+Constraints: `1 ≤ nodes ≤ 100`, `1 ≤ Node.val ≤ 1000`.
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **BFS null-flag approach**: the cleanest O(N) method / Dùng cờ sau khi gặp null là cách sạch nhất
+2. **Index approach**: complete tree if no node has index > n / Cách dùng index: node index <= n nghĩa là complete
+3. **Enqueue nulls**: unlike typical BFS, enqueue null children too / Cho null vào queue để phát hiện lỗ hổng
+4. **seenNull flag**: once true, any non-null node means incomplete / Một khi seenNull=true, nếu gặp node thật là sai
+5. **Edge cases**: single node is always complete / Cây 1 node luôn là complete
+6. **Alternative**: count nodes n, then check max index ≤ n via DFS / Đếm nodes, kiểm tra max_index <= n bằng DFS
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: BFS with Index Validation
+
+/\*_ @complexity Time: O(N) | Space: O(N) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function checkCompletenessOfABinaryTreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function checkCompletenessOfABinaryTree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function isCompleteTreeIndex(root: TreeNode | null): boolean {
+  if (!root) return true;
+  // Count total nodes
+  function countNodes(node: TreeNode | null): number {
+    if (!node) return 0;
+    return 1 + countNodes(node.left) + countNodes(node.right);
+  }
+  const n = countNodes(root);
+  // BFS with 1-based index; if index > n, not complete
+  const queue: [TreeNode, number][] = [[root, 1]];
+  while (queue.length) {
+    const [node, idx] = queue.shift()!;
+    if (idx > n) return false;
+    if (node.left) queue.push([node.left, 2 * idx]);
+    if (node.right) queue.push([node.right, 2 * idx + 1]);
+  }
+  return true;
 }
+```
 
-// === Test Cases ===
-// console.log(checkCompletenessOfABinaryTree(/* example 1 */)); // expected
-// console.log(checkCompletenessOfABinaryTree(/* example 2 */)); // expected
-// console.log(checkCompletenessOfABinaryTree(/* edge case */)); // expected
+### Approach 2: BFS Null-Sentinel Flag — Optimal
+
+/\*_ @complexity Time: O(N) | Space: O(N) _/
+
+```typescript
+function isCompleteTree(root: TreeNode | null): boolean {
+  if (!root) return true;
+  const queue: (TreeNode | null)[] = [root];
+  let seenNull = false;
+
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    if (node === null) {
+      seenNull = true;
+    } else {
+      // After seeing a null, any real node means incomplete
+      if (seenNull) return false;
+      queue.push(node.left); // enqueue even if null
+      queue.push(node.right);
+    }
+  }
+  return true;
+}
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Check Completeness of a Binary Tree — LeetCode](https://leetcode.com/problems/check-completeness-of-a-binary-tree) — problem page
+```typescript
+function build(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length || vals[0] == null) return null;
+  const root = new TreeNode(vals[0]);
+  const q = [root];
+  let i = 1;
+  while (q.length && i < vals.length) {
+    const n = q.shift()!;
+    if (vals[i] != null) {
+      n.left = new TreeNode(vals[i]!);
+      q.push(n.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] != null) {
+      n.right = new TreeNode(vals[i]!);
+      q.push(n.right);
+    }
+    i++;
+  }
+  return root;
+}
+console.log(isCompleteTree(build([1, 2, 3, 4, 5, 6]))); // → true
+console.log(isCompleteTree(build([1, 2, 3, 4, 5, null, 7]))); // → false
+console.log(isCompleteTree(build([1]))); // → true
+console.log(isCompleteTree(build([1, 2, 3, 4, 5, 6, 7]))); // → true (full level)
+console.log(isCompleteTreeIndex(build([1, 2, 3, 4, 5, 6]))); // → true
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                              | Difficulty | Pattern       |
+| ---------------------------------------------------------------------------------------------------- | ---------- | ------------- |
+| [Count Complete Tree Nodes](https://leetcode.com/problems/count-complete-tree-nodes)                 | Easy       | Binary Search |
+| [Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal) | Medium     | BFS           |
+| [Maximum Width of Binary Tree](https://leetcode.com/problems/maximum-width-of-binary-tree)           | Medium     | BFS           |

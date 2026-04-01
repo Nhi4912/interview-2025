@@ -7,7 +7,7 @@ tags: [String]
 leetcode_url: "https://leetcode.com/problems/minimum-changes-to-make-alternating-binary-string"
 ---
 
-# Minimum Changes To Make Alternating Binary String / Minimum Changes To Make Alternating Binary String
+# Minimum Changes To Make Alternating Binary String / Số Thay Đổi Tối Thiểu Để Chuỗi Nhị Phân Xen Kẽ
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,108 @@ leetcode_url: "https://leetcode.com/problems/minimum-changes-to-make-alternating
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
+**Vietnamese Analogy:** Hãy nghĩ đến bàn cờ vua — ô trắng và ô đen xen kẽ nhau theo quy luật hoàn hảo. Một chuỗi nhị phân xen kẽ giống như hàng ô cờ: vị trí chẵn là một màu, vị trí lẻ là màu kia. Chỉ có hai mẫu hợp lệ: "010101..." và "101010...". Đếm số ô cần đổi màu cho mỗi mẫu rồi lấy cái nhỏ hơn.
 
 **Pattern Recognition:**
 
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "alternating pattern" + "minimum changes" → **String Processing / Counting**
+- Key insight: Chỉ có hai mẫu target. Đếm mismatches với "010101...". Mismatches với mẫu kia = n - count (vì mọi vị trí phải là một trong hai).
 
-**Visual — Minimum Changes To Make Alternating Binary String example:**
+**Visual — s="0100":**
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
+Pattern A: "0101"   Pattern B: "1010"
+s =        "0100"   s =        "0100"
+
+Compare:
+  pos 0: s[0]='0' vs A[0]='0' ✓  vs B[0]='1' ✗
+  pos 1: s[1]='1' vs A[1]='1' ✓  vs B[1]='0' ✗
+  pos 2: s[2]='0' vs A[2]='0' ✓  vs B[2]='1' ✗
+  pos 3: s[3]='0' vs A[3]='1' ✗  vs B[3]='0' ✓
+
+mismatches_A = 1,  mismatches_B = 3
+answer = min(1, 3) = 1
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Minimum Changes To Make Alternating Binary String. ([LeetCode](https://leetcode.com/problems/minimum-changes-to-make-alternating-binary-string))
+Given binary string `s`, return the minimum number of character changes to make it alternating (no two adjacent characters are equal: "0101..." or "1010...").
 
-Difficulty: Easy | Acceptance: 63.7%
+- **Example 1:** s="0100" → `1` (change index 3 from '0' to '1': "0101")
+- **Example 2:** s="10" → `0` (already alternating)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-changes-to-make-alternating-binary-string) for full constraints
+Constraints: `1 ≤ n ≤ 10^4`, string contains only '0' and '1'.
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Only two targets** / Chỉ hai mẫu đích: "010101..." and "101010..." — no need to try others.
+2. **Complement property** / Tính chất bổ sung: mismatches_B = n - mismatches_A, so only count one.
+3. **Even index rule** / Quy tắc chỉ số chẵn: In pattern A, even positions = '0', odd = '1'. Check s[i] vs (i%2===0 ? '0' : '1').
+4. **No sorting needed** / Không cần sắp xếp: Single O(n) pass is optimal.
+5. **Edge: length 1** / Trường hợp dài 1: Always 0 changes (single char is trivially alternating).
+6. **Return type** / Kiểu trả về: Integer count, not the resulting string.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Count Both Patterns
+
+/\*_ @complexity Time: O(n) | Space: O(1) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumChangesToMakeAlternatingBinaryStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minOperationsBrute(s: string): number {
+  let mismatchA = 0; // mismatches with "010101..."
+  for (let i = 0; i < s.length; i++) {
+    const expected = i % 2 === 0 ? "0" : "1";
+    if (s[i] !== expected) mismatchA++;
+  }
+  const mismatchB = s.length - mismatchA; // mismatches with "101010..."
+  return Math.min(mismatchA, mismatchB);
 }
+```
 
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumChangesToMakeAlternatingBinaryString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+### Approach 2: Single Pass — Complement Trick (Optimal)
+
+/\*_ @complexity Time: O(n) | Space: O(1) _/
+
+```typescript
+function minOperations(s: string): number {
+  // Count how many positions don't match pattern "010101..."
+  // Positions matching "101010..." = n - count (perfect complement)
+  let countA = 0;
+  for (let i = 0; i < s.length; i++) {
+    // Pattern A: even index → '0', odd index → '1'
+    if (Number(s[i]) !== i % 2) countA++;
+  }
+  // Return whichever pattern requires fewer changes
+  return Math.min(countA, s.length - countA);
 }
+```
 
-// === Test Cases ===
-// console.log(minimumChangesToMakeAlternatingBinaryString(/* example 1 */)); // expected
-// console.log(minimumChangesToMakeAlternatingBinaryString(/* example 2 */)); // expected
-// console.log(minimumChangesToMakeAlternatingBinaryString(/* edge case */)); // expected
+---
+
+## 🧪 Test Cases
+
+```typescript
+console.log(minOperations("0100")); // → 1
+console.log(minOperations("10")); // → 0
+console.log(minOperations("1111")); // → 2
+console.log(minOperations("0101")); // → 0
+console.log(minOperations("1")); // → 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Minimum Changes To Make Alternating Binary String — LeetCode](https://leetcode.com/problems/minimum-changes-to-make-alternating-binary-string) — problem page
+| Problem                                                                                                                            | Difficulty | Pattern |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------- |
+| [Minimum Swaps to Make Strings Equal](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-binary-string-alternating) | Medium     | String  |
+| [Flip String to Monotone Increasing](https://leetcode.com/problems/flip-string-to-monotone-increasing)                             | Medium     | DP      |
+| [Decode String](https://leetcode.com/problems/decode-string)                                                                       | Medium     | Stack   |
+| [Check if Two String Arrays are Equivalent](https://leetcode.com/problems/check-if-two-string-arrays-are-equivalent)               | Easy       | String  |

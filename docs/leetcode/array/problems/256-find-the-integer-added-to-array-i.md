@@ -7,7 +7,7 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/find-the-integer-added-to-array-i"
 ---
 
-# Find the Integer Added to Array I / Find the Integer Added to Array I
+# Find the Integer Added to Array I / Tìm Số Nguyên Được Thêm Vào Mảng I
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,109 @@ leetcode_url: "https://leetcode.com/problems/find-the-integer-added-to-array-i"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Find the Integer Added to Array I" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Vietnamese Analogy:** Một lớp học đo chiều cao lần 1 (nums1) rồi lần 2 (nums2). Ai cũng lớn thêm đúng x cm. Để biết x, chỉ cần lấy chiều cao thấp nhất lần 2 trừ đi chiều cao thấp nhất lần 1 — vì người thấp nhất vẫn là người thấp nhất, chênh lệch chính là x.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "all elements of nums2 = nums1[i] + x for same x" → **min(nums2) - min(nums1)**
+- Key insight: cùng một x được cộng vào tất cả phần tử → hiệu của minimums = x (minimum giữ nguyên vị trí)
 
-**Visual — Find the Integer Added to Array I example:**
+**Visual — nums1=[2,6,4], nums2=[9,7,5]:**
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+nums1 sorted: [2, 4, 6]
+nums2 sorted: [5, 7, 9]
+
+x = min(nums2) - min(nums1)
+  = 5 - 2 = 3
+
+Verify: 2+3=5 ✓, 4+3=7 ✓, 6+3=9 ✓
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Find the Integer Added to Array I. ([LeetCode](https://leetcode.com/problems/find-the-integer-added-to-array-i))
+Given two arrays `nums1` and `nums2` of equal length. There exists an integer `x` such that `nums2[i] = nums1[i] + x` for every index. Return the integer `x`.
 
-Difficulty: Easy | Acceptance: 82.0%
+**Example 1:** `nums1=[2,6,4], nums2=[9,7,5]` → `3`
+**Example 2:** `nums1=[10], nums2=[5]` → `-5`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-integer-added-to-array-i) for full constraints
+**Constraints:** `1 ≤ nums1.length ≤ 100`, `-1000 ≤ nums1[i], nums2[i] ≤ 1000`
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **One-liner insight** / Một dòng giải: `x = min(nums2) - min(nums1)` — cực đơn giản
+2. **Why min?** / Tại sao min?: cùng một x cộng vào mọi phần tử → min của hai mảng chênh lệch đúng x
+3. **Could use any index** / Có thể dùng bất kỳ chỉ số: `nums2[0] - nums1[0]` cũng đúng (vì tất cả bằng x)
+4. **Sorted approach** / Cách dùng sort: sort cả hai → `nums2_sorted[0] - nums1_sorted[0]`
+5. **Negative x** / x âm: x có thể âm nếu nums2 nhỏ hơn nums1 → không cần xử lý đặc biệt
+6. **Verify approach** / Kiểm tra: có thể verify bằng cách check tất cả `nums2[i] - nums1[i]` bằng nhau
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Check All Differences — Brute Force
+
+/\*_ @complexity Time: O(n) | Space: O(1) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheIntegerAddedToArrayIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findIntegerAddedBrute(nums1: number[], nums2: number[]): number {
+  const x = nums2[0] - nums1[0];
+  // Verify all differences are equal (guaranteed by problem, but good practice)
+  for (let i = 1; i < nums1.length; i++) {
+    if (nums2[i] - nums1[i] !== x) return -1; // invalid input guard
+  }
+  return x;
 }
+```
 
-/**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheIntegerAddedToArrayI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+### Approach 2: Min Difference — Optimal O(n)
+
+/\*_ @complexity Time: O(n) | Space: O(1) _/
+
+```typescript
+function addedInteger(nums1: number[], nums2: number[]): number {
+  // x = min(nums2) - min(nums1)
+  const min1 = Math.min(...nums1);
+  const min2 = Math.min(...nums2);
+  return min2 - min1;
 }
+```
 
-// === Test Cases ===
-// console.log(findTheIntegerAddedToArrayI(/* example 1 */)); // expected
-// console.log(findTheIntegerAddedToArrayI(/* example 2 */)); // expected
-// console.log(findTheIntegerAddedToArrayI(/* edge case */)); // expected
+### Approach 3: Sort + Compare — Alternative
+
+/\*_ @complexity Time: O(n log n) | Space: O(n) _/
+
+```typescript
+function addedIntegerSort(nums1: number[], nums2: number[]): number {
+  const s1 = [...nums1].sort((a, b) => a - b);
+  const s2 = [...nums2].sort((a, b) => a - b);
+  return s2[0] - s1[0]; // minimum of sorted arrays
+}
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Find the Integer Added to Array I — LeetCode](https://leetcode.com/problems/find-the-integer-added-to-array-i) — problem page
+```typescript
+console.log(addedInteger([2, 6, 4], [9, 7, 5])); // → 3
+console.log(addedInteger([10], [5])); // → -5
+console.log(addedInteger([-3, -1, -2], [0, 2, 1])); // → 3
+console.log(addedInteger([0], [0])); // → 0
+console.log(addedIntegerSort([2, 6, 4], [9, 7, 5])); // → 3
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                                | Difficulty | Pattern |
+| ------------------------------------------------------------------------------------------------------ | ---------- | ------- |
+| [Find the Integer Added to Array II](https://leetcode.com/problems/find-the-integer-added-to-array-ii) | Medium     | Sorting |
+| [Find the Difference](https://leetcode.com/problems/find-the-difference)                               | Easy       | XOR/Sum |
+| [Missing Number](https://leetcode.com/problems/missing-number)                                         | Easy       | Math    |

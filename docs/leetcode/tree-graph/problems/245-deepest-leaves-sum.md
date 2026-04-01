@@ -7,7 +7,7 @@ tags: [Tree, Depth-First Search, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/deepest-leaves-sum"
 ---
 
-# Deepest Leaves Sum / Deepest Leaves Sum
+# Deepest Leaves Sum / Tổng Các Lá Sâu Nhất
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,90 +17,162 @@ leetcode_url: "https://leetcode.com/problems/deepest-leaves-sum"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Vietnamese Analogy:** Giống hái trái cây ở đáy giếng — chỉ những trái ở tầng sâu nhất mới được tính. BFS tự nhiên duyệt từng tầng; khi xử lý xong tầng cuối cùng, tổng của tầng đó chính là đáp án. DFS thì theo dõi depth và reset khi tìm thấy tầng sâu hơn.
 
 **Pattern Recognition:**
 
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "sum of deepest leaves" + "binary tree" → **BFS (last level sum)** hoặc **DFS track maxDepth**
+- Key insight: BFS: mỗi vòng lặp ghi lại levelSum, lần cuối cùng chính là đáp án
 
 **Visual — Deepest Leaves Sum example:**
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+Input:         1
+             /   \
+            2     3
+           / \     \
+          4   5     6
+         /           \
+        7              8
 
-BFS: process level by level using queue
+BFS levels:
+  L0: [1]       levelSum=1
+  L1: [2,3]     levelSum=5
+  L2: [4,5,6]   levelSum=15
+  L3: [7,8]     levelSum=15  ← last level
+
+Output: 15
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Deepest Leaves Sum. ([LeetCode](https://leetcode.com/problems/deepest-leaves-sum))
+Given the root of a binary tree, return the sum of values of its **deepest leaves**. The deepest leaves are all leaf nodes at the maximum depth of the tree.
 
-Difficulty: Medium | Acceptance: 86.3%
+**Example 1:** Tree `[1,2,3,4,5,null,6,7,null,null,null,null,8]` → `15`
+**Example 2:** Tree `[6,7,8,2,7,1,3,9,null,1,4,null,null,null,5]` → `19`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/deepest-leaves-sum) for full constraints
+Constraints: `1 ≤ nodes ≤ 10⁴`, `1 ≤ Node.val ≤ 100`.
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **BFS natural fit**: last level sum = answer / BFS rất tự nhiên — tổng của tầng cuối là đáp án
+2. **DFS alternative**: track maxDepth, reset sum when deeper level found / DFS: theo dõi maxDepth, reset sum khi tìm tầng sâu hơn
+3. **All leaves at max depth** — may have multiple / Có thể có nhiều lá ở tầng sâu nhất
+4. **Single node tree**: the root itself is the deepest leaf / Cây 1 node: root là lá sâu nhất
+5. **No need to store all nodes**: BFS just needs levelSum per iteration / Không cần lưu tất cả node, chỉ cần levelSum mỗi vòng
+6. **Follow-up**: what if you need coordinates of deepest leaves? / Nếu cần tọa độ của deepest leaves thì sao?
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: DFS with maxDepth Tracking
+
+/\*_ @complexity Time: O(N) | Space: O(H) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function deepestLeavesSumBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function deepestLeavesSum(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
+function deepestLeavesSumDFS(root: TreeNode | null): number {
+  let maxDepth = 0;
+  let sum = 0;
 
-// === Test Cases ===
-// console.log(deepestLeavesSum(/* example 1 */)); // expected
-// console.log(deepestLeavesSum(/* example 2 */)); // expected
-// console.log(deepestLeavesSum(/* edge case */)); // expected
+  function dfs(node: TreeNode | null, depth: number): void {
+    if (!node) return;
+    if (depth > maxDepth) {
+      maxDepth = depth;
+      sum = node.val; // new deepest level found, reset sum
+    } else if (depth === maxDepth) {
+      sum += node.val; // same deepest level, accumulate
+    }
+    dfs(node.left, depth + 1);
+    dfs(node.right, depth + 1);
+  }
+  dfs(root, 1);
+  return sum;
+}
+```
+
+### Approach 2: BFS Last Level Sum — Optimal
+
+/\*_ @complexity Time: O(N) | Space: O(W) where W = max width _/
+
+```typescript
+function deepestLeavesSum(root: TreeNode | null): number {
+  if (!root) return 0;
+  let queue: TreeNode[] = [root];
+  let levelSum = 0;
+
+  while (queue.length > 0) {
+    levelSum = 0;
+    const next: TreeNode[] = [];
+    for (const node of queue) {
+      levelSum += node.val;
+      if (node.left) next.push(node.left);
+      if (node.right) next.push(node.right);
+    }
+    queue = next;
+  }
+  // When queue becomes empty, levelSum holds the last level's sum
+  return levelSum;
+}
+```
+
+### Approach 3: Single-Pass DFS with Pair Return
+
+/\*_ @complexity Time: O(N) | Space: O(H) _/
+
+```typescript
+function deepestLeavesSumV3(root: TreeNode | null): number {
+  // Returns [depth, sumAtDepth]
+  function dfs(node: TreeNode | null): [number, number] {
+    if (!node) return [0, 0];
+    const [ld, ls] = dfs(node.left);
+    const [rd, rs] = dfs(node.right);
+    if (ld === 0 && rd === 0) return [1, node.val]; // leaf
+    if (ld > rd) return [ld + 1, ls];
+    if (rd > ld) return [rd + 1, rs];
+    return [ld + 1, ls + rs]; // equal depth: sum both sides
+  }
+  return dfs(root)[1];
+}
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Deepest Leaves Sum — LeetCode](https://leetcode.com/problems/deepest-leaves-sum) — problem page
+```typescript
+// Simple manual tree: 1 → (2 → (4→7), 3 → 6→8)
+const n7 = new TreeNode(7), n8 = new TreeNode(8);
+const n4 = new TreeNode(4, n7), n5 = new TreeNode(5);
+const n6 = new TreeNode(6, null, n8);
+const root1 = new TreeNode(1, new TreeNode(2, n4, n5), new TreeNode(3, null, n6));
+console.log(deepestLeavesSum(root1));     // → 15  (7+8)
+console.log(deepestLeavesSum(new TreeNode(1)));  // → 1
+console.log(deepestLeavesSumDFS(root1)); // → 15
+console.log(deepestLeavesSumV3(root1));  // → 15
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                                  | Difficulty | Pattern |
+| -------------------------------------------------------------------------------------------------------- | ---------- | ------- |
+| [Find Largest Value in Each Tree Row](https://leetcode.com/problems/find-largest-value-in-each-tree-row) | Medium     | BFS     |
+| [Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal)     | Medium     | BFS     |
+| [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree)               | Easy       | DFS/BFS |

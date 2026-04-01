@@ -7,7 +7,7 @@ tags: [Array, String, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/shifting-letters-ii"
 ---
 
-# Shifting Letters II / Shifting Letters II
+# Shifting Letters II / Dịch Chuyển Chữ Cái II
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,138 @@ leetcode_url: "https://leetcode.com/problems/shifting-letters-ii"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+**Vietnamese Analogy:** Hãy nghĩ đến hệ thống điều hòa nhiệt độ trong một tòa nhà — mỗi lệnh tăng/giảm nhiệt độ áp dụng cho một dải phòng từ tầng L đến tầng R. Thay vì chỉnh từng phòng một (O(n) mỗi lệnh), ta dùng "mảng hiệu" (difference array): đánh dấu +1 hoặc -1 tại điểm bắt đầu và kết thúc, rồi quét tổng tích lũy để tính nhiệt độ từng phòng chỉ trong O(n).
 
 **Pattern Recognition:**
 
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "range updates" + "apply multiple intervals" + "build final string" → **Difference Array / Prefix Sum**
+- Key insight: Với mỗi shift [l, r, direction]: diff[l] += (+1 or -1), diff[r+1] -= (+1 or -1). Tính prefix sum của diff → tổng shift tại mỗi vị trí. Áp dụng shift modulo 26.
 
-**Visual — Shifting Letters II example:**
+**Visual — s="abc", shifts=[[0,1,0],[1,2,1]]:**
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+diff array (size n+1): [0, 0, 0, 0]
+
+shift [0,1,0] (backward=-1): diff[0]+=-1, diff[2]-= -1
+  diff: [-1, 0, 1, 0]
+
+shift [1,2,1] (forward=+1): diff[1]+=1, diff[3]-=1
+  diff: [-1, 1, 1, -1]
+
+Prefix sum:
+  pos 0: running = -1  → shift 'a' by -1 = 'z'
+  pos 1: running = -1+1=0  → shift 'b' by 0 = 'b'
+  pos 2: running = 0+1=1  → shift 'c' by 1 = 'd'
+
+Result: "zbd"
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Shifting Letters II. ([LeetCode](https://leetcode.com/problems/shifting-letters-ii))
+Given string `s` and array of `shifts` where `shifts[i]=[start, end, direction]`, for direction=1 shift chars forward (a→b→...→z→a), direction=0 shift backward. Apply all shifts simultaneously. Return the resulting string.
 
-Difficulty: Medium | Acceptance: 53.3%
+- **Example 1:** s="abc", shifts=[[0,1,0],[1,2,1]] → `"zbd"`
+- **Example 2:** s="dztz", shifts=[[0,0,0],[1,1,1]] → `"catz"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/shifting-letters-ii) for full constraints
+Constraints: `1 ≤ n ≤ 5×10^4`, `1 ≤ shifts.length ≤ 5×10^4`.
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Difference array pattern** / Mảng hiệu: For range [l,r] update: mark start and past-end → sweep once for totals.
+2. **Direction encoding** / Mã hóa chiều: direction=1 means +1, direction=0 means -1.
+3. **Modulo 26** / Modulo 26: Total shift at each position modulo 26. Handle negative: `((shift % 26) + 26) % 26`.
+4. **Don't apply shifts one by one** / Không áp dụng từng cái một: That's O(n × shifts) = O(n²). Use diff array for O(n + shifts).
+5. **Build result char by char** / Xây dựng kết quả: Compute new char = `(s[i].charCodeAt - 'a' + totalShift) % 26 + 'a'`.
+6. **Off-by-one** / Lỗi lệch 1: diff[r+1] -= delta. Size of diff array = n+1.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Brute Force — Apply Each Shift Range
+
+/\*_ @complexity Time: O(n × shifts.length) | Space: O(1) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shiftingLettersIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function shiftingLettersBrute(s: string, shifts: number[][]): string {
+  const arr = s.split("").map((c) => c.charCodeAt(0) - 97);
+  for (const [l, r, dir] of shifts) {
+    const delta = dir === 1 ? 1 : -1;
+    for (let i = l; i <= r; i++) {
+      arr[i] = (((arr[i] + delta) % 26) + 26) % 26;
+    }
+  }
+  return arr.map((c) => String.fromCharCode(c + 97)).join("");
 }
+```
 
-/**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shiftingLettersIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+### Approach 2: Difference Array — O(n + m)
+
+/\*_ @complexity Time: O(n + m) | Space: O(n) _/
+
+```typescript
+function shiftingLetters(s: string, shifts: number[][]): string {
+  const n = s.length;
+  const diff = new Array(n + 1).fill(0);
+
+  // Mark range updates in difference array
+  for (const [l, r, dir] of shifts) {
+    const delta = dir === 1 ? 1 : -1;
+    diff[l] += delta;
+    if (r + 1 <= n) diff[r + 1] -= delta;
+  }
+
+  // Compute prefix sum → total shift at each position
+  const result: string[] = [];
+  let runningShift = 0;
+  for (let i = 0; i < n; i++) {
+    runningShift += diff[i];
+    const base = s.charCodeAt(i) - 97;
+    const shifted = (((base + runningShift) % 26) + 26) % 26;
+    result.push(String.fromCharCode(shifted + 97));
+  }
+  return result.join("");
 }
+```
 
-// === Test Cases ===
-// console.log(shiftingLettersIi(/* example 1 */)); // expected
-// console.log(shiftingLettersIi(/* example 2 */)); // expected
-// console.log(shiftingLettersIi(/* edge case */)); // expected
+---
+
+## 🧪 Test Cases
+
+```typescript
+console.log(
+  shiftingLetters("abc", [
+    [0, 1, 0],
+    [1, 2, 1],
+  ]),
+); // → "zbd"
+console.log(
+  shiftingLetters("dztz", [
+    [0, 0, 0],
+    [1, 1, 1],
+  ]),
+); // → "catz"
+console.log(shiftingLetters("a", [[0, 0, 1]])); // → "b"
+console.log(shiftingLetters("z", [[0, 0, 1]])); // → "a"
+console.log(
+  shiftingLetters("abcde", [
+    [1, 3, 0],
+    [0, 4, 1],
+  ]),
+); // → "bcbcd"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Count Vowel Strings in Ranges](https://leetcode.com/problems/count-vowel-strings-in-ranges) — same pattern: Prefix Sum
-- [Can Make Palindrome from Substring](https://leetcode.com/problems/can-make-palindrome-from-substring) — same pattern: Prefix Sum
-- [Number of Same-End Substrings](https://leetcode.com/problems/number-of-same-end-substrings) — same pattern: Prefix Sum
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Shifting Letters II — LeetCode](https://leetcode.com/problems/shifting-letters-ii) — problem page
+| Problem                                                                                      | Difficulty | Pattern          |
+| -------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Count Vowel Strings in Ranges](https://leetcode.com/problems/count-vowel-strings-in-ranges) | Medium     | Prefix Sum       |
+| [Range Addition](https://leetcode.com/problems/range-addition)                               | Medium     | Difference Array |
+| [Car Pooling](https://leetcode.com/problems/car-pooling)                                     | Medium     | Difference Array |
+| [Shifting Letters](https://leetcode.com/problems/shifting-letters)                           | Medium     | Prefix Sum       |

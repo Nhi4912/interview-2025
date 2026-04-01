@@ -7,7 +7,7 @@ tags: [Array, Bit Manipulation, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/shortest-subarray-with-or-at-least-k-i"
 ---
 
-# Shortest Subarray With OR at Least K I / Shortest Subarray With OR at Least K I
+# Shortest Subarray With OR at Least K I / Mảng Con Ngắn Nhất Có OR Ít Nhất K (I)
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,90 +17,132 @@ leetcode_url: "https://leetcode.com/problems/shortest-subarray-with-or-at-least-
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+**Vietnamese Analogy:** Hãy hình dung bạn đang chọn các lá bài có số nhị phân. Phép OR giống như "gộp" các lá — một khi bit đã bật thì không tắt được trong cùng cửa sổ. Vì n ≤ 200 (nhỏ), có thể thử mọi cặp (l,r) với O(n²). Nhưng hiểu sliding window để áp dụng cho version II.
 
 **Pattern Recognition:**
 
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "shortest subarray", OR operation, `n ≤ 200` (Easy version) → **Brute O(n²)** + optional sliding window
+- Key insight: OR tích lũy — một khi thêm phần tử OR chỉ tăng hoặc giữ nguyên → có thể early-break
 
-**Visual — Shortest Subarray With OR at Least K I example:**
+**Visual — nums=[2,1,8], k=10:**
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+l=0:
+  r=0: OR=2  < 10
+  r=1: OR=3  < 10
+  r=2: OR=11 ≥ 10 → len=3
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+l=1:
+  r=1: OR=1  < 10
+  r=2: OR=9  < 10  (1|8=9)
+
+l=2:
+  r=2: OR=8  < 10
+
+Best = 3 (full array 2|1|8=11≥10)
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Shortest Subarray With OR at Least K I. ([LeetCode](https://leetcode.com/problems/shortest-subarray-with-or-at-least-k-i))
+Given integer array `nums` and integer `k`. Return the length of the shortest non-empty subarray whose bitwise OR is at least `k`, or `-1` if no such subarray exists.
 
-Difficulty: Easy | Acceptance: 42.8%
+**Example 1:** `nums=[1,2,3], k=2` → `1` (subarray [2] or [3])
+**Example 2:** `nums=[2,1,8], k=10` → `3` (entire array: 2|1|8=11)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/shortest-subarray-with-or-at-least-k-i) for full constraints
+**Constraints:** `1 ≤ nums.length ≤ 200`, `1 ≤ nums[i] ≤ 1000`, `1 ≤ k ≤ 1000`
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+1. **OR is monotone** / OR đơn điệu tăng: khi mở rộng subarray, OR chỉ tăng → early break khi OR ≥ k
+2. **Brute O(n²) OK** / n ≤ 200 → O(n²) an toàn: 200² = 40K phép tính
+3. **Single element check** / Kiểm tra phần tử đơn: nếu `nums[i] >= k` → trả về 1 ngay
+4. **-1 case** / Trường hợp -1: nếu OR toàn mảng < k → không có subarray nào thỏa
+5. **Difference from II** / Khác với version II: version I n nhỏ hơn nhiều → O(n²) đủ
+6. **Upgrade path** / Nâng cấp: hiểu bit-count trick để xử lý version II (n=2×10^5)
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Brute Force — All Subarrays with Early Break
+
+/\*_ @complexity Time: O(n²) | Space: O(1) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shortestSubarrayWithOrAtLeastKIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function shortestSubarrayOrKBrute(nums: number[], k: number): number {
+  const n = nums.length;
+  let ans = Infinity;
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shortestSubarrayWithOrAtLeastKI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+  for (let l = 0; l < n; l++) {
+    let or = 0;
+    for (let r = l; r < n; r++) {
+      or |= nums[r];
+      if (or >= k) {
+        ans = Math.min(ans, r - l + 1);
+        break; // OR can only grow, so this is already shortest for this l
+      }
+    }
+  }
+  return ans === Infinity ? -1 : ans;
 }
+```
 
-// === Test Cases ===
-// console.log(shortestSubarrayWithOrAtLeastKI(/* example 1 */)); // expected
-// console.log(shortestSubarrayWithOrAtLeastKI(/* example 2 */)); // expected
-// console.log(shortestSubarrayWithOrAtLeastKI(/* edge case */)); // expected
+### Approach 2: Sliding Window + Bit Count — Scalable
+
+/\*_ @complexity Time: O(n × 32) | Space: O(32) _/
+
+```typescript
+function minimumSubarrayLengthI(nums: number[], k: number): number {
+  const bitCount = new Array(32).fill(0);
+  let currentOr = 0;
+  let ans = Infinity;
+  let left = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    // Add nums[right] to window
+    for (let b = 0; b < 32; b++) {
+      if ((nums[right] >> b) & 1) {
+        if (++bitCount[b] === 1) currentOr |= 1 << b;
+      }
+    }
+
+    // Shrink left while OR still satisfies condition
+    while (currentOr >= k) {
+      ans = Math.min(ans, right - left + 1);
+      for (let b = 0; b < 32; b++) {
+        if ((nums[left] >> b) & 1) {
+          if (--bitCount[b] === 0) currentOr &= ~(1 << b);
+        }
+      }
+      left++;
+    }
+  }
+  return ans === Infinity ? -1 : ans;
+}
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Shortest Subarray With OR at Least K II](https://leetcode.com/problems/shortest-subarray-with-or-at-least-k-ii) — same pattern: Sliding Window
-- [Longest Nice Subarray](https://leetcode.com/problems/longest-nice-subarray) — same pattern: Sliding Window
-- [Minimum Number of K Consecutive Bit Flips](https://leetcode.com/problems/minimum-number-of-k-consecutive-bit-flips) — same pattern: Sliding Window
-- [Maximum Strong Pair XOR I](https://leetcode.com/problems/maximum-strong-pair-xor-i) — same pattern: Trie
-- [Shortest Subarray With OR at Least K I — LeetCode](https://leetcode.com/problems/shortest-subarray-with-or-at-least-k-i) — problem page
+```typescript
+console.log(shortestSubarrayOrKBrute([1, 2, 3], 2)); // → 1
+console.log(shortestSubarrayOrKBrute([2, 1, 8], 10)); // → 3
+console.log(shortestSubarrayOrKBrute([1, 2], 4)); // → -1 (1|2=3 < 4)
+console.log(minimumSubarrayLengthI([1, 2, 3], 2)); // → 1
+console.log(minimumSubarrayLengthI([2, 1, 8], 10)); // → 3
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                                          | Difficulty | Pattern               |
+| ---------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| [Shortest Subarray With OR at Least K II](https://leetcode.com/problems/shortest-subarray-with-or-at-least-k-ii) | Medium     | Sliding Window + Bits |
+| [Longest Nice Subarray](https://leetcode.com/problems/longest-nice-subarray)                                     | Medium     | Sliding Window + Bits |
+| [Maximum AND Subarray](https://leetcode.com/problems/maximum-and-subarray)                                       | -          | Bit Manipulation      |

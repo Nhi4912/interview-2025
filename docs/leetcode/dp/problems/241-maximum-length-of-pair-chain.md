@@ -7,9 +7,9 @@ tags: [Array, Dynamic Programming, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/maximum-length-of-pair-chain"
 ---
 
-# Maximum Length of Pair Chain / Maximum Length of Pair Chain
+# Maximum Length of Pair Chain / Độ Dài Lớn Nhất Của Chuỗi Cặp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy / DP
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
 > **See also**: [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) | [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs)
 
@@ -17,92 +17,150 @@ leetcode_url: "https://leetcode.com/problems/maximum-length-of-pair-chain"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Vietnamese Analogy:** Như xâu chuỗi trang sức — mỗi miếng trang sức có khoảng giá trị [a, b], và miếng tiếp theo phải bắt đầu từ giá trị **lớn hơn** (không bằng) b. Chiến lược tham lam: luôn chọn miếng kết thúc sớm nhất — tương tự bài lập lịch phòng họp.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: longest chain of non-overlapping pairs (strict: b_i < a_j) → **Greedy (sort by end) or DP**
+- Key insight: Sort by second element (end of pair). Greedily pick each pair if its start > current chain's end. Each accepted pair leaves maximum room for future pairs.
 
-**Visual — Maximum Length of Pair Chain example:**
+**Visual — pairs=[[3,4],[1,2],[2,3]] example:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Sorted by end: [1,2] [2,3] [3,4]
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Greedy:
+  Pick [1,2]: chain_end = 2, count = 1
+  [2,3]: start=2, need > 2 → SKIP (2 is NOT strictly greater)
+  [3,4]: start=3 > 2 ✓ → pick, chain_end = 4, count = 2
+
+Answer: 2  ([1,2] then [3,4])
+
+DP verification:
+  dp[0]=1, dp[1]=1, dp[2]=max(dp[0]+1, 1)=2 (3>2)
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Maximum Length of Pair Chain. ([LeetCode](https://leetcode.com/problems/maximum-length-of-pair-chain))
+Given `n` pairs where `pairs[i] = [a, b]` with `a < b`, find the longest chain. A chain satisfies: for consecutive pairs `(c, d)` and `(e, f)`, we need `d < e` (strictly less than).
 
-Difficulty: Medium | Acceptance: 60.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-length-of-pair-chain) for full constraints
+- **Example 1:** `pairs=[[1,2],[2,3],[3,4]]` → `2` (`[1,2]→[3,4]`)
+- **Example 2:** `pairs=[[1,2],[7,8],[4,5]]` → `3` (`[1,2]→[4,5]→[7,8]`)
+- **Constraints:** `1 ≤ n ≤ 1000`, `-1000 ≤ a < b ≤ 1000`
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Sort by END** / Sắp theo giá trị kết thúc: bí quyết greedy — kết thúc sớm nhất → chừa nhiều chỗ hơn
+2. **Strict inequality** / Bất đẳng thức nghiêm ngặt: `b_i < a_j` (NOT ≤) — khác với non-overlapping intervals
+3. **Greedy vs DP** / Greedy vs DP: greedy O(n log n) tốt hơn DP O(n²); cả hai đều đúng
+4. **DP state** / Trạng thái DP: `dp[i]` = độ dài chuỗi dài nhất kết thúc tại cặp i (sau khi sort)
+5. **Similar to LIS** / Giống LIS: cấu trúc tương tự Longest Increasing Subsequence nhưng điều kiện nối là `pairs[j][1] < pairs[i][0]`
+6. **O(n log n) DP** / DP O(n log n): có thể dùng binary search để tìm cặp cuối cùng tương thích, giống LIS patience sort
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: DP — O(n²)
+
+/\*_ @complexity Time: O(n²) | Space: O(n) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumLengthOfPairChainBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function findLongestChainDP(pairs: number[][]): number {
+  pairs.sort((a, b) => a[0] - b[0]); // sort by start
+  const n = pairs.length;
+  const dp = new Array(n).fill(1);
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumLengthOfPairChain(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      // pairs[j][1] < pairs[i][0]: strict, pair j ends before pair i starts
+      if (pairs[j][1] < pairs[i][0]) {
+        dp[i] = Math.max(dp[i], dp[j] + 1);
+      }
+    }
+  }
+  return Math.max(...dp);
 }
+```
 
-// === Test Cases ===
-// console.log(maximumLengthOfPairChain(/* example 1 */)); // expected
-// console.log(maximumLengthOfPairChain(/* example 2 */)); // expected
-// console.log(maximumLengthOfPairChain(/* edge case */)); // expected
+### Approach 2: Greedy — Optimal O(n log n)
+
+/\*_ @complexity Time: O(n log n) | Space: O(1) _/
+
+```typescript
+function findLongestChain(pairs: number[][]): number {
+  // Sort by END value (second element)
+  pairs.sort((a, b) => a[1] - b[1]);
+
+  let count = 0;
+  let chainEnd = -Infinity; // end of last picked pair
+
+  for (const [start, end] of pairs) {
+    if (start > chainEnd) {
+      // This pair starts strictly after the current chain ends → extend chain
+      count++;
+      chainEnd = end;
+    }
+    // Otherwise skip: this pair overlaps with (or touches) the current chain
+  }
+
+  return count;
+}
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs) — same pattern: Dynamic Programming
-- [Find the Maximum Sum of Node Values](https://leetcode.com/problems/find-the-maximum-sum-of-node-values) — same pattern: Dynamic Programming
-- [Greatest Sum Divisible by Three](https://leetcode.com/problems/greatest-sum-divisible-by-three) — same pattern: Dynamic Programming
-- [Maximum Length of Pair Chain — LeetCode](https://leetcode.com/problems/maximum-length-of-pair-chain) — problem page
+```typescript
+console.log(
+  findLongestChain([
+    [1, 2],
+    [2, 3],
+    [3, 4],
+  ]),
+); // → 2
+console.log(
+  findLongestChain([
+    [1, 2],
+    [7, 8],
+    [4, 5],
+  ]),
+); // → 3
+console.log(findLongestChain([[1, 2]])); // → 1
+console.log(
+  findLongestChain([
+    [-10, -8],
+    [8, 9],
+    [-5, 0],
+    [0, 1],
+    [5, 6],
+    [-3, 4],
+  ]),
+); // → 4
+console.log(
+  findLongestChain([
+    [1, 100],
+    [2, 3],
+    [4, 5],
+  ]),
+); // → 2 ([2,3]→[4,5])
+```
+
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                                                | Difficulty | Pattern            |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals)                                   | Medium     | Greedy             |
+| [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence)                         | Medium     | DP / Binary Search |
+| [Maximum Length of Pair Chain](https://leetcode.com/problems/maximum-length-of-pair-chain)                             | Medium     | Greedy / DP        |
+| [Minimum Number of Arrows to Burst Balloons](https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons) | Medium     | Greedy             |
+```

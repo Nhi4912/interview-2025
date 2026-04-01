@@ -7,7 +7,7 @@ tags: [Array, Math, Geometry]
 leetcode_url: "https://leetcode.com/problems/minimum-time-visiting-all-points"
 ---
 
-# Minimum Time Visiting All Points / Minimum Time Visiting All Points
+# Minimum Time Visiting All Points / Thời Gian Tối Thiểu Thăm Tất Cả Điểm
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,129 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-visiting-all-points"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
+**Vietnamese Analogy:** Hãy tưởng tượng bạn là quân Vua trên bàn cờ — được phép đi theo 8 hướng (kể cả đường chéo), mỗi bước tốn 1 giây. Để đi từ ô A đến ô B, bạn "đi chéo" tối đa rồi đi thẳng — thời gian luôn bằng max(|dx|, |dy|), tức khoảng cách Chebyshev.
 
 **Pattern Recognition:**
 
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "8-directional movement", "min time between points" → **Chebyshev Distance**
+- Key insight: `time(A→B) = max(|x2-x1|, |y2-y1|)`; total = sum over consecutive pairs
 
-**Visual — Minimum Time Visiting All Points example:**
+**Visual — points=[[1,1],[3,4],[-1,0]]:**
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+Segment 1→2: dx=|3-1|=2, dy=|4-1|=3 → max(2,3) = 3s
+  (1,1) ──2 diagonal──► (3,3) ──1 up──► (3,4)
+
+Segment 2→3: dx=|−1−3|=4, dy=|0−4|=4 → max(4,4) = 4s
+  (3,4) ──4 diagonal (SW)──► (−1,0)
+
+Total = 3 + 4 = 7 seconds ✓
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Minimum Time Visiting All Points. ([LeetCode](https://leetcode.com/problems/minimum-time-visiting-all-points))
+Given an array of 2D points in order. Each second you can move ≤1 unit horizontally, vertically, or diagonally. Return the minimum time to visit all points in order.
 
-Difficulty: Easy | Acceptance: 82.6%
+**Example 1:** `points=[[1,1],[3,4],[-1,0]]` → `7`
+**Example 2:** `points=[[3,2],[-2,2]]` → `5`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-time-visiting-all-points) for full constraints
+**Constraints:** `1 ≤ points.length ≤ 100`, `-10^4 ≤ points[i][j] ≤ 10^4`
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Chebyshev distance** / Khoảng cách Chebyshev: `max(|dx|, |dy|)` là công thức khi di chuyển 8 hướng
+2. **No backtracking** / Không cần quay lui: thứ tự thăm đã cố định → sum các đoạn liên tiếp
+3. **One linear pass** / Một lần duyệt: chỉ cần `for i in 0..n-2` cộng dần
+4. **Edge case** / Trường hợp đặc biệt: 1 điểm → 0; 2 điểm cùng vị trí → +0
+5. **Why diagonal wins** / Tại sao chéo tốt: mỗi bước chéo "tiêu" cả dx lẫn dy cùng lúc → tối ưu
+6. **Follow-up** / Mở rộng: không có đường chéo → Manhattan distance = |dx|+|dy|
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Step-by-Step Simulation — Brute Force
+
+/\*_ @complexity Time: O(sum of distances) | Space: O(1) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeVisitingAllPointsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minTimeVisitingBrute(points: number[][]): number {
+  let time = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    let [x, y] = points[i];
+    const [tx, ty] = points[i + 1];
+    while (x !== tx || y !== ty) {
+      if (x < tx) x++;
+      else if (x > tx) x--;
+      if (y < ty) y++;
+      else if (y > ty) y--;
+      time++;
+    }
+  }
+  return time;
 }
+```
 
-/**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeVisitingAllPoints(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+### Approach 2: Chebyshev Distance Formula — Optimal
+
+/\*_ @complexity Time: O(n) | Space: O(1) _/
+
+```typescript
+function minTimeVisiting(points: number[][]): number {
+  let time = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const dx = Math.abs(points[i + 1][0] - points[i][0]);
+    const dy = Math.abs(points[i + 1][1] - points[i][1]);
+    time += Math.max(dx, dy); // Chebyshev distance
+  }
+  return time;
 }
-
-// === Test Cases ===
-// console.log(minimumTimeVisitingAllPoints(/* example 1 */)); // expected
-// console.log(minimumTimeVisitingAllPoints(/* example 2 */)); // expected
-// console.log(minimumTimeVisitingAllPoints(/* edge case */)); // expected
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line) — same pattern: Math
-- [K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin) — same pattern: Heap / Priority Queue
-- [Maximum Number of Visible Points](https://leetcode.com/problems/maximum-number-of-visible-points) — same pattern: Sliding Window
-- [Minimum Area Rectangle](https://leetcode.com/problems/minimum-area-rectangle) — same pattern: Sorting
-- [Minimum Time Visiting All Points — LeetCode](https://leetcode.com/problems/minimum-time-visiting-all-points) — problem page
+```typescript
+console.log(
+  minTimeVisiting([
+    [1, 1],
+    [3, 4],
+    [-1, 0],
+  ]),
+); // → 7
+console.log(
+  minTimeVisiting([
+    [3, 2],
+    [-2, 2],
+  ]),
+); // → 5
+console.log(minTimeVisiting([[0, 0]])); // → 0 (single point)
+console.log(
+  minTimeVisiting([
+    [0, 0],
+    [0, 0],
+  ]),
+); // → 0 (same point)
+console.log(
+  minTimeVisitingBrute([
+    [1, 1],
+    [3, 4],
+    [-1, 0],
+  ]),
+); // → 7
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                                | Difficulty | Pattern            |
+| ------------------------------------------------------------------------------------------------------ | ---------- | ------------------ |
+| [K Closest Points to Origin](https://leetcode.com/problems/k-closest-points-to-origin)                 | Medium     | Euclidean Distance |
+| [Walking Robot Simulation](https://leetcode.com/problems/walking-robot-simulation)                     | Medium     | Grid Simulation    |
+| [Minimum Distance Between BST Nodes](https://leetcode.com/problems/minimum-distance-between-bst-nodes) | Easy       | Tree Traversal     |

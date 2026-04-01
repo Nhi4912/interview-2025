@@ -7,7 +7,7 @@ tags: [String, Stack, Greedy]
 leetcode_url: "https://leetcode.com/problems/maximum-score-from-removing-substrings"
 ---
 
-# Maximum Score From Removing Substrings / Maximum Score From Removing Substrings
+# Maximum Score From Removing Substrings / Điểm Tối Đa Khi Xóa Chuỗi Con
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,89 +17,125 @@ leetcode_url: "https://leetcode.com/problems/maximum-score-from-removing-substri
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Vietnamese Analogy:** Giống trò chơi "xếp đôi" trong bộ bài Tam Cúc — khi lá trên tay khớp với lá trước đó, bạn ăn cặp để ghi điểm. Chiến lược tối ưu: luôn ưu tiên ăn cặp có giá trị cao nhất trước (greedy). Dùng stack như "tay bài hiện tại" — nhìn lá trên cùng, nếu tạo thành cặp thì ăn ngay và ghi điểm.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "remove adjacent pair for points" + "order of removal matters for max score" → **Greedy + Stack**
+- Key insight: Luôn loại bỏ cặp có điểm cao hơn trước. Dùng stack hai lần: lần 1 cho cặp cao, lần 2 cho cặp thấp trên phần còn lại.
 
-**Visual — Maximum Score From Removing Substrings example:**
+**Visual — s="cdbcbbaaabab", x=4 (ab), y=5 (ba):**
 
 ```
-stack = []
+y(ba)=5 > x(ab)=4 → remove "ba" first
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+Stack pass 1 (remove "ba", +5 each):
+  c→[c] d→[c,d] b→[c,d,b] c→[c,d,b,c] b→[c,d,b,c,b]
+  b→[c,d,b,c,b,b]
+  a→top='b' + 'a'='ba'! pop, score+=5 → [c,d,b,c,b] s=5
+  a→top='b' + 'a'='ba'! pop, score+=5 → [c,d,b,c]   s=10
+  b→[c,d,b,c,b] a→pop,score=15 b→[c,d,b,c,b]
+Remaining after pass1: "cdbcb" + leftover
+
+Stack pass 2 (remove "ab" on remainder, +4 each):
+  → finds "ab" pairs → total score = 19
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Maximum Score From Removing Substrings. ([LeetCode](https://leetcode.com/problems/maximum-score-from-removing-substrings))
+Given string `s` and integers `x` (score for removing "ab") and `y` (score for removing "ba"), repeatedly remove "ab" or "ba" to maximize total score. Return max score.
 
-Difficulty: Medium | Acceptance: 62.8%
+- **Example 1:** s="cdbcbbaaabab", x=4, y=5 → `19`
+- **Example 2:** s="aabbaaxybbaabb", x=5, y=4 → `20`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-score-from-removing-substrings) for full constraints
+Constraints: `1 ≤ n ≤ 10^5`, `1 ≤ x, y ≤ 10^4`.
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Greedy order** / Thứ tự tham lam: Remove the higher-value pair first — this is provably optimal.
+2. **Why greedy works** / Tại sao greedy đúng: Removing a lower-value pair may block a higher-value one; taking high first never blocks low pairs in aggregate.
+3. **Stack for pair detection** / Stack để phát hiện cặp: O(n) scan with stack; peek last char to detect adjacent pair.
+4. **Two-pass structure** / Hai lượt quét: First pass removes high pair, second removes low pair on remainder.
+5. **Normalize direction** / Chuẩn hóa: Swap (pair, value) if y > x to reuse same helper function.
+6. **No in-place removal** / Không xóa tại chỗ: Build new string via stack — avoid O(n²) substring removal.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Simulation — Repeated String Replace
+
+/\*_ @complexity Time: O(n²) | Space: O(n) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumScoreFromRemovingSubstringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximumGainBrute(s: string, x: number, y: number): number {
+  let score = 0;
+  const [high, hv, low, lv] = x >= y ? ["ab", x, "ba", y] : ["ba", y, "ab", x];
+  let str = s;
+  while (str.includes(high)) {
+    score += hv;
+    str = str.replace(high, "");
+  }
+  while (str.includes(low)) {
+    score += lv;
+    str = str.replace(low, "");
+  }
+  return score;
 }
+```
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumScoreFromRemovingSubstrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+### Approach 2: Greedy Stack — Two-Pass O(n)
+
+/\*_ @complexity Time: O(n) | Space: O(n) _/
+
+```typescript
+function maximumGain(s: string, x: number, y: number): number {
+  // Ensure we process the higher-value pair first
+  const [p1, p2, fv, sv] = x >= y ? ["a", "b", x, y] : ["b", "a", y, x];
+
+  function stackRemove(str: string, first: string, second: string, pts: number): [string, number] {
+    const stk: string[] = [];
+    let gained = 0;
+    for (const ch of str) {
+      if (stk.length > 0 && stk[stk.length - 1] === first && ch === second) {
+        stk.pop();
+        gained += pts;
+      } else {
+        stk.push(ch);
+      }
+    }
+    return [stk.join(""), gained];
+  }
+
+  const [rem, score1] = stackRemove(s, p1, p2, fv);
+  const [, score2] = stackRemove(rem, p2, p1, sv);
+  return score1 + score2;
 }
+```
 
-// === Test Cases ===
-// console.log(maximumScoreFromRemovingSubstrings(/* example 1 */)); // expected
-// console.log(maximumScoreFromRemovingSubstrings(/* example 2 */)); // expected
-// console.log(maximumScoreFromRemovingSubstrings(/* edge case */)); // expected
+---
+
+## 🧪 Test Cases
+
+```typescript
+console.log(maximumGain("cdbcbbaaabab", 4, 5)); // → 19
+console.log(maximumGain("aabbaaxybbaabb", 5, 4)); // → 20
+console.log(maximumGain("ab", 3, 2)); // → 3
+console.log(maximumGain("ba", 3, 2)); // → 2
+console.log(maximumGain("aabb", 4, 5)); // → 9
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — same pattern: Monotonic Stack
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string) — same pattern: Dynamic Programming
-- [Maximum Score From Removing Substrings — LeetCode](https://leetcode.com/problems/maximum-score-from-removing-substrings) — problem page
+| Problem                                                                            | Difficulty | Pattern         |
+| ---------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Remove K Digits](https://leetcode.com/problems/remove-k-digits)                   | Medium     | Monotonic Stack |
+| [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) | Medium     | Monotonic Stack |
+| [Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string) | Medium     | Stack / Greedy  |
+| [Score of Parentheses](https://leetcode.com/problems/score-of-parentheses)         | Medium     | Stack           |

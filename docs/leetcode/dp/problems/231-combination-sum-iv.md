@@ -7,7 +7,7 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/combination-sum-iv"
 ---
 
-# Combination Sum IV / Combination Sum IV
+# Combination Sum IV / Tổng Kết Hợp IV
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,92 +17,135 @@ leetcode_url: "https://leetcode.com/problems/combination-sum-iv"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Vietnamese Analogy:** Như đếm số cách đi từ nhà đến chợ khi có thể đi bộ 1, 2, hoặc 3 bước mỗi lần. Để đến bước thứ n, bạn có thể từ bước n-1, n-2, hoặc n-3 bước tới. Tổng số cách đến n = tổng số cách đến các bước trước đó. Đây là bài toán leo cầu thang nhưng tổng quát hơn!
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: count **ordered** combinations summing to target → **unbounded knapsack / climbing stairs DP**
+- Key insight: `dp[i]` = number of ways to reach sum `i`. For each `num` in `nums`, if `i >= num`, add `dp[i - num]`. ORDER matters (1+2 ≠ 2+1), so we loop target in outer loop.
 
-**Visual — Combination Sum IV example:**
+**Visual — nums=[1,2,3], target=4 example:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+dp[0]=1 (base: empty combination)
+dp[1]: from dp[0] using 1       → dp[1]=1       {[1]}
+dp[2]: dp[1]+dp[0] (use 1,2)    → dp[2]=2       {[1,1],[2]}
+dp[3]: dp[2]+dp[1]+dp[0]        → dp[3]=4       {[1,1,1],[1,2],[2,1],[3]}
+dp[4]: dp[3]+dp[2]+dp[1]        → dp[4]=7
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+7 ordered combinations: [1,1,1,1][1,1,2][1,2,1][1,3][2,1,1][2,2][3,1]
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Combination Sum IV. ([LeetCode](https://leetcode.com/problems/combination-sum-iv))
+Given an array `nums` of **distinct** positive integers and a positive integer `target`, return the number of possible ordered combinations that add up to `target`.
 
-Difficulty: Medium | Acceptance: 54.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/combination-sum-iv) for full constraints
+- **Example 1:** `nums=[1,2,3], target=4` → `7`
+- **Example 2:** `nums=[9], target=3` → `0`
+- **Constraints:** `1 ≤ nums.length ≤ 200`, `1 ≤ nums[i] ≤ 1000`, `1 ≤ target ≤ 1000`, all nums are distinct
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Order matters** / Thứ tự quan trọng: 1+2 và 2+1 được tính là 2 cách khác nhau — đây là "ordered" combination
+2. **Loop order** / Thứ tự vòng lặp: để đếm thứ tự, đặt vòng `target` ở ngoài, `nums` ở trong (ngược với 0/1 knapsack)
+3. **Brute force** / Vũ lực: đệ quy O(n^target), memoize để xuống O(n × target)
+4. **Compare with Coin Change** / So sánh với Coin Change: đó đếm cách không quan tâm thứ tự, đây có thứ tự
+5. **Overflow** / Tràn số: đề note không cần mod, nhưng thực tế nên dùng BigInt nếu cần
+6. **Follow-up** / Biến thể: nếu nums có số âm thì bài sẽ có vô hạn kết quả (cycle trong DP)
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Recursive + Memoization (Top-Down)
+
+/\*_ @complexity Time: O(target × n) | Space: O(target) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function combinationSumIvBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function combinationSum4Memo(nums: number[], target: number): number {
+  const memo = new Array(target + 1).fill(-1);
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function combinationSumIv(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  function dfs(remaining: number): number {
+    if (remaining === 0) return 1;
+    if (remaining < 0) return 0;
+    if (memo[remaining] !== -1) return memo[remaining];
+    let ways = 0;
+    for (const num of nums) {
+      if (remaining >= num) ways += dfs(remaining - num);
+    }
+    memo[remaining] = ways;
+    return ways;
+  }
 
-// === Test Cases ===
-// console.log(combinationSumIv(/* example 1 */)); // expected
-// console.log(combinationSumIv(/* example 2 */)); // expected
-// console.log(combinationSumIv(/* edge case */)); // expected
+  return dfs(target);
+}
+```
+
+### Approach 2: Bottom-Up DP — Optimal
+
+/\*_ @complexity Time: O(target × n) | Space: O(target) _/
+
+```typescript
+function combinationSum4(nums: number[], target: number): number {
+  // dp[i] = number of ordered combinations summing to i
+  const dp = new Array(target + 1).fill(0);
+  dp[0] = 1; // base: one way to make sum 0 (empty combination)
+
+  for (let i = 1; i <= target; i++) {
+    for (const num of nums) {
+      if (i >= num) {
+        dp[i] += dp[i - num];
+      }
+    }
+  }
+  return dp[target];
+}
+```
+
+### Approach 3: With Overflow Guard (if counts can be huge)
+
+/\*_ @complexity Time: O(target × n) | Space: O(target) _/
+
+```typescript
+function combinationSum4Safe(nums: number[], target: number): number {
+  const MOD = 2 ** 31; // guard against JS number limits
+  const dp = new Array(target + 1).fill(0);
+  dp[0] = 1;
+
+  for (let i = 1; i <= target; i++) {
+    for (const num of nums) {
+      if (i >= num && dp[i - num] > 0) {
+        dp[i] = (dp[i] + dp[i - num]) % MOD;
+      }
+    }
+  }
+  return dp[target];
+}
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Combination Sum IV — LeetCode](https://leetcode.com/problems/combination-sum-iv) — problem page
+```typescript
+console.log(combinationSum4([1, 2, 3], 4)); // → 7
+console.log(combinationSum4([9], 3)); // → 0 (9 > 3, impossible)
+console.log(combinationSum4([1], 1)); // → 1
+console.log(combinationSum4([1, 2], 3)); // → 3  ([1,1,1],[1,2],[2,1])
+console.log(combinationSum4([3, 1, 2], 4)); // → 7  (same as example 1, order of nums doesn't matter)
+```
+
+---
+
+## Related Problems
+
+| Problem                                                          | Difficulty | Pattern               |
+| ---------------------------------------------------------------- | ---------- | --------------------- |
+| [Coin Change](https://leetcode.com/problems/coin-change)         | Medium     | DP Unbounded Knapsack |
+| [Coin Change II](https://leetcode.com/problems/coin-change-ii)   | Medium     | DP (unordered)        |
+| [Climbing Stairs](https://leetcode.com/problems/climbing-stairs) | Easy       | DP Linear             |
+| [Word Break](https://leetcode.com/problems/word-break)           | Medium     | DP + Hash Set         |

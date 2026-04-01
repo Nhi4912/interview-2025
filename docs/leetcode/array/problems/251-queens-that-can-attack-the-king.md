@@ -7,7 +7,7 @@ tags: [Array, Matrix, Simulation]
 leetcode_url: "https://leetcode.com/problems/queens-that-can-attack-the-king"
 ---
 
-# Queens That Can Attack the King / Queens That Can Attack the King
+# Queens That Can Attack the King / Hậu Có Thể Tấn Công Vua
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,152 @@ leetcode_url: "https://leetcode.com/problems/queens-that-can-attack-the-king"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Queens That Can Attack the King" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Vietnamese Analogy:** Hãy tưởng tượng Vua đứng giữa căn phòng có 8 cánh cửa (8 hướng). Mỗi cánh cửa chỉ có 1 kẻ địch gần nhất mới nguy hiểm — kẻ đứng sau bị che khuất. Từ vị trí vua, nhìn ra theo 8 hướng rồi dừng lại ngay khi gặp hậu đầu tiên.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "8 directions from king", "first queen in line-of-sight" → **8-Direction Scan from Source**
+- Key insight: đặt queens vào HashSet, scan từ vua ra 8 hướng, lấy hậu đầu tiên gặp được trong mỗi hướng
 
-**Visual — Queens That Can Attack the King example:**
+**Visual — queens=[[0,1],[1,0],[4,0]], king=[0,0]:**
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+  0   1   2   3   4   5   6   7
+0[K] [Q]  .   .   .   .   .   .
+1[Q]  .   .   .   .   .   .   .
+2 .   .   .   .   .   .   .   .
+
+Scan 8 directions from K(0,0):
+→ (0,1)=Q ✓  ↓ (1,0)=Q ✓  ↘ (1,1) empty...
+↑ OOB  ← OOB  ↗ OOB  ↙ OOB  ↖ OOB
+
+Result: [[1,0],[0,1]]
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Queens That Can Attack the King. ([LeetCode](https://leetcode.com/problems/queens-that-can-attack-the-king))
+On an 8×8 chessboard, given queen positions and king position. A queen attacks the king if they share a row/column/diagonal with no queen in between. Return all queens that can attack the king.
 
-Difficulty: Medium | Acceptance: 72.2%
+**Example 1:** `queens=[[0,1],[1,0],[4,0]], king=[0,0]` → `[[1,0],[0,1]]`
+**Example 2:** `queens=[[0,0],[1,1],[2,2],[3,4],[3,5],[4,4],[4,5]], king=[3,3]` → `[[2,2],[3,4],[4,4]]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/queens-that-can-attack-the-king) for full constraints
+**Constraints:** `1 ≤ queens.length ≤ 63`, all positions distinct, king not in queens
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **HashSet O(1) lookup** / Set tra cứu O(1): lưu queens dạng `"r,c"` string để check nhanh
+2. **Scan from king outward** / Quét từ vua ra: 8 hướng, break ngay khi gặp hậu đầu tiên
+3. **8 direction vectors** / 8 vector hướng: `[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]`
+4. **First blocker** / Hậu đầu tiên mới nguy hiểm: break ngay — queens sau bị che khuất
+5. **Boundary check** / Kiểm tra biên: `r∈[0,7]` và `c∈[0,7]`
+6. **Board is 8×8** / Bàn cờ 8×8: tối đa 7 bước mỗi hướng → O(56) = O(1) thực sự
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Brute Force — Check Each Queen
+
+/\*_ @complexity Time: O(Q²) | Space: O(Q) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function queensThatCanAttackTheKingBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function queensAttackBrute(queens: number[][], king: number[]): number[][] {
+  const qs = new Set(queens.map((q) => `${q[0]},${q[1]}`));
+  const res: number[][] = [];
+  for (const [qr, qc] of queens) {
+    const dr = Math.sign(king[0] - qr),
+      dc = Math.sign(king[1] - qc);
+    if (dr === 0 && dc === 0) continue;
+    if (qr !== king[0] && qc !== king[1] && Math.abs(qr - king[0]) !== Math.abs(qc - king[1]))
+      continue;
+    let r = qr + dr,
+      c = qc + dc,
+      blocked = false;
+    while (r !== king[0] || c !== king[1]) {
+      if (qs.has(`${r},${c}`)) {
+        blocked = true;
+        break;
+      }
+      r += dr;
+      c += dc;
+    }
+    if (!blocked) res.push([qr, qc]);
+  }
+  return res;
 }
+```
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function queensThatCanAttackTheKing(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+### Approach 2: 8-Direction Scan from King — Optimal
+
+/\*_ @complexity Time: O(8 × 8) = O(1) | Space: O(Q) _/
+
+```typescript
+function queensAttackTheKing(queens: number[][], king: number[]): number[][] {
+  const qs = new Set(queens.map((q) => `${q[0]},${q[1]}`));
+  const res: number[][] = [];
+  const dirs = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
+  for (const [dr, dc] of dirs) {
+    let r = king[0] + dr,
+      c = king[1] + dc;
+    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+      if (qs.has(`${r},${c}`)) {
+        res.push([r, c]);
+        break;
+      }
+      r += dr;
+      c += dc;
+    }
+  }
+  return res;
 }
-
-// === Test Cases ===
-// console.log(queensThatCanAttackTheKing(/* example 1 */)); // expected
-// console.log(queensThatCanAttackTheKing(/* example 2 */)); // expected
-// console.log(queensThatCanAttackTheKing(/* edge case */)); // expected
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🧪 Test Cases
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Game of Life](https://leetcode.com/problems/game-of-life) — same pattern: Matrix / Simulation
-- [Candy Crush](https://leetcode.com/problems/candy-crush) — same pattern: Two Pointers
-- [Queens That Can Attack the King — LeetCode](https://leetcode.com/problems/queens-that-can-attack-the-king) — problem page
+```typescript
+const q1 = [
+  [0, 1],
+  [1, 0],
+  [4, 0],
+];
+console.log(queensAttackTheKing(q1, [0, 0])); // → [[1,0],[0,1]]
+
+const q2 = [
+  [0, 0],
+  [1, 1],
+  [2, 2],
+  [3, 4],
+  [3, 5],
+  [4, 4],
+  [4, 5],
+];
+console.log(queensAttackTheKing(q2, [3, 3])); // → [[2,2],[3,4],[4,4]]
+
+console.log(queensAttackTheKing([[5, 6]], [3, 4])); // → [[5,6]] diagonal
+console.log(queensAttackBrute(q1, [0, 0])); // → [[0,1],[1,0]]
+```
+
+---
+
+## Related Problems
+
+| Problem                                                                                          | Difficulty | Pattern          |
+| ------------------------------------------------------------------------------------------------ | ---------- | ---------------- |
+| [Available Captures for Rook](https://leetcode.com/problems/available-captures-for-rook)         | Easy       | Matrix Scan      |
+| [Spiral Matrix](https://leetcode.com/problems/spiral-matrix)                                     | Medium     | Matrix Traversal |
+| [Number of Laser Beams in a Bank](https://leetcode.com/problems/number-of-laser-beams-in-a-bank) | Medium     | Matrix Row       |

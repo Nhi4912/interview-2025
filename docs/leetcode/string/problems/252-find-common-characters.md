@@ -7,7 +7,7 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/find-common-characters"
 ---
 
-# Find Common Characters / Find Common Characters
+# Find Common Characters / Tìm Ký Tự Chung Trong Tất Cả Từ
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,90 +17,128 @@ leetcode_url: "https://leetcode.com/problems/find-common-characters"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**Vietnamese Analogy:** Tưởng tượng bạn cần tìm những đặc sản nào có mặt trong _tất cả_ các tỉnh thành. Mỗi tỉnh có danh sách đặc sản (với số lượng). Để một đặc sản "xuất hiện chung", số lượng tối thiểu phải lấy là min của tất cả tỉnh. Dùng bảng đếm (26 ô cho 26 chữ cái) và lấy min dần theo từng từ.
 
 **Pattern Recognition:**
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "characters appearing in ALL strings" + "with multiplicity" → **Frequency Array + Min Intersection**
+- Key insight: Duy trì mảng tần suất toàn cục = min(global[c], word[c]) cho mỗi từ. Cuối cùng chuyển mảng tần suất thành danh sách ký tự.
 
-**Visual — Find Common Characters example:**
+**Visual — words = ["bella","label","roller"]:**
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+"bella":  b=1 e=1 l=2 a=1
+"label":  l=2 a=1 b=1 e=1
+"roller": r=2 o=1 l=2 e=1
 
-Key insight: store complement for O(1) lookup
+Global = min across all:
+  b: min(1,1,0)=0  e: min(1,1,1)=1  l: min(2,2,2)=2
+  a: min(1,1,0)=0  r: min(0,0,2)=0  o: min(0,0,1)=0
+
+Result chars: e×1 + l×2 → ["e","l","l"]
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Find Common Characters. ([LeetCode](https://leetcode.com/problems/find-common-characters))
+Given array of strings `words`, return all characters that appear in every string (including duplicates). You may return the answer in any order.
 
-Difficulty: Easy | Acceptance: 74.5%
+- **Example 1:** words=["bella","label","roller"] → `["e","l","l"]`
+- **Example 2:** words=["cool","lock","cook"] → `["c","o"]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-common-characters) for full constraints
+Constraints: `1 ≤ words.length ≤ 100`, `1 ≤ words[i].length ≤ 100`, lowercase letters only.
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Frequency array of size 26** / Mảng tần suất 26 ô: More efficient than Map for lowercase letters.
+2. **Initialize with first word** / Khởi tạo từ từ đầu: Set global freq = first word's freq; then min-intersect remaining.
+3. **Take min, not intersection** / Lấy min, không phải giao: If 'l' appears 3× in word1 and 2× in word2, output 2 'l's.
+4. **Build result from global freq** / Tạo kết quả từ tần suất: Push char c exactly global[c] times.
+5. **Edge: single word** / Một từ: Return all chars of that word (with counts).
+6. **O(nm) total** / O(nm) tổng cộng: n words × m avg length — fully acceptable.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Brute Force — Set Intersection Per Char
+
+/\*_ @complexity Time: O(26 × n × m) | Space: O(26) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findCommonCharactersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function commonCharsBrute(words: string[]): string[] {
+  const result: string[] = [];
+  for (let c = 0; c < 26; c++) {
+    const ch = String.fromCharCode(97 + c);
+    // min count of ch across all words
+    let minCount = Infinity;
+    for (const w of words) {
+      let cnt = 0;
+      for (const letter of w) if (letter === ch) cnt++;
+      minCount = Math.min(minCount, cnt);
+    }
+    for (let k = 0; k < minCount; k++) result.push(ch);
+  }
+  return result;
 }
+```
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findCommonCharacters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+### Approach 2: Frequency Array Min-Intersection (Optimal)
+
+/\*_ @complexity Time: O(n × m) | Space: O(26) _/
+
+```typescript
+function commonChars(words: string[]): string[] {
+  const freq = (word: string): number[] => {
+    const cnt = new Array(26).fill(0);
+    for (const c of word) cnt[c.charCodeAt(0) - 97]++;
+    return cnt;
+  };
+
+  // Start with frequency of first word
+  const global = freq(words[0]);
+
+  // Intersect with each subsequent word (take min)
+  for (let i = 1; i < words.length; i++) {
+    const wf = freq(words[i]);
+    for (let j = 0; j < 26; j++) {
+      global[j] = Math.min(global[j], wf[j]);
+    }
+  }
+
+  // Build result: push char c exactly global[c] times
+  const result: string[] = [];
+  for (let j = 0; j < 26; j++) {
+    for (let k = 0; k < global[j]; k++) {
+      result.push(String.fromCharCode(97 + j));
+    }
+  }
+  return result;
 }
+```
 
-// === Test Cases ===
-// console.log(findCommonCharacters(/* example 1 */)); // expected
-// console.log(findCommonCharacters(/* example 2 */)); // expected
-// console.log(findCommonCharacters(/* edge case */)); // expected
+---
+
+## 🧪 Test Cases
+
+```typescript
+console.log(commonChars(["bella", "label", "roller"])); // → ["e","l","l"]
+console.log(commonChars(["cool", "lock", "cook"])); // → ["c","o"]
+console.log(commonChars(["a", "a"])); // → ["a"]
+console.log(commonChars(["abc", "def"])); // → []
+console.log(commonChars(["aaa", "aa", "a"])); // → ["a"]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Find Common Characters — LeetCode](https://leetcode.com/problems/find-common-characters) — problem page
+| Problem                                                                                              | Difficulty | Pattern  |
+| ---------------------------------------------------------------------------------------------------- | ---------- | -------- |
+| [Intersection of Two Arrays II](https://leetcode.com/problems/intersection-of-two-arrays-ii)         | Easy       | Hash Map |
+| [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words)                           | Medium     | Heap     |
+| [Ransom Note](https://leetcode.com/problems/ransom-note)                                             | Easy       | Hash Map |
+| [Uncommon Words from Two Sentences](https://leetcode.com/problems/uncommon-words-from-two-sentences) | Easy       | Hash Map |

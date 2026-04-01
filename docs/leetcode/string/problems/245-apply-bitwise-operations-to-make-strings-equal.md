@@ -7,7 +7,7 @@ tags: [String, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/apply-bitwise-operations-to-make-strings-equal"
 ---
 
-# Apply Bitwise Operations to Make Strings Equal / Apply Bitwise Operations to Make Strings Equal
+# Apply Bitwise Operations to Make Strings Equal / Áp Dụng Phép Bit Để Hai Chuỗi Bằng Nhau
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Bit Manipulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,106 @@ leetcode_url: "https://leetcode.com/problems/apply-bitwise-operations-to-make-st
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Làm việc trực tiếp với bit (0/1) — nhanh hơn phép toán thông thường. XOR, AND, OR, shift là các công cụ chính.
+**Vietnamese Analogy:** Tưởng tượng bạn có một phòng với n bóng đèn (0=tắt, 1=sáng). Nếu phòng tối hoàn toàn (toàn số 0), không có phép nào có thể tạo ra ánh sáng — OR/AND/XOR trên (0,0) luôn cho 0. Nhưng nếu có ít nhất một bóng đang sáng, bạn có thể lan truyền ánh sáng đến bất kỳ bóng nào bằng OR, rồi dùng XOR để tắt những bóng không cần.
 
 **Pattern Recognition:**
 
-- Signal: "binary representation" + "XOR/AND/OR properties" → **Bit Manipulation**
-- Bài này thuộc dạng Bit Manipulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "binary string" + "symmetric OR/AND/XOR on two positions" → **Bit Manipulation / Invariant**
+- Key insight: Phép (0,0)→(0,0) với mọi phép toán. Nếu s không có '1' thì không thể tạo '1'. Chỉ cần kiểm tra xem cả hai chuỗi có cùng trạng thái "có chứa '1'" hay không.
 
-**Visual — Apply Bitwise Operations to Make Strings Equal example:**
+**Visual — s="010", t="110":**
 
 ```
-// TODO: Add step-by-step visual for Bit Manipulation
-// Show one complete example with state at each step
+s="010" → has '1'? YES
+t="110" → has '1'? YES  → same presence → CAN transform ✓
+
+Proof: idx 0,1: s[0]=0, s[1]=1
+  OR op: s[0] = 0|1=1, s[1] = 0|1=1 → s="110" = t ✓
+
+s="000" → has '1'? NO
+t="111" → has '1'? YES  → different → CANNOT transform ✗
+(no operation on all-zeros can produce a 1)
+
+Rule: s → t iff s.includes('1') === t.includes('1')
 ```
 
 ---
 
-## Problem Description
+## 📝 Problem Description
 
-Apply Bitwise Operations to Make Strings Equal. ([LeetCode](https://leetcode.com/problems/apply-bitwise-operations-to-make-strings-equal))
+Given two binary strings `s` and `t` of equal length, you may pick any `i ≠ j` and apply one operation (both positions update symmetrically): OR, AND, or XOR. Return `true` if `s` can be made equal to `t`.
 
-Difficulty: Medium | Acceptance: 41.7%
+- **Example 1:** s="010", t="110" → `true`
+- **Example 2:** s="011", t="001" → `true`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/apply-bitwise-operations-to-make-strings-equal) for full constraints
+Constraints: `1 ≤ n ≤ 10^5`, strings contain only '0' and '1'.
 
 ---
 
-## 📝 Interview Tips
+## 🎯 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Find the invariant** / Tìm bất biến: OR/AND/XOR on (0,0) always gives 0 — zeros can't generate ones.
+2. **One '1' is enough** / Một '1' là đủ: A single '1' can spread everywhere via OR operations.
+3. **Two '1's can cancel** / Hai '1' có thể triệt tiêu: XOR(1,1)=(0,0) — we can remove ones too.
+4. **Edge: s==t** / Trường hợp s==t: Always true, covered by the same-presence check.
+5. **O(n) scan** / Quét O(n): `includes('1')` or a simple loop — no complex logic needed.
+6. **Communicate the insight** / Trình bày insight: Tell the interviewer the invariant before coding.
 
 ---
 
-## Solutions
+## 💡 Solutions
+
+### Approach 1: Linear Scan — Count Ones
+
+/\*_ @complexity Time: O(n) | Space: O(1) _/
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function applyBitwiseOperationsToMakeStringsEqualBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function makeStringsEqualScan(s: string, t: string): boolean {
+  let sOnes = 0,
+    tOnes = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === "1") sOnes++;
+    if (t[i] === "1") tOnes++;
+  }
+  // Both all-zeros, or both have at least one '1'
+  return (sOnes === 0) === (tOnes === 0);
 }
+```
 
-/**
- * Solution 2: Optimized — Bit Manipulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function applyBitwiseOperationsToMakeStringsEqual(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Bit Manipulation
-  // Hint: Use XOR, AND, OR, shift operations on bits
-  throw new Error('Not implemented');
+### Approach 2: One-Liner — String Includes (Optimal)
+
+/\*_ @complexity Time: O(n) | Space: O(1) _/
+
+```typescript
+function makeStringsEqual(s: string, t: string): boolean {
+  // Key insight: the only invariant is whether '1' is present.
+  // All-zero is a "black hole" — no op creates a 1 from (0,0).
+  // If both have '1': freely rearrange via OR/XOR. Equal → true.
+  // If neither has '1': s=t="000...0". Already equal → true.
+  // Mixed: impossible → false.
+  return s.includes("1") === t.includes("1");
 }
+```
 
-// === Test Cases ===
-// console.log(applyBitwiseOperationsToMakeStringsEqual(/* example 1 */)); // expected
-// console.log(applyBitwiseOperationsToMakeStringsEqual(/* example 2 */)); // expected
-// console.log(applyBitwiseOperationsToMakeStringsEqual(/* edge case */)); // expected
+---
+
+## 🧪 Test Cases
+
+```typescript
+console.log(makeStringsEqual("010", "110")); // → true
+console.log(makeStringsEqual("0101", "0000")); // → false
+console.log(makeStringsEqual("000", "000")); // → true
+console.log(makeStringsEqual("111", "000")); // → false
+console.log(makeStringsEqual("1", "1")); // → true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Palindrome Permutation](https://leetcode.com/problems/palindrome-permutation) — same pattern: Bit Manipulation
-- [Repeated DNA Sequences](https://leetcode.com/problems/repeated-dna-sequences) — same pattern: Sliding Window
-- [IP to CIDR](https://leetcode.com/problems/ip-to-cidr) — same pattern: Bit Manipulation
-- [Apply Bitwise Operations to Make Strings Equal — LeetCode](https://leetcode.com/problems/apply-bitwise-operations-to-make-strings-equal) — problem page
+| Problem                                                                        | Difficulty | Pattern          |
+| ------------------------------------------------------------------------------ | ---------- | ---------------- |
+| [Add Binary](https://leetcode.com/problems/add-binary)                         | Easy       | Bit Manipulation |
+| [Palindrome Permutation](https://leetcode.com/problems/palindrome-permutation) | Easy       | Bit Manipulation |
+| [Repeated DNA Sequences](https://leetcode.com/problems/repeated-dna-sequences) | Medium     | Sliding Window   |
+| [IP to CIDR](https://leetcode.com/problems/ip-to-cidr)                         | Medium     | Bit Manipulation |
