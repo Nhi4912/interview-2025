@@ -210,11 +210,17 @@
 ## be-track Files
 
 > **Audit note (2026-03-30)**: All 31 be-track files have Phase 1 (Real-World Scenario + What & Why).
-> All be-track files now have full Phase 2 compliance (session 20 completed Tier 9-10 fixes + Tier 12).
+> Session 20 added some Phase 2 elements but **deep audit (2026-04-02) found compliance overstated**.
 >
-> **⚠️ Systemic gap (session 21 audit)**: B1 Interview Signal (✅ Strong/❌ Weak markers) present in only **3/28** files (11%).
-> Most Q&A answers lack explicit signal markers. This is the single biggest compliance gap in be-track.
-> D1 (3-Block Flow) also lacks explicit Block A/B/C labels — structure exists implicitly but isn't machine-checkable.
+> **🚨 Re-audit (2026-04-02)**: Only Tier 8 (01-golang, 8 files) truly passes full Phase 2.
+> Tiers 9-12 are missing C3 (Cold Call), C4 (Self-Check), C6 (Spaced Repetition) in 18 files.
+> **Systemic gaps across all non-golang files**:
+>
+> - **C3 Cold Call**: Missing in 18/21 files (only 02-classic-problems + 06-ride-hailing + 06-devops have it partially)
+> - **C4 Self-Check**: Missing in 16/21 files
+> - **C6 Spaced Repetition**: Missing in 18/21 files
+> - **B1 Interview Signal**: Present in only **3/29** files (10%)
+> - **D1 3-Block labels**: Missing in ~25/30 files (only 04-memory-gc + 05-testing-profiling have explicit labels)
 
 ### Tier 8: Go Language (`be-track/01-golang/`)
 
@@ -231,45 +237,45 @@
 
 ### Tier 9: Backend Knowledge (`be-track/02-backend-knowledge/`)
 
-| File                        | Phase 1 | Phase 2 | Notes                           |
-| --------------------------- | ------- | ------- | ------------------------------- |
-| `01-api-design.md`          | ✅      | ✅      | Session 13+20 — full compliance |
-| `02-microservices.md`       | ✅      | ✅      | Session 13+20 — full compliance |
-| `03-distributed-systems.md` | ✅      | ✅      | Session 13+20 — full compliance |
-| `04-auth-security.md`       | ✅      | ✅      | Session 13+20 — full compliance |
-| `05-os-go.md`               | ✅      | ✅      | Session 13+20 — full compliance |
-| `06-networking-go.md`       | ✅      | ✅      | Session 13+20 — full compliance |
-| `07-resilience-patterns.md` | ✅      | ✅      | Session 13+20 — full compliance |
-| `08-message-queues.md`      | ✅      | ✅      | Session 13+20 — full compliance |
-| `09-grpc-protobuf.md`       | ✅      | ✅      | Session 13+20 — full compliance |
+| File                        | Phase 1 | Phase 2 | Notes                                             |
+| --------------------------- | ------- | ------- | ------------------------------------------------- |
+| `01-api-design.md`          | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `02-microservices.md`       | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `03-distributed-systems.md` | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `04-auth-security.md`       | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `05-os-go.md`               | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `06-networking-go.md`       | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `07-resilience-patterns.md` | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `08-message-queues.md`      | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
+| `09-grpc-protobuf.md`       | ✅      | ⚠️      | Has A1,A6,A7,A8,R6,R7,R11. Missing C3,C4,C6,B1,D1 |
 
 ### Tier 10: Database Advanced (`be-track/03-database-advanced/`)
 
-| File                          | Phase 1 | Phase 2 | Notes                           |
-| ----------------------------- | ------- | ------- | ------------------------------- |
-| `01-sql-fundamentals.md`      | ✅      | ✅      | Session 14+20 — full compliance |
-| `02-indexing-optimization.md` | ✅      | ✅      | Session 14+20 — full compliance |
-| `03-nosql-redis-mongo.md`     | ✅      | ✅      | Session 14+20 — full compliance |
-| `04-caching-patterns.md`      | ✅      | ✅      | Session 14+20 — full compliance |
+| File                          | Phase 1 | Phase 2 | Notes                                                    |
+| ----------------------------- | ------- | ------- | -------------------------------------------------------- |
+| `01-sql-fundamentals.md`      | ✅      | ⚠️      | Has A1,A6,A8,R6. Missing C3,C4,C6,B1,D1. Signal: partial |
+| `02-indexing-optimization.md` | ✅      | ⚠️      | Has A1,A6,A8,R6. Missing C3,C4,C6,B1,D1. Signal: partial |
+| `03-nosql-redis-mongo.md`     | ✅      | ⚠️      | Has A1,A6,A8,R6. Missing C3,C4,C6,B1,D1. Signal: partial |
+| `04-caching-patterns.md`      | ✅      | ⚠️      | Has A1,A6,A8,R6. Missing C3,C4,C6,B1,D1. Signal: partial |
 
 ### Tier 11: BE System Design (`be-track/04-be-system-design/`)
 
-| File                            | Phase 1 | Phase 2 | Notes                             |
-| ------------------------------- | ------- | ------- | --------------------------------- |
-| `01-design-framework.md`        | ✅      | ✅      | Done session 16 — full compliance |
-| `02-classic-problems.md`        | ✅      | ✅      | Done session 16 — full compliance |
-| `03-advanced-problems.md`       | ✅      | ✅      | Done session 16 — full compliance |
-| `04-distributed-patterns.md`    | ✅      | ✅      | Done session 16 — full compliance |
-| `05-observability-and-scale.md` | ✅      | ✅      | Done session 16 — full compliance |
-| `06-ride-hailing-system.md`     | ✅      | ✅      | Done session 16 — full compliance |
+| File                            | Phase 1 | Phase 2 | Notes                                                         |
+| ------------------------------- | ------- | ------- | ------------------------------------------------------------- |
+| `01-design-framework.md`        | ✅      | ⚠️      | Worst in tier: missing A1,A6,C3,C4,C6,B1,D1 (1/10 compliance) |
+| `02-classic-problems.md`        | ✅      | ✅      | Has C3,C4,C6,A1,A6,A8. Missing B1,D1 only (7/10)              |
+| `03-advanced-problems.md`       | ✅      | ⚠️      | Has A1,A6,A8. Missing C3,C4,C6,B1,D1 (4/10)                   |
+| `04-distributed-patterns.md`    | ✅      | ⚠️      | Has A1,A6,A8,R6. Missing C3,C4,C6,B1,D1 (4/10)                |
+| `05-observability-and-scale.md` | ✅      | ⚠️      | Has A1,A6,A8,R6. Missing C3,C4,C6,B1,D1 (4/10)                |
+| `06-ride-hailing-system.md`     | ✅      | ✅      | Has C3,C4,C6,A1,A6,A8. Missing B1,D1 only (7/10)              |
 
 ### Tier 12: BE Misc
 
-| File                          | Phase 1 | Phase 2 | Notes                          |
-| ----------------------------- | ------- | ------- | ------------------------------ |
-| `00-study-roadmap.md`         | ✅      | N/A     | Roadmap file, no Core Concepts |
-| `05-company-guide.md`         | ✅      | N/A     | Guide file, no Core Concepts   |
-| `06-devops-infrastructure.md` | ✅      | ✅      | Session 20 — full compliance   |
+| File                          | Phase 1 | Phase 2 | Notes                                |
+| ----------------------------- | ------- | ------- | ------------------------------------ |
+| `00-study-roadmap.md`         | ✅      | N/A     | Roadmap file, no Core Concepts       |
+| `05-company-guide.md`         | ✅      | N/A     | Guide file, no Core Concepts         |
+| `06-devops-infrastructure.md` | ✅      | ⚠️      | Has C4,A1,A6,A8. Missing C3,C6,B1,D1 |
 
 ---
 
@@ -475,8 +481,12 @@ Only 1 Feynman layer found (should be 3 layers per concept for spiral depth).
 ### be-track
 
 - Total be-track theory files tracked: **29** (excl. 2 roadmap/guide files)
-- Phase 2 full ✅: **29** (all pass A1-A8, C1-C7, D2-D4)
-- **⚠️ Systemic B1 gap**: 26/29 files lack Interview Signal markers in Q&A
+- Phase 2 full ✅: **10** (8 golang + 02-classic-problems + 06-ride-hailing)
+- Phase 2 partial ⚠️: **19** (9 backend-knowledge + 4 database + 4 system-design + 1 devops)
+- **⚠️ Systemic gaps (re-audit 2026-04-02)**:
+  - C3/C4/C6 missing in 18/21 non-golang files
+  - B1 Interview Signal in only 3/29 files (10%)
+  - D1 3-Block labels missing in ~25/30 files
 - Phase 2 not started ❌: **0**
 
 ### shared
@@ -491,8 +501,9 @@ Only 1 Feynman layer found (should be 3 layers per concept for spiral depth).
 ### Overall
 
 - **Total files needing Phase 2**: ~142
-- **Phase 2 full ✅**: 120 (57 fe-track + 29 be-track + 34 shared)
-- **Phase 2 partial ⚠️**: 7 (5 fe-track + 2 shared)
+- **Phase 2 full ✅**: 101 (57 fe-track + 10 be-track + 34 shared)
+- **Phase 2 partial ⚠️**: 26 (5 fe-track + 19 be-track + 2 shared)
 - **Phase 2 FAIL 🚨**: 1 (security-fundamentals)
 - **Not started ❌**: ~13 (fe-track only)
 - **Systemic B1 gap**: ~57 files across be-track + shared need Interview Signal markers
+- **Systemic C3/C4/C6 gap**: ~18 be-track files need Cold Call, Self-Check, Spaced Repetition

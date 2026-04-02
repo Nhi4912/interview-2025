@@ -1613,287 +1613,168 @@ allow {
 
 ---
 
-## 20. Practice Drill Bank
+## 20. Practice Drill Bank / Bài Tập Thực Hành
 
-### 🟢 Q: Security fundamentals drill #1? `[Junior]`
+> 20 unique drills covering core security concepts. Each answer is concept-specific.
+> 20 bài tập bao phủ các khái niệm bảo mật cốt lõi. Mỗi đáp án là duy nhất cho từng chủ đề.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #1: What are the three components of the CIA Triad? Give one threat per component. / Ba thành phần CIA Triad? Cho 1 mối đe dọa mỗi thành phần. `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #2? `[Junior]`
+**A:** **Confidentiality** — unauthorized access (threat: data breach via SQL injection). **Integrity** — unauthorized modification (threat: MITM altering API responses). **Availability** — service disruption (threat: DDoS attack). Every security decision balances these three dimensions.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Ví dụ thực tế: Encryption at rest bảo vệ Confidentiality, checksum/digital signature bảo vệ Integrity, load balancer + redundancy bảo vệ Availability. Khi tăng encryption quá mạnh (C cao) có thể làm chậm hệ thống (giảm A).
 
-### 🟢 Q: Security fundamentals drill #3? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #2: Explain the difference between authentication and authorization with a real-world analogy. / Phân biệt authentication và authorization bằng ví dụ thực tế. `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #4? `[Junior]`
+**A:** **Authentication (AuthN)** = proving identity ("Who are you?" — showing your passport at airport security). **Authorization (AuthZ)** = proving permission ("What can you do?" — your boarding pass determines which gate you access). AuthN always happens before AuthZ. In APIs: JWT token proves identity (AuthN), then claims/roles inside the token determine endpoint access (AuthZ).
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: AuthN = xác minh danh tính (bạn là ai?). AuthZ = kiểm tra quyền (bạn được làm gì?). Sai lầm thường gặp: confuse 401 (Unauthorized = chưa xác thực) với 403 (Forbidden = đã xác thực nhưng không có quyền).
 
-### 🟢 Q: Security fundamentals drill #5? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #3: What is HTTPS and why is it necessary? What happens without it? / HTTPS là gì và tại sao cần thiết? `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #6? `[Junior]`
+**A:** HTTPS = HTTP + TLS encryption. It provides: (1) **encryption** — data unreadable in transit, (2) **authentication** — server proves identity via certificate, (3) **integrity** — data cannot be modified without detection. Without HTTPS, attackers on the same network can read passwords, session tokens, and API data via packet sniffing (Wireshark). Modern browsers mark HTTP sites as "Not Secure."
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: TLS handshake: client gửi "hello" → server gửi certificate → client verify certificate qua CA → cả hai tạo session key → mã hóa symmetric từ đây. Nếu không có HTTPS, attacker dùng Wireshark bắt được plaintext password trên cùng WiFi.
 
-### 🟢 Q: Security fundamentals drill #7? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #4: What is input validation and why is it the first line of defense? Give 3 attack types it prevents. / Input validation là gì và tại sao là tuyến phòng thủ đầu tiên? `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #8? `[Junior]`
+**A:** Input validation ensures user-supplied data matches expected format, length, and type before processing. It prevents: (1) **SQL Injection** — malicious SQL in form fields, (2) **XSS** — injected JavaScript in user content, (3) **Path Traversal** — `../../etc/passwd` in file paths. Best practice: validate on both client (UX) AND server (security). Never trust client-side validation alone.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Nguyên tắc: "Never trust user input." Validate ở server LUÔN LUÔN — client validation chỉ là UX. Dùng allowlist (chỉ cho phép ký tự hợp lệ) thay vì denylist (cấm ký tự nguy hiểm) vì attacker luôn tìm cách bypass denylist.
 
-### 🟢 Q: Security fundamentals drill #9? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #5: Why should passwords never be stored in plaintext? What should be used instead? / Tại sao không bao giờ lưu mật khẩu dạng plaintext? `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #10? `[Junior]`
+**A:** Plaintext passwords mean a single database breach exposes all user credentials. Instead: (1) **Hash** with bcrypt/scrypt/Argon2 — one-way function, cannot reverse, (2) **Salt** — unique random value per user prevents rainbow table attacks, (3) **Pepper** — server-side secret adds extra layer. MD5/SHA-256 alone are NOT safe for passwords (too fast, vulnerable to brute force). bcrypt is deliberately slow (cost factor adjustable).
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: bcrypt tự động salt + có cost factor điều chỉnh tốc độ hash. MD5 hash 1 tỷ passwords/giây, bcrypt chỉ hash ~10/giây → brute force không khả thi. Lỗi thường gặp: dùng SHA-256 không salt → attacker dùng rainbow table crack ngay.
 
-### 🟢 Q: Security fundamentals drill #11? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #6: Explain Same-Origin Policy and CORS. When do you need CORS headers? / Giải thích Same-Origin Policy và CORS. `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #12? `[Junior]`
+**A:** **Same-Origin Policy (SOP)**: browser blocks JavaScript from making requests to a different origin (protocol + domain + port). **CORS** (Cross-Origin Resource Sharing): server explicitly allows cross-origin requests via headers like `Access-Control-Allow-Origin`. You need CORS when: frontend on `app.example.com` calls API on `api.example.com`. Common mistake: setting `Access-Control-Allow-Origin: *` with credentials — browsers reject this combination.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Origin = protocol + domain + port. `http://a.com` và `https://a.com` là KHÁC origin (khác protocol). CORS preflight (OPTIONS request) xảy ra khi request có custom headers hoặc method PUT/DELETE. Sai lầm: wildcard `*` + `withCredentials: true` → browser từ chối.
 
-### 🟢 Q: Security fundamentals drill #13? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #7: What is session management? Compare cookie-based sessions vs JWT tokens. / Quản lý session là gì? So sánh cookie session vs JWT. `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #14? `[Junior]`
+**A:** Session management tracks authenticated users across stateless HTTP requests. **Cookie-based**: server stores session in memory/DB, sends session ID via `Set-Cookie`, stateful. **JWT**: server signs token with all claims inside, client stores it, stateless. Trade-offs: cookies need server-side storage but can be revoked instantly; JWTs are scalable but cannot be revoked before expiry (need denylist pattern).
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Cookie session: đơn giản, revoke dễ, nhưng cần shared storage (Redis) khi scale. JWT: stateless, scalable, nhưng không revoke được trừ khi dùng denylist. Kích thước JWT thường 1-2KB → gửi mỗi request. Lỗi phổ biến: lưu JWT trong localStorage → dễ bị XSS đánh cắp.
 
-### 🟢 Q: Security fundamentals drill #15? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟢 Drill #8: What is the principle of least privilege? Give an IAM example. / Nguyên tắc quyền tối thiểu là gì? Cho ví dụ IAM. `[Junior]`
 
-### 🟢 Q: Security fundamentals drill #16? `[Junior]`
+**A:** Every user, process, or service should have only the minimum permissions needed to do its job — no more. **IAM example**: a Lambda function that reads from S3 should have `s3:GetObject` on specific bucket only, NOT `s3:*` on `*`. Why: if compromised, blast radius is minimized. Applies to: database users (read-only for reporting), API keys (scoped to specific endpoints), network access (micro-segmentation).
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: "Chỉ cho đủ quyền để làm việc, không hơn." Ví dụ sai: developer dùng AWS root account để deploy → nếu credential leak, attacker có toàn quyền. Ví dụ đúng: tạo IAM role riêng với chỉ `s3:GetObject` + `dynamodb:PutItem` cho service cụ thể.
 
-### 🟢 Q: Security fundamentals drill #17? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟡 Drill #9: Explain the STRIDE threat model. Apply it to a REST API that handles payments. / Giải thích STRIDE threat model. Áp dụng cho REST API thanh toán. `[Mid]`
 
-### 🟢 Q: Security fundamentals drill #18? `[Junior]`
+**A:** STRIDE identifies 6 threat categories: **S**poofing (fake identity → mitigate with MFA/mTLS), **T**ampering (modify data → HMAC/digital signatures), **R**epudiation (deny actions → audit logging), **I**nformation Disclosure (data leaks → encryption, access controls), **D**enial of Service (overload → rate limiting, WAF), **E**levation of Privilege (gain admin → RBAC, input validation). For a payment API: Spoofing = stolen API keys → use mTLS between services; Tampering = modified amounts → sign transaction payload; Repudiation = disputed charges → immutable audit log.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: STRIDE là framework của Microsoft. Mỗi chữ cái = 1 loại threat. Áp dụng cho payment API: Spoofing → mTLS giữa services; Tampering → ký HMAC cho transaction payload; Repudiation → audit log immutable; Info Disclosure → encrypt PII at rest; DoS → rate limit per customer; Elevation → RBAC + input validation.
 
-### 🟢 Q: Security fundamentals drill #19? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟡 Drill #10: What is Defense in Depth? Design a 5-layer security architecture for a web application. / Defense in Depth là gì? Thiết kế 5 lớp bảo mật cho web app. `[Mid]`
 
-### 🟢 Q: Security fundamentals drill #20? `[Junior]`
+**A:** Defense in Depth = multiple independent security layers so that compromise of one layer doesn't breach the system. 5-layer design: (1) **Network** — WAF, DDoS protection, IP allowlist, (2) **Transport** — TLS 1.3, certificate pinning, (3) **Application** — input validation, CSRF tokens, CSP headers, (4) **Data** — encryption at rest (AES-256), field-level encryption for PII, (5) **Monitoring** — SIEM alerts, anomaly detection, incident response runbook. Each layer operates independently — even if WAF is bypassed, input validation still catches SQLi.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Giống lâu đài trung cổ: hào nước (network) → tường thành (transport) → lính gác (application) → két sắt (data) → hệ thống chuông báo động (monitoring). Mỗi lớp hoạt động độc lập — nếu bypass WAF, input validation vẫn chặn SQLi.
 
-### 🟢 Q: Security fundamentals drill #21? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟡 Drill #11: Name the OWASP Top 3 for 2025. For each, give attack scenario + mitigation. / Kể 3 lỗ hổng OWASP Top hàng đầu 2025. Cho kịch bản tấn công + cách phòng. `[Mid]`
 
-### 🟢 Q: Security fundamentals drill #22? `[Junior]`
+**A:** (1) **Broken Access Control** — user modifies URL `/api/users/123` to `/api/users/456` to access another user's data. Mitigation: server-side authorization check on every request, deny by default. (2) **Cryptographic Failures** — storing passwords in MD5, using HTTP for login. Mitigation: bcrypt for passwords, TLS everywhere, encrypt PII at rest. (3) **Injection** — SQL injection via `' OR 1=1 --` in search field. Mitigation: parameterized queries, ORM, input validation.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: OWASP Top 10 cập nhật mỗi 3-4 năm. Broken Access Control leo lên #1 vì developers thường kiểm tra AuthN nhưng quên AuthZ. Ví dụ: IDOR (Insecure Direct Object Reference) — user thay đổi ID trong URL để xem data người khác. Fix: kiểm tra ownership ở server cho MỌI request.
 
-### 🟢 Q: Security fundamentals drill #23? `[Junior]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟡 Drill #12: What are common JWT security vulnerabilities and how to prevent them? / Các lỗ hổng bảo mật JWT phổ biến và cách phòng tránh? `[Mid]`
 
-### 🟢 Q: Security fundamentals drill #24? `[Junior]`
+**A:** (1) **Algorithm confusion** — attacker changes header to `"alg":"none"` → validate algorithm server-side, never trust header. (2) **Weak secret** — brute-forceable HMAC key → use RS256 with asymmetric keys or strong secrets (256+ bits). (3) **No expiration** — stolen token works forever → set short `exp` (15min access, 7d refresh). (4) **Sensitive data in payload** — JWT is base64 not encrypted → never put passwords/PII in claims. (5) **XSS token theft** — stored in localStorage → use httpOnly cookies instead.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: JWT = header.payload.signature (base64). Lỗi thường gặp nhất: lưu JWT trong localStorage → XSS đánh cắp được. Fix: lưu trong httpOnly cookie + SameSite=Strict. Nếu cần revoke: dùng token denylist trong Redis với TTL bằng token expiry.
 
-### 🟡 Q: Security fundamentals drill #25? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟡 Drill #13: Design a rate limiting strategy for an API gateway. What algorithms exist? / Thiết kế chiến lược rate limiting cho API gateway. Có những thuật toán nào? `[Mid]`
 
-### 🟡 Q: Security fundamentals drill #26? `[Mid]`
+**A:** Algorithms: (1) **Token Bucket** — tokens refill at fixed rate, each request consumes one (allows bursts), (2) **Sliding Window Log** — timestamps of all requests in window, exact but memory-heavy, (3) **Sliding Window Counter** — hybrid of fixed window + weight from previous window (Redis-friendly), (4) **Leaky Bucket** — requests processed at constant rate (smooths traffic). For API gateway: use sliding window counter in Redis, key by `user_id + endpoint`, return `429 Too Many Requests` with `Retry-After` header. Different limits per tier (free: 100/min, pro: 1000/min).
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Token Bucket phổ biến nhất vì cho phép burst (ví dụ: 100 tokens, refill 10/giây → burst 100 requests rồi 10/giây sau đó). Redis INCR + EXPIRE là cách đơn giản nhất implement sliding window counter. Luôn trả header `X-RateLimit-Remaining` để client biết còn bao nhiêu requests.
 
-### 🟡 Q: Security fundamentals drill #27? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟡 Drill #14: Explain secrets management. Compare HashiCorp Vault vs environment variables vs cloud-native solutions. / Giải thích quản lý secrets. So sánh Vault vs env vars vs cloud-native. `[Mid]`
 
-### 🟡 Q: Security fundamentals drill #28? `[Mid]`
+**A:** Secrets management ensures credentials, API keys, and certificates are stored, accessed, and rotated securely. **Environment variables**: simple but no rotation, no audit trail, visible in process listing. **HashiCorp Vault**: dynamic secrets, automatic rotation, audit logging, lease-based access — but operational overhead. **Cloud-native** (AWS Secrets Manager, GCP Secret Manager): managed service, auto-rotation, IAM-integrated, pay-per-use. Best practice: never commit secrets to git, use `.env` only for local dev, use Vault/cloud-native for production.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Env vars đơn giản nhưng: không tự rotate, `ps aux` có thể lộ, không audit log. Vault: dynamic secrets (tạo DB credential ngắn hạn cho mỗi request), tự rotate, audit log mọi access. AWS Secrets Manager: managed, tích hợp IAM, auto-rotate RDS passwords. Rule: KHÔNG BAO GIỜ commit secrets vào git — dùng git-secrets hoặc pre-commit hook để scan.
 
-### 🟡 Q: Security fundamentals drill #29? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🟡 Drill #15: When and why would you use mTLS (mutual TLS)? Compare with standard TLS. / Khi nào và tại sao dùng mTLS? So sánh với TLS thường. `[Mid]`
 
-### 🟡 Q: Security fundamentals drill #30? `[Mid]`
+**A:** Standard TLS: only server proves identity to client. **mTLS**: both sides present certificates — server verifies client certificate too. Use when: (1) microservice-to-microservice communication (zero trust), (2) API access for trusted partners, (3) IoT device authentication. Benefits: stronger than API keys (cert-based, auto-rotatable). Drawbacks: certificate management complexity, need PKI infrastructure. Implementation: Istio service mesh handles mTLS automatically between pods.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: TLS thường: bạn verify website là thật (one-way). mTLS: website CŨNG verify bạn là ai (two-way). Trong microservices: mỗi service có certificate riêng → verify lẫn nhau → attacker không thể giả mạo service. Istio/Linkerd tự động handle mTLS giữa các pods — developers không cần code gì thêm.
 
-### 🟡 Q: Security fundamentals drill #31? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🔴 Drill #16: Design a zero-trust architecture for a microservices system. What are the key components? / Thiết kế zero-trust architecture cho hệ microservices. `[Senior]`
 
-### 🟡 Q: Security fundamentals drill #32? `[Mid]`
+**A:** Zero trust = "never trust, always verify" — every request authenticated and authorized regardless of network location. Key components: (1) **Identity-based access** — mTLS between services, JWT for users, service mesh (Istio), (2) **Micro-segmentation** — network policies per service, deny-all default, (3) **Continuous verification** — re-authenticate on sensitive operations, context-aware access (device health, location), (4) **Least privilege** — fine-grained RBAC per endpoint, (5) **Observability** — log every access decision, anomaly detection on access patterns. Challenge: legacy systems that assume trusted internal network. Migration: start with service mesh + identity-aware proxy (BeyondCorp model).
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Zero Trust khác với perimeter security (castle-and-moat): không tin bất kỳ request nào chỉ vì nó đến từ internal network. Google BeyondCorp: mọi access đều qua identity-aware proxy, không VPN. Triển khai: bắt đầu với service mesh (Istio) cho mTLS tự động → thêm authorization policy → micro-segmentation → continuous verification.
 
-### 🟡 Q: Security fundamentals drill #33? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🔴 Drill #17: Design a security incident response plan for a production API breach. What are the key phases? / Thiết kế kế hoạch phản ứng sự cố bảo mật cho API breach. `[Senior]`
 
-### 🟡 Q: Security fundamentals drill #34? `[Mid]`
+**A:** 6-phase incident response: (1) **Preparation** — runbooks, on-call rotation, communication templates, forensic tools ready. (2) **Detection** — SIEM alerts on anomalous patterns (unusual data volume, off-hours access, failed auth spikes). (3) **Containment** — isolate affected service (network policy), rotate compromised credentials, enable enhanced logging. (4) **Eradication** — patch vulnerability, remove attacker persistence (backdoor accounts, modified binaries). (5) **Recovery** — restore from verified backups, gradual traffic re-enable, monitor for re-compromise. (6) **Lessons Learned** — blameless postmortem within 48h, update runbooks, implement preventive controls.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Mô hình NIST IR. Quan trọng nhất là Preparation — đội nào không có runbook sẵn sẽ bị rối khi incident xảy ra. Containment: KHÔNG shutdown server ngay (mất forensic evidence) → isolate network + capture memory dump + preserve logs TRƯỚC. Postmortem phải blameless — tập trung vào system improvement, không blame cá nhân.
 
-### 🟡 Q: Security fundamentals drill #35? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🔴 Drill #18: Explain forward secrecy in TLS. Why is it critical for modern systems? / Giải thích forward secrecy trong TLS. Tại sao quan trọng? `[Senior]`
 
-### 🟡 Q: Security fundamentals drill #36? `[Mid]`
+**A:** Forward secrecy (Perfect Forward Secrecy — PFS) ensures that compromising a server's long-term private key doesn't decrypt past recorded traffic. Mechanism: each session generates ephemeral key pairs via **Diffie-Hellman Ephemeral (DHE)** or **ECDHE**. Even if attacker records encrypted traffic AND later steals the server key, they cannot decrypt old sessions because ephemeral keys were discarded. TLS 1.3 mandates PFS (only allows ECDHE). Without PFS: attacker records traffic today, steals server key next year, decrypts everything retroactively.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Không có PFS: attacker ghi lại traffic hôm nay → 5 năm sau đánh cắp private key → giải mã TOÀN BỘ traffic cũ. Có PFS: mỗi session tạo ephemeral key riêng, dùng xong xóa → private key bị lộ cũng không giải mã được traffic cũ. TLS 1.3 bắt buộc PFS — đây là lý do nên upgrade từ TLS 1.2.
 
-### 🟡 Q: Security fundamentals drill #37? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🔴 Drill #19: How do you secure your software supply chain? What tools and processes are needed? / Bảo mật supply chain phần mềm như thế nào? `[Senior]`
 
-### 🟡 Q: Security fundamentals drill #38? `[Mid]`
+**A:** Supply chain security protects against compromised dependencies, build processes, and distribution. Key practices: (1) **Dependency scanning** — Snyk/Dependabot for CVE detection in transitive deps, (2) **Lock files** — `package-lock.json` / `go.sum` pinned to exact versions, (3) **SBOM** (Software Bill of Materials) — CycloneDX/SPDX for transparency, (4) **Signed commits + artifacts** — GPG signatures, cosign for container images, (5) **Build reproducibility** — deterministic builds, SLSA framework levels, (6) **Private registry** — Artifactory/GitHub Packages with vulnerability policies. Real-world: SolarWinds attack (2020) — compromised build server injected backdoor into signed updates affecting 18,000 organizations.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: SolarWinds 2020: attacker xâm nhập build server → inject backdoor vào bản update có chữ ký hợp lệ → 18,000 tổ chức bị ảnh hưởng. Bài học: verify không chỉ source code mà cả build pipeline. SLSA framework: Level 1 (scripted build) → Level 4 (hermetic, reproducible, verified). npm/yarn: luôn commit lock file + audit dependencies trước CI/CD.
 
-### 🟡 Q: Security fundamentals drill #39? `[Mid]`
+---
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+### 🔴 Drill #20: How do you implement compliance controls (SOC 2, GDPR) as technical systems, not just policies? / Implement compliance controls dưới dạng hệ thống kỹ thuật? `[Senior]`
 
-### 🟡 Q: Security fundamentals drill #40? `[Mid]`
+**A:** Compliance-as-code turns audit requirements into automated, verifiable controls: (1) **SOC 2 access control** → IAM policies + JIT (just-in-time) access via Teleport/StrongDM, automatic deprovisioning. (2) **GDPR data minimization** → schema enforcement (reject unnecessary PII), automatic PII detection with AWS Macie. (3) **SOC 2 audit logging** → immutable logs to S3 + CloudWatch, tamper-evident via hash chain. (4) **GDPR right to erasure** → soft-delete with `deleted_at` + background job for hard delete after retention period, cascade to all data stores. (5) **Continuous compliance** → Open Policy Agent (OPA) for policy-as-code, automated evidence collection for auditors.
 
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🟡 Q: Security fundamentals drill #41? `[Mid]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🟡 Q: Security fundamentals drill #42? `[Mid]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🟡 Q: Security fundamentals drill #43? `[Mid]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🟡 Q: Security fundamentals drill #44? `[Mid]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🟡 Q: Security fundamentals drill #45? `[Mid]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🟡 Q: Security fundamentals drill #46? `[Mid]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🟡 Q: Security fundamentals drill #47? `[Mid]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #48? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #49? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #50? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #51? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #52? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #53? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #54? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #55? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #56? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #57? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #58? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #59? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #60? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #61? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #62? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #63? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #64? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #65? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #66? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #67? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #68? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #69? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
-
-### 🔴 Q: Security fundamentals drill #70? `[Senior]`
-
-**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+_Vietnamese_: Compliance không phải chỉ viết policy document → phải implement thành code có thể test và audit tự động. SOC 2 Type II yêu cầu bằng chứng controls hoạt động liên tục → dùng automated evidence collection (screenshot + API logs + config snapshots). GDPR Right to Erasure: cần cascade delete qua TẤT CẢ data stores (DB, cache, logs, backups, third-party) → thiết kế data lineage map.
 
 ---
 

@@ -7,97 +7,118 @@ tags: [Array, Hash Table, Bit Manipulation, Trie, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/maximum-strong-pair-xor-i"
 ---
 
-# Maximum Strong Pair XOR I / Maximum Strong Pair XOR I
+# Maximum Strong Pair XOR I / XOR Cặp Mạnh Tối Đa I
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Trie
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Maximum Strong Pair XOR II](https://leetcode.com/problems/maximum-strong-pair-xor-ii) | [Number of Valid Words for Each Puzzle](https://leetcode.com/problems/number-of-valid-words-for-each-puzzle)
+> **Track**: String | **Difficulty**: 🟢 Easy | **Pattern**: Brute Force / Bit Manipulation
+> **Frequency**: Low — bài nhập môn XOR, nắm trước khi học bài Hard (II)
+> **See also**: [Maximum XOR of Two Numbers in an Array](https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array) | [Maximum Strong Pair XOR II](https://leetcode.com/problems/maximum-strong-pair-xor-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống cây thư mục — mỗi ký tự là một cấp. Tìm kiếm prefix cực nhanh O(L) với L là độ dài từ.
+**Analogy:** Hãy tưởng tượng bạn có đội bóng 50 người. Hai người tạo thành "cặp mạnh" nếu sự chênh lệch số áo của họ không vượt quá số áo nhỏ hơn — tức là không quá cách biệt nhau (|x-y| ≤ min(x,y)). Từ tất cả các cặp mạnh, bạn tìm cặp nào khi XOR số áo lại cho ra kết quả lớn nhất. Vì chỉ có 50 người, thử tất cả (50×50)/2 cặp là hoàn toàn ổn — đây chính là brute force O(n²).
 
 **Pattern Recognition:**
 
-- Signal: "prefix search" + "dictionary of words" → **Trie**
-- Bài này thuộc dạng Trie — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "|x-y| ≤ min(x,y)" → **Strong pair condition** → equivalent to: x ≤ y ≤ 2x (after sorting)
+- Bài này thuộc dạng brute force trên mảng nhỏ (n ≤ 50), kiểm tra điều kiện cặp và maximize XOR
+- Key insight: điều kiện |x-y| ≤ min(x,y) với x ≤ y tương đương y ≤ 2x — dễ kiểm tra sau khi sort
 
-**Visual — Maximum Strong Pair XOR I example:**
+**Visual — nums = [1, 2, 3, 4, 5] example:**
 
 ```
-// TODO: Add step-by-step visual for Trie
-// Show one complete example with state at each step
+Check all pairs (x, y) where x ≤ y, condition: y ≤ 2x
+
+(1,2): 2≤2×1=2 ✓  XOR=3
+(1,3): 3≤2×1=2 ✗
+(2,3): 3≤2×2=4 ✓  XOR=1
+(2,4): 4≤2×2=4 ✓  XOR=6
+(3,4): 4≤2×3=6 ✓  XOR=7  ← max
+(3,5): 5≤2×3=6 ✓  XOR=6
+(4,5): 5≤2×4=8 ✓  XOR=1
+
+Maximum XOR from valid pairs = 7  (pair 3,4)
 ```
 
 ---
 
 ## Problem Description
 
-Maximum Strong Pair XOR I. ([LeetCode](https://leetcode.com/problems/maximum-strong-pair-xor-i))
-
-Difficulty: Easy | Acceptance: 74.8%
+You are given an array `nums`. A pair `(x, y)` is called **strong** if `|x - y| <= min(x, y)`. Return the maximum XOR value of all strong pairs. ([LeetCode](https://leetcode.com/problems/maximum-strong-pair-xor-i))
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: nums = [1, 2, 3, 4, 5]   → 7    (pair (3,4): 3 XOR 4 = 7)
+Example 2: nums = [10, 100]          → 0    (|10-100|=90 > min(10,100)=10, no valid pair)
+Example 3: nums = [5, 5]             → 0    (5 XOR 5 = 0, trivial but valid)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-strong-pair-xor-i) for full constraints
+Constraints: `1 <= nums.length <= 50`, `1 <= nums[i] <= 100`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **"Simplify |x-y| ≤ min(x,y)"** — _Với x ≤ y: điều kiện trở thành y-x ≤ x, tức y ≤ 2x — dễ check hơn sau khi sort._
+2. **"Brute force O(n²) is fine for n≤50"** — _50×50=2500 phép XOR — hoàn toàn chấp nhận được, không cần trie._
+3. **"A pair (x,x) is always valid — XOR=0"** — _Cặp giống nhau luôn là strong pair nhưng XOR=0, không ảnh hưởng max._
+4. **"This is prep for Problem II (Hard)"** — _Cùng bài toán nhưng n lên tới 5×10^4, cần trie + sliding window._
+5. **"XOR maximization: try to flip each bit from MSB"** — _Nguyên lý cơ bản của XOR trie — tại mỗi bit, ưu tiên chọn nhánh ngược để tạo bit 1._
+6. **"Self-pairs (i=j) are valid — include i≤j in loop"** — _Đề bài cho phép x=y, vì thế loop nên bắt đầu j=i._
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumStrongPairXorIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+/** Solution 1: Brute Force O(n²)  @complexity Time: O(n²) | Space: O(1) */
+function maximumStrongPairXor(nums: number[]): number {
+  let max = 0;
+  for (let i = 0; i < nums.length; i++) {
+    for (let j = i; j < nums.length; j++) {
+      const x = nums[i],
+        y = nums[j];
+      // strong pair condition: |x-y| <= min(x,y)
+      if (Math.abs(x - y) <= Math.min(x, y)) {
+        max = Math.max(max, x ^ y);
+      }
+    }
+  }
+  return max;
 }
 
-/**
- * Solution 2: Optimized — Trie
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumStrongPairXorI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Trie
-  // Hint: Build trie from dictionary, search by prefix
-  throw new Error('Not implemented');
+/** Solution 2: Sort + equivalent condition  @complexity Time: O(n² + n log n) | Space: O(n) */
+function maximumStrongPairXor2(nums: number[]): number {
+  // After sorting x<=y: |x-y|<=min(x,y) ⟺ y-x<=x ⟺ y<=2x
+  const sorted = [...nums].sort((a, b) => a - b);
+  let max = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = i; j < sorted.length; j++) {
+      if (sorted[j] <= 2 * sorted[i]) {
+        max = Math.max(max, sorted[i] ^ sorted[j]);
+      } else {
+        break; // sorted: no point checking further j
+      }
+    }
+  }
+  return max;
 }
 
 // === Test Cases ===
-// console.log(maximumStrongPairXorI(/* example 1 */)); // expected
-// console.log(maximumStrongPairXorI(/* example 2 */)); // expected
-// console.log(maximumStrongPairXorI(/* edge case */)); // expected
+console.log(maximumStrongPairXor([1, 2, 3, 4, 5])); // 7
+console.log(maximumStrongPairXor([10, 100])); // 0
+console.log(maximumStrongPairXor([5, 5])); // 0
+console.log(maximumStrongPairXor2([1, 2, 3, 4, 5])); // 7
+console.log(maximumStrongPairXor([1])); // 0  (single element, pair with itself)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Maximum Strong Pair XOR II](https://leetcode.com/problems/maximum-strong-pair-xor-ii) — same pattern: Trie
-- [Number of Valid Words for Each Puzzle](https://leetcode.com/problems/number-of-valid-words-for-each-puzzle) — same pattern: Trie
-- [Maximum XOR of Two Numbers in an Array](https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array) — same pattern: Trie
-- [Maximum Genetic Difference Query](https://leetcode.com/problems/maximum-genetic-difference-query) — same pattern: Trie
-- [Maximum Strong Pair XOR I — LeetCode](https://leetcode.com/problems/maximum-strong-pair-xor-i) — problem page
+| #    | Problem                                | Difficulty | Pattern               |
+| ---- | -------------------------------------- | ---------- | --------------------- |
+| 421  | Maximum XOR of Two Numbers in an Array | Medium     | Trie                  |
+| 136  | Single Number                          | Easy       | Bit Manipulation      |
+| 260  | Single Number III                      | Medium     | Bit Manipulation      |
+| 2935 | Maximum Strong Pair XOR II             | Hard       | Trie + Sliding Window |
