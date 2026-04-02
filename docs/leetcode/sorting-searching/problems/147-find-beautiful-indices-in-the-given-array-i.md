@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/find-beautiful-indices-in-the-given
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: String Matching + Binary Search
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Tìm tất cả vị trí `i` trong `s` nơi pattern `a` bắt đầu, và `i` đẹp nếu tồn tại vị trí `j` nơi pattern `b` bắt đầu thỏa `|i - j| ≤ k`. Trước tiên tìm tất cả occurrence của `a` và `b`, sau đó với mỗi `i`, binary search để kiểm tra có `j` gần không.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Tìm tất cả vị trí `i` trong `s` nơi pattern `a` bắt đầu, và `i` đẹp nếu tồn tại vị trí `j` nơi pattern `b` bắt đầu thỏa `|i - j| ≤ k`. Trước tiên tìm tất cả occurrence của `a` và `b`, sau đó với mỗi `i`, binary search để kiểm tra có `j` gần không.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Beautiful Indices in the Given Array I example:**
 
 ```
 s="isawsquirrelnearthetree", a="squ", b="irrel", k=15
@@ -25,7 +32,20 @@ i=4: closest j in B = 8, |4-8|=4 ≤ 15 → beautiful ✅
 Answer: [4]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                            | Pattern         |
+| ---- | -------------------------------------------------- | --------------- |
+| 3006 | Find Beautiful Indices in the Given Array I        | This problem    |
+| 3008 | Find Beautiful Indices in the Given Array II       | KMP             |
+| 28   | Find the Index of the First Occurrence in a String | String Matching |
+| 459  | Repeated Substring Pattern                         | KMP             |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Two-phase** / Pha 1: tìm tất cả occurrence của a và b; Pha 2: binary search proximity
 - 🔑 **indexOf loop** / Dùng `s.indexOf(a, start)` lặp để tìm tất cả vị trí — O(n×|a|)
@@ -33,6 +53,8 @@ Answer: [4]
 - 🔑 **Binary search** / Với mỗi i, tìm j ∈ B gần nhất: lower_bound(i-k) đến upper_bound(i+k)
 - 🔑 **Two pointers** / Nếu cả A và B đã sorted, dùng 2 con trỏ — O(|A| + |B|)
 - 🔑 **Result sorted** / A đã được build theo thứ tự tăng dần nên không cần sort lại
+
+---
 
 ## Solutions
 
@@ -117,7 +139,9 @@ function beautifulIndicesBrute(s: string, a: string, b: string, k: number): numb
 console.log(beautifulIndicesBrute("isawsquirrelnearthetree", "squ", "irrel", 15)); // [4]
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                            | Pattern         |
 | ---- | -------------------------------------------------- | --------------- |

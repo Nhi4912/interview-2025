@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/stone-game-vi"
 
 # Stone Game VI / Trò Chơi Đá VI
 
-🟡 Medium | 🏷️ Array, Math, Greedy, Sorting | [LeetCode](https://leetcode.com/problems/stone-game-vi)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Alice và Bob luân phiên lấy đá. Alice muốn maximize điểm của mình - điểm của Bob. Key insight: khi Alice lấy viên đá i, cô ấy vừa được `aliceValues[i]` điểm VÀ ngăn Bob được `bobValues[i]` điểm. Tổng "giá trị chiến lược" = `aliceValues[i] + bobValues[i]`. Sắp xếp theo tổng này giảm dần, luân phiên chọn.
+**Analogy:** **Vietnamese:** Alice và Bob luân phiên lấy đá. Alice muốn maximize điểm của mình - điểm của Bob. Key insight: khi Alice lấy viên đá i, cô ấy vừa được `aliceValues[i]` điểm VÀ ngăn Bob được `bobValues[i]` điểm. Tổng "giá trị chiến lược" = `aliceValues[i] + bobValues[i]`. Sắp xếp theo tổng này giảm dần, luân phiên chọn.
 
 **Analogy:** Mỗi viên đá có giá trị kép: giá trị cho bạn và giá trị bạn "cướp" từ đối thủ. Hãy ưu tiên những viên có tổng giá trị kép cao nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Stone Game VI example:**
 
 ```
 aliceValues = [1,3]  bobValues = [2,1]
@@ -32,6 +35,18 @@ alice(3) > bob(2) → Alice wins → return 1
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                        | Difficulty | Connection                |
+| -------------------------------------------------------------- | ---------- | ------------------------- |
+| [Stone Game](https://leetcode.com/problems/stone-game)         | 🟡 Medium  | Same game, simpler greedy |
+| [Stone Game II](https://leetcode.com/problems/stone-game-ii)   | 🟡 Medium  | DP stone game             |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler) | 🟡 Medium  | Greedy scheduling         |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** Greedy key: sort by `aliceValues[i] + bobValues[i]` descending / **VI:** Sắp xếp theo tổng `a[i]+b[i]` giảm dần
@@ -43,9 +58,9 @@ alice(3) > bob(2) → Alice wins → return 1
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Sort by Combined Value, Alternate Picks
+## Solutions
 
 ```typescript
 /**
@@ -78,11 +93,7 @@ function stoneGameVI(aliceValues: number[], bobValues: number[]): number {
 console.log(stoneGameVI([1, 3], [2, 1])); // 1  (Alice wins)
 console.log(stoneGameVI([1, 2], [3, 1])); // 0  (Draw)
 console.log(stoneGameVI([2, 4, 3], [1, 6, 7])); // -1 (Bob wins)
-```
 
-### Solution 2: Inline Sort with Tuple (cleaner)
-
-```typescript
 /**
  * Build tuples directly for clarity.
  * Time: O(n log n)  Space: O(n)
@@ -107,11 +118,7 @@ function stoneGameVI2(aliceValues: number[], bobValues: number[]): number {
 console.log(stoneGameVI2([1, 3], [2, 1])); // 1
 console.log(stoneGameVI2([1, 2], [3, 1])); // 0
 console.log(stoneGameVI2([2, 4, 3], [1, 6, 7])); // -1
-```
 
-### Solution 3: Using score difference directly
-
-```typescript
 /**
  * Track difference = aliceTotal - bobTotal.
  * Time: O(n log n)  Space: O(n)

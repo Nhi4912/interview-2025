@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/count-nodes-equal-to-average-of-sub
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Post-order DFS
 
-## 🧠 Intuition
+---
 
-**VI**: Đây là bài toán "thông tin đi lên" — mỗi nút cần biết tổng và số lượng phần tử trong cây con của nó. Dùng DFS hậu thứ tự (post-order): xử lý con trái và con phải trước, rồi gộp kết quả lên nút cha. Tại mỗi nút, kiểm tra `Math.floor(sum / count) === node.val`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Đây là bài toán "thông tin đi lên" — mỗi nút cần biết tổng và số lượng phần tử trong cây con của nó. Dùng DFS hậu thứ tự (post-order): xử lý con trái và con phải trước, rồi gộp kết quả lên nút cha. Tại mỗi nút, kiểm tra `Math.floor(sum / count) === node.val`.
 
 **EN**: Each node needs subtree sum and count — information flows **bottom-up**. Post-order DFS returns `[sum, count]` pairs; at each node check `floor(sum/count) === val`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Nodes Equal to Average of Subtree example:**
 
 ```
         4
@@ -34,6 +41,19 @@ DFS post-order:
 Answer: 1 (only node 5)
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                           | Difficulty | Pattern             |
+| ---- | ------------------------------- | ---------- | ------------------- |
+| 543  | Diameter of Binary Tree         | 🟢 Easy    | Post-order DFS      |
+| 124  | Binary Tree Maximum Path Sum    | 🔴 Hard    | Post-order DFS      |
+| 1448 | Count Good Nodes in Binary Tree | 🟡 Medium  | DFS                 |
+| 572  | Subtree of Another Tree         | 🟢 Easy    | DFS + Serialization |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Post-order = xử lý con trước, cha sau — luồng thông tin đi từ lá lên gốc.
@@ -42,6 +62,8 @@ Answer: 1 (only node 5)
 - 🇬🇧 Return `[sum, count]` from DFS — avoids mutable global state.
 - 🇻🇳 Dùng `Math.floor` để tính trung bình nguyên: `(sum / count) | 0`.
 - 🇬🇧 Integer average: `Math.floor(sum / count)` or `(sum / count) | 0`.
+
+---
 
 ## Solutions
 
@@ -140,6 +162,8 @@ console.log(averageOfSubtree(makeTree([4, 8, 5, 0, 1, null, 6]))); // 1
 console.log(averageOfSubtree(makeTree([1]))); // 1
 console.log(averageOfSubtree2(makeTree([4, 8, 5, 0, 1, null, 6]))); // 1
 ```
+
+---
 
 ## 🔗 Related Problems
 

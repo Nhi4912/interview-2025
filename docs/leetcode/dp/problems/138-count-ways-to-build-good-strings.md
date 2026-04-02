@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/count-ways-to-build-good-strings"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Bottom-Up DP (Unbounded Knapsack style)
 
-## 🧠 Intuition
+---
 
-**VI:** Giống bài toán đếm số cách leo cầu thang — nhưng thay vì bước 1 hoặc 2, bạn có thể thêm khối 0-bit kích thước `zero` hoặc khối 1-bit kích thước `one`. Đếm tất cả độ dài chuỗi nằm trong `[low, high]`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Giống bài toán đếm số cách leo cầu thang — nhưng thay vì bước 1 hoặc 2, bạn có thể thêm khối 0-bit kích thước `zero` hoặc khối 1-bit kích thước `one`. Đếm tất cả độ dài chuỗi nằm trong `[low, high]`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Ways To Build Good Strings example:**
 
 ```
 zero=1, one=2, low=3, high=4
@@ -29,6 +36,19 @@ dp[4] = dp[4-1] + dp[4-2]     = dp[3] + dp[2] = 5
 Answer = sum of dp[low..high] = dp[3] + dp[4] = 3 + 5 = 8
 ```
 
+---
+
+## Problem Description
+
+| #   | Title                    | Difficulty | Connection                                       |
+| --- | ------------------------ | ---------- | ------------------------------------------------ |
+| 70  | Climbing Stairs          | 🟢 Easy    | Same unbounded "sum of ways" recurrence          |
+| 746 | Min Cost Climbing Stairs | 🟢 Easy    | Add cost dimension to same pattern               |
+| 322 | Coin Change              | 🟡 Medium  | Unbounded knapsack — count ways with fixed items |
+| 518 | Coin Change II           | 🟡 Medium  | Count combinations with unbounded items          |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** `dp[i]` = number of valid strings of **exactly** length `i`; base case `dp[0] = 1` | **VI:** `dp[0] = 1` là trường hợp cơ sở (chuỗi rỗng), mọi thứ xây từ đây
@@ -37,6 +57,8 @@ Answer = sum of dp[low..high] = dp[3] + dp[4] = 3 + 5 = 8
 - 🔑 **EN:** Use `MOD = 1e9+7` throughout (constraints: up to 1e5) | **VI:** Nhớ lấy mod sau mỗi phép cộng
 - 🔑 **EN:** This is essentially unbounded knapsack counting with items of sizes `zero` and `one` | **VI:** Bản chất là đếm tổ hợp knapsack không giới hạn với 2 loại vật phẩm
 - 🔑 **EN:** Time O(high), Space O(high) — very efficient | **VI:** Độ phức tạp O(high) — rất hiệu quả
+
+---
 
 ## Solutions
 
@@ -88,6 +110,8 @@ console.log(countWays(1, 1, 1, 1)); // 2  (strings "0" and "1")
 console.log(countWaysTopDown(3, 3, 1, 1)); // 8
 console.log(countWaysTopDown(2, 3, 1, 2)); // 5
 ```
+
+---
 
 ## 🔗 Related Problems
 

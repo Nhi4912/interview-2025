@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/construct-the-minimum-bitwise-array
 
 # Construct the Minimum Bitwise Array II / Xây Dựng Mảng Bitwise Tối Thiểu II
 
-**Difficulty:** Medium | **Category:** Array, Bit Manipulation | **LeetCode:** [3085](https://leetcode.com/problems/construct-the-minimum-bitwise-array-ii)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Với mỗi số nguyên tố p, tìm x nhỏ nhất sao cho x OR (x+1) = p.**
+**Analogy:** > **Với mỗi số nguyên tố p, tìm x nhỏ nhất sao cho x OR (x+1) = p.**
 > `x OR (x+1)` luôn lật bít thấp nhất đang là 0 của x và tất cả bít dưới nó.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Construct the Minimum Bitwise Array II example:**
 
 ```
 p = 5  =  101
@@ -33,7 +38,13 @@ x = 7 - 4 = 3 = 011 → 011 OR 100 = 111 = 7 ✓
 p = 2: không có x vì x OR (x+1) ≥ 3 với x≥2, hoặc =1,3 với x=0,1.
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **p = 2 luôn trả -1** — `x OR (x+1)` không thể bằng 2 (kết quả lẻ hoặc ≥ 3).
 2. **Lowest set bit của (p+1):** `t = (p+1) & -(p+1)` — trích bit thấp nhất.
@@ -42,7 +53,9 @@ p = 2: không có x vì x OR (x+1) ≥ 3 với x≥2, hoặc =1,3 với x=0,1.
 5. **Verify:** `x | (x+1) === p` — luôn check sau khi tính.
 6. Đề đảm bảo `nums` là mảng số nguyên tố → không cần kiểm tra tính nguyên tố.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -65,9 +78,7 @@ console.log(minBitwiseArray([2, 3, 5, 7])); // [-1, 1, 4, 3]
 console.log(minBitwiseArray([11, 13])); // [9, 12]
 console.log(minBitwiseArray([2])); // [-1]
 console.log(minBitwiseArray([3])); // [1]  (1|2=3 ✓)
-```
 
-```typescript
 /**
  * Approach 2: Brute-force search per prime (verifiable, slower)
  * Time: O(n * p_max) | Space: O(n)
@@ -87,9 +98,7 @@ function minBitwiseArray2(nums: number[]): number[] {
 console.log(minBitwiseArray2([2, 3, 5, 7])); // [-1, 1, 4, 3]
 console.log(minBitwiseArray2([11, 13])); // [9, 12]
 // Verify: 9|10 = 1001|1010 = 1011 = 11 ✓; 12|13 = 1100|1101 = 1101 = 13 ✓
-```
 
-```typescript
 /**
  * Approach 3: Bit scan — find lowest 0-bit position in p, then derive x
  * Time: O(n * log p) | Space: O(n)
@@ -116,7 +125,9 @@ console.log(minBitwiseArray3([2, 3, 5, 7, 11, 13]));
 // 7=111 lowest-0 at pos=3, ans=7-4=3 ✓
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                                                           | Difficulty | Connection                    |
 | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------- |

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/binary-tree-postorder-traversal"
 
 # Binary Tree Postorder Traversal / Duyệt Cây Nhị Phân Theo Thứ Tự Hậu Tố
 
-## Analogy / Tương Tự
+---
 
-> Khi dọn nhà, bạn dọn phòng con cái trước, rồi phòng của bạn sau. **Postorder = con trái → con phải → cha**. Cha luôn được xử lý **sau** các con của nó.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Khi dọn nhà, bạn dọn phòng con cái trước, rồi phòng của bạn sau. **Postorder = con trái → con phải → cha**. Cha luôn được xử lý **sau** các con của nó.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Binary Tree Postorder Traversal example:**
 
 ```
       1
@@ -26,11 +31,15 @@ Postorder: 4 → 5 → 2 → 3 → 1
 (left subtree first, then right, finally root)
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given the `root` of a binary tree, return the **postorder traversal** of its nodes' values (left → right → root).
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Recursive is trivial** — but interviewer likely wants iterative
 2. **Iterative trick** — reverse of modified preorder (root→right→left reversed = left→right→root)
@@ -39,9 +48,9 @@ Given the `root` of a binary tree, return the **postorder traversal** of its nod
 5. **Null checks** — always handle null root
 6. **Order matters** — postorder is used in: tree deletion, expression evaluation, dependency resolution
 
-## Solutions
+---
 
-### Solution 1: Recursive
+## Solutions
 
 ```typescript
 class TreeNode {
@@ -71,11 +80,7 @@ function postorderTraversalRecursive(root: TreeNode | null): number[] {
 const root1 = new TreeNode(1, null, new TreeNode(2, new TreeNode(3), null));
 console.log(postorderTraversalRecursive(root1)); // [3, 2, 1]
 console.log(postorderTraversalRecursive(null)); // []
-```
 
-### Solution 2: Iterative (Reverse Preorder)
-
-```typescript
 function postorderTraversal(root: TreeNode | null): number[] {
   if (!root) return [];
   const result: number[] = [];
@@ -94,11 +99,7 @@ function postorderTraversal(root: TreeNode | null): number[] {
 
 const root2 = new TreeNode(1, new TreeNode(2, new TreeNode(4), new TreeNode(5)), new TreeNode(3));
 console.log(postorderTraversal(root2)); // [4, 5, 2, 3, 1]
-```
 
-### Solution 3: Iterative with Explicit State
-
-```typescript
 function postorderTraversalStack(root: TreeNode | null): number[] {
   const result: number[] = [];
   const stack: TreeNode[] = [];
@@ -126,7 +127,9 @@ function postorderTraversalStack(root: TreeNode | null): number[] {
 console.log(postorderTraversalStack(root2)); // [4, 5, 2, 3, 1]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #   | Problem                         | Difficulty | Tags       |
 | --- | ------------------------------- | ---------- | ---------- |

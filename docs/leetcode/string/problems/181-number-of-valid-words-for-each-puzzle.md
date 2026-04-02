@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/number-of-valid-words-for-each-puzz
 
 # Number of Valid Words for Each Puzzle / Số Từ Hợp Lệ Cho Mỗi Câu Đố
 
-**Difficulty:** 🔴 Hard | **Tags:** Array, Hash Table, String, Bit Manipulation, Trie
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Một từ **hợp lệ** cho puzzle nếu: (1) chứa ký tự đầu của puzzle, (2) mọi ký tự của từ đều có trong puzzle.
+**Analogy:** Một từ **hợp lệ** cho puzzle nếu: (1) chứa ký tự đầu của puzzle, (2) mọi ký tự của từ đều có trong puzzle.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Valid Words for Each Puzzle example:**
 
 ```
 words   = ["aaaa","asas","able","ability","actt","actor","access"]
@@ -36,7 +39,19 @@ Key: only words with ≤ 7 unique letters can be valid (puzzle has 7 chars)
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                         | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Word Filter](https://leetcode.com/problems/prefix-and-suffix-search/)                                          | 🔴 Hard    | Trie               |
+| [Maximum XOR of Two Numbers in an Array](https://leetcode.com/problems/maximum-xor-of-two-numbers-in-an-array/) | 🟡 Medium  | Bitmask / Trie     |
+| [Subsets](https://leetcode.com/problems/subsets/)                                                               | 🟡 Medium  | Subset enumeration |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Bitmask word trước**: hash 100k+ words → Map<mask, count> — O(words × L)
 - 🇺🇸 **Pre-hash words**: reduce words to Map<mask, count> once upfront
@@ -53,9 +68,9 @@ Key: only words with ≤ 7 unique letters can be valid (puzzle has 7 chars)
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Bitmask + Subset Enumeration (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -98,11 +113,7 @@ function findNumOfValidWords(words: string[], puzzles: string[]): number[] {
 const words = ["aaaa", "asas", "able", "ability", "actt", "actor", "access"];
 const puzzles = ["aboveyz", "abrodyz", "abslute", "bezpqrxy", "cfxzpgsl", "f"];
 console.log(findNumOfValidWords(words, puzzles)); // [1,1,3,2,4,0]
-```
 
-### Solution 2 — Naive O(W×P) for small inputs
-
-```typescript
 /**
  * Direct check: word mask subset of puzzle mask + has first letter.
  * Time: O(W×P×L)  Space: O(W)
@@ -129,11 +140,7 @@ function findNumOfValidWords2(words: string[], puzzles: string[]): number[] {
 }
 
 console.log(findNumOfValidWords2(words, puzzles)); // [1,1,3,2,4,0]
-```
 
-### Solution 3 — Trie-based (conceptual, for interview discussion)
-
-```typescript
 /**
  * Build a Trie over words' sorted unique char sets; query each puzzle.
  * Shown for completeness; bitmask approach is faster in practice.

@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/coloring-a-border"
 
 # Coloring A Border / Tô Màu Viền
 
-🟡 Medium | BFS/DFS: Find Connected Component, Color Border Cells | [LeetCode 1034](https://leetcode.com/problems/coloring-a-border)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Tìm thành phần liên thông chứa ô (row, col). Một ô là "viền" nếu nó nằm ở rìa lưới HOẶC có ít nhất một hàng xóm không cùng thành phần. Chỉ tô màu các ô viền — nội tâm giữ nguyên.
+**Analogy:** **Vietnamese:** Tìm thành phần liên thông chứa ô (row, col). Một ô là "viền" nếu nó nằm ở rìa lưới HOẶC có ít nhất một hàng xóm không cùng thành phần. Chỉ tô màu các ô viền — nội tâm giữ nguyên.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Coloring A Border example:**
 
 ```
 grid=[[1,1],[1,2]]  (row=0,col=0)  color=3
@@ -32,7 +35,20 @@ Result: color (0,0),(0,1),(1,0) with 3 → [[3,3],[3,2]]
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                    | Difficulty | Key Idea                       |
+| -------------------------------------------------------------------------- | ---------- | ------------------------------ |
+| [Flood Fill 733](https://leetcode.com/problems/flood-fill)                 | Easy       | BFS/DFS color all connected    |
+| [Number of Islands 200](https://leetcode.com/problems/number-of-islands)   | Medium     | BFS/DFS connected components   |
+| [Max Area of Island 695](https://leetcode.com/problems/max-area-of-island) | Medium     | BFS component size             |
+| [Surrounded Regions 130](https://leetcode.com/problems/surrounded-regions) | Medium     | BFS from border, mark interior |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Step 1: BFS/DFS from (row,col) to collect all cells with same original color | **VI:** BFS/DFS để tìm tất cả ô cùng màu kết nối
 - 🔑 **EN:** Step 2: border cell = in component AND (at grid edge OR has out-of-component neighbor) | **VI:** Ô viền = trong thành phần VÀ (ở rìa lưới HOẶC có hàng xóm ngoài thành phần)
@@ -43,7 +59,9 @@ Result: color (0,0),(0,1),(1,0) with 3 → [[3,3],[3,2]]
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -141,9 +159,7 @@ console.log(
     2,
   ),
 ); // border 2, interior 1
-```
 
-```typescript
 /**
  * DFS variant — same logic, recursive traversal
  * Time: O(m*n)  Space: O(m*n) recursion stack
@@ -214,7 +230,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                    | Difficulty | Key Idea                       |
 | -------------------------------------------------------------------------- | ---------- | ------------------------------ |

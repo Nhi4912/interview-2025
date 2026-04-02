@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/maximum-subarray-sum-with-one-delet
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn đang chạy xe qua một con đường với các đoạn "lời" (dương) và "lỗ" (âm). Bạn được phép bỏ qua tối đa một đoạn đường xấu nhất. Chiến lược tối ưu: dùng hai trạng thái DP — "chưa dùng quyền xóa" và "đã dùng quyền xóa". Tại mỗi vị trí, bạn quyết định: giữ nguyên đoạn này, hay dùng quyền đặc biệt để bỏ qua nó. Đây là dạng "State Machine DP" kinh điển với 2 trạng thái.
+**Analogy:** Bạn đang chạy xe qua một con đường với các đoạn "lời" (dương) và "lỗ" (âm). Bạn được phép bỏ qua tối đa một đoạn đường xấu nhất. Chiến lược tối ưu: dùng hai trạng thái DP — "chưa dùng quyền xóa" và "đã dùng quyền xóa". Tại mỗi vị trí, bạn quyết định: giữ nguyên đoạn này, hay dùng quyền đặc biệt để bỏ qua nó. Đây là dạng "State Machine DP" kinh điển với 2 trạng thái.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Subarray Sum with One Deletion example:**
 
 ```
 arr = [1, -2, 0, 3]
@@ -46,7 +49,9 @@ i=3: arr[3]=3
 Answer: max over all keep[i] and del[i] = 4 ✓  (delete -2, subarray [1,0,3]=4)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an integer array `arr`, return the **maximum sum** of a non-empty subarray with **at most one element deleted**. The subarray must be non-empty after deletion.
 
@@ -58,7 +63,9 @@ Given an integer array `arr`, return the **maximum sum** of a non-empty subarray
 
 **Constraints:** `1 ≤ arr.length ≤ 10^5`, `-10^4 ≤ arr[i] ≤ 10^4`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Two-state DP** / DP hai trạng thái: `keep[i]` (chưa xóa) và `del[i]` (đã xóa 1 phần tử)
 - **del[i] transition** / Chuyển trạng thái del: `max(del[i-1] + arr[i], keep[i-1])` — xóa hiện tại hoặc đã xóa trước
@@ -67,7 +74,9 @@ Given an integer array `arr`, return the **maximum sum** of a non-empty subarray
 - **Kadane variant** / Biến thể Kadane: Đây là Kadane mở rộng với state cho phép bỏ 1 phần tử
 - **Edge case** / Trường hợp đặc biệt: Mảng toàn âm → phải trả phần tử âm lớn nhất (không xóa hết)
 
-## Solution 1 - O(n) with Extra Arrays
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -93,11 +102,7 @@ function maximumSumBasic(arr: number[]): number {
 
   return ans;
 }
-```
 
-## Solution 2 - O(1) Space State Machine (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Rolling variables: keep = current max subarray sum, del = with one deletion
@@ -117,11 +122,7 @@ function maximumSum(arr: number[]): number {
 
   return ans;
 }
-```
 
-## Solution 3 - Prefix + Suffix Max
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * preMax[i] = max subarray ending at i, sufMax[i] = max subarray starting at i
@@ -142,11 +143,8 @@ function maximumSumPreSuf(arr: number[]): number {
   for (let k = 1; k < n - 1; k++) ans = Math.max(ans, preMax[k - 1] + sufMax[k + 1]);
   return ans;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(maximumSum([1, -2, 0, 3])); // → 4
 console.log(maximumSum([1, -2, -2, 3])); // → 3
 console.log(maximumSum([-1, -1, -1, -1])); // → -1
@@ -154,7 +152,9 @@ console.log(maximumSumBasic([1, -2, 0, 3])); // → 4
 console.log(maximumSumPreSuf([1, -2, 0, 3])); // → 4
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                       | Difficulty | Link                                                                  |
 | ----------------------------- | ---------- | --------------------------------------------------------------------- |

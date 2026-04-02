@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/find-indices-with-index-and-value-d
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn đang tìm hai ngày trong lịch (i và j) thỏa: hai ngày cách nhau ít nhất `indexDifference` ngày VÀ nhiệt độ chênh lệch ít nhất `valueDifference` độ. Brute force kiểm tra mọi cặp ngày là O(n²). Tối ưu hơn: với mỗi j, ta chỉ cần biết nhiệt độ thấp nhất và cao nhất trong các ngày [0..j-indexDifference] — duy trì hai biến này khi j tăng dần là đủ.
+**Analogy:** Hãy tưởng tượng bạn đang tìm hai ngày trong lịch (i và j) thỏa: hai ngày cách nhau ít nhất `indexDifference` ngày VÀ nhiệt độ chênh lệch ít nhất `valueDifference` độ. Brute force kiểm tra mọi cặp ngày là O(n²). Tối ưu hơn: với mỗi j, ta chỉ cần biết nhiệt độ thấp nhất và cao nhất trong các ngày [0..j-indexDifference] — duy trì hai biến này khi j tăng dần là đủ.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Indices With Index and Value Difference I example:**
 
 ```
 nums=[5,1,4,1], indexDifference=2, valueDifference=4
@@ -35,7 +38,9 @@ Optimal — for each j, keep min/max in [0..j-indexDifference]:
     |5-nums[3]|=|5-1|=4 ≥ 4 → [maxIdx=0, j=3] ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given `nums`, `indexDifference`, `valueDifference`, find indices `i` and `j` such that `|i-j| >= indexDifference` AND `|nums[i]-nums[j]| >= valueDifference`. Return `[-1,-1]` if none exist.
 
@@ -45,7 +50,9 @@ Given `nums`, `indexDifference`, `valueDifference`, find indices `i` and `j` suc
 
 **Constraints:** `2 ≤ nums.length ≤ 100`, `0 ≤ indexDifference ≤ 50`, `0 ≤ valueDifference ≤ 50`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Brute O(n²) is fine here** / Brute force chấp nhận: n≤100 → O(n²)=10000 phép — đủ nhanh
 - **Optimal O(n) with min/max tracking** / Tối ưu O(n): Với mỗi j, track min và max index trong `[0..j-indexDiff]`
@@ -54,7 +61,9 @@ Given `nums`, `indexDifference`, `valueDifference`, find indices `i` and `j` suc
 - **Part II follow-up** / Mở rộng: Find Indices II cùng bài nhưng n≤10^5 → bắt buộc O(n)
 - **Return any valid pair** / Trả bất kỳ cặp hợp lệ: Không cần tối ưu, chỉ cần tìm một cặp
 
-## Solution 1 - Brute Force (O(n²))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -76,11 +85,7 @@ function findIndicesBrute(
   }
   return [-1, -1];
 }
-```
 
-## Solution 2 - Sliding Min/Max Tracking (Optimal O(n))
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * For each j, maintain min/max indices in [0..j-indexDiff]
@@ -102,11 +107,7 @@ function findIndices(nums: number[], indexDifference: number, valueDifference: n
   }
   return [-1, -1];
 }
-```
 
-## Solution 3 - Two-Pointer Forward Scan
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Scan j from indexDifference to n; look back at position j-indexDifference
@@ -131,11 +132,8 @@ function findIndicesForward(
   }
   return [-1, -1];
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(findIndices([5, 1, 4, 1], 2, 4)); // → [0,3]
 console.log(findIndices([2, 1], 0, 0)); // → [0,0]
 console.log(findIndices([1, 2, 3], 2, 4)); // → [-1,-1]
@@ -143,7 +141,9 @@ console.log(findIndices([0, 2, 2, 0], 2, 0)); // → [0,2]
 console.log(findIndicesBrute([5, 1, 4, 1], 2, 4)); // → [0,3]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                         | Difficulty | Link                                                                                     |
 | ----------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |

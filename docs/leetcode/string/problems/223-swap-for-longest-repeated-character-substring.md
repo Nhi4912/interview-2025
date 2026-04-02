@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/swap-for-longest-repeated-character
 
 # Swap For Longest Repeated Character Substring / Hoán Đổi Để Có Chuỗi Ký Tự Lặp Dài Nhất
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Cho chuỗi `text`, bạn có thể hoán đổi 2 ký tự bất kỳ **đúng một lần** (hoặc không hoán đổi). Tìm độ dài chuỗi con dài nhất chứa toàn ký tự giống nhau sau thao tác đó.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Cho chuỗi `text`, bạn có thể hoán đổi 2 ký tự bất kỳ **đúng một lần** (hoặc không hoán đổi). Tìm độ dài chuỗi con dài nhất chứa toàn ký tự giống nhau sau thao tác đó.
 
 **Ví dụ:** `"ababa"` → hoán đổi vị trí 0 và 2: `"aaa"` + "bb" → độ dài `3`.
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như sắp xếp hàng ghế màu sắc: được phép đổi 1 ghế từ hàng khác sang lấp vào khoảng trống giữa 2 nhóm cùng màu. Tối đa bao nhiêu ghế liên tiếp cùng màu?
-
-## Minh họa ASCII
+**Visual — Swap For Longest Repeated Character Substring example:**
 
 ```
 text = "aaabbaaa"
@@ -37,14 +38,18 @@ Best for 'a': take [a] gap [a] = 1+1+1=3, total=3 → min(3,3)=3
 Answer = 3
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - Hoán đổi tối đa 1 lần (hoặc không).
 - Trả về độ dài chuỗi con liên tiếp dài nhất chỉ chứa một loại ký tự.
 
 **Constraints:** `1 <= text.length <= 2 * 10^4`, chỉ chứa chữ thường.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **Group runs** — tách thành các run liên tiếp: `"aaabbaaa"` → `[(a,3),(b,2),(a,3)]`.
 2. **Xét từng ký tự** — với mỗi ký tự `c`, tìm window tốt nhất.
@@ -53,9 +58,9 @@ Answer = 3
 5. **Sliding window** — với 2 run liền kề qua gap 1: `run[i].len + 1 + run[i+2].len` nếu `run[i+1].len == 1`.
 6. **Trường hợp không gap** — nếu không còn ký tự nào khác để hoán đổi vào, +1 vẫn hợp lệ nếu tổng > run.
 
-## Giải pháp
+---
 
-### Giải pháp 1: Group Runs + Sliding Window
+## Solutions
 
 ```typescript
 function maxRepOpt1(text: string): number {
@@ -106,11 +111,7 @@ console.log(maxRepOpt1("aaabbaaa")); // 6
 console.log(maxRepOpt1("aaaaa")); // 5
 console.log(maxRepOpt1("aababab")); // 4 (a: freq=5, best window=4)
 console.log(maxRepOpt1("a")); // 1
-```
 
-### Giải pháp 2: Sliding Window trực tiếp trên chuỗi
-
-```typescript
 function maxRepOpt1V2(text: string): number {
   // Count total of each char
   const freq: number[] = new Array(26).fill(0);
@@ -152,17 +153,11 @@ console.log(maxRepOpt1V2("aaabbaaa")); // 6
 console.log(maxRepOpt1V2("aaaaa")); // 5
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp      | Thời gian | Không gian | Ghi chú             |
 | -------------- | --------- | ---------- | ------------------- |
 | Group Runs     | O(n)      | O(n)       | Trực quan, dễ debug |
 | Sliding Window | O(26n)    | O(1)       | Linh hoạt hơn       |
-
-## Bài liên quan
-
-| #    | Tên                                     | Độ khó | Tags           |
-| ---- | --------------------------------------- | ------ | -------------- |
-| 424  | Longest Repeating Character Replacement | Medium | Sliding Window |
-| 1004 | Max Consecutive Ones III                | Medium | Sliding Window |
-| 2401 | Longest Nice Subarray                   | Medium | Sliding Window |

@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/path-crossing"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Một vận động viên chạy bộ trên bản đồ thành phố dạng lưới, ghi lại từng bước đi (`N`, `S`, `E`, `W`). Câu hỏi: liệu đường chạy của anh có bao giờ đi qua một điểm mình đã từng ghé thăm không? Đây chính là bài toán phát hiện vòng lặp (crossing) trong đường đi. Giải pháp: lưu tập hợp các tọa độ đã thăm; sau mỗi bước, kiểm tra xem tọa độ mới có trong tập không. Khác với "Robot Return to Origin" — ở đây ta cần biết lịch sử toàn bộ hành trình, không chỉ vị trí cuối.
+**Analogy:** Một vận động viên chạy bộ trên bản đồ thành phố dạng lưới, ghi lại từng bước đi (`N`, `S`, `E`, `W`). Câu hỏi: liệu đường chạy của anh có bao giờ đi qua một điểm mình đã từng ghé thăm không? Đây chính là bài toán phát hiện vòng lặp (crossing) trong đường đi. Giải pháp: lưu tập hợp các tọa độ đã thăm; sau mỗi bước, kiểm tra xem tọa độ mới có trong tập không. Khác với "Robot Return to Origin" — ở đây ta cần biết lịch sử toàn bộ hành trình, không chỉ vị trí cuối.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Path Crossing example:**
 
 ```
 path = "NES"
@@ -40,7 +43,9 @@ path = "NNSWWEWSSSSA"  (invalid, only NSEW)
 Coordinate key: "x,y" string for O(1) Set lookup
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given string `path` (characters: `'N'`, `'S'`, `'E'`, `'W'`), return `true` if the path **crosses itself** (visits any coordinate more than once), including the starting point `(0,0)`.
 
@@ -50,7 +55,9 @@ Given string `path` (characters: `'N'`, `'S'`, `'E'`, `'W'`), return `true` if t
 
 **Constraints:** `1 ≤ path.length ≤ 10⁴`, `path[i] ∈ {'N', 'S', 'E', 'W'}`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Include start in visited** / Gồm điểm xuất phát: Khởi tạo visited với `"0,0"` — đường đi quay lại origin cũng là crossing
 - **String key cho Set** / String key for Set: `"${x},${y}"` là cách đơn giản nhất; JavaScript Set so sánh string by value
@@ -59,7 +66,9 @@ Given string `path` (characters: `'N'`, `'S'`, `'E'`, `'W'`), return `true` if t
 - **Khác Robot Return** / Different from Robot Return: Robot Return chỉ cần vị trí cuối; Path Crossing cần toàn bộ lịch sử
 - **Direction map** / Bảng hướng: Object `{N:[0,1], S:[0,-1], E:[1,0], W:[-1,0]}` dễ đọc và mở rộng
 
-## Solution 1 - String Key Set O(n)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -82,11 +91,7 @@ function isPathCrossing(path: string): boolean {
   }
   return false;
 }
-```
 
-## Solution 2 - Direction Map O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Use direction map for cleaner code; same logic
@@ -111,11 +116,7 @@ function isPathCrossingMap(path: string): boolean {
   }
   return false;
 }
-```
 
-## Solution 3 - Numeric Hash Key O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Encode (x,y) as a single number to avoid string allocation.
@@ -139,11 +140,8 @@ function isPathCrossingNumeric(path: string): boolean {
   }
   return false;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(isPathCrossing("NES")); // → false
 console.log(isPathCrossing("NESWW")); // → true
 console.log(isPathCrossing("NESW")); // → true (full square)
@@ -153,7 +151,9 @@ console.log(isPathCrossing("N")); // → false
 console.log(isPathCrossing("NN")); // → false
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                  | Difficulty | Link                                                             |
 | ------------------------ | ---------- | ---------------------------------------------------------------- |

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/largest-number-after-mutating-subst
 
 # Largest Number After Mutating Substring / Số Lớn Nhất Sau Khi Thay Đổi
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống đổi tiền — bạn chỉ đổi nếu có lợi (nhận được tờ có mệnh giá cao hơn). Dừng ngay khi đổi không có lợi nữa, vì phần còn lại không nên thay đổi.
+**Analogy:** > **Phép so sánh:** Giống đổi tiền — bạn chỉ đổi nếu có lợi (nhận được tờ có mệnh giá cao hơn). Dừng ngay khi đổi không có lợi nữa, vì phần còn lại không nên thay đổi.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Largest Number After Mutating Substring example:**
 
 ```
 num="132", change=[9,8,5,3,7,9,2,3,4,3]
@@ -25,6 +30,8 @@ Result: "835"
 Rule: once started replacing, stop ONLY when change[d] < d
 ```
 
+---
+
 ## Problem Description
 
 Given string `num` (digit string) and array `change` of length 10, you may replace any **contiguous substring** of `num` where for each digit `d` at position `i` in the substring, you replace `d` with `change[d]`. Return the **lexicographically largest** result.
@@ -35,6 +42,8 @@ Given string `num` (digit string) and array `change` of length 10, you may repla
 
 **Constraints:** `1 <= num.length <= 10^4`
 
+---
+
 ## 📝 Interview Tips
 
 - **Greedy start:** Begin replacement at the first position where `change[d] > d`
@@ -44,9 +53,9 @@ Given string `num` (digit string) and array `change` of length 10, you may repla
 - **If no improvement found:** Return `num` unchanged
 - **Complexity:** O(n) time, O(n) space (for output array)
 
-## Solutions
+---
 
-### Solution 1: Greedy scan — O(n) time, O(n) space
+## Solutions
 
 ```typescript
 function maximumNumber(num: string, change: number[]): string {
@@ -71,11 +80,7 @@ function maximumNumber(num: string, change: number[]): string {
 
   return digits.join("");
 }
-```
 
-### Solution 2: Explicit state machine — O(n) time, O(n) space
-
-```typescript
 function maximumNumber(num: string, change: number[]): string {
   const arr = num.split("");
   let inMutation = false;
@@ -101,11 +106,7 @@ function maximumNumber(num: string, change: number[]): string {
 
   return arr.join("");
 }
-```
 
-### Solution 3: Find segment boundaries first — O(n) time, O(n) space
-
-```typescript
 function maximumNumber(num: string, change: number[]): string {
   const n = num.length;
   let start = -1,
@@ -136,6 +137,8 @@ function maximumNumber(num: string, change: number[]): string {
   return arr.join("");
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/most-common-word"
 
 # Most Common Word / Từ Xuất Hiện Nhiều Nhất
 
-**Difficulty:** 🟢 Easy | **Tags:** Array, Hash Table, String, Counting
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Bài toán giống như **đếm phiếu bầu**: loại trừ ứng viên bị cấm, ai nhiều phiếu nhất thắng.
+**Analogy:** Bài toán giống như **đếm phiếu bầu**: loại trừ ứng viên bị cấm, ai nhiều phiếu nhất thắng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Most Common Word example:**
 
 ```
 paragraph = "Bob hit a ball, the hit BALL flew far after it was hit."
@@ -36,7 +39,19 @@ Step 4 – Max count:   "ball" → 2  ← answer
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                 | Difficulty | Pattern        |
+| ------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words/)                             | 🟡 Medium  | HashMap + heap |
+| [First Unique Character in a String](https://leetcode.com/problems/first-unique-character-in-a-string/) | 🟢 Easy    | Frequency map  |
+| [Word Frequency](https://leetcode.com/problems/word-frequency/)                                         | 🟡 Medium  | Shell counting |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Chuẩn hoá trước**: lowercase + xóa dấu câu là bước hay bị bỏ quên nhất
 - 🇺🇸 **Normalize first**: lowercasing + stripping punctuation is the #1 missed step
@@ -53,9 +68,9 @@ Step 4 – Max count:   "ball" → 2  ← answer
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — HashMap + Regex (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -91,11 +106,7 @@ function mostCommonWord(paragraph: string, banned: string[]): string {
 console.log(mostCommonWord("Bob hit a ball, the hit BALL flew far after it was hit.", ["hit"])); // "ball"
 console.log(mostCommonWord("a.", [])); // "a"
 console.log(mostCommonWord("Bob. hIt, baLl", ["bob", "hit"])); // "ball"
-```
 
-### Solution 2 — Functional One-liner
-
-```typescript
 /**
  * Reduce-based pipeline.
  * Time: O(n + m)  Space: O(n)
@@ -113,11 +124,7 @@ function mostCommonWord2(paragraph: string, banned: string[]): string {
 }
 
 console.log(mostCommonWord2("Bob hit a ball, the hit BALL flew far after it was hit.", ["hit"])); // "ball"
-```
 
-### Solution 3 — Character-by-Character (No Regex)
-
-```typescript
 /**
  * Manual parsing without regex for environments that restrict it.
  * Time: O(n + m)  Space: O(n)

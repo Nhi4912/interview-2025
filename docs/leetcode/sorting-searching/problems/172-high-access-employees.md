@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/high-access-employees"
 
 # High-Access Employees / Nhân Viên Truy Cập Nhiều Lần
 
-🟡 Medium | Hash Table, Sorting | [LeetCode 2933](https://leetcode.com/problems/high-access-employees)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** Group access times by employee name. Sort each employee's times, then use a sliding window of size 3: if the 3rd access is within 60 minutes of the 1st, that employee is "high-access."
+**Analogy:** **EN:** Group access times by employee name. Sort each employee's times, then use a sliding window of size 3: if the 3rd access is within 60 minutes of the 1st, that employee is "high-access."
 
 **VI:** Gom thời gian truy cập theo tên nhân viên, sắp xếp lại. Dùng cửa sổ trượt 3 phần tử: nếu lần truy cập thứ 3 cách lần đầu < 60 phút → nhân viên "truy cập nhiều".
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — High-Access Employees example:**
 
 ```
 access_times: [["alice","0000"],["alice","0100"],["alice","0055"],["bob","0800"]]
@@ -34,7 +37,19 @@ Sliding window of 3:
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                   | Difficulty | Pattern           |
+| --- | ------------------------- | ---------- | ----------------- |
+| 1   | Contains Duplicate II     | 🟢 Easy    | sliding window    |
+| 2   | Employee Free Time        | 🔴 Hard    | interval grouping |
+| 3   | Count Pairs in Two Arrays | 🟡 Medium  | two-pointer       |
+
+---
+
+## 📝 Interview Tips
 
 - 🕐 **EN:** Convert "HHMM" to minutes: `hh*60 + mm` — avoids string comparison edge cases. **VI:** Đổi "HHMM" sang phút để so sánh số học.
 - 🔑 **EN:** Use a Map to group times by name in one pass. **VI:** Dùng Map để gom dữ liệu một lần duyệt.
@@ -45,9 +60,9 @@ Sliding window of 3:
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Group + Sort + Sliding Window (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -99,11 +114,7 @@ console.log(
     ["c", "0809"],
   ]),
 ); // ["c","d"]
-```
 
-### Solution 2 — Frequency Map with Time Bucket
-
-```typescript
 /**
  * Count per (name, hour-window) bucket using sorted times per person
  * Time: O(n log n)  Space: O(n)
@@ -146,7 +157,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                   | Difficulty | Pattern           |
 | --- | ------------------------- | ---------- | ----------------- |

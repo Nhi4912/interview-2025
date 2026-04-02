@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/maximize-the-confusion-of-an-exam"
 
 # Maximize the Confusion of an Exam / Tối Đa Hóa Sự Nhầm Lẫn Trong Bài Kiểm Tra
 
-🟡 Medium | 🏷️ String, Sliding Window | [LeetCode](https://leetcode.com/problems/maximize-the-confusion-of-an-exam)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Tìm chuỗi con dài nhất có tối đa k ký tự khác với ký tự còn lại. Thực ra cần tìm max của hai bài: (1) chuỗi con dài nhất với ≤ k chữ 'F', và (2) chuỗi con dài nhất với ≤ k chữ 'T'. Dùng sliding window cho mỗi bài.
+**Analogy:** **Vietnamese:** Tìm chuỗi con dài nhất có tối đa k ký tự khác với ký tự còn lại. Thực ra cần tìm max của hai bài: (1) chuỗi con dài nhất với ≤ k chữ 'F', và (2) chuỗi con dài nhất với ≤ k chữ 'T'. Dùng sliding window cho mỗi bài.
 
 **Analogy:** Bạn muốn đổi nhiều nhất k câu trả lời để có chuỗi liên tiếp dài nhất cùng loại — như sơn k căn nhà để có dãy phố dài nhất cùng màu.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximize the Confusion of an Exam example:**
 
 ```
 answerKey = "TTFTTFTT"  k=1
@@ -37,6 +40,18 @@ max(5, 3) = 5
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                                                    | Difficulty | Connection                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | --------------------------------- |
+| [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii)                                                         | 🟡 Medium  | Same sliding window, binary array |
+| [Longest Substring with At Most K Distinct Characters](https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters) | 🟡 Medium  | Sliding window with constraint    |
+| [Get Equal Substrings Within Budget](https://leetcode.com/problems/get-equal-substrings-within-budget)                                     | 🟡 Medium  | Sliding window on cost            |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** Run sliding window twice: once maximizing T's (count F's ≤ k), once maximizing F's (count T's ≤ k) / **VI:** Chạy sliding window 2 lần: đếm F ≤ k và đếm T ≤ k
@@ -48,9 +63,9 @@ max(5, 3) = 5
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Sliding Window (run twice)
+## Solutions
 
 ```typescript
 /**
@@ -81,11 +96,7 @@ function maxConsecutiveAnswers(answerKey: string, k: number): number {
 console.log(maxConsecutiveAnswers("TTFF", 2)); // 4
 console.log(maxConsecutiveAnswers("TFFT", 1)); // 3
 console.log(maxConsecutiveAnswers("TTFTTFTT", 1)); // 5
-```
 
-### Solution 2: Single Pass with Two Counters
-
-```typescript
 /**
  * Combine both windows in a single loop using two separate windows.
  * Time: O(n)  Space: O(1)
@@ -121,11 +132,7 @@ function maxConsecutiveAnswers2(answerKey: string, k: number): number {
 console.log(maxConsecutiveAnswers2("TTFF", 2)); // 4
 console.log(maxConsecutiveAnswers2("TFFT", 1)); // 3
 console.log(maxConsecutiveAnswers2("TTFTTFTT", 1)); // 5
-```
 
-### Solution 3: Binary Search on Window Length
-
-```typescript
 /**
  * Binary search on length l; check if any window of size l is valid.
  * Time: O(n log n)  Space: O(1)

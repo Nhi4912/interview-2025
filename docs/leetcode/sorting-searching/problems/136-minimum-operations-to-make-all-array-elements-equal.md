@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-operations-to-make-all-arra
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum + Binary Search
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Cho một mảng số và nhiều truy vấn `q`. Với mỗi `q`, bạn muốn đưa tất cả phần tử về `q` — tổng chi phí là tổng khoảng cách. Sau khi sort, chia mảng thành hai phần tại `q`: phần trái tăng, phần phải giảm. Prefix sum cho phép tính tổng O(1).
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Cho một mảng số và nhiều truy vấn `q`. Với mỗi `q`, bạn muốn đưa tất cả phần tử về `q` — tổng chi phí là tổng khoảng cách. Sau khi sort, chia mảng thành hai phần tại `q`: phần trái tăng, phần phải giảm. Prefix sum cho phép tính tổng O(1).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Operations to Make All Array Elements Equal example:**
 
 ```
 sorted: [1, 2, 3, 4]
@@ -25,7 +32,20 @@ query q=3 → split=2 (first index >= 3)
   total = 4 ✅
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                             | Pattern                    |
+| ---- | --------------------------------------------------- | -------------------------- |
+| 1685 | Sum of Absolute Differences in a Sorted Array       | Prefix Sum                 |
+| 2602 | Minimum Operations to Make All Array Elements Equal | This problem               |
+| 2448 | Minimum Cost to Make Array Equal                    | Prefix Sum + Binary Search |
+| 1870 | Minimum Speed to Arrive on Time                     | Binary Search on Answer    |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Sort first** / Sắp xếp trước để binary search và prefix sum hoạt động chính xác
 - 🔑 **Prefix sum** / Tiền tố tổng: `prefix[i] = prefix[i-1] + nums[i-1]` — truy vấn range sum O(1)
@@ -33,6 +53,8 @@ query q=3 → split=2 (first index >= 3)
 - 🔑 **Left cost** / Chi phí phần trái = `q * split - prefix[split]` (tăng lên q)
 - 🔑 **Right cost** / Chi phí phần phải = `(prefix[n] - prefix[split]) - q * (n - split)` (giảm xuống q)
 - 🔑 **No overflow** / Với constraints lớn, kết quả vừa vào number (max ~10^14)
+
+---
 
 ## Solutions
 
@@ -106,7 +128,9 @@ function minOperationsV2(nums: number[], queries: number[]): number[] {
 console.log(minOperationsV2([3, 1, 2, 4], [1, 5, 2, 4])); // [5, 5, 1, 1]
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                             | Pattern                    |
 | ---- | --------------------------------------------------- | -------------------------- |

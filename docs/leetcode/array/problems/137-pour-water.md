@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/pour-water"
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Hãy tưởng tượng bạn đang đổ nước lên bản đồ độ cao: nước luôn chảy xuống. Với mỗi giọt nước thả tại vị trí `k`: trước tiên quét sang TRÁI tìm nơi thấp hơn, nếu không được thì quét sang PHẢI, nếu không được thì đứng tại chỗ.
+**Analogy:** **VI:** Hãy tưởng tượng bạn đang đổ nước lên bản đồ độ cao: nước luôn chảy xuống. Với mỗi giọt nước thả tại vị trí `k`: trước tiên quét sang TRÁI tìm nơi thấp hơn, nếu không được thì quét sang PHẢI, nếu không được thì đứng tại chỗ.
 
 **EN:** Simulate gravity: each water drop at `k` first tries to flow LEFT to find a lower spot, then RIGHT, then stays put. Scan until you can't go lower anymore.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Pour Water example:**
 
 ```
 heights:  [2, 1, 1, 2, 1, 2, 2]  k=3, 1 drop
@@ -34,7 +39,19 @@ Step 2 — if left fails, scan RIGHT from k=3:
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                   | Difficulty | Pattern              |
+| --- | ------------------------- | ---------- | -------------------- |
+| 42  | Trapping Rain Water       | 🔴 Hard    | Two Pointers / Stack |
+| 407 | Trapping Rain Water II    | 🔴 Hard    | BFS / Heap           |
+| 11  | Container With Most Water | 🟡 Medium  | Two Pointers         |
+
+---
+
+## 📝 Interview Tips
 
 - 🟡 **EN:** Priority order is strict: LEFT first, then RIGHT, then stay.
   **VI:** Thứ tự ưu tiên: TRÁI trước, rồi PHẢI, rồi đứng tại chỗ.
@@ -51,9 +68,9 @@ Step 2 — if left fails, scan RIGHT from k=3:
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Direct Simulation — O(n \* vol) Time, O(1) Space ✅ Optimal
+## Solutions
 
 ```typescript
 function pourWater(heights: number[], volume: number, k: number): number[] {
@@ -96,11 +113,7 @@ console.log(JSON.stringify(pourWater([1, 2, 3, 4], 2, 2)));
 // Expected: [2,3,3,4]  (water flows left)
 console.log(JSON.stringify(pourWater([3, 1, 3], 5, 1)));
 // Expected: [3,6,3]  (water stays in valley)
-```
 
-### Solution 2: Cleaner Simulation with Helper — O(n \* vol) Time, O(1) Space
-
-```typescript
 function pourWaterV2(heights: number[], volume: number, k: number): number[] {
   const n = heights.length;
 
@@ -136,7 +149,7 @@ console.log(JSON.stringify(pourWaterV2([2, 1, 1, 2, 1, 2, 2], 4, 3)));
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                   | Difficulty | Pattern              |
 | --- | ------------------------- | ---------- | -------------------- |

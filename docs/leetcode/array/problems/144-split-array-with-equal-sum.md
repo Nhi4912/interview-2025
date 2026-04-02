@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/split-array-with-equal-sum"
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Cần 3 dấu tách (i, j, k) chia mảng thành 4 phần không giao nhau có tổng bằng nhau. Dùng prefix sum: cố định j (dấu giữa), thu thập tất cả tổng phần 1 hợp lệ vào Set, rồi kiểm tra tổng phần 3 có trong Set không.
+**Analogy:** **VI:** Cần 3 dấu tách (i, j, k) chia mảng thành 4 phần không giao nhau có tổng bằng nhau. Dùng prefix sum: cố định j (dấu giữa), thu thập tất cả tổng phần 1 hợp lệ vào Set, rồi kiểm tra tổng phần 3 có trong Set không.
 
 **EN:** Need 3 separators (i, j, k) splitting array into 4 non-overlapping parts with equal sum. Fix middle separator `j`, collect all valid left sums (sum of part 1) into a Set, then check if right sums (sum of part 3) appear in that Set.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Split Array with Equal Sum example:**
 
 ```
 nums=[1,2,1,2,1,2,1,2,1]
@@ -34,7 +39,19 @@ Key: prefix[j] used to compute both parts quickly.
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                  | Difficulty | Pattern                    |
+| ---- | ---------------------------------------- | ---------- | -------------------------- |
+| 548  | Split Array with Equal Sum               | 🔴 Hard    | Prefix Sum                 |
+| 2270 | Number of Ways to Split Array            | 🟡 Medium  | Prefix Sum                 |
+| 1712 | Ways to Split Array Into Three Subarrays | 🔴 Hard    | Prefix Sum + Binary Search |
+
+---
+
+## 📝 Interview Tips
 
 - 🔴 **EN:** Fix the middle separator j, then use a Set of valid left sums found while sweeping i.
   **VI:** Cố định j ở giữa, dùng Set chứa tổng trái hợp lệ khi duyệt i.
@@ -51,9 +68,9 @@ Key: prefix[j] used to compute both parts quickly.
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Brute Force — O(n³) Time, O(1) Space
+## Solutions
 
 ```typescript
 function splitArray_brute(nums: number[]): boolean {
@@ -79,11 +96,7 @@ function splitArray_brute(nums: number[]): boolean {
 
 console.log(splitArray_brute([1, 2, 1, 2, 1, 2, 1, 2, 1])); // true
 console.log(splitArray_brute([1, 2, 1, 2, 1, 2, 1])); // false
-```
 
-### Solution 2: Prefix Sum + Hash Set — O(n²) Time, O(n) Space ✅ Optimal
-
-```typescript
 function splitArray(nums: number[]): boolean {
   const n = nums.length;
   if (n < 7) return false;
@@ -121,7 +134,7 @@ console.log(splitArray([3, 0, 2, 3])); // Expected: false (too short)
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                                  | Difficulty | Pattern                    |
 | ---- | ---------------------------------------- | ---------- | -------------------------- |

@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/find-players-with-zero-or-one-losse
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map + Sort
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Mỗi trận đấu có người thắng và người thua. Đếm số lần thua của từng người. Người chưa thua lần nào = 0 lần thua; người thua đúng một lần = 1 lần thua. Sau đó sắp xếp kết quả theo thứ tự tăng dần.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Mỗi trận đấu có người thắng và người thua. Đếm số lần thua của từng người. Người chưa thua lần nào = 0 lần thua; người thua đúng một lần = 1 lần thua. Sau đó sắp xếp kết quả theo thứ tự tăng dần.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Players With Zero or One Losses example:**
 
 ```
 matches = [[1,3],[2,3],[3,6],[5,6],[5,7],[4,5],[4,8],[4,9],[10,4],[10,9]]
@@ -25,7 +32,20 @@ players who appeared: {1,2,3,4,5,6,7,8,9,10}
 1 loss:   {4,5,7,8} → sorted: [4,5,7,8]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                              | Pattern         |
+| ---- | ------------------------------------ | --------------- |
+| 2225 | Find Players With Zero or One Losses | This problem    |
+| 169  | Majority Element                     | Counting        |
+| 347  | Top K Frequent Elements              | Hash Map + Sort |
+| 692  | Top K Frequent Words                 | Hash Map + Sort |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Track all players** / Dùng Set hoặc Map để nhớ tất cả người chơi xuất hiện
 - 🔑 **Count losses only** / Chỉ cần đếm số lần thua — người thắng không cần ghi nhận
@@ -33,6 +53,8 @@ players who appeared: {1,2,3,4,5,6,7,8,9,10}
 - 🔑 **One loss** / Người có đúng 1 lần thua: `lossCount.get(p) === 1`
 - 🔑 **Sort result** / Đề yêu cầu kết quả theo thứ tự tăng dần — sort cả hai mảng
 - 🔑 **Complexity** / O(n log n) do sort — O(n) nếu không cần sort
+
+---
 
 ## Solutions
 
@@ -129,7 +151,9 @@ function findWinnersV2(matches: number[][]): number[][] {
 console.log(JSON.stringify(findWinnersV2(m1))); // [[1,2,10],[4,5,7,8]]
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                              | Pattern         |
 | ---- | ------------------------------------ | --------------- |

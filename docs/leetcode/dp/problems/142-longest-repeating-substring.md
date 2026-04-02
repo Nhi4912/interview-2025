@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/longest-repeating-substring"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DP Matrix / Binary Search + Rolling Hash
 
-## 🧠 Intuition
+---
 
-**VI:** Giống bài LCS nhưng so sánh chuỗi với chính nó (không so `s[i]` với `s[i]`). Dùng ma trận DP `dp[i][j]` = độ dài chuỗi con chung kết tại `s[i-1]` và `s[j-1]`, với điều kiện `i ≠ j`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Giống bài LCS nhưng so sánh chuỗi với chính nó (không so `s[i]` với `s[i]`). Dùng ma trận DP `dp[i][j]` = độ dài chuỗi con chung kết tại `s[i-1]` và `s[j-1]`, với điều kiện `i ≠ j`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Longest Repeating Substring example:**
 
 ```
 s = "abcabc"
@@ -32,6 +39,19 @@ dp[i][j] = length of longest common substring ending at s[i-1] and s[j-1], i≠j
 Only cells where i≠j contribute (diagonal i==j excluded)
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                               | Difficulty | Connection                             |
+| ---- | ----------------------------------- | ---------- | -------------------------------------- |
+| 1044 | Longest Duplicate Substring         | 🔴 Hard    | Same problem without length constraint |
+| 718  | Maximum Length of Repeated Subarray | 🟡 Medium  | Two separate arrays instead of one     |
+| 1143 | Longest Common Subsequence          | 🟡 Medium  | Subsequence variant (allows gaps)      |
+| 187  | Repeated DNA Sequences              | 🟡 Medium  | Fixed-length rolling hash for repeats  |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Key constraint: `i ≠ j` — same index positions must not overlap | **VI:** Điều kiện quan trọng: `i ≠ j` để tránh so sánh cùng vị trí trong chuỗi
@@ -40,6 +60,8 @@ Only cells where i≠j contribute (diagonal i==j excluded)
 - 🔑 **EN:** Binary search monotonicity: if length L exists, length L-1 also exists | **VI:** Tính đơn điệu: nếu L hợp lệ thì L-1 cũng hợp lệ → binary search được
 - 🔑 **EN:** Rolling hash: build set of hashes for length L, check duplicates | **VI:** Hash chuỗi con: dùng set để phát hiện chuỗi con trùng nhau
 - 🔑 **EN:** Suffix Array + LCP is O(n log n) optimal but complex for interviews | **VI:** Suffix Array là O(n log n) tối ưu nhưng phức tạp khi implement
+
+---
 
 ## Solutions
 
@@ -108,6 +130,8 @@ console.log(longestRepeatingSubstring("aaaaa")); // 4  ("aaaa")
 console.log(longestRepeatingSubstringDP("abcabc")); // 3
 console.log(longestRepeatingSubstringDP("aaaaa")); // 4
 ```
+
+---
 
 ## 🔗 Related Problems
 

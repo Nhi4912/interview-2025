@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/cut-off-trees-for-golf-event"
 
 # Cut Off Trees for Golf Event / Chặt Cây Theo Thứ Tự Chiều Cao
 
-## Analogy / Tương Tự
+---
 
-> Bạn là người chặt cây trên sân golf. Quy tắc: phải chặt cây theo thứ tự **từ thấp đến cao**. Từ vị trí hiện tại, tìm đường ngắn nhất đến cây tiếp theo, tránh các vật cản (ô = 0). Nếu không thể đến được, trả về -1.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Bạn là người chặt cây trên sân golf. Quy tắc: phải chặt cây theo thứ tự **từ thấp đến cao**. Từ vị trí hiện tại, tìm đường ngắn nhất đến cây tiếp theo, tránh các vật cản (ô = 0). Nếu không thể đến được, trả về -1.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Cut Off Trees for Golf Event example:**
 
 ```
 Grid:            Sorted trees (height):
@@ -23,11 +28,15 @@ Grid:            Sorted trees (height):
                   Total = 7 steps
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given an `m x n` matrix `forest` where `forest[i][j]` represents a tree height (0=obstacle, 1=flat ground, >1=tree). Starting at `(0,0)`, cut all trees in ascending order of height. Return the minimum total steps, or -1 if impossible.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Sort first** — collect all trees with height > 1, sort by height ascending
 2. **BFS for each leg** — find shortest path between consecutive positions
@@ -36,9 +45,9 @@ Given an `m x n` matrix `forest` where `forest[i][j]` represents a tree height (
 5. **BFS handles obstacles** — cells with 0 block movement
 6. **Time complexity** — O((m·n)² ) worst case: O(m·n) trees × O(m·n) BFS each
 
-## Solutions
+---
 
-### Solution 1: BFS Between Consecutive Trees
+## Solutions
 
 ```typescript
 function cutOffTree(forest: number[][]): number {
@@ -107,11 +116,7 @@ console.log(
   ]),
 ); // 6
 console.log(cutOffTree([[0]])); // -1
-```
 
-### Solution 2: Hadlock's Algorithm (Fewer Detours, Faster)
-
-```typescript
 function cutOffTreeHadlock(forest: number[][]): number {
   const m = forest.length,
     n = forest[0].length;
@@ -170,7 +175,9 @@ console.log(
 ); // 6
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                 | Difficulty | Tags        |
 | ---- | --------------------------------------- | ---------- | ----------- |

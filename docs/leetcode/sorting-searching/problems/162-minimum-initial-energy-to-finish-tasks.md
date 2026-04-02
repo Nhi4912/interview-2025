@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-initial-energy-to-finish-ta
 
 # Minimum Initial Energy to Finish Tasks / Năng Lượng Ban Đầu Tối Thiểu Để Hoàn Thành Tất Cả Nhiệm Vụ
 
-🔴 Hard | 🏷️ Array, Greedy, Sorting | [LeetCode](https://leetcode.com/problems/minimum-initial-energy-to-finish-tasks)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mỗi task `[actual, minimum]`: cần ít nhất `minimum` năng lượng để bắt đầu, tiêu tốn `actual` năng lượng. Thứ tự thực hiện ảnh hưởng đến năng lượng ban đầu cần. Key insight: sắp xếp theo `(minimum - actual)` giảm dần — task có "chi phí ròng" cao nhất (minimum lớn hơn actual nhiều nhất) nên làm trước để tránh cần thêm energy.
+**Analogy:** **Vietnamese:** Mỗi task `[actual, minimum]`: cần ít nhất `minimum` năng lượng để bắt đầu, tiêu tốn `actual` năng lượng. Thứ tự thực hiện ảnh hưởng đến năng lượng ban đầu cần. Key insight: sắp xếp theo `(minimum - actual)` giảm dần — task có "chi phí ròng" cao nhất (minimum lớn hơn actual nhiều nhất) nên làm trước để tránh cần thêm energy.
 
 **Analogy:** Như nạp tiền điện thoại — trả trước những gói cước đòi số dư cao hơn số tiêu thụ, rồi mới trả gói rẻ hơn. Sắp xếp đúng giúp giảm số dư ban đầu cần.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Initial Energy to Finish Tasks example:**
 
 ```
 tasks = [[1,2],[2,4],[4,8]]
@@ -32,6 +35,18 @@ Working backward from 0 energy:
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                              | Difficulty | Connection                     |
+| ------------------------------------------------------------------------------------ | ---------- | ------------------------------ |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)                       | 🟡 Medium  | Greedy task ordering           |
+| [IPO](https://leetcode.com/problems/ipo)                                             | 🔴 Hard    | Greedy with capital constraint |
+| [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) | 🟡 Medium  | Greedy sort by end time        |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** Sort by `(minimum - actual)` descending — tasks needing more "pre-charge" go first / **VI:** Sắp theo `(min - actual)` giảm dần — task cần "nạp trước" nhiều hơn làm trước
@@ -43,9 +58,9 @@ Working backward from 0 energy:
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Greedy Sort by (minimum − actual) Descending
+## Solutions
 
 ```typescript
 /**
@@ -116,11 +131,7 @@ console.log(
     [6, 12],
   ]),
 ); // 27
-```
 
-### Solution 2: Forward Simulation (equivalent, more intuitive)
-
-```typescript
 /**
  * Forward pass: track energy, accumulate deficit as initial requirement.
  * Time: O(n log n)  Space: O(1)

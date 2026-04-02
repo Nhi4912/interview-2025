@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/maximum-value-at-a-given-index-in-a
 
 # Maximum Value at a Given Index in a Bounded Array / Giá Trị Lớn Nhất Tại Chỉ Số Cho Trước
 
-🟡 Medium | Binary Search, Greedy | [LeetCode 1802](https://leetcode.com/problems/maximum-value-at-a-given-index-in-a-bounded-array)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** We want to maximize `arr[index]` subject to: sum ≤ maxSum and adjacent elements differ by at most 1 (all ≥ 1). Binary search on the peak value `v`. The minimum sum when `arr[index] = v` forms two arithmetic pyramids descending from `v` to 1 on each side.
+**Analogy:** **EN:** We want to maximize `arr[index]` subject to: sum ≤ maxSum and adjacent elements differ by at most 1 (all ≥ 1). Binary search on the peak value `v`. The minimum sum when `arr[index] = v` forms two arithmetic pyramids descending from `v` to 1 on each side.
 
 **VI:** Muốn tối đa `arr[index]` với tổng ≤ maxSum và các phần tử kề nhau khác nhau ≤ 1 (đều ≥ 1). Binary search trên giá trị đỉnh `v`. Tổng tối thiểu khi `arr[index] = v` tạo thành hai tháp số học giảm dần từ `v` về 1 ở hai phía.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Value at a Given Index in a Bounded Array example:**
 
 ```
 n=4, index=2, maxSum=6
@@ -35,7 +38,19 @@ Answer: 2
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                              | Difficulty | Pattern                   |
+| --- | ------------------------------------ | ---------- | ------------------------- |
+| 1   | Koko Eating Bananas                  | 🟡 Medium  | binary search on answer   |
+| 2   | Capacity To Ship Packages            | 🟡 Medium  | binary search feasibility |
+| 3   | Minimize Max Distance to Gas Station | 🔴 Hard    | binary search + greedy    |
+
+---
+
+## 📝 Interview Tips
 
 - 📐 **EN:** `calcSum(v, count)`: if `v >= count`, it's arithmetic: `(v + v-count+1) * count / 2`. If `v < count`, it's `v*(v+1)/2 + (count-v)`. **VI:** Hai trường hợp: đủ chỗ cho dốc đầy đủ hay phải giữ đáy là 1.
 - 🔍 **EN:** Binary search range: `lo=1` (min value), `hi=maxSum` (upper bound when n=1). **VI:** Tìm kiếm từ 1 đến maxSum.
@@ -46,9 +61,9 @@ Answer: 2
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Binary Search on Peak Value (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -89,11 +104,7 @@ console.log(maxValue(4, 2, 6)); // 2
 console.log(maxValue(6, 1, 10)); // 3
 console.log(maxValue(3, 2, 18)); // 7
 console.log(maxValue(1, 0, 24)); // 24  (single element, no constraint)
-```
 
-### Solution 2 — Math Direct Formula (No Binary Search)
-
-```typescript
 /**
  * Direct math: compute max v such that pyramid sum fits in maxSum.
  * Rearrange calcSum equation to solve for v analytically.
@@ -133,7 +144,7 @@ console.log(maxValue2(6, 1, 10)); // 3
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                              | Difficulty | Pattern                   |
 | --- | ------------------------------------ | ---------- | ------------------------- |

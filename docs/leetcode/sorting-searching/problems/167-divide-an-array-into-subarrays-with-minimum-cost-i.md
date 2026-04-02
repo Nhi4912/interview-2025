@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/divide-an-array-into-subarrays-with
 
 # Divide an Array Into Subarrays With Minimum Cost I / Chia Mảng Thành Các Dãy Con Với Chi Phí Tối Thiểu I
 
-🟢 Easy | 🏷️ Array, Sorting, Enumeration | [LeetCode](https://leetcode.com/problems/divide-an-array-into-subarrays-with-minimum-cost-i)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Chia mảng thành 3 phần: phần đầu luôn là `nums[0]`. Chi phí = tổng 3 giá trị đầu mỗi phần = `nums[0]` + 2 giá trị nhỏ nhất trong `nums[1..n-1]`. Vì nums[0] cố định, chỉ cần tìm 2 giá trị nhỏ nhất trong phần còn lại.
+**Analogy:** **Vietnamese:** Chia mảng thành 3 phần: phần đầu luôn là `nums[0]`. Chi phí = tổng 3 giá trị đầu mỗi phần = `nums[0]` + 2 giá trị nhỏ nhất trong `nums[1..n-1]`. Vì nums[0] cố định, chỉ cần tìm 2 giá trị nhỏ nhất trong phần còn lại.
 
 **Analogy:** Ba đội thi đấu — đội đầu tiên luôn được chọn sẵn. Để chi phí thấp nhất, chọn 2 đội yếu nhất trong số còn lại làm đội trưởng 2 nhóm sau.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Divide an Array Into Subarrays With Minimum Cost I example:**
 
 ```
 nums = [1, 2, 3, 12]  k=3 subarrays
@@ -27,6 +30,18 @@ Cost = nums[0] + min1 + min2  from nums[1..]
 nums = [5, 4, 3, 2, 1]
 Cost = 5 + 1 + 2 = 8  (two smallest from [4,3,2,1] are 1,2)
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                                  | Difficulty | Connection                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------- |
+| [Divide an Array Into Subarrays With Minimum Cost II](https://leetcode.com/problems/divide-an-array-into-subarrays-with-minimum-cost-ii) | 🔴 Hard    | k subarrays version, needs heap |
+| [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum)                                                         | 🔴 Hard    | Array partitioning              |
+| [Minimum Cost to Split an Array](https://leetcode.com/problems/minimum-cost-to-split-an-array)                                           | 🔴 Hard    | DP split cost                   |
 
 ---
 
@@ -41,9 +56,9 @@ Cost = 5 + 1 + 2 = 8  (two smallest from [4,3,2,1] are 1,2)
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Sort Tail, Take 2 Smallest
+## Solutions
 
 ```typescript
 /**
@@ -59,11 +74,7 @@ function minimumCost(nums: number[]): number {
 console.log(minimumCost([1, 2, 3, 12])); // 6
 console.log(minimumCost([5, 4, 3, 2, 1])); // 8
 console.log(minimumCost([10, 3, 1, 1])); // 12
-```
 
-### Solution 2: Linear Scan for 2 Minimums (O(n))
-
-```typescript
 /**
  * Single pass to find 2 smallest in nums[1..] without sorting.
  * Time: O(n)  Space: O(1)
@@ -88,11 +99,7 @@ console.log(minimumCost2([1, 2, 3, 12])); // 6
 console.log(minimumCost2([5, 4, 3, 2, 1])); // 8
 console.log(minimumCost2([10, 3, 1, 1])); // 12
 console.log(minimumCost2([1, 1, 1])); // 3
-```
 
-### Solution 3: Explicit Enumeration (brute force for understanding)
-
-```typescript
 /**
  * Try all valid split points (i,j) with 0<i<j<n; return min cost.
  * Time: O(n^2)  Space: O(1)  — valid for n<=50

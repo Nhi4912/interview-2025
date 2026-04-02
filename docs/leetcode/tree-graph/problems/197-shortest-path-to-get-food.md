@@ -7,15 +7,18 @@ tags: [Array, Breadth-First Search, Matrix]
 leetcode_url: "https://leetcode.com/problems/shortest-path-to-get-food"
 ---
 
-## 1730. Shortest Path to Get Food
-
-### Đường Đi Ngắn Nhất Để Lấy Thức Ăn | 🟡 Medium
+# shortest path to get food
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Bạn đang đói trong mê cung — bắt đầu từ vị trí của mình `@`, tìm đường ngắn nhất đến thức ăn `#`. BFS đảm bảo tìm được đường ngắn nhất theo số bước.
+**Analogy:** > **Vietnamese analogy:** Bạn đang đói trong mê cung — bắt đầu từ vị trí của mình `@`, tìm đường ngắn nhất đến thức ăn `#`. BFS đảm bảo tìm được đường ngắn nhất theo số bước.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Grid:
@@ -29,7 +32,9 @@ BFS from @: spread level by level → reach # in 4 steps
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given a `m x n` character matrix `grid`:
 
@@ -49,6 +54,8 @@ Return the **minimum number of steps** to reach any food cell. Return `-1` if im
 
 ---
 
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **BFS** guarantees shortest path in unweighted grid
@@ -60,9 +67,9 @@ Return the **minimum number of steps** to reach any food cell. Return `-1` if im
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: BFS from Starting Position
+## Solutions
 
 ```typescript
 function getFood(grid: string[][]): number {
@@ -111,11 +118,7 @@ function getFood(grid: string[][]): number {
 
   return -1;
 }
-```
 
-### Solution 2: BFS with Distance Tracking
-
-```typescript
 function getFoodDist(grid: string[][]): number {
   const m = grid.length;
   const n = grid[0].length;

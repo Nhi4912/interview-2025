@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/number-of-unique-good-subsequences"
 
 # Number of Unique Good Subsequences / Số Dãy Con Nhị Phân Tốt Duy Nhất
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Cho chuỗi nhị phân, đếm các dãy con duy nhất là số nhị phân hợp lệ (không có số 0 đứng đầu, ngoại trừ "0" đơn lẻ).  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Cho chuỗi nhị phân, đếm các dãy con duy nhất là số nhị phân hợp lệ (không có số 0 đứng đầu, ngoại trừ "0" đơn lẻ).  
 > Như đếm số mã PIN duy nhất có thể tạo từ các chữ số — mỗi lần thêm chữ số mới, nhân đôi các trường hợp.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Unique Good Subsequences example:**
 
 ```
 binary = "101"
@@ -27,7 +32,9 @@ Answer = endOne + endZero + hasZero = 3 + 1 + 1 = 5
 Sequences: "0", "1", "10", "11", "101"  ✓
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given a binary string `binary`, return the number of **unique** non-empty subsequences that are:
 
@@ -38,7 +45,9 @@ Return the answer modulo `10^9 + 7`.
 
 **Constraints:** `1 <= binary.length <= 10^5`, binary contains only `'0'` and `'1'`.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **State definition** — `endOne`: # unique good subseqs ending in '1'; `endZero`: ending in '0' (not "0" alone).
 2. **Transition '1'** — Any existing good subseq + '1' is still good: `endOne = (endOne + endZero + 1) % MOD` (+1 for new "1").
@@ -47,9 +56,9 @@ Return the answer modulo `10^9 + 7`.
 5. **Why not endZero+1?** — A lone '0' would be "0" which we handle separately with `hasZero` flag.
 6. **Why modulo?** — Up to 10^5 chars; 2^(10^5) possibilities — must reduce modulo 10^9+7.
 
-## Solutions
+---
 
-### Solution 1: DP — endOne / endZero — O(n) time, O(1) space
+## Solutions
 
 ```typescript
 function numberOfUniqueGoodSubsequences(binary: string): number {
@@ -79,11 +88,7 @@ console.log(numberOfUniqueGoodSubsequences("11")); // 2: "1","11"
 console.log(numberOfUniqueGoodSubsequences("101")); // 5: "0","1","10","11","101"
 console.log(numberOfUniqueGoodSubsequences("1")); // 1: "1"
 console.log(numberOfUniqueGoodSubsequences("0")); // 1: "0"
-```
 
-### Solution 2: Regular Number DP (without BigInt, using modular arithmetic)
-
-```typescript
 function numberOfUniqueGoodSubsequencesV2(binary: string): number {
   const MOD = 1_000_000_007;
   let endOne = 0;
@@ -105,11 +110,7 @@ function numberOfUniqueGoodSubsequencesV2(binary: string): number {
 console.log(numberOfUniqueGoodSubsequencesV2("001")); // 2
 console.log(numberOfUniqueGoodSubsequencesV2("11")); // 2
 console.log(numberOfUniqueGoodSubsequencesV2("101")); // 5
-```
 
-### Solution 3: Memoized Recursive (top-down verification)
-
-```typescript
 function numberOfUniqueGoodSubsequencesBrute(binary: string): number {
   // Only valid for small inputs — enumerate all subsequences
   const seen = new Set<string>();
@@ -131,7 +132,9 @@ console.log(numberOfUniqueGoodSubsequencesBrute("11")); // 2 ✓
 console.log(numberOfUniqueGoodSubsequencesBrute("001")); // 2 ✓
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                             | Difficulty | Key Concept        |
 | ------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |

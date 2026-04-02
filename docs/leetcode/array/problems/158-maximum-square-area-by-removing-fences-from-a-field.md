@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-square-area-by-removing-fen
 
 # Maximum Square Area by Removing Fences From a Field / Diện Tích Hình Vuông Lớn Nhất Sau Khi Bỏ Hàng Rào
 
-**Difficulty:** Medium | **Category:** Array, Hash Table, Enumeration | **LeetCode:** [3261](https://leetcode.com/problems/maximum-square-area-by-removing-fences-from-a-field)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Phép so sánh tiếng Việt:** Bạn có một cánh đồng được chia bởi các hàng rào ngang và dọc. Bạn có thể bỏ hàng rào đi (nhưng phải giữ biên). Mục tiêu: tạo ra ô vuông lớn nhất. Bí quyết: liệt kê tất cả "khoảng cách hàng rào" theo chiều ngang và dọc, tìm khoảng cách chung — đó chính là cạnh hình vuông.
+**Analogy:** **Phép so sánh tiếng Việt:** Bạn có một cánh đồng được chia bởi các hàng rào ngang và dọc. Bạn có thể bỏ hàng rào đi (nhưng phải giữ biên). Mục tiêu: tạo ra ô vuông lớn nhất. Bí quyết: liệt kê tất cả "khoảng cách hàng rào" theo chiều ngang và dọc, tìm khoảng cách chung — đó chính là cạnh hình vuông.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Square Area by Removing Fences From a Field example:**
 
 ```
 m=4, n=4, hFences=[2], vFences=[2]
@@ -27,7 +32,13 @@ Khoảng cách dọc:   2-0=2, 3-0=3, 3-2=1
 Giao: {1,2,3}  → max = 3 → area = 3*3 = 9
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Thêm biên**: Nhớ thêm `0` và `m-1` (hoặc `n-1`) vào danh sách hàng rào trước khi tính khoảng cách.
 2. **Khoảng cách, không phải tọa độ**: Enumerate tất cả pair (i, j) với i < j, khoảng cách = fences[j] - fences[i].
@@ -36,7 +47,9 @@ Giao: {1,2,3}  → max = 3 → area = 3*3 = 9
 5. **MOD 1e9+7**: Kết quả có thể rất lớn. Áp dụng modulo khi trả về.
 6. **Trả về -1 nếu không tìm được**: Nếu không có khoảng cách chung → return -1.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -77,9 +90,7 @@ function maximizeSquareArea(m: number, n: number, hFences: number[], vFences: nu
 console.log(maximizeSquareArea(4, 3, [2], [2])); // 4
 console.log(maximizeSquareArea(6, 7, [2], [4])); // -1 (no common gap)
 console.log(maximizeSquareArea(3, 3, [], [])); // 4
-```
 
-```typescript
 /**
  * Approach 2: Tối ưu — dùng sorted array, chỉ track max common gap
  * Time: O(H² + V² + H²logH)  Space: O(H + V)
@@ -122,9 +133,7 @@ function maximizeSquareAreaOpt(m: number, n: number, hFences: number[], vFences:
 console.log(maximizeSquareAreaOpt(4, 3, [2], [2])); // 4
 console.log(maximizeSquareAreaOpt(6, 7, [2], [4])); // -1
 console.log(maximizeSquareAreaOpt(100, 100, [50], [50])); // 2500 (50*50 mod 1e9+7)
-```
 
-```typescript
 /**
  * Approach 3: Tách biệt logic, thêm comment tường minh
  * Time: O(H² + V²)  Space: O(H² + V²)
@@ -174,7 +183,9 @@ console.log(maximizeSquareAreaClear(3, 3, [], [])); // 4 (cạnh=2: 0→2)
 console.log(maximizeSquareAreaClear(1000000000, 1000000000, [2], [2])); // 4
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                        | Difficulty | Pattern               |
 | -------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |

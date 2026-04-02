@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/lucky-numbers-in-a-matrix"
 
 # Lucky Numbers in a Matrix / Số May Mắn Trong Ma Trận
 
-🟢 Easy | Tags: Array, Matrix
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Số may mắn là số nhỏ nhất trong hàng VÀ lớn nhất trong cột. Tìm tập hợp min mỗi hàng, tìm tập hợp max mỗi cột, giao điểm chính là đáp án.
+**Analogy:** **VN:** Số may mắn là số nhỏ nhất trong hàng VÀ lớn nhất trong cột. Tìm tập hợp min mỗi hàng, tìm tập hợp max mỗi cột, giao điểm chính là đáp án.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Lucky Numbers in a Matrix example:**
 
 ```
 matrix = [[3, 7, 8],
@@ -26,6 +29,18 @@ row-mins: {3, 9, 15}
 col-maxes: {15, 16, 17}
 intersection: {15} ← lucky number
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                   | Difficulty | Pattern     |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- |
+| [Special Positions in a Binary Matrix](https://leetcode.com/problems/special-positions-in-a-binary-matrix/)               | 🟢 Easy    | Matrix Scan |
+| [Row With Maximum Ones](https://leetcode.com/problems/row-with-maximum-ones/)                                             | 🟢 Easy    | Matrix      |
+| [Find the Maximum Element Along the Diagonal](https://leetcode.com/problems/find-the-maximum-element-along-the-diagonal/) | 🟢 Easy    | Matrix      |
 
 ---
 
@@ -40,9 +55,9 @@ intersection: {15} ← lucky number
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Row-Min Set × Col-Max Scan
+## Solutions
 
 ```typescript
 /**
@@ -92,11 +107,7 @@ console.log(
     [1, 2],
   ]),
 ); // [7]
-```
 
-### Solution 2: Two-Pass with Row-Min Array
-
-```typescript
 /**
  * Explicit two-pass: collect row mins array, collect col maxes array, intersect.
  * Time: O(m*n) | Space: O(m + n)

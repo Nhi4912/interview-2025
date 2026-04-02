@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/last-day-where-you-can-still-cross"
 
 # Last Day Where You Can Still Cross / Ngày Cuối Cùng Có Thể Băng Qua
 
-🔴 Hard | Binary Search + BFS / Union-Find Reversed | [LeetCode 2258](https://leetcode.com/problems/last-day-where-you-can-still-cross)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mỗi ngày một ô đất biến thành nước — ta cần tìm ngày cuối cùng vẫn có thể đi từ hàng đầu xuống hàng cuối (chỉ đi trên đất liền). Có hai cách: (1) Binary search + BFS kiểm tra ngày mid; (2) Đảo ngược thời gian — thêm ô từ ngày cuối → đầu, dùng Union-Find để biết khi nào top-row nối được với bottom-row.
+**Analogy:** **Vietnamese:** Mỗi ngày một ô đất biến thành nước — ta cần tìm ngày cuối cùng vẫn có thể đi từ hàng đầu xuống hàng cuối (chỉ đi trên đất liền). Có hai cách: (1) Binary search + BFS kiểm tra ngày mid; (2) Đảo ngược thời gian — thêm ô từ ngày cuối → đầu, dùng Union-Find để biết khi nào top-row nối được với bottom-row.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Last Day Where You Can Still Cross example:**
 
 ```
 Day 1: . . . .    Day 2: . X . .    Day 3: . X . .
@@ -27,7 +30,20 @@ Binary search: lo=1, hi=3 → answer=2
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                             | Difficulty | Key Idea                         |
+| ----------------------------------------------------------------------------------- | ---------- | -------------------------------- |
+| [Swim in Rising Water 778](https://leetcode.com/problems/swim-in-rising-water)      | Hard       | Binary search / Dijkstra on time |
+| [Path With Min Effort 1631](https://leetcode.com/problems/path-with-minimum-effort) | Medium     | Binary search + BFS              |
+| [Making a Large Island 827](https://leetcode.com/problems/making-a-large-island)    | Hard       | Union-Find on grid               |
+| [Number of Islands II 305](https://leetcode.com/problems/number-of-islands-ii)      | Hard       | Online Union-Find                |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Binary search on day — monotone property: if cross on day d, also on d-1 | **VI:** Tính đơn điệu — qua được ngày d thì ngày d-1 cũng qua được
 - 🔑 **EN:** BFS check: start from top row (land cells), try to reach bottom row | **VI:** BFS từ hàng trên xuống hàng dưới
@@ -38,7 +54,9 @@ Binary search: lo=1, hi=3 → answer=2
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -124,9 +142,7 @@ console.log(
     [3, 1],
   ]),
 ); // 3
-```
 
-```typescript
 /**
  * Union-Find with Reversed Timeline (Optimal)
  * Time: O(row*col*α)  Space: O(row*col)
@@ -212,7 +228,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                             | Difficulty | Key Idea                         |
 | ----------------------------------------------------------------------------------- | ---------- | -------------------------------- |

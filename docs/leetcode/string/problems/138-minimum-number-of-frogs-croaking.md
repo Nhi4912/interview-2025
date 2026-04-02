@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-frogs-croaking"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: State Counting
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Mỗi con ếch kêu theo thứ tự `c→r→o→a→k`. Khi gặp `c`, cần thêm một ếch (hoặc dùng ếch vừa kết thúc `k`). Đếm số ếch đang ở mỗi trạng thái — đỉnh đồng thời chính là đáp án.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Mỗi con ếch kêu theo thứ tự `c→r→o→a→k`. Khi gặp `c`, cần thêm một ếch (hoặc dùng ếch vừa kết thúc `k`). Đếm số ếch đang ở mỗi trạng thái — đỉnh đồng thời chính là đáp án.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Frogs Croaking example:**
 
 ```
 croakcroak
@@ -29,7 +36,20 @@ Answer = 1
 
 **Key insight**: At each step, the previous-state count must be ≥ 1 (a frog must have arrived at that state). Max concurrent `c`-count = answer. If any count goes negative → invalid → return -1.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                          | Difficulty | Pattern  |
+| ---- | -------------------------------- | ---------- | -------- |
+| 936  | Stamping the Sequence            | 🔴 Hard    | Greedy   |
+| 678  | Valid Parenthesis String         | 🟡 Medium  | Greedy   |
+| 1419 | Minimum Number of Frogs Croaking | 🟡 Medium  | Counting |
+| 846  | Hand of Straights                | 🟡 Medium  | Greedy   |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Map each letter to its index in "croak" (c=0, r=1, o=2, a=3, k=4)
   **VI**: Ánh xạ mỗi chữ cái tới vị trí trong "croak" (c=0, r=1, o=2, a=3, k=4)
@@ -134,7 +154,14 @@ console.log(minNumberOfFrogs2("croakcrook")); // -1
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                          | Difficulty | Pattern  |
 | ---- | -------------------------------- | ---------- | -------- |

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/construct-binary-search-tree-from-p
 
 # Construct Binary Search Tree from Preorder Traversal / Xây dựng BST từ duyệt preorder
 
-🟡 Medium | BST | Monotonic Stack | Bound Recursion
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mỗi phần tử trong preorder là gốc của cây con. Dùng stack đơn điệu giảm dần — khi gặp giá trị lớn hơn đỉnh stack, đó là con phải; nếu nhỏ hơn, là con trái.
+**Analogy:** **Vietnamese:** Mỗi phần tử trong preorder là gốc của cây con. Dùng stack đơn điệu giảm dần — khi gặp giá trị lớn hơn đỉnh stack, đó là con phải; nếu nhỏ hơn, là con trái.
 
 **English:** Preorder visits root before children. Use a **monotonic decreasing stack** — if the new value is larger than the stack top, it's the right child of the last popped node; otherwise it's the left child of the stack top.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Construct Binary Search Tree from Preorder Traversal example:**
 
 ```
 preorder = [8, 5, 1, 7, 10, 12]
@@ -35,6 +38,18 @@ stack: [8]
 
 ---
 
+---
+
+## Problem Description
+
+| #    | Problem                                       | Difficulty | Pattern          |
+| ---- | --------------------------------------------- | ---------- | ---------------- |
+| 105  | Construct Binary Tree from Preorder & Inorder | Medium     | Divide & Conquer |
+| 1008 | Construct BST from Preorder (this)            | Medium     | Monotonic Stack  |
+| 255  | Verify Preorder Sequence in BST               | Medium     | Monotonic Stack  |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Key insight / Nhận xét chính:** Preorder = root, left subtree, right subtree. BST property: left < root < right.
@@ -46,9 +61,9 @@ stack: [8]
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Recursive with Bound (Simple)
+## Solutions
 
 ```typescript
 class TreeNode {
@@ -100,11 +115,7 @@ function serialize(root: TreeNode | null): (number | null)[] {
 
 console.log(serialize(bstFromPreorder([8, 5, 1, 7, 10, 12]))); // [8,5,10,1,7,null,12]
 console.log(serialize(bstFromPreorder([1, 3]))); // [1,null,3]
-```
 
-### Solution 2 — Monotonic Stack O(n)
-
-```typescript
 /**
  * Maintain a decreasing stack. For each value:
  *   - Pop while stack top < current → last popped is parent (right child).

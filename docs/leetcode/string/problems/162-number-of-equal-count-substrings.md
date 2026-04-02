@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/number-of-equal-count-substrings"
 
 # Number of Equal Count Substrings / Số Chuỗi Con Có Tần Số Bằng Nhau
 
-🟡 Medium | 🏷️ Hash Table, String, Sliding Window, Counting
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Tìm các chuỗi con trong đó **mỗi ký tự xuất hiện đúng `count` lần**. Với mỗi số ký tự phân biệt có thể (`1..26`), dùng sliding window có kích thước cố định `k * count`. Cửa sổ hợp lệ khi đúng `k` ký tự phân biệt, mỗi cái xuất hiện đúng `count` lần.
+**Analogy:** **VI:** Tìm các chuỗi con trong đó **mỗi ký tự xuất hiện đúng `count` lần**. Với mỗi số ký tự phân biệt có thể (`1..26`), dùng sliding window có kích thước cố định `k * count`. Cửa sổ hợp lệ khi đúng `k` ký tự phân biệt, mỗi cái xuất hiện đúng `count` lần.
 
 **EN:** For each possible number of distinct chars `k` (1–26), slide a fixed-width window of size `k * count` and check if exactly `k` chars each appear exactly `count` times.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Equal Count Substrings example:**
 
 ```
 s = "aabcde", count = 2
@@ -23,6 +28,18 @@ k=1: window=2 → "aa" ✅   "ab","bc"... ❌
 k=2: window=4 → "aabc"❌  "abcd"❌  ...
 k=3: window=6 → "aabcde"❌
 ```
+
+---
+
+## Problem Description
+
+| #    | Problem                        | Difficulty | Key Idea              |
+| ---- | ------------------------------ | ---------- | --------------------- |
+| 567  | Permutation in String          | 🟡 Medium  | Fixed sliding window  |
+| 438  | Find All Anagrams in a String  | 🟡 Medium  | Sliding window + freq |
+| 1248 | Count Number of Nice Subarrays | 🟡 Medium  | Prefix count trick    |
+
+---
 
 ## 📝 Interview Tips
 
@@ -33,9 +50,9 @@ k=3: window=6 → "aabcde"❌
 - 🇻🇳 **Khi window trượt:** cập nhật `exactCount` khi tần số thay đổi qua ngưỡng `count`
 - 🇬🇧 **O(26n) overall** — 26 passes over the string, each O(n)
 
-## Solutions
+---
 
-### Solution 1: Sliding window per k
+## Solutions
 
 ```typescript
 /**
@@ -86,11 +103,7 @@ console.log(equalCountSubstrings("aabcde", 2)); // 1  ("aabcde" has 2 of each? n
 // Actually "aabc" no. Let's test properly:
 console.log(equalCountSubstrings("aaaa", 1)); // 0 (each window of size 1: a=1, but k=1 ✅ → 4 windows)
 console.log(equalCountSubstrings("aaaa", 2)); // 3 ("aa" at pos 0,1,2 — wait size=2, k=1)
-```
 
-### Solution 2: Using array for frequency
-
-```typescript
 /**
  * Same approach with array instead of Map for speed.
  * Time: O(26 * n) | Space: O(26) = O(1)
@@ -131,6 +144,8 @@ function equalCountSubstrings2(s: string, count: number): number {
 console.log(equalCountSubstrings2("aabcde", 2)); // 1
 console.log(equalCountSubstrings2("abcd", 1)); // 10
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimize-rounding-error-to-meet-tar
 
 # Minimize Rounding Error to Meet Target / Giảm Thiểu Sai Số Làm Tròn Để Đạt Mục Tiêu
 
-🟡 Medium | 🏷️ Array, Math, Greedy, Sorting | [LeetCode](https://leetcode.com/problems/minimize-rounding-error-to-meet-target)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mỗi số thập phân có thể làm tròn xuống (floor) hoặc lên (ceil). Sai số khi floor = phần thập phân, sai số khi ceil = 1 − phần thập phân. Ta cần round-up đúng k = target − Σfloor(prices[i]) phần tử. Để tổng sai số nhỏ nhất, chọn k phần tử có phần thập phân LỚN NHẤT để ceil (vì sai số 1−frac nhỏ hơn).
+**Analogy:** **Vietnamese:** Mỗi số thập phân có thể làm tròn xuống (floor) hoặc lên (ceil). Sai số khi floor = phần thập phân, sai số khi ceil = 1 − phần thập phân. Ta cần round-up đúng k = target − Σfloor(prices[i]) phần tử. Để tổng sai số nhỏ nhất, chọn k phần tử có phần thập phân LỚN NHẤT để ceil (vì sai số 1−frac nhỏ hơn).
 
 **Analogy:** Bạn đổ nước vào N cốc — muốn đổ đầy đúng target cốc, hãy ưu tiên đổ những cốc đã gần đầy nhất để tiết kiệm nước nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimize Rounding Error to Meet Target example:**
 
 ```
 prices = ["0.700","2.800","4.900"]  target=8
@@ -32,6 +35,18 @@ total error = 1.0  → "1.000"
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                              | Difficulty | Connection               |
+| ------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)                       | 🟡 Medium  | Greedy assignment        |
+| [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) | 🟡 Medium  | Greedy sort by criterion |
+| [Candy](https://leetcode.com/problems/candy)                                         | 🔴 Hard    | Greedy with constraints  |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** Parse each string to float; `Math.floor` extracts integer part / **VI:** Dùng `parseFloat` rồi `Math.floor` lấy phần nguyên
@@ -43,9 +58,9 @@ total error = 1.0  → "1.000"
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Greedy — Sort Fractional Parts Descending
+## Solutions
 
 ```typescript
 /**
@@ -82,11 +97,7 @@ console.log(minimizeError(["0.700", "2.800", "4.900"], 8)); // "1.000"
 console.log(minimizeError(["1.500", "2.500", "3.500"], 10)); // "-1"
 console.log(minimizeError(["2.000", "2.000"], 4)); // "0.000"
 console.log(minimizeError(["1.500", "2.500"], 4)); // "1.000"
-```
 
-### Solution 2: Sort with Index Tracking (explicit ceil/floor assignment)
-
-```typescript
 /**
  * Keep which items are ceil'd vs floor'd for clarity.
  * Time: O(n log n)  Space: O(n)

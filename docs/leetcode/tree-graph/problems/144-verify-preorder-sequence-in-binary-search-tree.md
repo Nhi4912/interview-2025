@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/verify-preorder-sequence-in-binary-
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack
 
-## 🧠 Intuition
+---
 
-**VI**: Trong preorder BST: gặp nút nào lớn hơn nút trên đỉnh stack thì ta đang chuyển sang cây con phải — mọi nút sau phải lớn hơn "lower bound" (giá trị cha cây con phải gần nhất). Dùng stack đơn điệu giảm dần: khi gặp phần tử lớn hơn, pop stack và cập nhật lower bound.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Trong preorder BST: gặp nút nào lớn hơn nút trên đỉnh stack thì ta đang chuyển sang cây con phải — mọi nút sau phải lớn hơn "lower bound" (giá trị cha cây con phải gần nhất). Dùng stack đơn điệu giảm dần: khi gặp phần tử lớn hơn, pop stack và cập nhật lower bound.
 
 **EN**: Preorder traversal visits root → left → right. A monotonic decreasing stack tracks the "path" from root. When we see a value larger than stack top, we're entering a right subtree — pop to find the new lower bound. Any subsequent value below this bound is invalid.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Verify Preorder Sequence in Binary Search Tree example:**
 
 ```
 preorder = [5, 2, 1, 3, 6]
@@ -31,6 +38,19 @@ val=6: 6>3 → pop 3 (lo=3), 6>5 → pop 5 (lo=5), push 6
 All values > lo → valid ✓
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                 | Difficulty | Pattern         |
+| ---- | ------------------------------------- | ---------- | --------------- |
+| 1008 | Construct BST from Preorder Traversal | 🟡 Medium  | Monotonic Stack |
+| 173  | Binary Search Tree Iterator           | 🟡 Medium  | Stack           |
+| 739  | Daily Temperatures                    | 🟡 Medium  | Monotonic Stack |
+| 901  | Online Stock Span                     | 🟡 Medium  | Monotonic Stack |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Stack đơn điệu giảm: nếu giá trị mới < lower_bound thì invalid ngay lập tức.
@@ -39,6 +59,8 @@ All values > lo → valid ✓
 - 🇬🇧 Lower bound increases each pop — represents "crossed into right subtree, no going back left".
 - 🇻🇳 Có thể làm O(1) space bằng cách dùng chính mảng `preorder` làm stack.
 - 🇬🇧 O(1) space variant: reuse `preorder` array as the stack (in-place).
+
+---
 
 ## Solutions
 
@@ -107,6 +129,8 @@ console.log(verifyPreorderO1([5, 2, 6, 1, 3])); // false
 console.log(verifyPreorderRecursive([5, 2, 1, 3, 6])); // true
 console.log(verifyPreorderRecursive([5, 2, 6, 1, 3])); // false
 ```
+
+---
 
 ## 🔗 Related Problems
 

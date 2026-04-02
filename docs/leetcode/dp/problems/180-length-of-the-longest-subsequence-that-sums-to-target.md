@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/length-of-the-longest-subsequence-t
 
 # Length of the Longest Subsequence That Sums to Target / Độ Dài Dãy Con Dài Nhất Có Tổng Bằng Target
 
-🟡 Medium | Dynamic Programming · 0/1 Knapsack
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** Classic **0/1 knapsack** variant: instead of maximizing value, maximize the count of elements used. `dp[t]` = maximum number of elements we can pick that sum exactly to `t`. Process each number backwards (prevent reuse).
+**Analogy:** **EN:** Classic **0/1 knapsack** variant: instead of maximizing value, maximize the count of elements used. `dp[t]` = maximum number of elements we can pick that sum exactly to `t`. Process each number backwards (prevent reuse).
 
 **VI:** Biến thể **ba lô 0/1 cổ điển**: thay vì tối đa hóa giá trị, tối đa hóa số phần tử đã dùng. `dp[t]` = số phần tử tối đa có thể chọn sao cho tổng đúng bằng `t`. Duyệt ngược để tránh dùng lại.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Length of the Longest Subsequence That Sums to Target example:**
 
 ```
 nums = [1, 1, 5, 4, 5], target = 3
@@ -37,6 +40,18 @@ Return dp[target] if dp[target] > 0 else -1
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                 | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum/) | 🟡 Medium  | 0/1 Knapsack       |
+| [Target Sum](https://leetcode.com/problems/target-sum/)                                 | 🟡 Medium  | 0/1 Knapsack       |
+| [Coin Change](https://leetcode.com/problems/coin-change/)                               | 🟡 Medium  | Unbounded Knapsack |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** `dp[t]` = max length of subsequence summing to `t`, initialized to `-Infinity` (impossible). `dp[0] = 0`. **VI:** dp[t] = độ dài tối đa dãy con có tổng t, khởi tạo -Infinity. dp[0] = 0.
@@ -48,7 +63,9 @@ Return dp[target] if dp[target] > 0 else -1
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

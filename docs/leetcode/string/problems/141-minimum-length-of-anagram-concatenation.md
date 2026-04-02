@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-length-of-anagram-concatena
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Divisor Enumeration
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Tìm chuỗi `t` ngắn nhất sao cho `s` là ghép nối các hoán vị của `t`. Nghĩa là `len(t)` phải là ước của `len(s)`, và mỗi đoạn `s[i..i+len(t)-1]` phải là hoán vị của `t`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Tìm chuỗi `t` ngắn nhất sao cho `s` là ghép nối các hoán vị của `t`. Nghĩa là `len(t)` phải là ước của `len(s)`, và mỗi đoạn `s[i..i+len(t)-1]` phải là hoán vị của `t`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Length of Anagram Concatenation example:**
 
 ```
 s = "abab"   len=4
@@ -25,7 +32,20 @@ Try len=2: t="ab"? → chunks "ab","ab" — both anagram of "ab" ✓ → answer=
 
 **Key insight**: `t.length` must divide `s.length`. For each divisor `d`, check if every chunk of size `d` has the same character frequency as the first chunk.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                            | Difficulty | Pattern           |
+| ---- | ---------------------------------- | ---------- | ----------------- |
+| 49   | Group Anagrams                     | 🟡 Medium  | Hash Map          |
+| 242  | Valid Anagram                      | 🟢 Easy    | Hash Map          |
+| 1071 | Greatest Common Divisor of Strings | 🟢 Easy    | GCD / Divisor     |
+| 686  | Repeated String Match              | 🟡 Medium  | String Repetition |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Enumerate divisors of `s.length` from smallest to largest; return first valid
   **VI**: Duyệt ước của `s.length` từ nhỏ đến lớn; trả về ước hợp lệ đầu tiên
@@ -128,7 +148,14 @@ console.log(minAnagramLength2("aaaa")); // 1
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                            | Difficulty | Pattern           |
 | ---- | ---------------------------------- | ---------- | ----------------- |

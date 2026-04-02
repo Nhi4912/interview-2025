@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/removing-minimum-number-of-magic-be
 
 # Removing Minimum Number of Magic Beans / Loại Bỏ Tối Thiểu Hạt Đậu Ma Thuật
 
-🟡 Medium | Sort + Prefix Sum | [LeetCode 2171](https://leetcode.com/problems/removing-minimum-number-of-magic-beans)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** After operations, all non-zero bags must have equal beans. Sort the array. For each threshold value `beans[i]`, the cost is: remove all beans in bags < beans[i] (they become 0), and reduce all bags > beans[i] down to beans[i]. The total removed = total - (n - i) × beans[i]. Try all thresholds.
+**Analogy:** **EN:** After operations, all non-zero bags must have equal beans. Sort the array. For each threshold value `beans[i]`, the cost is: remove all beans in bags < beans[i] (they become 0), and reduce all bags > beans[i] down to beans[i]. The total removed = total - (n - i) × beans[i]. Try all thresholds.
 
 **VI:** Sau thao tác, tất cả túi khác 0 phải có số đậu bằng nhau. Sắp xếp mảng. Với mỗi ngưỡng `beans[i]`, chi phí là: xóa hết túi < beans[i] (thành 0), giảm túi > beans[i] xuống beans[i]. Tổng bị xóa = total - (n-i) × beans[i]. Thử mọi ngưỡng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Removing Minimum Number of Magic Beans example:**
 
 ```
 beans = [4, 1, 6, 5]
@@ -36,7 +39,19 @@ Key formula: cost[i] = total - (n - i) * beans[i]
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                                               | Difficulty | Pattern                |
+| --- | ----------------------------------------------------- | ---------- | ---------------------- |
+| 1   | Minimum Cost to Move Chips                            | 🟢 Easy    | greedy parity          |
+| 2   | Minimum Number of Operations to Make Array Continuous | 🔴 Hard    | sort + sliding window  |
+| 3   | Sum of Absolute Differences                           | 🟡 Medium  | prefix sum enumeration |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** The optimal final state must be one of the existing bean values (or 0). So try each beans[i] as the threshold. **VI:** Trạng thái tối ưu cuối cùng phải là một trong các giá trị đậu hiện có (hoặc 0). Thử mỗi beans[i] làm ngưỡng.
 - 📊 **EN:** Formula: `cost = total - (n - i) * beans[i]`. The `(n-i)` bags at positions i..n-1 each contribute exactly beans[i]; rest are zeroed. **VI:** Công thức: `cost = total - (n-i) × beans[i]`. Đơn giản vì chúng ta biết phần còn lại sau khi giữ (n-i) túi ở mức beans[i].
@@ -47,9 +62,9 @@ Key formula: cost[i] = total - (n - i) * beans[i]
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Sort + One-Pass (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -78,11 +93,7 @@ console.log(minimumRemoval([2, 10, 3, 2])); // 7  → threshold=2: 10-2+3-2=9? N
 // i=0: 17-4×2=9  i=1: 17-3×2=11  i=2: 17-2×3=11  i=3: 17-1×10=7  → 7
 console.log(minimumRemoval([1, 1, 1])); // 0  (all equal, nothing to remove)
 console.log(minimumRemoval([1, 2])); // 1  (threshold=1: remove 0; total=3,kept=1×2=2? i=0: 3-2×1=1, i=1: 3-1×2=1 → 1)
-```
 
-### Solution 2 — Sort + Prefix Sum (Explicit)
-
-```typescript
 /**
  * Build prefix sums for the "remove left" cost explicitly.
  * Cost for threshold beans[i] = prefix[i] + sum of (beans[j]-beans[i]) for j>i
@@ -111,11 +122,7 @@ function minimumRemoval2(beans: number[]): number {
 
 console.log(minimumRemoval2([4, 1, 6, 5])); // 4
 console.log(minimumRemoval2([2, 10, 3, 2])); // 7
-```
 
-### Solution 3 — Edge Case Verification
-
-```typescript
 /**
  * Handles single-element and all-equal arrays
  * Time: O(n log n)  Space: O(1)
@@ -138,7 +145,7 @@ console.log(minimumRemoval3([1, 1000000000])); // 1
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                                               | Difficulty | Pattern                |
 | --- | ----------------------------------------------------- | ---------- | ---------------------- |

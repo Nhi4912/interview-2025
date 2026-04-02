@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-cost-to-convert-string-ii"
 
 # Minimum Cost to Convert String II / Chi phí tối thiểu để chuyển đổi chuỗi II
 
-🔴 Hard | Trie | DP | Graph Shortest Path
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Thay vì biến đổi từng ký tự, bài này biến đổi các **chuỗi con**. Dùng Trie để nhanh chóng tìm tất cả các cặp `(original[i], changed[i])` bắt đầu tại mỗi vị trí. Gán ID cho từng chuỗi duy nhất, chạy Floyd-Warshall trên đồ thị chuỗi con. Sau đó DP: `dp[i]` = chi phí tối thiểu để biến đổi `source[0..i-1]` thành `target[0..i-1]`.
+**Analogy:** **Vietnamese:** Thay vì biến đổi từng ký tự, bài này biến đổi các **chuỗi con**. Dùng Trie để nhanh chóng tìm tất cả các cặp `(original[i], changed[i])` bắt đầu tại mỗi vị trí. Gán ID cho từng chuỗi duy nhất, chạy Floyd-Warshall trên đồ thị chuỗi con. Sau đó DP: `dp[i]` = chi phí tối thiểu để biến đổi `source[0..i-1]` thành `target[0..i-1]`.
 
 **English:** Transformations are now on **substrings**, not single chars. Build a Trie of all `original[i]` strings to efficiently find all matching transformations starting at each position. Run Floyd-Warshall on substring-node graph. Then DP: `dp[i]` = min cost to convert `source[0..i-1]`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Cost to Convert String II example:**
 
 ```
 source="abcd", target="acbe"
@@ -32,6 +35,18 @@ DP:
 
 ---
 
+---
+
+## Problem Description
+
+| #    | Problem                           | Difficulty | Pattern        |
+| ---- | --------------------------------- | ---------- | -------------- |
+| 2976 | Min Cost Convert String I         | Medium     | Floyd-Warshall |
+| 2977 | Min Cost Convert String II (this) | Hard       | Trie + DP      |
+| 139  | Word Break                        | Medium     | DP + Trie      |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Key insight / Nhận xét chính:** Two Tries — one for `original[]` strings, one for `target[]` strings. Map each unique string to an integer ID.
@@ -43,9 +58,9 @@ DP:
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Trie + Floyd-Warshall + DP
+## Solutions
 
 ```typescript
 /**

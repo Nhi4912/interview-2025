@@ -7,100 +7,87 @@ tags: [Array, Binary Search]
 leetcode_url: "https://leetcode.com/problems/kth-smallest-product-of-two-sorted-arrays"
 ---
 
-# Kth Smallest Product of Two Sorted Arrays / Kth Smallest Product of Two Sorted Arrays
-
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) | [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)
+# kth smallest product of two sorted arrays
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Analogy:** Tưởng tượng bạn có hai bảng báo giá hàng hóa: một bảng có thể âm (kho bán lỗ), một bảng
+dương. Bạn muốn tìm cặp giao dịch có lợi nhuận nhỏ thứ k. Thay vì liệt kê tất cả m×n cặp,
+bạn **đoán một ngưỡng x** rồi đếm: "có bao nhiêu cặp cho tích ≤ x?" Nếu đủ k cặp thì x quá
+lớn, thiếu thì x quá nhỏ — binary search thu hẹp đến đáp án. Mấu chốt: khi `a > 0` thì
+`a*b ≤ x ↔ b ≤ x/a`; khi `a < 0` chiều đảo ngược; khi `a = 0` tích luôn là 0.
 
 **Pattern Recognition:**
+- Key insight: see analogy above
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Kth Smallest Product of Two Sorted Arrays example:**
+**Visual —  example:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+nums1 = [-2, -1, 0, 3],  nums2 = [1, 2, 3],  k = 6
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Outer binary search:  lo = -10^10,  hi = 10^10
+─────────────────────────────────────────────
+mid = 0  →  countPairs(0):
+  a=-2  threshold=ceil(0/-2)=0  → b ≥ 0  → [1,2,3] → +3
+  a=-1  threshold=ceil(0/-1)=0  → b ≥ 0  → [1,2,3] → +3
+  a= 0  0 ≤ 0 → n=3              → +3
+  a= 3  threshold=floor(0/3)=0  → b ≤ 0  → [] → +0
+  total = 9 ≥ k=6  →  hi = 0
+
+mid = -5000000000  →  count < 6  →  lo 오르다
+Converges:  answer = -2
+
+Verify:  all products sorted = [-6,-6,-3,-3,-2,-2,-1,-1,0,0,0,3,6,9]
+         6th smallest = -2  ✓
 ```
 
 ---
 
 ## Problem Description
 
-Kth Smallest Product of Two Sorted Arrays. ([LeetCode](https://leetcode.com/problems/kth-smallest-product-of-two-sorted-arrays))
-
-Difficulty: Hard | Acceptance: 30.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/kth-smallest-product-of-two-sorted-arrays) for full constraints
+| Problem                                                                                                                        | Difficulty | Tags                |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------- |
+| [373. Find K Pairs with Smallest Sums](https://leetcode.com/problems/find-k-pairs-with-smallest-sums/)                         | Medium     | Heap                |
+| [668. Kth Smallest Number in Multiplication Table](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table/) | Hard       | Binary Search       |
+| [786. K-th Smallest Prime Fraction](https://leetcode.com/problems/k-th-smallest-prime-fraction/)                               | Medium     | Binary Search, Heap |
+| [378. Kth Smallest Element in a Sorted Matrix](https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/)         | Medium     | Binary Search, Heap |
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+1. **Binary search on value, not index** — The answer is some actual product; search `[-10^10, 10^10]`.
+   _Binary search trên giá trị, không phải chỉ số — Đáp án là một tích thực tế; tìm trong `[-10^10, 10^10]`._
+
+2. **Count-then-decide pattern** — For candidate `x`, count pairs with product ≤ x in O(m log n). Find smallest x with count ≥ k.
+   _Mẫu đếm-rồi-quyết định — Với x cho trước, đếm cặp tích ≤ x trong O(m log n). Tìm x nhỏ nhất thỏa count ≥ k._
+
+3. **Sign flips inequality** — When dividing by a negative number, comparison direction reverses.
+   _Dấu âm đảo chiều bất đẳng thức — Khi chia cho số âm, chiều so sánh đảo ngược._
+
+4. **Use integer thresholds** — `Math.floor(x/a)` for `a > 0`, `Math.ceil(x/a)` for `a < 0` avoids float precision bugs.
+   _Dùng ngưỡng nguyên — `Math.floor(x/a)` khi `a > 0`, `Math.ceil(x/a)` khi `a < 0` để tránh lỗi dấu phẩy động._
+
+5. **Zero is a special case** — `0 * anything = 0`; never divide by zero.
+   _Số 0 là trường hợp đặc biệt — `0 _ anything = 0`; không bao giờ chia cho 0.\*
+
+6. **Answer is always a real product** — Binary search converges to an actual product value, not an interpolated one.
+   _Đáp án luôn là tích thực — Binary search hội tụ về giá trị tích thực tế, không phải giá trị nội suy._
 
 ---
 
 ## Solutions
 
-```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function kthSmallestProductOfTwoSortedArraysBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
-
-/**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function kthSmallestProductOfTwoSortedArrays(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(kthSmallestProductOfTwoSortedArrays(/* example 1 */)); // expected
-// console.log(kthSmallestProductOfTwoSortedArrays(/* example 2 */)); // expected
-// console.log(kthSmallestProductOfTwoSortedArrays(/* edge case */)); // expected
-```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) — same pattern: Binary Search
-- [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas) — same pattern: Binary Search
-- [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix) — same pattern: Binary Search
-- [Find Peak Element](https://leetcode.com/problems/find-peak-element) — same pattern: Binary Search
-- [Kth Smallest Product of Two Sorted Arrays — LeetCode](https://leetcode.com/problems/kth-smallest-product-of-two-sorted-arrays) — problem page
+| Problem                                                                                                                        | Difficulty | Tags                |
+| ------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------- |
+| [373. Find K Pairs with Smallest Sums](https://leetcode.com/problems/find-k-pairs-with-smallest-sums/)                         | Medium     | Heap                |
+| [668. Kth Smallest Number in Multiplication Table](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table/) | Hard       | Binary Search       |
+| [786. K-th Smallest Prime Fraction](https://leetcode.com/problems/k-th-smallest-prime-fraction/)                               | Medium     | Binary Search, Heap |
+| [378. Kth Smallest Element in a Sorted Matrix](https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/)         | Medium     | Binary Search, Heap |

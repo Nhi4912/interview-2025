@@ -7,104 +7,86 @@ tags: [Array, Heap (Priority Queue), Simulation]
 leetcode_url: "https://leetcode.com/problems/time-to-cross-a-bridge"
 ---
 
-# Time to Cross a Bridge / Time to Cross a Bridge
-
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers) | [Number of Orders in the Backlog](https://leetcode.com/problems/number-of-orders-in-the-backlog)
+# time to cross a bridge
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
+**Analogy:** Hình dung một cây cầu một làn duy nhất nối hai bờ kho hàng. Công nhân phải sang phải để
+lấy hộp rồi mang về trái. Quy tắc ưu tiên: "người chậm nhất" (tổng thời gian qua cầu cao
+nhất) được đi trước — tránh chặn đường người nhanh. Ta dùng **4 heap**:
+
+- `leftWait` / `rightWait`: người đang chờ ở bờ trái/phải (max-heap theo độ chậm)
+- `leftWork` / `rightWork`: người đang làm việc trong kho (min-heap theo thời gian xong việc)
+
+Tại mỗi thời điểm cầu rảnh: bờ phải ưu tiên trước → nếu không có ai bên phải thì bờ trái.
 
 **Pattern Recognition:**
+- Key insight: see analogy above
 
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Time to Cross a Bridge example:**
+**Visual —  example:**
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+n=2, k=2, time=[[1,1,1,1],[3,1,1,3]]  (worker0=ineff2, worker1=ineff6)
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+t=0:  leftWait=[1,0]  (sorted ineff desc: 6,2)
+      Bridge free → send worker1 L→R  t=3,  rightWork=[(3+1,1)]=[(4,1)]
+t=3:  leftWait=[0]  boxesLeft=1
+      Bridge free → send worker0 L→R  t=4,  rightWork=[(4,1),(4+1,0)]=[(4,1),(5,0)]
+t=4:  rightWork: (4,1) done → rightWait=[1]
+      Bridge free → rightWait priority: send worker1 R→L  t=5  boxesDelivered=1  ans=5
+      leftWork=[(5+3,1)]=[(8,1)]
+t=5:  rightWork: (5,0) done → rightWait=[0]
+      Bridge free → send worker0 R→L  t=6  boxesDelivered=2  ans=6
+Return 6
 ```
 
 ---
 
 ## Problem Description
 
-Time to Cross a Bridge. ([LeetCode](https://leetcode.com/problems/time-to-cross-a-bridge))
-
-Difficulty: Hard | Acceptance: 43.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/time-to-cross-a-bridge) for full constraints
+| Problem                                                                                         | Difficulty | Tags             |
+| ----------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [1834. Single-Threaded CPU](https://leetcode.com/problems/single-threaded-cpu/)                 | Medium     | Heap, Simulation |
+| [2402. Meeting Rooms III](https://leetcode.com/problems/meeting-rooms-iii/)                     | Hard       | Heap, Simulation |
+| [1882. Process Tasks Using Servers](https://leetcode.com/problems/process-tasks-using-servers/) | Medium     | Heap, Simulation |
+| [407. Trapping Rain Water II](https://leetcode.com/problems/trapping-rain-water-ii/)            | Hard       | Heap, BFS        |
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Four queues, not two** — Separate "waiting" (ready to cross) from "working" (in warehouse); different priorities for each.
+   _Bốn hàng đợi, không phải hai — Tách "đang chờ" (sẵn sàng qua cầu) khỏi "đang làm việc" (trong kho); ưu tiên khác nhau._
+
+2. **Right bank priority** — Workers waiting on right always cross before workers waiting on left.
+   _Bờ phải ưu tiên — Công nhân chờ bên phải luôn qua cầu trước công nhân chờ bên trái._
+
+3. **Advance time to next event** — When no one is ready to cross, jump to earliest warehouse completion time.
+   _Nhảy thời gian đến sự kiện tiếp theo — Khi không ai sẵn sàng qua cầu, nhảy đến thời điểm hoàn thành kho sớm nhất._
+
+4. **Track boxes to send, not delivered** — Decrement `boxesLeft` when a worker crosses L→R; decrement `boxesDelivered` when crosses R→L.
+   _Theo dõi hộp cần gửi, không phải đã giao — Giảm `boxesLeft` khi công nhân qua L→R; tăng `boxesDelivered` khi qua R→L._
+
+5. **Answer = last R→L arrival** — Record `curTime` each time a worker finishes crossing R→L; the k-th one is the answer.
+   _Đáp án = lần đến bờ trái cuối cùng — Ghi lại `curTime` mỗi khi công nhân qua xong R→L; lần thứ k là đáp án._
+
+6. **Don't send extra workers L→R** — Once `boxesLeft == 0`, stop sending workers from left even if leftWait is non-empty.
+   _Không gửi thêm công nhân L→R — Khi `boxesLeft == 0`, ngừng gửi từ trái dù leftWait không rỗng._
 
 ---
 
 ## Solutions
 
-```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function timeToCrossABridgeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
-
-/**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function timeToCrossABridge(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(timeToCrossABridge(/* example 1 */)); // expected
-// console.log(timeToCrossABridge(/* example 2 */)); // expected
-// console.log(timeToCrossABridge(/* edge case */)); // expected
-```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers) — same pattern: Two Pointers
-- [Number of Orders in the Backlog](https://leetcode.com/problems/number-of-orders-in-the-backlog) — same pattern: Heap / Priority Queue
-- [Car Pooling](https://leetcode.com/problems/car-pooling) — same pattern: Prefix Sum
-- [Mark Elements on Array by Performing Queries](https://leetcode.com/problems/mark-elements-on-array-by-performing-queries) — same pattern: Heap / Priority Queue
-- [Time to Cross a Bridge — LeetCode](https://leetcode.com/problems/time-to-cross-a-bridge) — problem page
+| Problem                                                                                         | Difficulty | Tags             |
+| ----------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [1834. Single-Threaded CPU](https://leetcode.com/problems/single-threaded-cpu/)                 | Medium     | Heap, Simulation |
+| [2402. Meeting Rooms III](https://leetcode.com/problems/meeting-rooms-iii/)                     | Hard       | Heap, Simulation |
+| [1882. Process Tasks Using Servers](https://leetcode.com/problems/process-tasks-using-servers/) | Medium     | Heap, Simulation |
+| [407. Trapping Rain Water II](https://leetcode.com/problems/trapping-rain-water-ii/)            | Hard       | Heap, BFS        |

@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/largest-local-values-in-a-matrix"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một bản đồ địa hình với độ cao từng ô. Bạn cần tạo một bản đồ thu nhỏ: mỗi ô trong bản đồ mới đại diện cho đỉnh cao nhất trong một vùng 3×3 của bản đồ gốc (tâm là ô đó). Kết quả là bản đồ nhỏ hơn 2 hàng và 2 cột so với bản đồ gốc — mỗi ô chứa "ngọn núi cao nhất" của vùng xung quanh nó.
+**Analogy:** Hãy tưởng tượng một bản đồ địa hình với độ cao từng ô. Bạn cần tạo một bản đồ thu nhỏ: mỗi ô trong bản đồ mới đại diện cho đỉnh cao nhất trong một vùng 3×3 của bản đồ gốc (tâm là ô đó). Kết quả là bản đồ nhỏ hơn 2 hàng và 2 cột so với bản đồ gốc — mỗi ô chứa "ngọn núi cao nhất" của vùng xung quanh nó.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Largest Local Values in a Matrix example:**
 
 ```
 grid (4×4):                    result (2×2):
@@ -35,7 +38,9 @@ result[1][1] = max(3×3 at r=2,c=2) = 6
                                             → [[9,9],[8,6]]
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an `n×n` integer matrix `grid`, generate an `(n-2)×(n-2)` matrix `maxLocal` where `maxLocal[i][j]` is the **largest value** in the 3×3 subgrid centered at `grid[i+1][j+1]`.
 
@@ -44,7 +49,9 @@ Given an `n×n` integer matrix `grid`, generate an `(n-2)×(n-2)` matrix `maxLoc
 
 **Constraints:** `3 ≤ n ≤ 100`, `1 ≤ grid[i][j] ≤ 100`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Result size is (n-2)×(n-2)** / Kích thước kết quả: Loại bỏ hàng/cột đầu và cuối → tâm hợp lệ từ (1,1) đến (n-2,n-2)
 - **3×3 subgrid scan** / Quét lưới 3×3: Với mỗi tâm `(r,c)`, duyệt `dr∈[-1,0,1]` và `dc∈[-1,0,1]`
@@ -53,7 +60,9 @@ Given an `n×n` integer matrix `grid`, generate an `(n-2)×(n-2)` matrix `maxLoc
 - **Sliding window optimization** / Tối ưu cửa sổ trượt: Với n lớn hơn, dùng sparse table 2D cho O(1)/query
 - **Edge case** / Trường hợp đặc biệt: n=3 → chỉ một ô kết quả (1×1), là max của toàn bộ lưới
 
-## Solution 1 - Direct Scan (Optimal O(n²))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -79,11 +88,7 @@ function largestLocal(grid: number[][]): number[][] {
   }
   return result;
 }
-```
 
-## Solution 2 - Functional Style
-
-```typescript
 /**
  * @complexity Time: O(n²) | Space: O((n-2)²)
  * Using Array.from for declarative matrix construction
@@ -99,11 +104,8 @@ function largestLocalFunctional(grid: number[][]): number[][] {
     }),
   );
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   largestLocal([
     [9, 9, 8, 1],
@@ -143,7 +145,9 @@ console.log(
 // → [[9,9],[8,6]]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                               | Difficulty | Link                                                                          |
 | ------------------------------------- | ---------- | ----------------------------------------------------------------------------- |

@@ -9,16 +9,21 @@ leetcode_url: "https://leetcode.com/problems/maximum-score-from-grid-operations"
 
 # Maximum Score From Grid Operations / Điểm Tối Đa Từ Phép Toán Lưới
 
-🔴 Hard | Column DP with prefix sums and black/white ownership
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Mỗi cột được chia theo một đường ngang: phần trên thuộc cột bên trái, phần dưới
+**Analogy:** **VI:** Mỗi cột được chia theo một đường ngang: phần trên thuộc cột bên trái, phần dưới
 thuộc cột bên phải. Dùng tiền tố tổng và DP theo cột để tối ưu điểm.
 
 **EN:** Each column `j` is cut at some row `r`: rows `[0..r-1]` belong to column `j-1`
 (white), rows `[r..n-1]` belong to column `j` (black). Score = sum of black cells in each
 column. DP over columns tracking the previous cut row.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Score From Grid Operations example:**
 
 ```
 Column j-1 cut at row p, column j cut at row q:
@@ -26,6 +31,19 @@ Column j-1 cut at row p, column j cut at row q:
                                  + prefix[j][p] (shared overlap if q < p)
 dp[j][q] = max over p of dp[j-1][p] + score(j, p, q)
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                                            | Difficulty | Key Idea                 |
+| ------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [85. Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle/)                                          | 🔴 Hard    | Column DP + stack        |
+| [363. Max Sum of Rectangle No Larger Than K](https://leetcode.com/problems/max-sum-of-rectangle-no-larger-than-k/) | 🔴 Hard    | 2D prefix sum            |
+| [1444. Number of Ways to Split a Grid](https://leetcode.com/problems/number-of-ways-of-cutting-a-pizza/)           | 🔴 Hard    | Partition DP with prefix |
+| [312. Burst Balloons](https://leetcode.com/problems/burst-balloons/)                                               | 🔴 Hard    | Interval DP              |
+
+---
 
 ## 📝 Interview Tips
 
@@ -43,9 +61,9 @@ dp[j][q] = max over p of dp[j-1][p] + score(j, p, q)
 - 🔑 **EN:** Edge columns (first and last) have only one neighbour to consider.
   **VI:** Cột đầu và cuối chỉ có một cột kề cần xét.
 
-## Solutions
+---
 
-### Solution 1: Column DP with prefix sums O(n^3)
+## Solutions
 
 ```typescript
 /**
@@ -111,11 +129,7 @@ console.log(
     [0, 1],
   ]),
 ); // 1
-```
 
-### Solution 2: Simplified O(n^2) with combined prefix/suffix max
-
-```typescript
 /**
  * Cleaner formulation: for each column transition j-1 -> j,
  * score depends on how much of col j is black (below cut q)
@@ -167,6 +181,8 @@ console.log(
   ]),
 ); // 1
 ```
+
+---
 
 ## 🔗 Related Problems
 

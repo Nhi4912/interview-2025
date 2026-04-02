@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/complete-binary-tree-inserter"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một khán đài bóng đá hình cây: khán giả phải ngồi lấp đầy từng hàng trái qua phải trước khi chuyển sang hàng tiếp theo. Mỗi chỗ ngồi "chưa có đủ 2 con" chính là slot sẵn sàng cho khán giả tiếp theo. Khi quản lý thêm khán giả mới, anh ta luôn biết ngay ai sẽ là "cha" của ghế tiếp theo — chính là người đứng đầu hàng đợi những "chỗ chưa đầy". Đây là cấu trúc CBTInserter: dùng deque các node chưa đủ 2 con.
+**Analogy:** Hãy tưởng tượng một khán đài bóng đá hình cây: khán giả phải ngồi lấp đầy từng hàng trái qua phải trước khi chuyển sang hàng tiếp theo. Mỗi chỗ ngồi "chưa có đủ 2 con" chính là slot sẵn sàng cho khán giả tiếp theo. Khi quản lý thêm khán giả mới, anh ta luôn biết ngay ai sẽ là "cha" của ghế tiếp theo — chính là người đứng đầu hàng đợi những "chỗ chưa đầy". Đây là cấu trúc CBTInserter: dùng deque các node chưa đủ 2 con.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Complete Binary Tree Inserter example:**
 
 ```
 Initial tree:    1
@@ -48,7 +51,9 @@ Tree now:      1
            4   5
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Design a class `CBTInserter` for a **complete binary tree**:
 
@@ -67,7 +72,9 @@ get_root() → [1,2,3,4,5]
 
 **Constraints:** `1 ≤ Node.val ≤ 1000`, `1 ≤ n ≤ 1000` initially, `1 ≤ val ≤ 1000`, at most `10⁴` calls to `insert` and `get_root`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Maintain candidate deque** / Duy trì hàng đợi ứng viên: Queue chứa các node có ít hơn 2 con — node đầu queue chính là parent tiếp theo
 - **BFS to init** / BFS để khởi tạo: Duyệt BFS cây ban đầu, thêm vào deque mọi node chưa đủ 2 con
@@ -76,7 +83,9 @@ get_root() → [1,2,3,4,5]
 - **O(1) insert** / Chèn O(1): Sau khi khởi tạo O(n), mỗi lần insert chỉ O(1) — truy cập đầu deque
 - **Array-based alternative** / Thay thế dùng mảng: Lưu nodes[] theo BFS order, node i có parent tại `floor((i-1)/2)` — O(1) lookup
 
-## Solution 1 - Deque of Incomplete Nodes
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -115,11 +124,7 @@ class CBTInserter {
     return this.root;
   }
 }
-```
 
-## Solution 2 - Array-Based (Index Arithmetic)
-
-```typescript
 /**
  * @complexity Init: O(n) | Insert: O(1) | Space: O(n)
  * Store all nodes in BFS-order array; parent of node[i] = node[floor((i-1)/2)]
@@ -154,11 +159,8 @@ class CBTInserterArray {
     return this.root;
   }
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 const root = new TreeNode(1, new TreeNode(2), new TreeNode(3));
 const ins = new CBTInserter(root);
 console.log(ins.insert(4)); // → 2
@@ -170,7 +172,9 @@ console.log(ins2.insert(2)); // → 1
 console.log(ins2.insert(3)); // → 1
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                               | Difficulty | Link                                                                          |
 | ------------------------------------- | ---------- | ----------------------------------------------------------------------------- |

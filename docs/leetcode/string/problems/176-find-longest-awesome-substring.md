@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/find-longest-awesome-substring"
 
 # Find Longest Awesome Substring / Tìm Xâu Con Tuyệt Vời Dài Nhất
 
-**Difficulty:** 🔴 Hard | **Tags:** Hash Table, String, Bit Manipulation
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Một xâu "tuyệt vời" là xâu có thể sắp xếp thành **palindrome** — tức là **nhiều nhất một** ký tự có tần số lẻ.
+**Analogy:** Một xâu "tuyệt vời" là xâu có thể sắp xếp thành **palindrome** — tức là **nhiều nhất một** ký tự có tần số lẻ.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Longest Awesome Substring example:**
 
 ```
 s = "3242415"  →  longest awesome = "2424" (length 5 with "24241")
@@ -43,7 +46,19 @@ Substring s[l+1..r] is awesome ↔
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                                                   | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Find the Longest Substring Containing Vowels in Even Counts](https://leetcode.com/problems/find-the-longest-substring-containing-vowels-in-even-counts/) | 🟡 Medium  | Bitmask prefix XOR |
+| [Count Triplets That Can Form Two Arrays of Equal XOR](https://leetcode.com/problems/count-triplets-that-can-form-two-arrays-of-equal-xor/)               | 🟡 Medium  | XOR prefix         |
+| [Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/)                                                             | 🟡 Medium  | Palindrome         |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Palindrome = tối đa một ký tự lẻ**: đây là điều kiện cốt lõi
 - 🇺🇸 **Palindrome ↔ at most one odd-freq char**: the core condition to internalize
@@ -60,9 +75,9 @@ Substring s[l+1..r] is awesome ↔
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Bitmask Prefix XOR + First Occurrence Array (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -105,11 +120,7 @@ console.log(longestAwesome("3242415")); // 5
 console.log(longestAwesome("12345678")); // 1
 console.log(longestAwesome("213123")); // 6
 console.log(longestAwesome("00")); // 2
-```
 
-### Solution 2 — HashMap variant (explicit)
-
-```typescript
 /**
  * Same algorithm, using Map instead of array for readability.
  * Time: O(n)  Space: O(1024)

@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/delete-characters-to-make-fancy-str
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Trong biên tập sách, quy tắc "không có 3 ký tự liên tiếp giống nhau" đảm bảo văn bản dễ đọc. Biên tập viên duyệt từng chữ một: nếu chữ hiện tại trùng với 2 chữ trước đó, bỏ qua nó; ngược lại, giữ lại. Không cần nhìn xa hơn 2 vị trí vì chúng ta luôn kiểm soát kết quả đang xây dựng. Giống như kiểm tra dây chuyền sản xuất: chỉ cần nhìn "2 phần tử cuối cùng đã thêm vào" để biết có thêm tiếp được không.
+**Analogy:** Trong biên tập sách, quy tắc "không có 3 ký tự liên tiếp giống nhau" đảm bảo văn bản dễ đọc. Biên tập viên duyệt từng chữ một: nếu chữ hiện tại trùng với 2 chữ trước đó, bỏ qua nó; ngược lại, giữ lại. Không cần nhìn xa hơn 2 vị trí vì chúng ta luôn kiểm soát kết quả đang xây dựng. Giống như kiểm tra dây chuyền sản xuất: chỉ cần nhìn "2 phần tử cuối cùng đã thêm vào" để biết có thêm tiếp được không.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Delete Characters to Make Fancy String example:**
 
 ```
 s = "leeetcode"
@@ -38,7 +41,9 @@ s = "aaabaaaa"
   Result: "aabaa"
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 A **fancy string** has no three consecutive equal characters. Given string `s`, delete the minimum number of characters to make it fancy. Return the resulting string.
 
@@ -48,7 +53,9 @@ A **fancy string** has no three consecutive equal characters. Given string `s`, 
 
 **Constraints:** `1 ≤ s.length ≤ 10⁵`, `s` consists of lowercase English letters
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Greedy is optimal** / Tham lam là tối ưu: Bỏ qua ký tự thứ 3 trong chuỗi liên tiếp luôn cho kết quả ngắn nhất — không cần DP
 - **Chỉ nhìn 2 phần tử cuối** / Look back 2 only: `result[n-1] === s[i] && result[n-2] === s[i]` là điều kiện đủ để bỏ qua
@@ -57,7 +64,9 @@ A **fancy string** has no three consecutive equal characters. Given string `s`, 
 - **In-place simulation** / Mô phỏng tại chỗ: Có thể dùng hai-pointer ghi đè s nếu cho phép sửa input
 - **Luôn giữ tối thiểu 1** / Always keep ≥1: Ký tự đầu tiên luôn được giữ — không có edge case bỏ hết
 
-## Solution 1 - Build Result String O(n)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -73,11 +82,7 @@ function makeFancyString(s: string): string {
   }
   return res.join("");
 }
-```
 
-## Solution 2 - Filter with Index O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Use filter on original string — concise one-liner style
@@ -85,11 +90,7 @@ function makeFancyString(s: string): string {
 function makeFancyStringFilter(s: string): string {
   return [...s].filter((ch, i) => i < 2 || ch !== s[i - 1] || ch !== s[i - 2]).join("");
 }
-```
 
-## Solution 3 - Two Pointer In-Place O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n) for result (O(1) extra)
  * Write pointer 'w' tracks valid position; read pointer 'r' scans input
@@ -103,11 +104,8 @@ function makeFancyStringInPlace(s: string): string {
   }
   return arr.slice(0, w).join("");
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(makeFancyString("leeetcode")); // → "leetcode"
 console.log(makeFancyString("aaabaaaa")); // → "aabaa"
 console.log(makeFancyString("aab")); // → "aab"
@@ -118,7 +116,9 @@ console.log(makeFancyString("aaa")); // → "aa"
 console.log(makeFancyString("zzz")); // → "zz"
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                     | Difficulty | Link                                                                                 |
 | ------------------------------------------- | ---------- | ------------------------------------------------------------------------------------ |

@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/four-divisors"
 
 # Four Divisors / Bốn Ước Số
 
-🟡 Medium | 🏷️ Array, Math | 🔗 [LeetCode](https://leetcode.com/problems/four-divisors)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Với mỗi số n, tìm tất cả ước số bằng cách thử từ 1 đến sqrt(n). Mỗi ước số d < sqrt(n) sẽ cho cặp (d, n/d). Nếu đếm được đúng 4 ước số, thêm tổng của chúng vào kết quả.
+**Analogy:** **Tiếng Việt:** Với mỗi số n, tìm tất cả ước số bằng cách thử từ 1 đến sqrt(n). Mỗi ước số d < sqrt(n) sẽ cho cặp (d, n/d). Nếu đếm được đúng 4 ước số, thêm tổng của chúng vào kết quả.
 
 **English:** For each n, iterate d from 1 to sqrt(n). Each divisor d < sqrt(n) gives pair (d, n/d). If d == sqrt(n), it's a single divisor. Stop early if count exceeds 4. Sum divisors only when exactly 4.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Four Divisors example:**
 
 ```
 nums = [21, 4]
@@ -29,7 +34,19 @@ nums = [21, 4]
 Answer: 32
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                | Difficulty | Pattern               |
+| ---------------------------------------------------------------------- | ---------- | --------------------- |
+| [Count Primes](https://leetcode.com/problems/count-primes/)            | 🟡 Medium  | Sieve of Eratosthenes |
+| [Ugly Number II](https://leetcode.com/problems/ugly-number-ii/)        | 🟡 Medium  | Math                  |
+| [Sum of All Divisors](https://www.geeksforgeeks.org/sum-divisors-1-n/) | —          | Number Theory         |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Iterate d from 1 to sqrt(n) — each d gives at most 2 divisors | **VI:** Duyệt d từ 1 đến sqrt(n) — mỗi d cho tối đa 2 ước số
 - 🔑 **EN:** Perfect square d*d == n contributes only ONE divisor (d), not two | **VI:** Số chính phương d*d == n chỉ đóng góp MỘT ước số (d), không phải hai
@@ -38,9 +55,9 @@ Answer: 32
 - 🔑 **EN:** Numbers with exactly 4 divisors have form p³ or p*q (p,q distinct primes) | **VI:** Số có đúng 4 ước có dạng p³ hoặc p*q (p,q là số nguyên tố khác nhau)
 - 🔑 **EN:** O(n _ sqrt(maxVal)) total time | **VI:** Tổng thời gian O(n _ sqrt(maxVal))
 
-## Solutions
+---
 
-### Solution 1: Trial Division with Early Exit (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -75,11 +92,7 @@ console.log(sumFourDivisors([21, 4])); // 32
 console.log(sumFourDivisors([21, 4, 7])); // 32 (7 has only 2 divisors: 1,7)
 console.log(sumFourDivisors([1, 2, 3, 4, 5])); // 0
 console.log(sumFourDivisors([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])); // 20+? let's test
-```
 
-### Solution 2: Helper Function Style
-
-```typescript
 /**
  * Extract divisor logic into a helper
  * Time: O(n * sqrt(max)) | Space: O(1)
@@ -103,11 +116,7 @@ function sumFourDivisors2(nums: number[]): number {
 console.log(sumFourDivisors2([21, 4])); // 32
 console.log(sumFourDivisors2([1, 2, 3, 4, 5])); // 0
 console.log(sumFourDivisors2([36])); // 0 (9 divisors: 1,2,3,4,6,9,12,18,36)
-```
 
-### Solution 3: Math Insight — Forms p³ and p\*q
-
-```typescript
 /**
  * A number has exactly 4 divisors iff it is of the form:
  *   - p^3: divisors are 1, p, p^2, p^3
@@ -157,6 +166,8 @@ console.log(sumFourDivisors3([21, 4])); // 32
 console.log(sumFourDivisors3([8])); // 1+2+4+8=15 (8=2^3)
 console.log(sumFourDivisors3([1, 2, 3, 4, 5])); // 0
 ```
+
+---
 
 ## 🔗 Related Problems
 

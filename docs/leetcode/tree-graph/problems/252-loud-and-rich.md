@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/loud-and-rich"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Tưởng tượng trong giới thượng lưu, người giàu hơn thường ít nói chuyện hơn (less "loud"). Bạn được cho biết ai giàu hơn ai (quan hệ không đối xứng), và điểm "ồn ào" của mỗi người. Câu hỏi là: trong nhóm bao gồm bản thân và tất cả người giàu hơn mình, ai ít ồn ào nhất? Đây là bài toán DFS trên đồ thị có hướng: từ mỗi người, đi theo chiều "giàu hơn", tìm node có `quietness` nhỏ nhất.
+**Analogy:** Tưởng tượng trong giới thượng lưu, người giàu hơn thường ít nói chuyện hơn (less "loud"). Bạn được cho biết ai giàu hơn ai (quan hệ không đối xứng), và điểm "ồn ào" của mỗi người. Câu hỏi là: trong nhóm bao gồm bản thân và tất cả người giàu hơn mình, ai ít ồn ào nhất? Đây là bài toán DFS trên đồ thị có hướng: từ mỗi người, đi theo chiều "giàu hơn", tìm node có `quietness` nhỏ nhất.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Loud and Rich example:**
 
 ```
 richer = [[1,0],[2,1],[3,1],[3,7],[4,3],[5,3],[6,3]]
@@ -38,7 +41,9 @@ DFS from 3:
 answer = [5, 5, 2, 5, 4, 5, 6, 7]
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given `n` people (0 to n-1), `richer[i] = [a, b]` means person `a` is definitely richer than `b`. `quiet[i]` is the quietness value of person `i` (lower = less noise). For each person `x`, find `answer[x]` = the least quiet person among all people who are at least as rich as `x` (including `x` themselves).
 
@@ -49,7 +54,9 @@ Given `n` people (0 to n-1), `richer[i] = [a, b]` means person `a` is definitely
 
 **Constraints:** `1 ≤ n ≤ 500`, `0 ≤ richer.length ≤ n*(n-1)/2`, `0 ≤ quiet[i] < n`, all quietness values are distinct
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Build reverse graph** / Xây đồ thị ngược: `richer[a,b]` → edge `a→b` (a giàu hơn b); DFS từ b để tìm những người giàu hơn b
 - **Memoize answer** / Ghi nhớ kết quả: `answer[x]` một khi tính xong không đổi — dùng để cắt nhánh DFS
@@ -58,7 +65,9 @@ Given `n` people (0 to n-1), `richer[i] = [a, b]` means person `a` is definitely
 - **Initialized to self** / Khởi tạo bằng chính mình: `answer[i] = i` — ít nhất bản thân là ứng viên
 - **DFS returns answer** / DFS trả về kết quả: Sau DFS, `answer[x]` đã được tối ưu — con trỏ không cần update lại
 
-## Solution 1 - DFS with Memoization
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -86,11 +95,7 @@ function loudAndRich(richer: number[][], quiet: number[]): number[] {
   for (let i = 0; i < n; i++) dfs(i);
   return answer;
 }
-```
 
-## Solution 2 - Topological Sort (BFS Kahn's)
-
-```typescript
 /**
  * @complexity Time: O(n + e) | Space: O(n + e)
  * Process in topological order (richest first); propagate quiet answer downstream
@@ -119,11 +124,8 @@ function loudAndRichTopo(richer: number[][], quiet: number[]): number[] {
 
   return answer;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   loudAndRich(
     [
@@ -157,7 +159,9 @@ console.log(
 ); // → [5,5,2,5,4,5,6,7]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                          | Difficulty | Link                                                                                         |
 | -------------------------------- | ---------- | -------------------------------------------------------------------------------------------- |

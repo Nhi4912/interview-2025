@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/smallest-k-length-subsequence-with-
 
 # Smallest K-Length Subsequence With Occurrences of a Letter / Dãy Con Nhỏ Nhất Độ Dài K Với Điều Kiện Ký Tự
 
-**Difficulty:** 🔴 Hard | **Tags:** String, Stack, Greedy, Monotonic Stack
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Tương tự bài **"Remove Duplicate Letters"** nhưng thêm ràng buộc về ký tự bắt buộc.
+**Analogy:** Tương tự bài **"Remove Duplicate Letters"** nhưng thêm ràng buộc về ký tự bắt buộc.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Smallest K-Length Subsequence With Occurrences of a Letter example:**
 
 ```
 s = "leet"  k = 3  letter = 'e'  repetition = 1
@@ -39,7 +42,19 @@ Pop guard for letter: only pop top if
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                   | Difficulty | Pattern         |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters/)                                       | 🟡 Medium  | Monotonic stack |
+| [Smallest Subsequence of Distinct Characters](https://leetcode.com/problems/smallest-subsequence-of-distinct-characters/) | 🟡 Medium  | Monotonic stack |
+| [Create Maximum Number](https://leetcode.com/problems/create-maximum-number/)                                             | 🔴 Hard    | Greedy + stack  |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Stack đơn điệu**: giữ chuỗi không giảm, pop khi gặp ký tự nhỏ hơn ở đỉnh
 - 🇺🇸 **Monotonic stack**: maintain non-decreasing order, pop on smaller incoming char
@@ -56,9 +71,9 @@ Pop guard for letter: only pop top if
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Monotonic Stack with Letter Budget (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -101,11 +116,7 @@ console.log(smallestSubsequence("leet", 3, "e", 1)); // "eet"
 console.log(smallestSubsequence("leetcode", 4, "e", 2)); // "ecde"
 console.log(smallestSubsequence("bb", 2, "b", 2)); // "bb"
 console.log(smallestSubsequence("aabdaaabcd", 5, "a", 3)); // "aaabc"
-```
 
-### Solution 2 — Two-pointer suffix array
-
-```typescript
 /**
  * Pre-compute suffix letter counts for cleaner index access.
  * Time: O(n)  Space: O(n)

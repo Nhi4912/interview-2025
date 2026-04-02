@@ -7,15 +7,18 @@ tags: [String, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/k-similar-strings"
 ---
 
-## 854. K-Similar Strings
-
-### Chuỗi K-Tương Tự | 🔴 Hard
+# k similar strings
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Như xáo bài — mỗi lần chỉ được đổi chỗ 2 lá bài. Hỏi tối thiểu cần bao nhiêu lần đổi để từ xếp này sang xếp kia? BFS tìm số bước tối thiểu, mỗi state là một hoán vị.
+**Analogy:** > **Vietnamese analogy:** Như xáo bài — mỗi lần chỉ được đổi chỗ 2 lá bài. Hỏi tối thiểu cần bao nhiêu lần đổi để từ xếp này sang xếp kia? BFS tìm số bước tối thiểu, mỗi state là một hoán vị.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 s = "abcd"  → t = "badc"
@@ -26,7 +29,9 @@ k = 2
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Strings `s1` and `s2` are **k-similar** if we can swap characters in `s1` at most `k` times to equal `s2`. Given two anagrams `s1` and `s2`, return the minimum `k`.
 
@@ -43,6 +48,8 @@ Strings `s1` and `s2` are **k-similar** if we can swap characters in `s1` at mos
 
 ---
 
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **BFS on permutation states** — each swap is one step, BFS finds minimum swaps
@@ -54,9 +61,9 @@ Strings `s1` and `s2` are **k-similar** if we can swap characters in `s1` at mos
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: BFS with Pruning
+## Solutions
 
 ```typescript
 function kSimilarity(s1: string, s2: string): number {
@@ -96,11 +103,7 @@ function kSimilarity(s1: string, s2: string): number {
 
   return steps;
 }
-```
 
-### Solution 2: BFS with Additional Pruning (Skip If cur[j] Already Correct)
-
-```typescript
 function kSimilarityV2(s1: string, s2: string): number {
   if (s1 === s2) return 0;
 

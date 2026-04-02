@@ -7,15 +7,18 @@ tags: [Array, Dynamic Programming, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/maximum-total-reward-using-operations-ii"
 ---
 
-## 🏆 3182. Maximum Total Reward Using Operations II / Tổng Phần Thưởng Tối Đa (II)
-
-**Difficulty:** 🔴 Hard
+# maximum total reward using operations ii
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Giống bài I, nhưng `rewardValues` có thể lên tới 100,000 — mảng boolean thông thường sẽ TLE. Trick: dùng **BigInt như một bitset**. Mỗi bit trong BigInt đại diện cho một tổng có thể đạt được. Shift và OR thay vì vòng lặp — cực nhanh!
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 dp as BigInt bitset: bit i is set ↔ sum i is reachable
@@ -34,12 +37,16 @@ Example: v=3, dp = 0b...1101 (sums 0,2,3 reachable)
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Same as 3181 but `rewardValues.length` up to 50,000 and values up to 100,000. The naive O(n × maxVal) DP would be too slow without bitset optimization.
 
 - Example: `rewardValues = [1,6,4,3,2]` → **11**
 - Example: `rewardValues = [1,1,3,3]` → **4**
+
+---
 
 ---
 
@@ -54,9 +61,9 @@ Same as 3181 but `rewardValues.length` up to 50,000 and values up to 100,000. Th
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: BigInt Bitset DP (Optimal)
+## Solutions
 
 ```typescript
 function maxTotalReward(rewardValues: number[]): number {
@@ -82,11 +89,7 @@ function maxTotalReward(rewardValues: number[]): number {
   }
   return Number(result) - 1;
 }
-```
 
-### Solution 2: BigInt with bit_length helper
-
-```typescript
 function maxTotalRewardV2(rewardValues: number[]): number {
   const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
 
@@ -100,11 +103,7 @@ function maxTotalRewardV2(rewardValues: number[]): number {
   // dp.toString(2).length - 1 = position of highest set bit
   return dp.toString(2).length - 1;
 }
-```
 
-### Solution 3: Boolean Array fallback (for smaller constraints, shows logic)
-
-```typescript
 function maxTotalRewardFallback(rewardValues: number[]): number {
   const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
   const maxVal = vals[vals.length - 1];

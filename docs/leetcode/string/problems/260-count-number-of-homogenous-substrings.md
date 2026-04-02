@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/count-number-of-homogenous-substrin
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy nghĩ về dây chuyền sản xuất kẹo: mỗi màu sắc liên tiếp tạo thành một "lô hàng đồng nhất". Nếu lô có `k` viên kẹo cùng màu, ta có thể cắt ra bao nhiêu đoạn con cùng màu? Câu trả lời là `k*(k+1)/2` — tổng từ 1 đến k. Ví dụ lô 3 viên "aaa": ta có "a"×3, "aa"×2, "aaa"×1 = 6 đoạn. Với chuỗi "abbccc", ta cộng lô "a" (k=1: 1) + lô "bb" (k=2: 3) + lô "ccc" (k=3: 6) = 10, rồi modulo 10⁹+7 vì kết quả có thể rất lớn.
+**Analogy:** Hãy nghĩ về dây chuyền sản xuất kẹo: mỗi màu sắc liên tiếp tạo thành một "lô hàng đồng nhất". Nếu lô có `k` viên kẹo cùng màu, ta có thể cắt ra bao nhiêu đoạn con cùng màu? Câu trả lời là `k*(k+1)/2` — tổng từ 1 đến k. Ví dụ lô 3 viên "aaa": ta có "a"×3, "aa"×2, "aaa"×1 = 6 đoạn. Với chuỗi "abbccc", ta cộng lô "a" (k=1: 1) + lô "bb" (k=2: 3) + lô "ccc" (k=3: 6) = 10, rồi modulo 10⁹+7 vì kết quả có thể rất lớn.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Number of Homogenous Substrings example:**
 
 ```
 s = "abbccc"
@@ -39,7 +42,9 @@ Formula derivation for run of length k:
   Sum = k + (k-1) + ... + 1 = k*(k+1)/2
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given string `s`, return the number of **homogenous substrings** (substrings where all characters are the same) modulo `10⁹ + 7`.
 
@@ -49,7 +54,9 @@ Given string `s`, return the number of **homogenous substrings** (substrings whe
 
 **Constraints:** `1 ≤ s.length ≤ 10⁵`, `s` consists of lowercase English letters
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Run-length decomposition** / Phân tách RLE: Chia chuỗi thành các "lô" ký tự giống nhau liên tiếp, mỗi lô độc lập
 - **k\*(k+1)/2 formula** / Công thức tổ hợp: Lô độ dài k đóng góp đúng k\*(k+1)/2 chuỗi con — nhớ ngay, không cần giải thích lại
@@ -58,7 +65,9 @@ Given string `s`, return the number of **homogenous substrings** (substrings whe
 - **Thêm sentinel** / Sentinel trick: Duyệt đến `i <= s.length` và kiểm tra `s[i] !== s[i-1]` — xử lý lô cuối tự nhiên hơn
 - **Edge: all same** / Toàn ký tự giống: s = "aaaa" → k=4 → 10, kiểm tra không vượt MOD
 
-## Solution 1 - Collect Groups O(n)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +92,7 @@ function countHomogenousBrute(s: string): number {
   }
   return Number(ans);
 }
-```
 
-## Solution 2 - Single Pass Streaming O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Stream through runs, accumulate result without storing groups
@@ -107,11 +112,7 @@ function countHomogenous(s: string): number {
   }
   return ans;
 }
-```
 
-## Solution 3 - Incremental Counter O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Add 'run' to ans at each step: avoids multiplication entirely.
@@ -127,11 +128,8 @@ function countHomogenousIncremental(s: string): number {
   }
   return ans;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(countHomogenousBrute("abbccc")); // → 10
 console.log(countHomogenous("abbccc")); // → 10
 console.log(countHomogenousIncremental("abbccc")); // → 10
@@ -141,7 +139,9 @@ console.log(countHomogenous("a")); // → 1
 console.log(countHomogenous("aababab")); // → 10
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                        | Difficulty | Link                                                                                    |
 | ---------------------------------------------- | ---------- | --------------------------------------------------------------------------------------- |

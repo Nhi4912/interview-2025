@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/check-if-there-is-a-valid-partition
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Boolean DP (look-back 2 or 3)
 
-## 🧠 Intuition
+---
 
-**VI:** Giống bài leo cầu thang nhưng kiểm tra xem ta có thể "đặt chân" tại vị trí `i` hay không. Từ vị trí `i`, nhìn lại 2 hoặc 3 bước và kiểm tra điều kiện phân đoạn.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Giống bài leo cầu thang nhưng kiểm tra xem ta có thể "đặt chân" tại vị trí `i` hay không. Từ vị trí `i`, nhìn lại 2 hoặc 3 bước và kiểm tra điều kiện phân đoạn.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Check if There is a Valid Partition For The Array example:**
 
 ```
 nums = [4, 4, 4, 5, 6]
@@ -39,6 +46,19 @@ dp[5]: check pair   nums[3..4] = [5,6] → not equal ✗
        dp[5] |= dp[2] && true → true  ← ANSWER
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                      | Difficulty | Connection                               |
+| ---- | -------------------------- | ---------- | ---------------------------------------- |
+| 91   | Decode Ways                | 🟡 Medium  | Boolean DP looking back 1 or 2 positions |
+| 132  | Palindrome Partitioning II | 🔴 Hard    | Partition into valid segments DP         |
+| 1105 | Filling Bookcase Shelves   | 🟡 Medium  | Partition rows with constraint           |
+| 279  | Perfect Squares            | 🟡 Medium  | Partition into valid subsets             |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** `dp[i]` = can we partition `nums[0..i-1]`; `dp[0] = true` (empty) | **VI:** `dp[0] = true` là trường hợp cơ sở: mảng rỗng luôn hợp lệ
@@ -47,6 +67,8 @@ dp[5]: check pair   nums[3..4] = [5,6] → not equal ✗
 - 🔑 **EN:** Consecutive means `a+1==b && b+1==c` — strictly increasing by 1 | **VI:** Liên tiếp nghĩa là tăng đúng 1 đơn vị mỗi bước
 - 🔑 **EN:** Early termination: if `dp[n]` becomes true, can return immediately | **VI:** Dừng sớm khi `dp[n]` đã `true`
 - 🔑 **EN:** Space-optimise: only 3 previous boolean values needed | **VI:** Chỉ cần 3 giá trị boolean trước đó — tối ưu O(1) space
+
+---
 
 ## Solutions
 
@@ -117,6 +139,8 @@ console.log(validPartition([1, 1, 2, 2, 3, 3])); // true  ([1,1],[2,2],[3,3])
 console.log(validPartitionArray([4, 4, 4, 5, 6])); // true
 console.log(validPartitionArray([1, 1, 1, 2])); // false
 ```
+
+---
 
 ## 🔗 Related Problems
 

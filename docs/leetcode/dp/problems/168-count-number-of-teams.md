@@ -9,16 +9,21 @@ leetcode_url: "https://leetcode.com/problems/count-number-of-teams"
 
 # Count Number of Teams / Đếm Số Đội Hình
 
-🟡 Medium | For each middle soldier, count smaller-left × larger-right
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Với mỗi lính ở vị trí giữa j, đếm số lính bên trái có rating nhỏ hơn (leftSmall)
+**Analogy:** **VI:** Với mỗi lính ở vị trí giữa j, đếm số lính bên trái có rating nhỏ hơn (leftSmall)
 và bên phải có rating lớn hơn (rightLarge). Đóng góp = leftSmall × rightLarge + leftLarge × rightSmall.
 
 **EN:** Fix the middle element j. Count elements to the left smaller than `rating[j]`
 (leftSmall) and elements to the right larger than `rating[j]` (rightLarge).
 Teams in order: `leftSmall × rightLarge + leftLarge × rightSmall`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Number of Teams example:**
 
 ```
 rating = [2, 5, 3, 4, 1]
@@ -27,6 +32,19 @@ j=2 (r=3): leftSmall=1, leftLarge=1, rightSmall=1(r=1), rightLarge=1(r=4)
            → 1*1 + 1*1 = 2 teams from j=2
 Total = 3
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                                        | Difficulty | Key Idea            |
+| -------------------------------------------------------------------------------------------------------------- | ---------- | ------------------- |
+| [315. Count of Smaller Numbers After Self](https://leetcode.com/problems/count-of-smaller-numbers-after-self/) | 🔴 Hard    | BIT/merge sort      |
+| [493. Reverse Pairs](https://leetcode.com/problems/reverse-pairs/)                                             | 🔴 Hard    | Merge sort counting |
+| [1395. Count Number of Teams](https://leetcode.com/problems/count-number-of-teams/)                            | 🟡 Medium  | This problem        |
+| [300. Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/)           | 🟡 Medium  | LIS DP              |
+
+---
 
 ## 📝 Interview Tips
 
@@ -43,9 +61,9 @@ Total = 3
 - 🔑 **EN:** No duplicate ratings, so all comparisons are strict.
   **VI:** Không có rating trùng, mọi so sánh là nghiêm ngặt.
 
-## Solutions
+---
 
-### Solution 1: O(n^2) — Fix Middle Element
+## Solutions
 
 ```typescript
 /**
@@ -81,11 +99,7 @@ function numTeams(rating: number[]): number {
 console.log(numTeams([2, 5, 3, 4, 1])); // 3
 console.log(numTeams([2, 1, 3])); // 0
 console.log(numTeams([1, 2, 3, 4])); // 4
-```
 
-### Solution 2: O(n log n) — Fenwick Tree
-
-```typescript
 /**
  * Two-pass Fenwick tree:
  * Pass 1 (left to right): leftSmall[j] = count of ratings < rating[j] inserted so far
@@ -145,6 +159,8 @@ console.log(numTeams2([2, 5, 3, 4, 1])); // 3
 console.log(numTeams2([2, 1, 3])); // 0
 console.log(numTeams2([1, 2, 3, 4])); // 4
 ```
+
+---
 
 ## 🔗 Related Problems
 

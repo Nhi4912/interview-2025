@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/defanging-an-ip-address"
 
 # Defanging an IP Address / Vô Hiệu Hóa Địa Chỉ IP
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Cho địa chỉ IP hợp lệ, trả về phiên bản "defanged" bằng cách thay thế mỗi dấu `"."` bằng `"[.]"`. Kỹ thuật này thường dùng trong bảo mật để ngăn chặn URL tự động kích hoạt.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Cho địa chỉ IP hợp lệ, trả về phiên bản "defanged" bằng cách thay thế mỗi dấu `"."` bằng `"[.]"`. Kỹ thuật này thường dùng trong bảo mật để ngăn chặn URL tự động kích hoạt.
 
 **Ví dụ:** `"1.1.1.1"` → `"1[.]1[.]1[.]1"`.
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như che số điện thoại trong văn bản: thay `"."` bằng `"[.]"` để địa chỉ IP không còn có thể click-to-navigate, ngăn bot tự động truy cập vào link độc hại.
-
-## Minh họa ASCII
+**Visual — Defanging an IP Address example:**
 
 ```
 Input:  "255.100.50.0"
@@ -40,14 +41,18 @@ Step by step:
 '0'         → keep
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - Cho chuỗi `address` là địa chỉ IPv4 hợp lệ.
 - Trả về chuỗi với mỗi `"."` được thay bằng `"[.]"`.
 
 **Constraints:** `address` là IPv4 hợp lệ.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **replaceAll** — `address.replaceAll('.', '[.]')` là cách đơn giản nhất.
 2. **replace với regex** — `address.replace(/\./g, '[.]')` (cần escape dấu `.`).
@@ -56,9 +61,9 @@ Step by step:
 5. **Không dùng loop** — built-in string methods là tốt nhất cho bài này.
 6. **Hiểu ứng dụng** — "defanging" là kỹ thuật bảo mật thực tế (threat intelligence reports).
 
-## Giải pháp
+---
 
-### Giải pháp 1: replaceAll (Hiện đại, ES2021+)
+## Solutions
 
 ```typescript
 function defangIPaddr(address: string): string {
@@ -70,11 +75,7 @@ console.log(defangIPaddr("1.1.1.1")); // "1[.]1[.]1[.]1"
 console.log(defangIPaddr("255.100.50.0")); // "255[.]100[.]50[.]0"
 console.log(defangIPaddr("192.168.1.1")); // "192[.]168[.]1[.]1"
 console.log(defangIPaddr("0.0.0.0")); // "0[.]0[.]0[.]0"
-```
 
-### Giải pháp 2: split + join (Phổ biến nhất)
-
-```typescript
 function defangIPaddrSplit(address: string): string {
   return address.split(".").join("[.]");
 }
@@ -82,11 +83,7 @@ function defangIPaddrSplit(address: string): string {
 console.log(defangIPaddrSplit("1.1.1.1")); // "1[.]1[.]1[.]1"
 console.log(defangIPaddrSplit("255.100.50.0")); // "255[.]100[.]50[.]0"
 console.log(defangIPaddrSplit("192.168.1.1")); // "192[.]168[.]1[.]1"
-```
 
-### Giải pháp 3: Regex replace
-
-```typescript
 function defangIPaddrRegex(address: string): string {
   // Escape '.' in regex with backslash
   return address.replace(/\./g, "[.]");
@@ -94,11 +91,7 @@ function defangIPaddrRegex(address: string): string {
 
 console.log(defangIPaddrRegex("1.1.1.1")); // "1[.]1[.]1[.]1"
 console.log(defangIPaddrRegex("255.100.50.0")); // "255[.]100[.]50[.]0"
-```
 
-### Giải pháp 4: Manual loop (Để hiểu cơ chế)
-
-```typescript
 function defangIPaddrManual(address: string): string {
   const result: string[] = [];
 
@@ -127,7 +120,9 @@ console.log(defanged); // "192[.]168[.]1[.]1"
 console.log(refangIPaddr(defanged) === ip); // true
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp     | Thời gian | Không gian | Ghi chú                     |
 | ------------- | --------- | ---------- | --------------------------- |
@@ -135,11 +130,3 @@ console.log(refangIPaddr(defanged) === ip); // true
 | split + join  | O(n)      | O(n)       | Phổ biến, tất cả môi trường |
 | Regex replace | O(n)      | O(n)       | Cần escape                  |
 | Manual loop   | O(n)      | O(n)       | Trực quan nhất              |
-
-## Bài liên quan
-
-| #    | Tên                                | Độ khó | Tags   |
-| ---- | ---------------------------------- | ------ | ------ |
-| 1221 | Split a String in Balanced Strings | Easy   | String |
-| 1108 | Defanging an IP Address            | Easy   | String |
-| 2288 | Apply Discount to Prices           | Medium | String |

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-binary-string-after-change"
 
 # Maximum Binary String After Change / Chuỗi Nhị Phân Lớn Nhất Sau Khi Đổi
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống sắp xếp chỗ ngồi — mọi số `0` đều có thể dồn thành một khối liên tiếp. Nếu có `k` số 0 (bỏ qua tiền tố toàn `1`), kết quả luôn là: tất cả là `1` trừ đúng một vị trí là `0`.
+**Analogy:** > **Phép so sánh:** Giống sắp xếp chỗ ngồi — mọi số `0` đều có thể dồn thành một khối liên tiếp. Nếu có `k` số 0 (bỏ qua tiền tố toàn `1`), kết quả luôn là: tất cả là `1` trừ đúng một vị trí là `0`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Binary String After Change example:**
 
 ```
 Input:  "000110"
@@ -23,6 +28,8 @@ Result: "111011"  (n-1 ones, one '0' at position zeros_count-1)
 Rule: "00" → "10", "10" → "01"
 Key: all zeros can be bubbled right past ones → one lone 0 remains
 ```
+
+---
 
 ## Problem Description
 
@@ -38,6 +45,8 @@ Return the **maximum** binary string you can get (lexicographically largest).
 
 **Constraints:** `1 <= binary.length <= 10^5`, binary[i] ∈ `{'0','1'}`
 
+---
+
 ## 📝 Interview Tips
 
 - **Key insight:** All `1`s before the first `0` stay in place — leading ones are already maximal
@@ -47,9 +56,9 @@ Return the **maximum** binary string you can get (lexicographically largest).
 - **Complexity:** O(n) time, O(n) space (result array)
 - **Interview insight:** Nhận ra "invariant của greedy" — chứng minh vị trí `0` cuối cùng không ảnh hưởng đến kết quả
 
-## Solutions
+---
 
-### Solution 1: Greedy Count — O(n) time, O(n) space
+## Solutions
 
 ```typescript
 function maximumBinaryString(binary: string): string {
@@ -72,11 +81,7 @@ function maximumBinaryString(binary: string): string {
   result[firstZero + zerosCount - 1] = "0";
   return result.join("");
 }
-```
 
-### Solution 2: Simulation with index tracking — O(n) time, O(n) space
-
-```typescript
 function maximumBinaryString(binary: string): string {
   const n = binary.length;
   const arr = binary.split("");
@@ -101,6 +106,8 @@ function maximumBinaryString(binary: string): string {
   return arr.join("");
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

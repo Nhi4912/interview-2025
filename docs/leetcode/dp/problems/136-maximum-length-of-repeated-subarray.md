@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-length-of-repeated-subarray
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: 2D DP / Common Subarray
 
-## 🧠 Intuition
+---
 
-**VI:** Hãy tưởng tượng hai con đường song song. Bạn duyệt từng cặp bước `(i, j)`. Nếu bước `i` của đường 1 khớp bước `j` của đường 2, đoạn đường chung kéo dài thêm 1. Nếu không khớp, đoạn chung bị đứt → reset 0.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Hãy tưởng tượng hai con đường song song. Bạn duyệt từng cặp bước `(i, j)`. Nếu bước `i` của đường 1 khớp bước `j` của đường 2, đoạn đường chung kéo dài thêm 1. Nếu không khớp, đoạn chung bị đứt → reset 0.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Length of Repeated Subarray example:**
 
 ```
 nums1 = [1, 2, 3, 2, 1]
@@ -30,6 +37,19 @@ dp[i][j] = length of longest common subarray ending at nums1[i-1], nums2[j-1]
  1    0   0   0   3   0   0   ← ans = 3  ([3,2,1])
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                         | Difficulty | Connection                                |
+| ---- | ----------------------------- | ---------- | ----------------------------------------- |
+| 1143 | Longest Common Subsequence    | 🟡 Medium  | LCS allows gaps; this requires contiguous |
+| 1044 | Longest Duplicate Substring   | 🔴 Hard    | Same idea but within one string           |
+| 5    | Longest Palindromic Substring | 🟡 Medium  | "Longest contiguous" DP pattern           |
+| 187  | Repeated DNA Sequences        | 🟡 Medium  | Rolling hash on fixed-length windows      |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** `dp[i][j]` = common subarray length ending at `nums1[i-1]` & `nums2[j-1]`; only increment when equal | **VI:** Chỉ cộng 1 khi hai phần tử bằng nhau, không thì để 0 (bắt buộc liên tục)
@@ -38,6 +58,8 @@ dp[i][j] = length of longest common subarray ending at nums1[i-1], nums2[j-1]
 - 🔑 **EN:** This is NOT LCS — subarrays must be contiguous, LCS allows gaps | **VI:** Khác LCS: phải liên tục, không bỏ phần tử giữa
 - 🔑 **EN:** Binary search + rolling hash gets O((m+n) log(min(m,n))) — mention as follow-up | **VI:** Hỏi thêm: binary search + hash nếu yêu cầu tốt hơn O(mn)
 - 🔑 **EN:** Time O(m·n), Space O(min(m,n)) with 1D rolling | **VI:** Dùng mảng 1D tiết kiệm bộ nhớ xuống O(n)
+
+---
 
 ## Solutions
 
@@ -131,6 +153,8 @@ console.log(findLength([1, 2, 3], [4, 5, 6])); // 0
 console.log(findLength2D([1, 2, 3, 2, 1], [3, 2, 1, 4, 7])); // 3
 console.log(findLengthBinarySearch([1, 2, 3, 2, 1], [3, 2, 1, 4, 7])); // 3
 ```
+
+---
 
 ## 🔗 Related Problems
 

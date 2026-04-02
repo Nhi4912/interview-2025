@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-vertices-to-reach
 
 # Minimum Number of Vertices to Reach All Nodes / Số đỉnh tối thiểu để đến tất cả các nút
 
-🟡 Medium | Graph | In-degree
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Giống một nhà máy với nhiều phòng — nếu phòng nào có cửa từ phòng khác dẫn vào, bạn không cần xuất phát từ đó. Chỉ xuất phát từ những phòng **không ai dẫn đến** (in-degree = 0).
+**Analogy:** **Vietnamese:** Giống một nhà máy với nhiều phòng — nếu phòng nào có cửa từ phòng khác dẫn vào, bạn không cần xuất phát từ đó. Chỉ xuất phát từ những phòng **không ai dẫn đến** (in-degree = 0).
 
 **English:** In a DAG, any node with an incoming edge is reachable from another. Only nodes with **in-degree 0** must be explicit starting points — they can never be reached otherwise.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Vertices to Reach All Nodes example:**
 
 ```
 Graph: 0 → 1 → 3
@@ -26,6 +29,18 @@ Graph: 0 → 1 → 3
 
 Answer: [0]  ← only node 0 has no parent
 ```
+
+---
+
+---
+
+## Problem Description
+
+| #   | Problem              | Difficulty | Pattern                      |
+| --- | -------------------- | ---------- | ---------------------------- |
+| 207 | Course Schedule      | Medium     | Topological Sort             |
+| 210 | Course Schedule II   | Medium     | Topological Sort / In-degree |
+| 310 | Minimum Height Trees | Medium     | Topological Trim             |
 
 ---
 
@@ -40,9 +55,9 @@ Answer: [0]  ← only node 0 has no parent
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Set of Destinations (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +98,7 @@ console.log(
   ]),
 ); // [0,2,3]
 console.log(findSmallestSetOfVertices(3, [])); // [0,1,2]
-```
 
-### Solution 2 — In-degree Array
-
-```typescript
 /**
  * Explicitly count in-degree per node; collect all nodes with degree 0.
  *

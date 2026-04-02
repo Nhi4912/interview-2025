@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/validate-stack-sequences"
 
 # Validate Stack Sequences / Kiểm Tra Chuỗi Thao Tác Stack
 
-**Difficulty:** Medium | **Category:** Array, Stack, Simulation | **LeetCode:** [946](https://leetcode.com/problems/validate-stack-sequences)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Phép so sánh tiếng Việt:** Hãy tưởng tượng bạn đang xếp đĩa vào giá (push) và lấy đĩa ra (pop). Ai đó ghi lại thứ tự push và thứ tự pop — câu hỏi là: liệu hai danh sách đó có "khớp" với nhau không, tức là có thể thực hiện được trên một stack thực sự không?
+**Analogy:** **Phép so sánh tiếng Việt:** Hãy tưởng tượng bạn đang xếp đĩa vào giá (push) và lấy đĩa ra (pop). Ai đó ghi lại thứ tự push và thứ tự pop — câu hỏi là: liệu hai danh sách đó có "khớp" với nhau không, tức là có thể thực hiện được trên một stack thực sự không?
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Validate Stack Sequences example:**
 
 ```
 pushed = [1, 2, 3, 4, 5], popped = [4, 5, 3, 2, 1]
@@ -31,7 +36,13 @@ push 5 → [1,2,3,5]  → top=5=popped[1] → pop → [1,2,3], j=2
 j == n ✓ → VALID
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Simulate — không cần suy nghĩ phức tạp**: Cứ push theo `pushed`, sau mỗi lần push kiểm tra top có bằng `popped[j]` không → nếu có thì pop liên tục.
 2. **Con trỏ j cho popped**: Dùng một con trỏ `j` chỉ vào phần tử tiếp theo cần được pop khỏi `popped`. Khi pop thành công, tăng `j`.
@@ -40,7 +51,9 @@ j == n ✓ → VALID
 5. **In-place variant**: Dùng chính `pushed` array làm stack (dùng con trỏ top) để tiết kiệm space.
 6. **Edge cases**: pushed và popped có cùng độ dài, cùng tập phần tử (permutation của nhau). Nếu không → không valid.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -72,9 +85,7 @@ console.log(validateStackSequences([1, 2, 3, 4, 5], [4, 5, 3, 2, 1])); // true
 console.log(validateStackSequences([1, 2, 3, 4, 5], [4, 3, 5, 1, 2])); // false
 console.log(validateStackSequences([1], [1])); // true
 console.log(validateStackSequences([2, 1, 0], [1, 2, 0])); // true
-```
 
-```typescript
 /**
  * Approach 2: In-place — dùng pushed array làm stack
  * Time: O(n)  Space: O(1) extra
@@ -102,9 +113,7 @@ function validateStackSequencesInPlace(pushed: number[], popped: number[]): bool
 console.log(validateStackSequencesInPlace([1, 2, 3, 4, 5], [4, 5, 3, 2, 1])); // true
 console.log(validateStackSequencesInPlace([1, 2, 3, 4, 5], [4, 3, 5, 1, 2])); // false
 console.log(validateStackSequencesInPlace([0, 1, 2], [2, 1, 0])); // true
-```
 
-```typescript
 /**
  * Approach 3: Functional — kiểm tra bằng reduce
  * Time: O(n)  Space: O(n)
@@ -135,7 +144,9 @@ console.log(validateStackSequencesFunctional([1, 2, 3, 4, 5], [4, 3, 5, 1, 2]));
 console.log(validateStackSequencesFunctional([1, 0], [1, 0])); // true
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                            | Difficulty | Pattern          |
 | ------------------------------------------------------------------------------------------------------------------ | ---------- | ---------------- |

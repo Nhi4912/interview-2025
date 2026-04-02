@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/truncate-sentence"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Câu là dãy từ ngăn cách bằng dấu cách. Chỉ giữ `k` từ đầu tiên — như cắt một đoạn thịt đúng `k` lát từ đầu.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Câu là dãy từ ngăn cách bằng dấu cách. Chỉ giữ `k` từ đầu tiên — như cắt một đoạn thịt đúng `k` lát từ đầu.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Truncate Sentence example:**
 
 ```
 s = "Hello how are you Contestant"  k = 4
@@ -30,7 +37,20 @@ s = "Hello how are you Contestant"
 count spaces: 1, 2, 3 → at space 3 (index 13), k=4 words end at next space (index 17)
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                             | Difficulty | Pattern |
+| ---- | ----------------------------------- | ---------- | ------- |
+| 151  | Reverse Words in a String           | 🟡 Medium  | String  |
+| 557  | Reverse Words in a String III       | 🟢 Easy    | String  |
+| 2710 | Remove Trailing Zeros From a String | 🟢 Easy    | String  |
+| 58   | Length of Last Word                 | 🟢 Easy    | String  |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: `split(" ")` + `slice(0,k)` + `join(" ")` — most readable one-liner
   **VI**: `split(" ")` + `slice(0,k)` + `join(" ")` — cách đọc hiểu nhất
@@ -101,7 +121,14 @@ console.log(truncateSentence3("chopper is not a tanuki", 5)); // "chopper is not
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                             | Difficulty | Pattern |
 | ---- | ----------------------------------- | ---------- | ------- |

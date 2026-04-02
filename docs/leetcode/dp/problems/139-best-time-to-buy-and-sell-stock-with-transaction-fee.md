@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-wit
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: State-Machine DP (hold / cash)
 
-## 🧠 Intuition
+---
 
-**VI:** Mỗi ngày bạn chỉ ở một trong hai trạng thái: đang giữ cổ phiếu (`hold`) hoặc không giữ (`cash`). Chuyển trạng thái = mua hoặc bán (khi bán trả phí `fee`). Mỗi ngày chọn tốt nhất giữa giữ nguyên hoặc chuyển.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Mỗi ngày bạn chỉ ở một trong hai trạng thái: đang giữ cổ phiếu (`hold`) hoặc không giữ (`cash`). Chuyển trạng thái = mua hoặc bán (khi bán trả phí `fee`). Mỗi ngày chọn tốt nhất giữa giữ nguyên hoặc chuyển.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Best Time to Buy and Sell Stock with Transaction Fee example:**
 
 ```
 prices = [1, 3, 2, 8, 4, 9], fee = 2
@@ -31,6 +38,19 @@ Day 5  (price=9): cash=max(5, 1+9-2)=8, hold=max(1, 5-9)=1
 Answer: cash = 8
 ```
 
+---
+
+## Problem Description
+
+| #   | Title                                         | Difficulty | Connection                             |
+| --- | --------------------------------------------- | ---------- | -------------------------------------- |
+| 121 | Best Time to Buy and Sell Stock               | 🟢 Easy    | Single transaction — simpler base case |
+| 122 | Best Time to Buy and Sell Stock II            | 🟡 Medium  | Unlimited transactions, no fee         |
+| 309 | Best Time to Buy and Sell Stock with Cooldown | 🟡 Medium  | 3-state machine (hold/sold/rest)       |
+| 188 | Best Time to Buy and Sell Stock IV            | 🔴 Hard    | At most k transactions                 |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Two states: `cash` (no stock) and `hold` (has stock); transitions happen each day | **VI:** 2 trạng thái rõ ràng: `cash` và `hold`, chuyển qua lại mỗi ngày
@@ -39,6 +59,8 @@ Answer: cash = 8
 - 🔑 **EN:** Space O(1): only keep previous `cash` and `hold` values | **VI:** Chỉ cần 2 biến — không cần mảng
 - 🔑 **EN:** Greedy insight: always buy if tomorrow's profit (after fee) beats holding | **VI:** Tương đương greedy: mua khi lợi nhuận ngày mai vượt chi phí phí
 - 🔑 **EN:** Unlimited transactions allowed — key difference from "at most k transactions" | **VI:** Không giới hạn số lần giao dịch — khác bài "at most k transactions"
+
+---
 
 ## Solutions
 
@@ -95,6 +117,8 @@ console.log(maxProfit([1, 3, 7, 5, 10, 3], 3)); // 6
 console.log(maxProfitGreedy([1, 3, 2, 8, 4, 9], 2)); // 8
 console.log(maxProfitDP([1, 3, 2, 8, 4, 9], 2)); // 8
 ```
+
+---
 
 ## 🔗 Related Problems
 

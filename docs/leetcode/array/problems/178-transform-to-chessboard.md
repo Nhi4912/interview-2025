@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/transform-to-chessboard"
 
 # Transform to Chessboard / Biến Đổi Thành Bàn Cờ
 
-🔴 Hard | Tags: Array, Math, Bit Manipulation, Matrix
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Bàn cờ hợp lệ chỉ có 2 loại hàng (đảo của nhau). Kiểm tra tính hợp lệ bằng XOR. Đếm số vị trí sai so với mẫu `i%2` để tính số lần hoán đổi cần thiết cho hàng và cột.
+**Analogy:** **VN:** Bàn cờ hợp lệ chỉ có 2 loại hàng (đảo của nhau). Kiểm tra tính hợp lệ bằng XOR. Đếm số vị trí sai so với mẫu `i%2` để tính số lần hoán đổi cần thiết cho hàng và cột.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Transform to Chessboard example:**
 
 ```
 Chessboard pattern A:  1 0 1 0     Pattern B:  0 1 0 1
@@ -24,6 +27,18 @@ Chessboard pattern A:  1 0 1 0     Pattern B:  0 1 0 1
 Key validity check: board[i][j] XOR board[0][0]
                   = board[i][0] XOR board[0][j]
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                                       | Difficulty | Pattern           |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------- |
+| [Valid Sudoku](https://leetcode.com/problems/valid-sudoku/)                                                                                   | 🟡 Medium  | Matrix Validation |
+| [Minimum Number of Operations to Make Array Continuous](https://leetcode.com/problems/minimum-number-of-operations-to-make-array-continuous/) | 🔴 Hard    | Sorting           |
+| [Flip Columns For Maximum Number of Equal Rows](https://leetcode.com/problems/flip-columns-for-maximum-number-of-equal-rows/)                 | 🟡 Medium  | Hashing           |
 
 ---
 
@@ -38,9 +53,9 @@ Key validity check: board[i][j] XOR board[0][0]
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: XOR Validity + Mismatch Counting
+## Solutions
 
 ```typescript
 /**
@@ -111,11 +126,7 @@ console.log(
     [1, 0],
   ]),
 ); // -1
-```
 
-### Solution 2: Bit Mask Representation
-
-```typescript
 /**
  * Represent rows as bitmasks for compact comparison; same logic.
  * Time: O(n²) | Space: O(n)

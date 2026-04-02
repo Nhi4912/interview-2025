@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-to-break-locks-ii"
 
 # Minimum Time to Break Locks II / Thời Gian Tối Thiểu Để Phá Khóa II
 
-## Analogy / Tương Tự
+---
 
-> Giống bài I nhưng giờ có **nhiều người phá khóa** (hoặc n quá lớn để bitmask). Cần **Hungarian Algorithm** (min-cost bipartite matching) để tối ưu phân công: gán mỗi ổ khóa cho một vị trí trong thứ tự phá, sao cho tổng thời gian nhỏ nhất.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Giống bài I nhưng giờ có **nhiều người phá khóa** (hoặc n quá lớn để bitmask). Cần **Hungarian Algorithm** (min-cost bipartite matching) để tối ưu phân công: gán mỗi ổ khóa cho một vị trí trong thứ tự phá, sao cho tổng thời gian nhỏ nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Time to Break Locks II example:**
 
 ```
 strength = [1, 2, 3], k = 1
@@ -27,11 +32,15 @@ Min-cost matching:
   Order 2→0→1: 3+0+0=3
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Same as Locks I but `n` can be large (up to 50). You cannot use bitmask DP. Use **minimum cost bipartite matching** (Hungarian algorithm): assign lock `j` to position `i` (i.e., break it as the i-th lock). The cost matrix: `cost[i][j]` = time to break lock `j` at position `i` given strength `i * k`.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Hungarian algorithm** — O(n³) min-cost perfect matching
 2. **Cost matrix** — `cost[i][j] = max(0, ceil((strength[j] - i*k) / k))` for breaking lock j at position i
@@ -40,9 +49,9 @@ Same as Locks I but `n` can be large (up to 50). You cannot use bitmask DP. Use 
 5. **Alternative: KM algorithm** — Kuhn-Munkres O(n³)
 6. **When to use** — n > 20 (bitmask infeasible), need polynomial time
 
-## Solutions
+---
 
-### Solution 1: Hungarian Algorithm (Min-Cost Perfect Matching)
+## Solutions
 
 ```typescript
 function findMinimumTimeII(strength: number[], k: number): number {
@@ -121,11 +130,7 @@ function findMinimumTimeII(strength: number[], k: number): number {
 
 console.log(findMinimumTimeII([3, 4, 1, 2, 6], 1)); // 4 (same as Locks I on small input)
 console.log(findMinimumTimeII([1, 2, 3], 1)); // 3
-```
 
-### Solution 2: Bellman-Ford Min-Cost Flow (Alternative)
-
-```typescript
 function findMinimumTimeFlow(strength: number[], k: number): number {
   const n = strength.length;
 
@@ -163,11 +168,7 @@ function findMinimumTimeFlow(strength: number[], k: number): number {
 
 console.log(findMinimumTimeFlow([3, 4, 1, 2, 6], 1)); // 4
 console.log(findMinimumTimeFlow([1, 2, 3], 2)); // 3
-```
 
-### Solution 3: Greedy Lower-Bound Check
-
-```typescript
 function findMinimumTimeGreedy(strength: number[], k: number): number {
   // Greedy: break locks in increasing order of strength (minimize waiting)
   const sorted = [...strength].map((s, i) => ({ s, i })).sort((a, b) => a.s - b.s);
@@ -187,7 +188,9 @@ console.log(findMinimumTimeGreedy([3, 4, 1, 2, 6], 1)); // ≈ optimal
 console.log(findMinimumTimeGreedy([1, 2, 3], 1)); // 3
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                               | Difficulty | Tags                |
 | ---- | ------------------------------------- | ---------- | ------------------- |

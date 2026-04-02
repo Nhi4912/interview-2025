@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/number-of-ways-to-earn-points"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Kỳ thi có nhiều loại câu hỏi: loại 1 có 3 câu (1 điểm/câu), loại 2 có 2 câu (2 điểm/câu). Bạn muốn đạt đúng 4 điểm — hỏi có bao nhiêu cách chọn số câu mỗi loại? Đây là bài toán "bounded knapsack đếm số cách": với mỗi loại câu hỏi `(count, marks)`, bạn chọn từ 0 đến `count` câu để tổng điểm đạt đúng `target`. DP 1D với vòng lặp ngược giống Coin Change nhưng có giới hạn trên cho mỗi mệnh giá.
+**Analogy:** Kỳ thi có nhiều loại câu hỏi: loại 1 có 3 câu (1 điểm/câu), loại 2 có 2 câu (2 điểm/câu). Bạn muốn đạt đúng 4 điểm — hỏi có bao nhiêu cách chọn số câu mỗi loại? Đây là bài toán "bounded knapsack đếm số cách": với mỗi loại câu hỏi `(count, marks)`, bạn chọn từ 0 đến `count` câu để tổng điểm đạt đúng `target`. DP 1D với vòng lặp ngược giống Coin Change nhưng có giới hạn trên cho mỗi mệnh giá.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Ways to Earn Points example:**
 
 ```
 types = [[1,1],[2,2],[3,3]], target = 4
@@ -44,7 +47,9 @@ Process type (count=3, marks=3): for j=4..3, dp[j] += dp[j-3]..dp[j-9]
   dp[4] = 2 ✓ (answer)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 There are `n` types of questions in an exam. The `i`-th type has `types[i] = [count_i, marks_i]`: you can solve **0 to count_i** questions of this type, each worth `marks_i` points. Return the **number of ways** to earn exactly `target` points. Answer modulo `10^9 + 7`.
 
@@ -54,7 +59,9 @@ There are `n` types of questions in an exam. The `i`-th type has `types[i] = [co
 
 **Constraints:** `1 ≤ types.length ≤ 50`, `1 ≤ count_i, marks_i ≤ 50`, `1 ≤ target ≤ 1000`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Bounded knapsack** / Knapsack có giới hạn: Mỗi item dùng tối đa `count` lần — khác unbounded
 - **Prefix sum trick** / Trick prefix sum: Tối ưu O(n·target) thay vì O(n·target·count) với sliding window
@@ -63,7 +70,9 @@ There are `n` types of questions in an exam. The `i`-th type has `types[i] = [co
 - **Init dp[0]=1** / Khởi tạo: `dp[0] = 1` là trường hợp cơ sở (không chọn câu nào)
 - **Sliding window** / Cửa sổ trượt: Với bounded knapsack lớn, dùng deque để tối ưu thêm
 
-## Solution 1 - Bounded Knapsack O(n·T·C)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -87,11 +96,7 @@ function waysToReachTargetBrute(target: number, types: number[][]): number {
   }
   return Number(dp[target]);
 }
-```
 
-## Solution 2 - Bounded Knapsack with Prefix Sum (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(n·target) | Space: O(target)
  * Use prefix sum to compute bounded knapsack in O(target) per item
@@ -120,11 +125,8 @@ function waysToReachTarget(target: number, types: number[][]): number {
   }
   return dp[target];
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   waysToReachTarget(4, [
     [1, 1],
@@ -155,7 +157,9 @@ console.log(
 ); // → 2
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem          | Difficulty | Link                                                               |
 | ---------------- | ---------- | ------------------------------------------------------------------ |

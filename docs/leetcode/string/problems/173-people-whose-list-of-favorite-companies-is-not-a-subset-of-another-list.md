@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/people-whose-list-of-favorite-compa
 
 # People Whose List of Favorite Companies Is Not a Subset of Another List / Người Có Danh Sách Không Phải Tập Con
 
-**Difficulty:** 🟡 Medium | **Tags:** Array, Hash Table, String
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Bài toán giống như **kiểm tra thành viên CLB**: nếu CLB A có mọi thành viên của CLB B thì B không cần tồn tại riêng.
+**Analogy:** Bài toán giống như **kiểm tra thành viên CLB**: nếu CLB A có mọi thành viên của CLB B thì B không cần tồn tại riêng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — People Whose List of Favorite Companies Is Not a Subset of Another List example:**
 
 ```
 i=0: {leetcode, google, facebook}
@@ -36,7 +39,19 @@ Output: [0, 1, 4]
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                     | Difficulty | Pattern          |
+| ----------------------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Sentence Similarity II](https://leetcode.com/problems/sentence-similarity-ii/)                             | 🟡 Medium  | Set / Union-Find |
+| [Find Common Characters](https://leetcode.com/problems/find-common-characters/)                             | 🟢 Easy    | Set intersection |
+| [Check if Array Is Sorted and Rotated](https://leetcode.com/problems/check-if-array-is-sorted-and-rotated/) | 🟢 Easy    | Linear scan      |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Subset vs superset**: bạn cần loại i nếu _tồn tại_ j sao cho i ⊆ j, không phải j ⊆ i
 - 🇺🇸 **Direction**: exclude i if ANY j is a superset of i (not the other way around)
@@ -53,9 +68,9 @@ Output: [0, 1, 4]
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Set Subset Check (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -105,11 +120,7 @@ console.log(peopleIndexes(companies)); // [0, 1, 4]
 console.log(
   peopleIndexes([["leetcode"], ["google"], ["facebook"], ["leetcode", "google", "facebook"]]),
 ); // [3]
-```
 
-### Solution 2 — Every / Some Functional
-
-```typescript
 /**
  * Functional style using Array.every and Array.some.
  * Time: O(n² × k)  Space: O(n × k)
@@ -129,11 +140,7 @@ function peopleIndexes2(favoriteCompanies: string[][]): number[] {
 }
 
 console.log(peopleIndexes2(companies)); // [0, 1, 4]
-```
 
-### Solution 3 — Sorted String Fingerprint
-
-```typescript
 /**
  * Encode each list as a sorted string; use indexOf to check containment.
  * Works when company names are distinct tokens.

@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/longest-harmonious-subsequence"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map / Sorting
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Một dãy "hài hòa" có giá trị lớn nhất và nhỏ nhất hơn nhau đúng 1. Đếm tần số từng số, rồi với mỗi số `k`, kiểm tra xem `freq[k] + freq[k+1]` có tạo thành dãy hài hòa không. Lấy giá trị lớn nhất.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Một dãy "hài hòa" có giá trị lớn nhất và nhỏ nhất hơn nhau đúng 1. Đếm tần số từng số, rồi với mỗi số `k`, kiểm tra xem `freq[k] + freq[k+1]` có tạo thành dãy hài hòa không. Lấy giá trị lớn nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Longest Harmonious Subsequence example:**
 
 ```
 nums = [1, 3, 2, 2, 5, 2, 3, 7]
@@ -28,7 +35,20 @@ Check each key:
 Answer: 5 ✅
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                        | Pattern      |
+| --- | ------------------------------ | ------------ |
+| 594 | Longest Harmonious Subsequence | This problem |
+| 128 | Longest Consecutive Sequence   | Hash Set     |
+| 1   | Two Sum                        | Hash Map     |
+| 532 | K-diff Pairs in an Array       | Hash Map     |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Harmonic = diff 1** / Dãy hài hòa: max - min = 1 chính xác (không phải ≤ 1)
 - 🔑 **Subsequence** / Không cần liên tục — chỉ cần đếm tần số
@@ -36,6 +56,8 @@ Answer: 5 ✅
 - 🔑 **Only check k and k+1** / Không cần kiểm tra k-1 vì đã kiểm tra khi duyệt (k-1)
 - 🔑 **Skip if no neighbor** / Chỉ tính khi cả freq[k] và freq[k+1] đều tồn tại
 - 🔑 **Sorting approach** / Sắp xếp rồi sliding window cũng hoạt động — O(n log n)
+
+---
 
 ## Solutions
 
@@ -96,7 +118,9 @@ console.log(findLHSV2([0, 0])); // 0
 console.log(findLHSV2([-3, -2, -2, -1, 1, 2])); // 3
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #   | Problem                        | Pattern      |
 | --- | ------------------------------ | ------------ |

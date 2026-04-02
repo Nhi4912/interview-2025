@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/first-completely-painted-row-or-col
 
 # First Completely Painted Row or Column / Hàng Hoặc Cột Được Tô Đầy Tiên
 
-🟡 Medium | Tags: Array, Hash Table, Matrix
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Lưu trước vị trí (hàng, cột) của từng số trong ma trận. Khi tô số theo thứ tự `arr`, tăng bộ đếm cho hàng và cột tương ứng. Hàng/cột nào bộ đếm đạt đủ `n` hoặc `m` là xong.
+**Analogy:** **VN:** Lưu trước vị trí (hàng, cột) của từng số trong ma trận. Khi tô số theo thứ tự `arr`, tăng bộ đếm cho hàng và cột tương ứng. Hàng/cột nào bộ đếm đạt đủ `n` hoặc `m` là xong.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — First Completely Painted Row or Column example:**
 
 ```
 mat = [[2,3],[1,4]], arr = [2,1,3,4]
@@ -24,6 +27,18 @@ pos: 1→(1,0), 2→(0,0), 3→(0,1), 4→(1,1)
 k=0: paint 2 → row[0]=1, col[0]=1
 k=1: paint 1 → row[1]=1, col[0]=2 == m=2 → return 1
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                                 | Difficulty | Pattern     |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- |
+| [Painting a Grid With Three Different Colors](https://leetcode.com/problems/painting-a-grid-with-three-different-colors/)               | 🔴 Hard    | DP / Matrix |
+| [Check if Every Row and Column Contains All Numbers](https://leetcode.com/problems/check-if-every-row-and-column-contains-all-numbers/) | 🟢 Easy    | Matrix      |
+| [Score After Flipping Matrix](https://leetcode.com/problems/score-after-flipping-matrix/)                                               | 🟡 Medium  | Greedy      |
 
 ---
 
@@ -38,9 +53,9 @@ k=1: paint 1 → row[1]=1, col[0]=2 == m=2 → return 1
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Position Map + Row/Column Counters
+## Solutions
 
 ```typescript
 /**
@@ -87,11 +102,7 @@ console.log(
     ],
   ),
 ); // 3
-```
 
-### Solution 2: Flat Index Approach (no extra Map)
-
-```typescript
 /**
  * Encode position as flat index row*n+col stored in array indexed by value.
  * Time: O(m*n) | Space: O(m*n)

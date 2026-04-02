@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/all-possible-full-binary-trees"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn đang xây các tòa nhà đối xứng từ những viên gạch. Một "cây nhị phân đầy" giống như một tòa nhà mà mỗi tầng hoặc có đúng 2 cột con hoặc không có cột nào (lá). Cho trước n viên gạch, bạn phân chia: 1 viên cho mái (root), còn lại chia đôi cho cánh trái và phải. Vì phân đôi chỉ khả thi khi n lẻ, ta chỉ cần thử các cách chia (1,n-2), (3,n-4), ... — memoize để tránh tính lại.
+**Analogy:** Hãy tưởng tượng bạn đang xây các tòa nhà đối xứng từ những viên gạch. Một "cây nhị phân đầy" giống như một tòa nhà mà mỗi tầng hoặc có đúng 2 cột con hoặc không có cột nào (lá). Cho trước n viên gạch, bạn phân chia: 1 viên cho mái (root), còn lại chia đôi cho cánh trái và phải. Vì phân đôi chỉ khả thi khi n lẻ, ta chỉ cần thử các cách chia (1,n-2), (3,n-4), ... — memoize để tránh tính lại.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — All Possible Full Binary Trees example:**
 
 ```
 n=7: need 7 nodes, all full binary trees
@@ -45,7 +48,9 @@ n=7: |FBT(1)|*|FBT(5)| + |FBT(3)|*|FBT(3)| + |FBT(5)|*|FBT(1)|
    =  1*2  +  1*1  +  2*1  = 5 trees total
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an integer `n`, return a list of all possible **full binary trees** with exactly `n` nodes. A full binary tree is a binary tree where every node has either 0 or 2 children. Each node value should be `0`. Return the list in any order.
 
@@ -55,7 +60,9 @@ Given an integer `n`, return a list of all possible **full binary trees** with e
 
 **Constraints:** `1 ≤ n ≤ 20`, if n is even → return `[]` (impossible)
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Only odd n is valid** / Chỉ n lẻ mới hợp lệ: Full binary tree luôn có số node lẻ — nếu n chẵn return `[]` ngay
 - **Divide and conquer** / Chia để trị: Root chiếm 1 node, chia i node bên trái và (n-1-i) bên phải với i lẻ từ 1 đến n-2
@@ -64,7 +71,9 @@ Given an integer `n`, return a list of all possible **full binary trees** with e
 - **Catalan number growth** / Tăng trưởng Catalan: Số cây tăng nhanh theo số Catalan — với n=19 có 1430 cây
 - **Base case n=1** / Base case n=1: Trả về `[new TreeNode(0)]` — chỉ 1 lá duy nhất
 
-## Solution 1 - Recursive without Memoization
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -96,11 +105,7 @@ function allPossibleFBT(n: number): TreeNode[] {
   }
   return result;
 }
-```
 
-## Solution 2 - Memoized Recursion (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(2^n) output bounded | Space: O(2^n) memo + output
  * Memoize results per n; avoid recomputing same subtree structures
@@ -129,11 +134,8 @@ function allPossibleFBTMemo(n: number): TreeNode[] {
 
   return dp(n);
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(allPossibleFBTMemo(1).length); // → 1
 console.log(allPossibleFBTMemo(3).length); // → 1
 console.log(allPossibleFBTMemo(5).length); // → 2
@@ -148,7 +150,9 @@ function countNodes(root: TreeNode | null): number {
 console.log(allPossibleFBTMemo(7).every((t) => countNodes(t) === 7)); // → true
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                           | Difficulty | Link                                                                      |
 | --------------------------------- | ---------- | ------------------------------------------------------------------------- |

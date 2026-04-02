@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/fair-candy-swap"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Set / Math
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Alice và Bob mỗi người có một số hộp kẹo. Họ đổi đúng một hộp cho nhau để tổng kẹo bằng nhau. Với mỗi hộp `a` của Alice, hộp cần đổi từ Bob là `b = a - diff`, trong đó `diff = (sumA - sumB) / 2`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Alice và Bob mỗi người có một số hộp kẹo. Họ đổi đúng một hộp cho nhau để tổng kẹo bằng nhau. Với mỗi hộp `a` của Alice, hộp cần đổi từ Bob là `b = a - diff`, trong đó `diff = (sumA - sumB) / 2`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Fair Candy Swap example:**
 
 ```
 A = [1, 1],  B = [2, 2]
@@ -28,7 +35,20 @@ sumA=3, sumB=5, diff=(3-5)/2=-1
 a=1: b=1-(-1)=2 ∈ setB? YES → [1,2]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem         | Pattern      |
+| --- | --------------- | ------------ |
+| 888 | Fair Candy Swap | This problem |
+| 1   | Two Sum         | Hash Map     |
+| 268 | Missing Number  | Math         |
+| 454 | 4Sum II         | Hash Map     |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Math insight** / Sau swap: `sumA - a + b = sumB - b + a` → `b = a - (sumA-sumB)/2`
 - 🔑 **diff always integer** / `sumA - sumB` luôn chẵn vì tổng thay đổi cùng lượng
@@ -36,6 +56,8 @@ a=1: b=1-(-1)=2 ∈ setB? YES → [1,2]
 - 🔑 **Guaranteed solution** / Đề đảm bảo luôn có đáp án — không cần xử lý không tìm được
 - 🔑 **No need to sort** / HashSet đủ — sort + binary search cũng được nhưng phức tạp hơn
 - 🔑 **Complexity** / O(n + m) time, O(m) space cho setB
+
+---
 
 ## Solutions
 
@@ -106,7 +128,9 @@ console.log(fairCandySwapBS([1, 1], [2, 2])); // [1, 2]
 console.log(fairCandySwapBS([2], [1, 3])); // [2, 3]
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #   | Problem         | Pattern      |
 | --- | --------------- | ------------ |

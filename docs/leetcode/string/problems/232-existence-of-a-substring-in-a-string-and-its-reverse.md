@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/existence-of-a-substring-in-a-strin
 
 # Existence of a Substring in a String and Its Reverse / Sự Tồn Tại Chuỗi Con Trong Chuỗi Và Bản Đảo Ngược
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Cho chuỗi `s`, kiểm tra xem có tồn tại một chuỗi con độ dài 2 nào đó mà xuất hiện trong cả `s` **và** chuỗi đảo ngược của `s` không.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Cho chuỗi `s`, kiểm tra xem có tồn tại một chuỗi con độ dài 2 nào đó mà xuất hiện trong cả `s` **và** chuỗi đảo ngược của `s` không.
 
 **Ví dụ:** `s = "leetcode"` → "le" xuất hiện trong `s` và "el" xuất hiện trong reverse("leetcode") = "edocteel" → không. Nhưng "ee" xuất hiện trong cả hai → `true`.
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như kiểm tra bộ bài: lấy từng cặp bài liên tiếp, xem cặp đó có xuất hiện ở cả chiều xuôi lẫn chiều ngược không. Chỉ cần tìm một cặp như vậy là đủ.
-
-## Minh họa ASCII
+**Visual — Existence of a Substring in a String and Its Reverse example:**
 
 ```
 s = "leetcode"
@@ -38,14 +39,18 @@ rev = "abcba" (palindrome!)
 s[0..1]="ab" → in rev? yes at position 0 → true immediately
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - Kiểm tra xem có chuỗi con độ dài 2 nào đó tồn tại trong cả `s` và `reverse(s)` không.
 - Trả về `true` nếu có, `false` nếu không.
 
 **Constraints:** `1 <= s.length <= 100`, chỉ chứa chữ thường.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **Chỉ xét độ dài 2** — chuỗi con cần tìm có đúng 2 ký tự.
 2. **Set substrings** — tạo Set tất cả substring-2 của `s`, rồi check từng substring-2 của `reverse(s)`.
@@ -54,9 +59,9 @@ s[0..1]="ab" → in rev? yes at position 0 → true immediately
 5. **Early exit** — dừng ngay khi tìm được cặp đầu tiên.
 6. **Palindrome** — mọi palindrome đều return true (trừ length 1).
 
-## Giải pháp
+---
 
-### Giải pháp 1: Set của substring-2 trong s, check với reverse
+## Solutions
 
 ```typescript
 function isSubstringPresent(s: string): boolean {
@@ -83,11 +88,7 @@ console.log(isSubstringPresent("abcba")); // true ("ab" and "ba" both in s)
 console.log(isSubstringPresent("abcd")); // false
 console.log(isSubstringPresent("aa")); // true ("aa" reversed is "aa")
 console.log(isSubstringPresent("a")); // false (length 1, no pairs)
-```
 
-### Giải pháp 2: Direct check với reverse string
-
-```typescript
 function isSubstringPresentDirect(s: string): boolean {
   const rev = s.split("").reverse().join("");
 
@@ -104,11 +105,7 @@ console.log(isSubstringPresentDirect("leetcode")); // true
 console.log(isSubstringPresentDirect("abcba")); // true
 console.log(isSubstringPresentDirect("abcd")); // false
 console.log(isSubstringPresentDirect("aa")); // true
-```
 
-### Giải pháp 3: Bitmask/Matrix approach (Trực quan)
-
-```typescript
 function isSubstringPresentMatrix(s: string): boolean {
   // Track which [a][b] pairs appear in s
   // seen[i][j] = true if s contains char(i)+char(j)
@@ -143,18 +140,12 @@ for (const tc of testCases) {
 console.log("All approaches agree ✓");
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp      | Thời gian | Không gian | Ghi chú                    |
 | -------------- | --------- | ---------- | -------------------------- |
 | Set approach   | O(n)      | O(n)       | 2 passes, elegant          |
 | Direct reverse | O(n²)     | O(n)       | Simple, includes() is O(n) |
 | Matrix         | O(n)      | O(1)       | 26×26 fixed space, 1 pass  |
-
-## Bài liên quan
-
-| #    | Tên                                                  | Độ khó | Tags       |
-| ---- | ---------------------------------------------------- | ------ | ---------- |
-| 1408 | String Matching in an Array                          | Easy   | String     |
-| 2185 | Counting Words With a Given Prefix                   | Easy   | String     |
-| 3083 | Existence of a Substring in a String and Its Reverse | Easy   | Hash Table |

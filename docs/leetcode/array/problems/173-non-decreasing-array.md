@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/non-decreasing-array"
 
 # Non-decreasing Array / Mảng Không Giảm
 
-🟡 Medium | Tags: Array
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Cho phép sửa đúng một phần tử. Khi gặp `nums[i] > nums[i+1]`, có hai lựa chọn: hạ `nums[i]` xuống hoặc nâng `nums[i+1]` lên. Kiểm tra xem lựa chọn nào hợp lệ với phần tử trước đó.
+**Analogy:** **VN:** Cho phép sửa đúng một phần tử. Khi gặp `nums[i] > nums[i+1]`, có hai lựa chọn: hạ `nums[i]` xuống hoặc nâng `nums[i+1]` lên. Kiểm tra xem lựa chọn nào hợp lệ với phần tử trước đó.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Non-decreasing Array example:**
 
 ```
 [3, 4, 2, 3]
@@ -23,6 +26,18 @@ leetcode_url: "https://leetcode.com/problems/non-decreasing-array"
   A: hạ 4 → 2: [3, 2, 2, 3] → 3 > 2 ✗ không hợp lệ
   B: nâng 2 → 4: [3, 4, 4, 3] → tiếp tục kiểm tra
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                           | Difficulty | Pattern        |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Longest Non-Decreasing Subarray From Two Arrays](https://leetcode.com/problems/longest-non-decreasing-subarray-from-two-arrays/) | 🟡 Medium  | DP / Array     |
+| [Maximum Sum of 3 Non-Overlapping Subarrays](https://leetcode.com/problems/maximum-sum-of-3-non-overlapping-subarrays/)           | 🔴 Hard    | Sliding Window |
+| [Make Array Non-decreasing or Non-increasing](https://leetcode.com/problems/make-array-non-decreasing-or-non-increasing/)         | 🟡 Medium  | Greedy         |
 
 ---
 
@@ -37,9 +52,9 @@ leetcode_url: "https://leetcode.com/problems/non-decreasing-array"
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Greedy In-Place Check
+## Solutions
 
 ```typescript
 /**
@@ -71,11 +86,7 @@ console.log(checkPossibility([4, 2, 3])); // true  (lower 4→2)
 console.log(checkPossibility([4, 2, 1])); // false (two violations)
 console.log(checkPossibility([3, 4, 2, 3])); // false
 console.log(checkPossibility([5, 7, 1, 8])); // true  (raise 1→7)
-```
 
-### Solution 2: Try Both Options Without Mutation
-
-```typescript
 /**
  * When a violation is found, try skipping index i or i+1 and verify the rest.
  * Time: O(n) | Space: O(1)

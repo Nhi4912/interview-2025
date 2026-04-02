@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/match-alphanumerical-pattern-in-mat
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn có một bản mã số bí mật dạng chữ cái, ví dụ `"abc"` có nghĩa là "3 chữ số khác nhau theo thứ tự". Bạn cần tìm trong ma trận số nguyên xem hàng nào và cột nào bắt đầu bằng 3 số khớp mẫu đó — cùng chữ = cùng số, khác chữ = khác số (ánh xạ song ánh hai chiều). Giống như phân tích vân tay: `"aba"` khớp `[1,2,1]` nhưng không khớp `[1,2,3]` (thiếu lặp) hay `[1,1,2]` (lặp sai chỗ). Kết quả trả về danh sách `[hàng, cột]` của tất cả điểm khớp theo thứ tự từ điển.
+**Analogy:** Hãy tưởng tượng bạn có một bản mã số bí mật dạng chữ cái, ví dụ `"abc"` có nghĩa là "3 chữ số khác nhau theo thứ tự". Bạn cần tìm trong ma trận số nguyên xem hàng nào và cột nào bắt đầu bằng 3 số khớp mẫu đó — cùng chữ = cùng số, khác chữ = khác số (ánh xạ song ánh hai chiều). Giống như phân tích vân tay: `"aba"` khớp `[1,2,1]` nhưng không khớp `[1,2,3]` (thiếu lặp) hay `[1,1,2]` (lặp sai chỗ). Kết quả trả về danh sách `[hàng, cột]` của tất cả điểm khớp theo thứ tự từ điển.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Match Alphanumerical Pattern in Matrix I example:**
 
 ```
 matrix = [[1,2,3,4],         pattern = "aab"
@@ -41,7 +44,9 @@ Check row 2, col 0..1: [2,1,2] vs "aab"
 Result: [[1, 0]]
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an `m×n` matrix of integers and a pattern string of lowercase letters, find all `[row, col]` positions where reading `matrix[row][col..col+len-1]` creates a bijective mapping with the pattern (same letter → same digit, different letters → different digits).
 
@@ -51,7 +56,9 @@ Given an `m×n` matrix of integers and a pattern string of lowercase letters, fi
 
 **Constraints:** `1 ≤ m, n ≤ 50`, `1 ≤ pattern.length ≤ n`, `0 ≤ matrix[i][j] ≤ 9`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Bijection cần hai chiều** / Two-way bijection: Cần `charToDigit` VÀ `digitToChar` — thiếu một chiều sẽ cho phép `"ab"` khớp `[1,1]`
 - **Reset maps mỗi lần** / Reset maps per attempt: Mỗi lần kiểm tra `(row, col)` cần map mới, không tái dùng
@@ -60,7 +67,9 @@ Given an `m×n` matrix of integers and a pattern string of lowercase letters, fi
 - **Word Pattern ở 2D** / 2D Word Pattern: Bản chất là LC 290 Word Pattern nhưng áp dụng cho từng hàng của ma trận
 - **Sort output** / Sắp xếp kết quả: Trả về theo thứ tự `[row, col]` lexicographic (duyệt row trước, col sau là đủ)
 
-## Solution 1 - Direct Check with Maps O(m·n·p)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -100,11 +109,7 @@ function findPatternBrute(matrix: number[][], pattern: string): number[][] {
   }
   return result;
 }
-```
 
-## Solution 2 - Canonical Form Comparison O(m·n·p)
-
-```typescript
 /**
  * @complexity Time: O(m·n·p) | Space: O(p)
  * Convert both pattern and matrix slice to canonical form, compare directly.
@@ -135,11 +140,8 @@ function findPattern(matrix: number[][], pattern: string): number[][] {
   }
   return result;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 // Use variables to avoid formatter expansion
 const mx1 = [
   [1, 2, 2],
@@ -167,7 +169,9 @@ console.log(JSON.stringify(findPattern([[1, 2, 3]], "aba"))); // → [] (no repe
 console.log(JSON.stringify(findPattern(mx4, "aab"))); // → [[0,0],[1,1]]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                  | Difficulty | Link                                                             |
 | ------------------------ | ---------- | ---------------------------------------------------------------- |

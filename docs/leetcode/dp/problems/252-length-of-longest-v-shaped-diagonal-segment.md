@@ -7,102 +7,221 @@ tags: [Array, Dynamic Programming, Memoization, Matrix]
 leetcode_url: "https://leetcode.com/problems/length-of-longest-v-shaped-diagonal-segment"
 ---
 
-# Length of Longest V-Shaped Diagonal Segment / Length of Longest V-Shaped Diagonal Segment
-
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) | [Sliding Puzzle](https://leetcode.com/problems/sliding-puzzle)
+# length of longest v shaped diagonal segment
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống **người leo núi trên bàn cờ số**: xuất phát từ ô **giá trị 1**, bước theo đường chéo xen kẽ 1→2→1→2→…, được phép **rẽ một lần** (phản xạ gương) tạo hình chữ V. Trạng thái DP: `(hàng, cột, hướng, đã_rẽ)` — 8 trạng thái mỗi ô.
 
 **Pattern Recognition:**
+- Key insight: see analogy above
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Length of Longest V-Shaped Diagonal Segment example:**
+**Visual —  example:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Grid 3×5                        V-shape dài nhất = 5
+┌───┬───┬───┬───┬───┐           ┌───┬───┬───┬───┬───┐
+│ 1 │ 0 │ 0 │ 0 │ 1 │           │[1]│   │   │   │[1]│
+├───┼───┼───┼───┼───┤    =>     ├───┼───┼───┼───┼───┤
+│ 0 │ 2 │ 0 │ 2 │ 0 │           │   │[2]│   │[2]│   │
+├───┼───┼───┼───┼───┤           ├───┼───┼───┼───┼───┤
+│ 0 │ 0 │ 1 │ 0 │ 0 │           │   │   │[1]│   │   │
+└───┴───┴───┴───┴───┘           └───┴───┴───┴───┴───┘
+(0,0)→(1,1)→(2,2) ↘ rẽ ↗ →(1,3)→(0,4)  [1,2,1,2,1] = 5
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+4 hướng chéo & phản xạ:
+  dir0 ↘(+1,+1) ──flip-col──► dir1 ↙(+1,−1)
+               └──flip-row──► dir2 ↗(−1,+1)
+  dir3 ↖(−1,−1) ──flip-col──► dir2, flip-row──► dir1
 ```
 
 ---
 
 ## Problem Description
 
-Length of Longest V-Shaped Diagonal Segment. ([LeetCode](https://leetcode.com/problems/length-of-longest-v-shaped-diagonal-segment))
-
-Difficulty: Hard | Acceptance: 33.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/length-of-longest-v-shaped-diagonal-segment) for full constraints
+| Problem                                                                                                               | Difficulty | Key Similarity               |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------------- |
+| [Longest Line of Consecutive One in Matrix](https://leetcode.com/problems/longest-line-of-consecutive-one-in-matrix/) | Medium     | Direction-encoded DP on grid |
+| [Longest Increasing Path in Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix/)               | Hard       | DFS + memoization on 2D grid |
+| [Knight Dialer](https://leetcode.com/problems/knight-dialer/)                                                         | Medium     | Direction-based state DP     |
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **State = (r,c,dir,turned)** — 4 dirs × 2 turn states = 8 per cell / 8 trạng thái mỗi ô.
+2. **Next value = 3 − current** — no parity counter needed / Không cần đếm chẵn lẻ.
+3. **2 turn types per direction** — flip-row or flip-col; never both / 2 kiểu rẽ, lật cả hai là đi ngược.
+4. **Two-phase DP** — compute turned=1 first; turned=0 depends on it / Tính đã_rẽ trước.
+5. **Process in reverse** — for ↘, iterate from bottom-right / Lặp ngược chiều di chuyển.
+6. **Answer at value-1 cells only** — "starts at 1" enforced at collection / Chỉ thu kết quả tại ô = 1.
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function lengthOfLongestVShapedDiagonalSegmentBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+/** @complexity Time: O(m·n·8) | Space: O(m·n·8) */
+function lenLongestVDiagonalSegment(grid: number[][]): number {
+  const m = grid.length,
+    n = grid[0].length;
+  const dirs: [number, number][] = [
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ];
+  const turnDirs: [number, number][] = [
+    [1, 2],
+    [0, 3],
+    [3, 0],
+    [2, 1],
+  ];
+  const memo = new Int32Array(m * n * 8).fill(-1);
+  function dfs(r: number, c: number, d: number, t: number): number {
+    if (grid[r][c] === 0) return 0;
+    const key = (r * n + c) * 8 + d * 2 + t;
+    if (memo[key] !== -1) return memo[key];
+    const [dr, dc] = dirs[d];
+    const nv = 3 - grid[r][c];
+    let best = 1;
+    const nr = r + dr,
+      nc = c + dc;
+    if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] === nv)
+      best = Math.max(best, 1 + dfs(nr, nc, d, t));
+    if (t === 0) {
+      for (const td of turnDirs[d]) {
+        const [tdr, tdc] = dirs[td];
+        const tr = r + tdr,
+          tc = c + tdc;
+        if (tr >= 0 && tr < m && tc >= 0 && tc < n && grid[tr][tc] === nv)
+          best = Math.max(best, 1 + dfs(tr, tc, td, 1));
+      }
+    }
+    return (memo[key] = best);
+  }
+  let ans = 0;
+  for (let r = 0; r < m; r++)
+    for (let c = 0; c < n; c++)
+      if (grid[r][c] === 1) for (let d = 0; d < 4; d++) ans = Math.max(ans, dfs(r, c, d, 0));
+  return ans;
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function lengthOfLongestVShapedDiagonalSegment(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+/** @complexity Time: O(m·n·8) | Space: O(m·n·8) */
+function lenLongestVDiagonalDP(grid: number[][]): number {
+  const m = grid.length,
+    n = grid[0].length;
+  const dirs: [number, number][] = [
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+  ];
+  const turnDirs: [number, number][] = [
+    [1, 2],
+    [0, 3],
+    [3, 0],
+    [2, 1],
+  ];
+  const dp = new Int32Array(m * n * 8);
+  // Phase 1: turned=1 states (no more turns, just extend)
+  for (let d = 0; d < 4; d++) {
+    const [dr, dc] = dirs[d];
+    const rS = dr > 0 ? m - 1 : 0,
+      rE = dr > 0 ? -1 : m,
+      rD = dr > 0 ? -1 : 1;
+    const cS = dc > 0 ? n - 1 : 0,
+      cE = dc > 0 ? -1 : n,
+      cD = dc > 0 ? -1 : 1;
+    for (let r = rS; r !== rE; r += rD)
+      for (let c = cS; c !== cE; c += cD) {
+        const k = (r * n + c) * 8 + d * 2 + 1;
+        if (grid[r][c] === 0) {
+          dp[k] = 0;
+          continue;
+        }
+        dp[k] = 1;
+        const nr = r + dr,
+          nc = c + dc;
+        if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] === 3 - grid[r][c])
+          dp[k] = 1 + dp[(nr * n + nc) * 8 + d * 2 + 1];
+      }
+  }
+  // Phase 2: turned=0 states (can turn or continue)
+  let ans = 0;
+  for (let d = 0; d < 4; d++) {
+    const [dr, dc] = dirs[d];
+    const rS = dr > 0 ? m - 1 : 0,
+      rE = dr > 0 ? -1 : m,
+      rD = dr > 0 ? -1 : 1;
+    const cS = dc > 0 ? n - 1 : 0,
+      cE = dc > 0 ? -1 : n,
+      cD = dc > 0 ? -1 : 1;
+    for (let r = rS; r !== rE; r += rD)
+      for (let c = cS; c !== cE; c += cD) {
+        const k = (r * n + c) * 8 + d * 2;
+        if (grid[r][c] === 0) {
+          dp[k] = 0;
+          continue;
+        }
+        const nv = 3 - grid[r][c];
+        dp[k] = 1;
+        const nr = r + dr,
+          nc = c + dc;
+        if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] === nv)
+          dp[k] = Math.max(dp[k], 1 + dp[(nr * n + nc) * 8 + d * 2]);
+        for (const td of turnDirs[d]) {
+          const [tdr, tdc] = dirs[td];
+          const tr = r + tdr,
+            tc = c + tdc;
+          if (tr >= 0 && tr < m && tc >= 0 && tc < n && grid[tr][tc] === nv)
+            dp[k] = Math.max(dp[k], 1 + dp[(tr * n + tc) * 8 + td * 2 + 1]);
+        }
+        if (grid[r][c] === 1) ans = Math.max(ans, dp[k]);
+      }
+  }
+  return ans;
 }
 
 // === Test Cases ===
-// console.log(lengthOfLongestVShapedDiagonalSegment(/* example 1 */)); // expected
-// console.log(lengthOfLongestVShapedDiagonalSegment(/* example 2 */)); // expected
-// console.log(lengthOfLongestVShapedDiagonalSegment(/* edge case */)); // expected
+console.log(
+  lenLongestVDiagonalSegment([
+    [1, 0, 0, 0, 1],
+    [0, 2, 0, 2, 0],
+    [0, 0, 1, 0, 0],
+  ]),
+); // 5
+console.log(
+  lenLongestVDiagonalSegment([
+    [1, 0, 0],
+    [0, 2, 0],
+    [0, 0, 1],
+  ]),
+); // 3
+console.log(lenLongestVDiagonalSegment([[1]])); // 1
+console.log(
+  lenLongestVDiagonalSegment([
+    [2, 2],
+    [2, 2],
+  ]),
+); // 0
+console.log(
+  lenLongestVDiagonalDP([
+    [1, 0, 0, 0, 1],
+    [0, 2, 0, 2, 0],
+    [0, 0, 1, 0, 0],
+  ]),
+); // 5
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Sliding Puzzle](https://leetcode.com/problems/sliding-puzzle) — same pattern: Backtracking
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Length of Longest V-Shaped Diagonal Segment — LeetCode](https://leetcode.com/problems/length-of-longest-v-shaped-diagonal-segment) — problem page
+| Problem                                                                                                               | Difficulty | Key Similarity               |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------------- |
+| [Longest Line of Consecutive One in Matrix](https://leetcode.com/problems/longest-line-of-consecutive-one-in-matrix/) | Medium     | Direction-encoded DP on grid |
+| [Longest Increasing Path in Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix/)               | Hard       | DFS + memoization on 2D grid |
+| [Knight Dialer](https://leetcode.com/problems/knight-dialer/)                                                         | Medium     | Direction-based state DP     |

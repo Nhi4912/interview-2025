@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/zuma-game"
 
 # Zuma Game / Trò Chơi Zuma
 
-🔴 Hard | DFS with Memoization on Board State | [LeetCode 488](https://leetcode.com/problems/zuma-game)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Trò Zuma: chèn bi vào bảng để tạo nhóm 3+ bi cùng màu liên tiếp, nhóm đó tự xóa (cascade). Tìm số bi tối thiểu cần dùng. Ý tưởng: DFS/BFS trên trạng thái bảng với memoization. Mỗi bước: chọn vị trí và màu bi chèn vào, collapse bảng, đệ quy.
+**Analogy:** **Vietnamese:** Trò Zuma: chèn bi vào bảng để tạo nhóm 3+ bi cùng màu liên tiếp, nhóm đó tự xóa (cascade). Tìm số bi tối thiểu cần dùng. Ý tưởng: DFS/BFS trên trạng thái bảng với memoization. Mỗi bước: chọn vị trí và màu bi chèn vào, collapse bảng, đệ quy.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Zuma Game example:**
 
 ```
 board="RBYYBBRRB" hand="YRBGB"
@@ -27,7 +30,20 @@ Key: merge adjacent same-color groups to reduce state space
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                              | Difficulty | Key Idea                       |
+| -------------------------------------------------------------------- | ---------- | ------------------------------ |
+| [Remove Boxes 546](https://leetcode.com/problems/remove-boxes)       | Hard       | Interval DP with group merging |
+| [Strange Printer 664](https://leetcode.com/problems/strange-printer) | Hard       | Interval DP                    |
+| [Burst Balloons 312](https://leetcode.com/problems/burst-balloons)   | Hard       | Interval DP                    |
+| [Word Ladder 127](https://leetcode.com/problems/word-ladder)         | Hard       | BFS on state space             |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Collapse board after each insertion (remove 3+ consecutive same color) | **VI:** Sau mỗi lần chèn, xóa liên tiếp 3+ cùng màu
 - 🔑 **EN:** Memoize on (board_state, hand_remaining) as string key | **VI:** Memo theo (trạng thái bảng, tay còn lại)
@@ -38,7 +54,9 @@ Key: merge adjacent same-color groups to reduce state space
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -113,9 +131,7 @@ console.log(findMinStep("WRRBBW", "RB")); // -1
 console.log(findMinStep("WWRRBBWW", "WRBRW")); // 2
 console.log(findMinStep("G", "GGGGG")); // 2
 console.log(findMinStep("RBYYBBRRB", "YRBGB")); // 3
-```
 
-```typescript
 /**
  * BFS approach — explore all possible insertion states level by level
  * Time: O(B! * H!) bounded — practical with deduplication
@@ -174,7 +190,7 @@ console.log(findMinStepBFS("WWRRBBWW", "WRBRW")); // 2
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                              | Difficulty | Key Idea                       |
 | -------------------------------------------------------------------- | ---------- | ------------------------------ |

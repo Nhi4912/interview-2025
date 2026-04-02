@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/verifying-an-alien-dictionary"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Từ điển ngoài hành tinh có thứ tự chữ cái khác. Bạn xây bảng tra thứ tự, rồi so sánh từng cặp từ liền kề — như kiểm tra bảng chữ cái thông thường nhưng dùng thứ tự mới.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Từ điển ngoài hành tinh có thứ tự chữ cái khác. Bạn xây bảng tra thứ tự, rồi so sánh từng cặp từ liền kề — như kiểm tra bảng chữ cái thông thường nhưng dùng thứ tự mới.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Verifying an Alien Dictionary example:**
 
 ```
 order = "hlabcdefgijkmnopqrstuvwxyz"
@@ -33,7 +40,20 @@ Compare "world" vs "row":
 
 **Key insight**: Build `Map<char, rank>` from `order`. Compare adjacent words: first mismatch decides order; if `w1` is prefix of `w2` but longer → invalid.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                               | Difficulty | Pattern     |
+| ---- | ------------------------------------- | ---------- | ----------- |
+| 242  | Valid Anagram                         | 🟢 Easy    | Hash Map    |
+| 953  | Verifying an Alien Dictionary         | 🟢 Easy    | Hash Map    |
+| 1051 | Height Checker                        | 🟢 Easy    | Sorting     |
+| 1356 | Sort Integers by The Number of 1 Bits | 🟢 Easy    | Custom Sort |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Build rank map in O(26) — `order[i]` gets rank `i`
   **VI**: Xây bảng thứ tự O(26) — `order[i]` được xếp hạng `i`
@@ -119,7 +139,14 @@ console.log(isAlienSorted2(["word", "world", "row"], "worldabcefghijkmnpqstuvxyz
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                               | Difficulty | Pattern     |
 | ---- | ------------------------------------- | ---------- | ----------- |

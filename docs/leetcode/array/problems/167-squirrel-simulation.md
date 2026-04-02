@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/squirrel-simulation"
 
 # Squirrel Simulation / Mô Phỏng Sóc
 
-🟡 Medium | 🏷️ Array, Math | 🔗 [LeetCode](https://leetcode.com/problems/squirrel-simulation)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Tổng chi phí cơ bản = 2 × tổng khoảng cách từ cây đến mỗi hạt (cây → hạt → cây). Con sóc xuất phát từ vị trí riêng cho hạt đầu tiên, tiết kiệm được dist(cây, hạt) - dist(sóc, hạt). Chọn hạt tối đa hóa tiết kiệm.
+**Analogy:** **Tiếng Việt:** Tổng chi phí cơ bản = 2 × tổng khoảng cách từ cây đến mỗi hạt (cây → hạt → cây). Con sóc xuất phát từ vị trí riêng cho hạt đầu tiên, tiết kiệm được dist(cây, hạt) - dist(sóc, hạt). Chọn hạt tối đa hóa tiết kiệm.
 
 **English:** Base cost = 2 × sum of dist(tree, nut) for all nuts. The squirrel's starting position only matters for the first nut — it saves dist(tree,nut) but costs dist(squirrel,nut). Maximize the saving.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Squirrel Simulation example:**
 
 ```
 tree=[2,2], squirrel=[2,2], nuts=[[2,3],[3,3]]
@@ -30,7 +35,19 @@ Nut[1]: saving = dist(tree,nut1) - dist(sq,nut1)
 min = 6 - 0 = 6
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                               | Difficulty | Pattern |
+| ----------------------------------------------------------------------------------------------------- | ---------- | ------- |
+| [Minimum Cost to Connect Sticks](https://leetcode.com/problems/minimum-cost-to-connect-sticks/)       | 🟡 Medium  | Greedy  |
+| [Minimum Number of Refueling Stops](https://leetcode.com/problems/minimum-number-of-refueling-stops/) | 🔴 Hard    | Greedy  |
+| [Shortest Path in Binary Matrix](https://leetcode.com/problems/shortest-path-in-binary-matrix/)       | 🟡 Medium  | BFS     |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Base cost assumes squirrel starts at tree for ALL nuts | **VI:** Chi phí cơ bản giả định sóc xuất phát từ cây cho MỌI hạt
 - 🔑 **EN:** Only one nut is fetched from squirrel's starting position | **VI:** Chỉ một hạt được lấy từ vị trí bắt đầu của sóc
@@ -39,9 +56,9 @@ min = 6 - 0 = 6
 - 🔑 **EN:** Manhattan distance: |r1-r2| + |c1-c2| | **VI:** Khoảng cách Manhattan: |r1-r2| + |c1-c2|
 - 🔑 **EN:** O(n) — one pass over all nuts | **VI:** O(n) — một lần duyệt qua tất cả các hạt
 
-## Solutions
+---
 
-### Solution 1: Greedy Saving Maximization (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -87,11 +104,7 @@ console.log(
 ); // 12
 console.log(minDistance(1, 3, [0, 1], [0, 0], [[0, 2]])); // 3
 console.log(minDistance(2, 2, [0, 0], [0, 1], [[1, 1]])); // 4
-```
 
-### Solution 2: Explicit Loop (No Arrow Functions)
-
-```typescript
 /**
  * Same logic with explicit helper and for loop
  * Time: O(n) | Space: O(1)
@@ -132,11 +145,7 @@ console.log(
     ],
   ),
 ); // 12
-```
 
-### Solution 3: Using reduce
-
-```typescript
 /**
  * Functional style using reduce
  * Time: O(n) | Space: O(1)
@@ -177,6 +186,8 @@ console.log(
   ),
 ); // 12
 ```
+
+---
 
 ## 🔗 Related Problems
 

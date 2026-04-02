@@ -7,15 +7,18 @@ tags: [Array, Hash Table, Binary Search, Dynamic Programming, Sorting]
 leetcode_url: "https://leetcode.com/problems/maximum-earnings-from-taxi"
 ---
 
-## 🚕 2008. Maximum Earnings From Taxi / Thu Nhập Tối Đa Từ Taxi
-
-**Difficulty:** 🟡 Medium
+# maximum earnings from taxi
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Bạn là tài xế taxi trên đường thẳng. Mỗi chuyến đi từ điểm `start` đến `end` kiếm được `tip + (end - start)` đồng. Chuyến này kết thúc ở `end`, bạn chỉ có thể bắt chuyến mới bắt đầu từ điểm ≥ `end`. Tìm cách chọn chuyến để tối đa thu nhập.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 n=5, rides=[[2,5,4],[1,5,1]]
@@ -34,12 +37,16 @@ Answer: dp[5] = 7
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `n` (road length) and `rides = [[start, end, tip]]`. Each ride earns `end - start + tip`. Non-overlapping rides only (next start ≥ prev end). Maximize total earnings.
 
 - Example: `n=5`, `rides=[[2,5,4],[1,5,1]]` → **7**
 - Example: `n=20`, `rides=[[1,6,1],[3,10,2],[10,12,3],[11,12,2],[12,15,2],[13,18,1]]` → **20**
+
+---
 
 ---
 
@@ -54,9 +61,9 @@ Given `n` (road length) and `rides = [[start, end, tip]]`. Each ride earns `end 
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: DP + Hash Map (Group by End Point)
+## Solutions
 
 ```typescript
 function maxTaxiEarnings(n: number, rides: number[][]): number {
@@ -83,11 +90,7 @@ function maxTaxiEarnings(n: number, rides: number[][]): number {
 
   return dp[n];
 }
-```
 
-### Solution 2: Sort by End + DP Array
-
-```typescript
 function maxTaxiEarningsSort(n: number, rides: number[][]): number {
   // Sort rides by end point
   rides.sort((a, b) => a[1] - b[1]);
@@ -105,11 +108,7 @@ function maxTaxiEarningsSort(n: number, rides: number[][]): number {
 
   return dp[n];
 }
-```
 
-### Solution 3: Sort + Binary Search (memory efficient for large n)
-
-```typescript
 function maxTaxiEarningsBinarySearch(n: number, rides: number[][]): number {
   rides.sort((a, b) => a[1] - b[1]);
   const m = rides.length;

@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/display-table-of-food-orders-in-a-r
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map + Sort
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Bạn là quản lý nhà hàng và cần lập bảng thống kê: hàng là số bàn (tăng dần), cột là tên món ăn (alphabet), ô là số lần bàn đó gọi món đó. Dùng Map lồng Map: `table → (food → count)`, sau đó thu thập tất cả tên món và bàn, sắp xếp, build bảng.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Bạn là quản lý nhà hàng và cần lập bảng thống kê: hàng là số bàn (tăng dần), cột là tên món ăn (alphabet), ô là số lần bàn đó gọi món đó. Dùng Map lồng Map: `table → (food → count)`, sau đó thu thập tất cả tên món và bàn, sắp xếp, build bảng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Display Table of Food Orders in a Restaurant example:**
 
 ```
 orders = [["David","3","Ceviche"],["Corina","10","Beef Burrito"],
@@ -30,7 +37,20 @@ Result:
   row 10: ["10","1","0","0","0"]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                      | Pattern         |
+| ---- | -------------------------------------------- | --------------- |
+| 1418 | Display Table of Food Orders in a Restaurant | This problem    |
+| 350  | Intersection of Two Arrays II                | Hash Map        |
+| 692  | Top K Frequent Words                         | Hash Map + Sort |
+| 49   | Group Anagrams                               | Hash Map + Sort |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Two sets** / Thu thập tập hợp tên món và số bàn riêng để sort chúng
 - 🔑 **Nested Map** / `tableMap: Map<number, Map<string, number>>` — bàn → món → số lượng
@@ -38,6 +58,8 @@ Result:
 - 🔑 **Sort tables numerically** / Số bàn sắp xếp theo số (không phải string)
 - 🔑 **Header row** / Hàng đầu = `["Table", ...sortedFoods]`
 - 🔑 **Default 0** / Nếu bàn chưa gọi món đó, điền "0"
+
+---
 
 ## Solutions
 
@@ -124,7 +146,9 @@ function displayTableV2(orders: string[][]): string[][] {
 console.log(displayTableV2(orders2));
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                      | Pattern         |
 | ---- | -------------------------------------------- | --------------- |

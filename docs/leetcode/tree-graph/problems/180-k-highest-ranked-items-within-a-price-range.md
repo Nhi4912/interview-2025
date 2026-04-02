@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/k-highest-ranked-items-within-a-pri
 
 # K Highest Ranked Items Within a Price Range / K Hàng Xếp Hạng Cao Nhất Trong Khoảng Giá
 
-🟡 Medium | BFS from Start + Sort by Rank Criteria | [LeetCode 2146](https://leetcode.com/problems/k-highest-ranked-items-within-a-price-range)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Từ vị trí xuất phát, BFS lan ra để tìm tất cả hàng hoá có giá trong khoảng [low, high]. Mỗi hàng hoá có "rank" theo thứ tự ưu tiên: (1) khoảng cách gần nhất, (2) giá thấp hơn, (3) hàng nhỏ hơn, (4) cột nhỏ hơn. Sắp xếp rồi lấy k đầu.
+**Analogy:** **Vietnamese:** Từ vị trí xuất phát, BFS lan ra để tìm tất cả hàng hoá có giá trong khoảng [low, high]. Mỗi hàng hoá có "rank" theo thứ tự ưu tiên: (1) khoảng cách gần nhất, (2) giá thấp hơn, (3) hàng nhỏ hơn, (4) cột nhỏ hơn. Sắp xếp rồi lấy k đầu.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — K Highest Ranked Items Within a Price Range example:**
 
 ```
 grid=[[1,2,0,1],[1,3,4,2],[2,3,1,1],[4,0,3,2]]
@@ -32,7 +35,20 @@ Sort by (dist, price, row, col) → pick top 3
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                     | Difficulty | Key Idea                  |
+| ----------------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| [Nearest Exit from Entrance in Maze 1926](https://leetcode.com/problems/nearest-exit-from-entrance-in-maze) | Medium     | BFS shortest path in grid |
+| [Shortest Path in Binary Matrix 1091](https://leetcode.com/problems/shortest-path-in-binary-matrix)         | Medium     | BFS with obstacle         |
+| [As Far From Land as Possible 1162](https://leetcode.com/problems/as-far-from-land-as-possible)             | Medium     | Multi-source BFS          |
+| [Kth Largest Element in Array 215](https://leetcode.com/problems/kth-largest-element-in-an-array)           | Medium     | Heap / Quickselect        |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** BFS naturally gives minimum distance from start | **VI:** BFS tự động cho khoảng cách tối thiểu
 - 🔑 **EN:** 0 = wall (impassable), 1 = empty (no item), 2+ = item with price | **VI:** 0 là tường, 1 là ô trống, ≥2 là hàng hoá
@@ -43,7 +59,9 @@ Sort by (dist, price, row, col) → pick top 3
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -130,9 +148,7 @@ console.log(
     1,
   ),
 ); // [[2,1]]
-```
 
-```typescript
 /**
  * Same approach — slightly more readable with named type
  * Time: O(m*n * log(m*n))  Space: O(m*n)
@@ -199,7 +215,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                                     | Difficulty | Key Idea                  |
 | ----------------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |

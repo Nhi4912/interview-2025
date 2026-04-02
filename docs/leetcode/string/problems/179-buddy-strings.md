@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/buddy-strings"
 
 # Buddy Strings / Chuỗi Bạn Đồng Hành
 
-**Difficulty:** 🟢 Easy | **Tags:** Hash Table, String
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Hai chuỗi là "buddy" nếu **hoán đổi đúng một cặp** ký tự trong `s` ra được `goal`.
+**Analogy:** Hai chuỗi là "buddy" nếu **hoán đổi đúng một cặp** ký tự trong `s` ra được `goal`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Buddy Strings example:**
 
 ```
 s = "ab"   goal = "ba"   → swap(0,1): "ba" ✓
@@ -34,7 +37,19 @@ Case analysis:
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                           | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Check if One String Swap Can Make Strings Equal](https://leetcode.com/problems/check-if-one-string-swap-can-make-strings-equal/) | 🟢 Easy    | Swap validation    |
+| [Determine if Two Strings Are Close](https://leetcode.com/problems/determine-if-two-strings-are-close/)                           | 🟡 Medium  | Frequency analysis |
+| [Check if a String Can Break Another String](https://leetcode.com/problems/check-if-a-string-can-break-another-string/)           | 🟡 Medium  | String comparison  |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Trường hợp s == goal**: cần ký tự trùng → hoán đổi hai vị trí giống nhau
 - 🇺🇸 **s == goal case**: need a duplicate char — swap two identical chars keeps string same
@@ -51,9 +66,9 @@ Case analysis:
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Three-case Analysis (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -87,11 +102,7 @@ console.log(buddyStrings("ab", "ab")); // false (no duplicate)
 console.log(buddyStrings("aa", "aa")); // true  (duplicate 'a')
 console.log(buddyStrings("aaaaaaabc", "aaaaaaacb")); // true
 console.log(buddyStrings("abcd", "badc")); // false (4 diffs)
-```
 
-### Solution 2 — Explicit freq map for duplicate check
-
-```typescript
 /**
  * Use frequency array instead of Set for duplicate detection.
  * Time: O(n)  Space: O(26)
@@ -122,11 +133,7 @@ function buddyStrings2(s: string, goal: string): boolean {
 console.log(buddyStrings2("ab", "ba")); // true
 console.log(buddyStrings2("aa", "aa")); // true
 console.log(buddyStrings2("ab", "ab")); // false
-```
 
-### Solution 3 — Compact with sorted diff check
-
-```typescript
 /**
  * Sort the two diff-pairs and compare; duplicate via char count.
  * Time: O(n)  Space: O(n)

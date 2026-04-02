@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/unique-morse-code-words"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Trong điện tín xưa, mỗi chữ cái có một tín hiệu Morse riêng. Bạn cần đếm xem bao nhiêu từ trong danh sách có tín hiệu Morse khác nhau khi ghép lại. Ví dụ "gin" và "zen" đều mã hóa thành `"--...-."`— chúng "nghe giống nhau" qua điện tín! Bài toán đơn giản: chuyển mỗi từ thành chuỗi Morse, bỏ vào Set để loại trùng, trả về kích thước Set. Đây là bài toán cổ điển "map + set" — thường xuất hiện trong vòng đầu phỏng vấn để kiểm tra tư duy tạo hàm hash.
+**Analogy:** Trong điện tín xưa, mỗi chữ cái có một tín hiệu Morse riêng. Bạn cần đếm xem bao nhiêu từ trong danh sách có tín hiệu Morse khác nhau khi ghép lại. Ví dụ "gin" và "zen" đều mã hóa thành `"--...-."`— chúng "nghe giống nhau" qua điện tín! Bài toán đơn giản: chuyển mỗi từ thành chuỗi Morse, bỏ vào Set để loại trùng, trả về kích thước Set. Đây là bài toán cổ điển "map + set" — thường xuất hiện trong vòng đầu phỏng vấn để kiểm tra tư duy tạo hàm hash.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Unique Morse Code Words example:**
 
 ```
 MORSE = [".-","-...","-.-.","-..",".","..-.","--.","....",
@@ -33,7 +36,9 @@ words = ["gin","zen","gig","msg"]
 Set = {"--...-.", "--..--."}  → size = 2
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an array of strings `words`, return the number of **different** Morse code transformations. Each letter maps to its international Morse code (a→".-", b→"-...", ..., z→"--..").
 
@@ -43,7 +48,9 @@ Given an array of strings `words`, return the number of **different** Morse code
 
 **Constraints:** `1 ≤ words.length ≤ 100`, `1 ≤ words[i].length ≤ 12`, `words[i]` consists of lowercase English letters
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Lookup table** / Bảng tra cứu: Mảng 26 phần tử indexed by `charCode - 97` nhanh hơn object/Map cho bảng cố định
 - **String concatenation** / Nối chuỗi: Cộng Morse code từng ký tự là O(k) per word — tổng O(sum of lengths) = O(26k) max
@@ -52,7 +59,9 @@ Given an array of strings `words`, return the number of **different** Morse code
 - **Môi trường phỏng vấn** / Interview env: Thường được phép nhìn bảng Morse — không cần ghi nhớ thuộc lòng
 - **Biến thể** / Variations: Có thể bị hỏi "tìm các từ cùng mã Morse" — group by Morse code dùng Map<string, string[]>
 
-## Solution 1 - Direct Set Approach O(n·k)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -98,11 +107,7 @@ function uniqueMorseRepresentations(words: string[]): number {
   }
   return codes.size;
 }
-```
 
-## Solution 2 - Functional One-Liner O(n·k)
-
-```typescript
 /**
  * @complexity Time: O(n·k) | Space: O(n·k)
  * Uses the shared MORSE_TABLE; functional map+join pipeline
@@ -111,11 +116,7 @@ function uniqueMorseRepresentationsFP(words: string[]): number {
   const toMorse = (w: string) => [...w].map((c) => MORSE_TABLE[c.charCodeAt(0) - 97]).join("");
   return new Set(words.map(toMorse)).size;
 }
-```
 
-## Solution 3 - Group by Morse Code
-
-```typescript
 /**
  * @complexity Time: O(n·k) | Space: O(n·k)
  * Returns groups of words sharing the same Morse representation.
@@ -131,11 +132,8 @@ function groupByMorse(words: string[]): Map<string, string[]> {
   }
   return groups;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(uniqueMorseRepresentations(["gin", "zen", "gig", "msg"])); // → 2
 console.log(uniqueMorseRepresentationsFP(["gin", "zen", "gig", "msg"])); // → 2
 console.log(uniqueMorseRepresentations(["a"])); // → 1
@@ -145,7 +143,9 @@ console.log([...groups.entries()].map(([k, v]) => `${k}: ${v}`));
 // → ["--...-.": gin,zen", "--..--.": gig,msg"]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                  | Difficulty | Link                                                             |
 | ------------------------ | ---------- | ---------------------------------------------------------------- |

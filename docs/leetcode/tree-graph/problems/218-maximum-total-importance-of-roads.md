@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-total-importance-of-roads"
 
 # Maximum Total Importance of Roads / Tổng Tầm Quan Trọng Tối Đa Của Các Con Đường
 
-## Analogy / Tương Tự
+---
 
-> Bạn đặt giá trị 1..n cho n thành phố. Tầm quan trọng của một con đường = tổng giá trị 2 đầu. Để tối đa tổng tầm quan trọng, hãy gán giá trị **cao nhất cho thành phố có nhiều con đường nhất** (degree cao nhất).
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Bạn đặt giá trị 1..n cho n thành phố. Tầm quan trọng của một con đường = tổng giá trị 2 đầu. Để tối đa tổng tầm quan trọng, hãy gán giá trị **cao nhất cho thành phố có nhiều con đường nhất** (degree cao nhất).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Total Importance of Roads example:**
 
 ```
 n=5, roads: 0-1, 1-2, 2-3, 0-2, 1-3, 2-4
@@ -24,11 +29,15 @@ Assign values:    2→5,  1→4,  0→3,  3→2,  4→1
 Importance = 3+4 + 4+5 + 5+2 + 3+5 + 4+2 + 5+1 = 43
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given `n` cities and `roads` array of `[a, b]` pairs. Assign each city a **unique** value from 1 to n. The importance of a road `[a, b]` = value[a] + value[b]. Maximize the **total importance** of all roads.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Greedy insight** — city with degree `d` contributes its value `d` times to the total
 2. **Sort by degree** — assign highest values to highest-degree nodes
@@ -37,9 +46,9 @@ Given `n` cities and `roads` array of `[a, b]` pairs. Assign each city a **uniqu
 5. **Time complexity** — O(n log n) for sort + O(E) for degree counting
 6. **Why greedy works** — maximizing `Σ value[i] × degree[i]` = rearrangement inequality (pair largest with largest)
 
-## Solutions
+---
 
-### Solution 1: Greedy Sort
+## Solutions
 
 ```typescript
 function maximumImportance(n: number, roads: number[][]): number {
@@ -76,11 +85,7 @@ console.log(
     [1, 3],
   ]),
 ); // 20
-```
 
-### Solution 2: Explicit Node Labeling (for clarity)
-
-```typescript
 function maximumImportanceVerbose(n: number, roads: number[][]): number {
   // Count connections per city
   const degree = new Array(n).fill(0);
@@ -116,11 +121,7 @@ console.log(
     [2, 4],
   ]),
 ); // 43
-```
 
-### Solution 3: One-liner with Map/Reduce
-
-```typescript
 function maximumImportanceCompact(n: number, roads: number[][]): number {
   const deg = new Array(n).fill(0);
   roads.forEach(([a, b]) => {
@@ -149,7 +150,9 @@ console.log(
 ); // 20
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                 | Difficulty | Tags          |
 | ---- | --------------------------------------- | ---------- | ------------- |

@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/replace-the-substring-for-balanced-
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Chuỗi chỉ gồm `Q, W, E, R`. Cân bằng nghĩa là mỗi ký tự xuất hiện đúng `n/4` lần. Ta chọn một đoạn con để thay thế (đặt ký tự tùy ý). Đoạn cần thay nhỏ nhất — dùng sliding window: thu hẹp cửa sổ khi phần **ngoài** đã đủ điều kiện.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Chuỗi chỉ gồm `Q, W, E, R`. Cân bằng nghĩa là mỗi ký tự xuất hiện đúng `n/4` lần. Ta chọn một đoạn con để thay thế (đặt ký tự tùy ý). Đoạn cần thay nhỏ nhất — dùng sliding window: thu hẹp cửa sổ khi phần **ngoài** đã đủ điều kiện.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Replace the Substring for Balanced String example:**
 
 ```
 s = "QWER"  n=4  target=1 each
@@ -30,7 +37,20 @@ Answer = 1
 
 **Key insight**: Slide a window over the string. The chars **outside** the window must each have count ≤ `n/4`. Minimize the window size satisfying this constraint.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                            | Difficulty | Pattern        |
+| ---- | ---------------------------------- | ---------- | -------------- |
+| 76   | Minimum Window Substring           | 🔴 Hard    | Sliding Window |
+| 1004 | Max Consecutive Ones III           | 🟡 Medium  | Sliding Window |
+| 567  | Permutation in String              | 🟡 Medium  | Sliding Window |
+| 1208 | Get Equal Substrings Within Budget | 🟡 Medium  | Sliding Window |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Key observation: characters **inside** the window will be replaced → their count is irrelevant
   **VI**: Nhận xét chính: ký tự **trong** cửa sổ sẽ bị thay → không quan trọng số lần xuất hiện
@@ -130,7 +150,14 @@ console.log(balancedString2("QQQW")); // 2
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                            | Difficulty | Pattern        |
 | ---- | ---------------------------------- | ---------- | -------------- |

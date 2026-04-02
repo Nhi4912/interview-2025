@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/paint-house-iii"
 
 # Paint House III / Sơn Nhà III
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Bạn cần sơn n căn nhà với k màu, tạo ra đúng m khu phố (nhóm nhà liên tiếp cùng màu).  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Bạn cần sơn n căn nhà với k màu, tạo ra đúng m khu phố (nhóm nhà liên tiếp cùng màu).  
 > Giống phân chia dân cư thành m quận: mỗi quận gồm các nhà liên tiếp, tối thiểu hóa chi phí.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Paint House III example:**
 
 ```
 houses=[0,2,1,2,0], cost=[[1,10],[10,1],[10,1],[1,10],[5,1]], m=3, k=2
@@ -25,7 +30,9 @@ dp[4][c][3] → answer: min over all colors c
 Result: 9
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given `houses[i]` (0=unpainted, else color), `cost[i][j]` (cost to paint house i with color j+1),
 and `m` (target neighborhoods), return the **minimum cost** to paint all houses with exactly `m`
@@ -33,7 +40,9 @@ neighborhoods. If impossible, return `-1`.
 
 **Constraints:** `n <= 100`, `m <= n`, `k <= 20`, costs `<= 10^4`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **3D DP state** — `dp[i][color][neighborhoods]` = min cost for first `i+1` houses.
 2. **Transition** — if house `i-1` and `i` same color → neighborhoods unchanged; else +1.
@@ -42,9 +51,9 @@ neighborhoods. If impossible, return `-1`.
 5. **Answer** — `min(dp[n-1][c][m])` for all colors `c`.
 6. **Complexity** — O(n·k²·m): n=100, k=20, m=100 → 4M ops — feasible.
 
-## Solutions
+---
 
-### Solution 1: 3D DP Bottom-up — O(n·k²·m)
+## Solutions
 
 ```typescript
 function minCost(houses: number[], cost: number[][], m: number, n: number, k: number): number {
@@ -155,11 +164,7 @@ console.log(
     3,
   ),
 ); // -1
-```
 
-### Solution 2: Space-optimized (2 layers)
-
-```typescript
 function minCostOpt(houses: number[], cost: number[][], m: number, n: number, k: number): number {
   const INF = 1e9;
   // Use prev/curr to save memory
@@ -225,7 +230,9 @@ console.log(
 ); // -1
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                       | Difficulty | Key Concept  |
 | ----------------------------------------------------------------------------- | ---------- | ------------ |

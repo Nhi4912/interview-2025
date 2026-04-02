@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-number-of-vowels-in-a-subst
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Cửa sổ trượt kích thước `k` qua chuỗi. Khi trượt sang phải một bước: cộng thêm 1 nếu ký tự mới là nguyên âm, trừ 1 nếu ký tự rời khỏi cửa sổ là nguyên âm.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Cửa sổ trượt kích thước `k` qua chuỗi. Khi trượt sang phải một bước: cộng thêm 1 nếu ký tự mới là nguyên âm, trừ 1 nếu ký tự rời khỏi cửa sổ là nguyên âm.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Number of Vowels in a Substring of Given Length example:**
 
 ```
 s = "abciiidef"  k = 3
@@ -28,7 +35,20 @@ Answer = 3
 
 **Key insight**: Maintain a running vowel count. Slide right: `+1` if `s[i]` is vowel, `-1` if `s[i-k]` is vowel. O(n) — no recount.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                 | Difficulty | Pattern        |
+| ---- | --------------------------------------- | ---------- | -------------- |
+| 643  | Maximum Average Subarray I              | 🟢 Easy    | Sliding Window |
+| 1004 | Max Consecutive Ones III                | 🟡 Medium  | Sliding Window |
+| 567  | Permutation in String                   | 🟡 Medium  | Sliding Window |
+| 1456 | Maximum Number of Vowels in a Substring | 🟡 Medium  | Sliding Window |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Fixed-size window — expand to size k, then slide one step at a time
   **VI**: Cửa sổ cố định — mở rộng đến kích thước k, rồi trượt từng bước
@@ -126,7 +146,14 @@ console.log(maxVowels3("aeiou", 2)); // 2
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                 | Difficulty | Pattern        |
 | ---- | --------------------------------------- | ---------- | -------------- |

@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/all-ancestors-of-a-node-in-a-direct
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng hệ thống phân cấp công ty: mỗi nhân viên có những người quản lý trực tiếp hoặc gián tiếp (tổ tiên). Cho danh sách các cặp "A quản lý B", hãy tìm tất cả người quản lý của từng người. Bí quyết: đảo ngược quan hệ (từ B→A thành A→B), rồi với mỗi node khởi phát DFS, đánh dấu "node này là tổ tiên của tất cả descendants" — cách này tránh phải tìm kiếm từ mỗi node.
+**Analogy:** Hãy tưởng tượng hệ thống phân cấp công ty: mỗi nhân viên có những người quản lý trực tiếp hoặc gián tiếp (tổ tiên). Cho danh sách các cặp "A quản lý B", hãy tìm tất cả người quản lý của từng người. Bí quyết: đảo ngược quan hệ (từ B→A thành A→B), rồi với mỗi node khởi phát DFS, đánh dấu "node này là tổ tiên của tất cả descendants" — cách này tránh phải tìm kiếm từ mỗi node.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — All Ancestors of a Node in a DAG example:**
 
 ```
 n=8, edges: 0→3, 0→4, 1→3, 2→4, 2→7, 3→5, 3→6, 3→7, 4→6
@@ -34,7 +37,9 @@ Approach: For each node u, DFS to find all descendants, mark u as ancestor
 Result (sorted): [[], [], [], [0,1], [0,2], [0,1,3], [0,1,2,3,4], [0,1,2,3]]
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given a DAG with `n` nodes (0-indexed) and a list of `edges` (directed), find all ancestors of each node. Return a list `answer` where `answer[i]` is the **sorted** list of all ancestor node indices of node `i`. An ancestor of node `v` is any node `u` such that there exists a directed path from `u` to `v`.
 
@@ -46,7 +51,9 @@ Given a DAG with `n` nodes (0-indexed) and a list of `edges` (directed), find al
 
 **Constraints:** `1 ≤ n ≤ 1000`, `0 ≤ edges.length ≤ min(2000, n*(n-1)/2)`, no duplicate edges
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **DFS from each source** / DFS từ mỗi nguồn: Với mỗi node `u` là nguồn (outgoing edges), DFS xuôi chiều và đánh dấu `u` là tổ tiên của mọi node đến được
 - **Sort guaranteed** / Đảm bảo thứ tự: Nếu duyệt u từ 0 → n-1 và mỗi u append vào descendants, kết quả tự động được sắp xếp
@@ -55,7 +62,9 @@ Given a DAG with `n` nodes (0-indexed) and a list of `edges` (directed), find al
 - **O(n²) is acceptable** / O(n²) chấp nhận được: n≤1000 nên O(n*(n+e)) ≈ O(n²+n*e) là fine
 - **Use Set for dedup** / Dùng Set khử trùng: Topological approach cần Set vì có thể thêm cùng ancestor nhiều lần
 
-## Solution 1 - DFS from Each Node
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -85,11 +94,7 @@ function getAncestors(n: number, edges: number[][]): number[][] {
 
   return ancestors; // already sorted because u goes 0..n-1
 }
-```
 
-## Solution 2 - Topological Sort + Set Propagation (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(n²) | Space: O(n²)
  * Toposort; each node inherits ancestors from all its parents via Set union
@@ -121,11 +126,8 @@ function getAncestorsTopoSort(n: number, edges: number[][]): number[][] {
 
   return ancSets.map((s) => [...s].sort((a, b) => a - b));
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   getAncestors(8, [
     [0, 3],
@@ -167,7 +169,9 @@ console.log(
 // → [[],[0],[0,1]]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                         | Difficulty | Link                                                                 |
 | ------------------------------- | ---------- | -------------------------------------------------------------------- |

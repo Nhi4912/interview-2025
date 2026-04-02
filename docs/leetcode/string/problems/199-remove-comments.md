@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/remove-comments"
 
 # Remove Comments / Xóa Bình Luận
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống đọc văn bản với bút highlight — khi gặp `/*` thì che đi tất cả cho đến `*/`, khi gặp `//` thì che phần còn lại của dòng đó.
+**Analogy:** > **Phép so sánh:** Giống đọc văn bản với bút highlight — khi gặp `/*` thì che đi tất cả cho đến `*/`, khi gặp `//` thì che phần còn lại của dòng đó.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Remove Comments example:**
 
 ```
 State machine:
@@ -27,6 +32,8 @@ State machine:
 
 Line boundary: if !inBlock and currentLine non-empty → push to result
 ```
+
+---
 
 ## Problem Description
 
@@ -46,6 +53,8 @@ Output: ["int main()", "{ ", "   cout << s ;", "}"]
 
 **Constraints:** `1 <= source.length <= 100`, each line length `<= 80`
 
+---
+
 ## 📝 Interview Tips
 
 - **State machine:** Chỉ cần một flag `inBlock` — 2 trạng thái, không cần stack
@@ -55,9 +64,9 @@ Output: ["int main()", "{ ", "   cout << s ;", "}"]
 - **Two-pointer:** Dùng index `i` trong vòng lặp để nhảy 2 ký tự khi phát hiện `/*` hay `*/`
 - **Complexity:** O(n·m) time where n=lines, m=max line length
 
-## Solutions
+---
 
-### Solution 1: State Machine — O(n·m) time, O(n·m) space
+## Solutions
 
 ```typescript
 function removeComments(source: string[]): string[] {
@@ -97,11 +106,7 @@ function removeComments(source: string[]): string[] {
 
   return result;
 }
-```
 
-### Solution 2: Join then scan — O(n·m) time, O(n·m) space
-
-```typescript
 function removeComments(source: string[]): string[] {
   // Join with sentinel newlines to preserve line info
   const lines: string[] = [];
@@ -135,6 +140,8 @@ function removeComments(source: string[]): string[] {
   return lines;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

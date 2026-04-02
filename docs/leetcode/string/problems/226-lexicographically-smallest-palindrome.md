@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/lexicographically-smallest-palindro
 
 # Lexicographically Smallest Palindrome / Palindrome Nhỏ Nhất Theo Thứ Tự Từ Điển
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Cho chuỗi `s`, bạn có thể thay thế bất kỳ ký tự nào bằng ký tự chữ thường bất kỳ. Tìm palindrome nhỏ nhất theo thứ tự từ điển mà có thể tạo ra.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Cho chuỗi `s`, bạn có thể thay thế bất kỳ ký tự nào bằng ký tự chữ thường bất kỳ. Tìm palindrome nhỏ nhất theo thứ tự từ điển mà có thể tạo ra.
 
 **Ví dụ:** `s = "egcfe"` → cặp `(0,4): e,e` ok; `(1,3): g,f` → thay cả hai bằng `min('g','f')='f'` → `"efcfe"`.
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như chỉnh sửa gương chiếu: hai vị trí đối xứng phải giống nhau. Để nhỏ nhất theo từ điển, lấy ký tự bé hơn trong hai vị trí đối xứng.
-
-## Minh họa ASCII
+**Visual — Lexicographically Smallest Palindrome example:**
 
 ```
 s = "egcfe"
@@ -40,14 +41,18 @@ Pairs: (0,3)='a','d' → min='a' → 'a','a'
 Result: "abba"
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - Thay thế bất kỳ ký tự nào (0 hoặc nhiều lần) để tạo palindrome.
 - Trả về palindrome nhỏ nhất theo thứ tự từ điển.
 
 **Constraints:** `1 <= s.length <= 1000`, chỉ chứa chữ thường.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **Greedy từ ngoài vào** — xử lý từng cặp đối xứng từ ngoài vào giữa.
 2. **Nếu bằng nhau** — không cần thay, giữ nguyên.
@@ -56,9 +61,9 @@ Result: "abba"
 5. **Palindrome đảm bảo** — vì cả hai ký tự trong cặp đều được set bằng nhau.
 6. **Không cần sort** — chỉ cần một lần duyệt O(n/2).
 
-## Giải pháp
+---
 
-### Giải pháp 1: Two Pointers (Tối ưu)
+## Solutions
 
 ```typescript
 function makeSmallestPalindrome(s: string): string {
@@ -87,11 +92,7 @@ console.log(makeSmallestPalindrome("seven")); // "neven"
 console.log(makeSmallestPalindrome("a")); // "a"
 console.log(makeSmallestPalindrome("aa")); // "aa"
 console.log(makeSmallestPalindrome("zzz")); // "zzz"
-```
 
-### Giải pháp 2: Array map với index mirroring
-
-```typescript
 function makeSmallestPalindromeMap(s: string): string {
   const n = s.length;
   const arr = s.split("");
@@ -110,11 +111,7 @@ function makeSmallestPalindromeMap(s: string): string {
 console.log(makeSmallestPalindromeMap("egcfe")); // "efcfe"
 console.log(makeSmallestPalindromeMap("abcd")); // "abba"
 console.log(makeSmallestPalindromeMap("seven")); // "neven"
-```
 
-### Giải pháp 3: Functional với charCodeAt
-
-```typescript
 function makeSmallestPalindromeFn(s: string): string {
   const n = s.length;
 
@@ -137,18 +134,12 @@ console.log(isPalindrome(makeSmallestPalindromeFn("egcfe"))); // true
 console.log(isPalindrome(makeSmallestPalindromeFn("seven"))); // true
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp    | Thời gian | Không gian | Ghi chú          |
 | ------------ | --------- | ---------- | ---------------- |
 | Two Pointers | O(n)      | O(n)       | Tối ưu, rõ ràng  |
 | Array map    | O(n)      | O(n)       | Tương đương      |
 | Functional   | O(n)      | O(n)       | Functional style |
-
-## Bài liên quan
-
-| #    | Tên                                                 | Độ khó | Tags         |
-| ---- | --------------------------------------------------- | ------ | ------------ |
-| 125  | Valid Palindrome                                    | Easy   | Two Pointers |
-| 680  | Valid Palindrome II                                 | Easy   | Two Pointers |
-| 1312 | Minimum Insertion Steps to Make a String Palindrome | Hard   | DP           |

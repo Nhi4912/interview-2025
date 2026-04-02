@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/shortest-string-that-contains-three
 
 # Shortest String That Contains Three Strings / Chuỗi Ngắn Nhất Chứa Ba Chuỗi
 
-🟡 Medium | 🏷️ String, Greedy, Enumeration
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Tìm chuỗi ngắn nhất chứa `a`, `b`, `c` làm substring. Thử tất cả 6 hoán vị `[a,b,c]`, với mỗi hoán vị, hợp nhất 3 chuỗi theo thứ tự bằng cách tìm **overlap tối đa** giữa đuôi chuỗi trước và đầu chuỗi sau. Chọn kết quả ngắn nhất (nếu bằng nhau, chọn lex nhỏ hơn).
+**Analogy:** **VI:** Tìm chuỗi ngắn nhất chứa `a`, `b`, `c` làm substring. Thử tất cả 6 hoán vị `[a,b,c]`, với mỗi hoán vị, hợp nhất 3 chuỗi theo thứ tự bằng cách tìm **overlap tối đa** giữa đuôi chuỗi trước và đầu chuỗi sau. Chọn kết quả ngắn nhất (nếu bằng nhau, chọn lex nhỏ hơn).
 
 **EN:** Try all 6 permutations of [a, b, c]. For each ordering, merge consecutive strings by finding their maximum suffix-prefix overlap. Return the shortest merged result (lexicographically smallest if tie).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Shortest String That Contains Three Strings example:**
 
 ```
 a="abc", b="bca", c="aab"
@@ -28,6 +33,18 @@ Ordering [aab, abc, bca]:
   "aabc"+"bca" → overlap "bc" → "aabca"  len=5 ✅
 ```
 
+---
+
+## Problem Description
+
+| #    | Problem                                | Difficulty | Key Idea            |
+| ---- | -------------------------------------- | ---------- | ------------------- |
+| 1092 | Shortest Common Supersequence          | 🔴 Hard    | DP supersequence    |
+| 943  | Find the Shortest Superstring          | 🔴 Hard    | TSP + DP on subsets |
+| 28   | Find the Index of the First Occurrence | 🟢 Easy    | KMP string matching |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Brute force hợp lý:** 3! = 6 hoán vị — hoàn toàn chấp nhận được
@@ -39,9 +56,9 @@ Ordering [aab, abc, bca]:
 - 🇻🇳 **Tie-breaking:** cùng độ dài thì chọn chuỗi nhỏ hơn theo alphabet
 - 🇬🇧 **Tie-breaking:** same length? take lexicographically smaller string
 
-## Solutions
+---
 
-### Solution 1: Enumerate all 6 permutations
+## Solutions
 
 ```typescript
 /**
@@ -86,11 +103,7 @@ function minimumString(a: string, b: string, c: string): string {
 console.log(minimumString("abc", "bca", "aab")); // "aabc" or "aabca"
 console.log(minimumString("ab", "ba", "aba")); // "aba"
 console.log(minimumString("aa", "aa", "aa")); // "aa"
-```
 
-### Solution 2: KMP-based overlap for efficiency
-
-```typescript
 /**
  * Use KMP failure function for O(n) overlap computation.
  * Time: O(n) per merge, 6 perms → O(6n) = O(n) | Space: O(n)
@@ -140,6 +153,8 @@ function minimumString2(a: string, b: string, c: string): string {
 console.log(minimumString2("abc", "bca", "aab")); // "aabc"
 console.log(minimumString2("ab", "ba", "aba")); // "aba"
 ```
+
+---
 
 ## 🔗 Related Problems
 

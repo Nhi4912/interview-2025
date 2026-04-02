@@ -7,15 +7,18 @@ tags: [Array, Binary Search, Depth-First Search, Breadth-First Search, Union Fin
 leetcode_url: "https://leetcode.com/problems/path-with-maximum-minimum-value"
 ---
 
-## 1102. Path With Maximum Minimum Value
-
-### Đường Đi Với Giá Trị Nhỏ Nhất Tối Đa | 🟡 Medium
+# path with maximum minimum value
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Bạn cần đi từ góc trên-trái sang góc dưới-phải. Trên đường đi, "điểm yếu" là ô nhỏ nhất. Tìm con đường mà "điểm yếu" lớn nhất có thể — nghĩa là đường đi tốt nhất trong điều kiện xấu nhất.
+**Analogy:** > **Vietnamese analogy:** Bạn cần đi từ góc trên-trái sang góc dưới-phải. Trên đường đi, "điểm yếu" là ô nhỏ nhất. Tìm con đường mà "điểm yếu" lớn nhất có thể — nghĩa là đường đi tốt nhất trong điều kiện xấu nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Grid:           Best path (greedy max-heap):
@@ -26,7 +29,9 @@ Grid:           Best path (greedy max-heap):
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given an `m x n` integer matrix `grid`, find a path from `(0,0)` to `(m-1, n-1)` that maximizes the **minimum value** along the path. Return that maximum score.
 
@@ -42,6 +47,8 @@ Given an `m x n` integer matrix `grid`, find a path from `(0,0)` to `(m-1, n-1)`
 
 ---
 
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Greedy max-heap (Dijkstra-variant):** always expand the cell with the highest value first
@@ -53,9 +60,9 @@ Given an `m x n` integer matrix `grid`, find a path from `(0,0)` to `(m-1, n-1)`
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Max-Heap (Greedy Dijkstra)
+## Solutions
 
 ```typescript
 function maximumMinimumPath(grid: number[][]): number {
@@ -123,11 +130,7 @@ function maximumMinimumPath(grid: number[][]): number {
 
   return score;
 }
-```
 
-### Solution 2: Binary Search + BFS
-
-```typescript
 function maximumMinimumPathBS(grid: number[][]): number {
   const m = grid.length,
     n = grid[0].length;

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimize-or-of-remaining-elements-u
 
 # Minimize OR of Remaining Elements Using Operations / Tối Thiểu OR Của Các Phần Tử Còn Lại
 
-**Difficulty:** Hard | **Category:** Array, Greedy, Bit Manipulation | **LeetCode:** [3317](https://leetcode.com/problems/minimize-or-of-remaining-elements-using-operations)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Phép so sánh tiếng Việt:** Giống như bạn muốn "tắt đèn" trên bảng điện — mỗi ô đèn là một bit. Mỗi lần AND hai phần tử kề nhau chỉ có thể tắt đèn (không bật thêm). Bạn được k lần AND liên tiếp. Muốn kết quả OR nhỏ nhất → tắt được nhiều bit nhất.
+**Analogy:** **Phép so sánh tiếng Việt:** Giống như bạn muốn "tắt đèn" trên bảng điện — mỗi ô đèn là một bit. Mỗi lần AND hai phần tử kề nhau chỉ có thể tắt đèn (không bật thêm). Bạn được k lần AND liên tiếp. Muốn kết quả OR nhỏ nhất → tắt được nhiều bit nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimize OR of Remaining Elements Using Operations example:**
 
 ```
 Greedy từ bit cao nhất xuống thấp nhất:
@@ -29,7 +34,13 @@ bit 2 (=4): thử loại bỏ
   Cần 1 đoạn → segments=1 <= k+1=3 ✓ → loại bit 2 khỏi kết quả
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Greedy từ bit cao xuống thấp**: Bit cao có trọng số lớn hơn, ưu tiên loại nó trước.
 2. **AND chỉ tắt bit**: Phép AND không bao giờ bật bit mới → chỉ có lợi khi dùng AND liên tiếp.
@@ -38,7 +49,9 @@ bit 2 (=4): thử loại bỏ
 5. **Accumulate target**: Giữ `target` là mask các bit đã quyết định loại bỏ, dùng để check segment.
 6. **Không phải DP**: Greedy bit-by-bit từ MSB đảm bảo optimal vì mỗi bit độc lập với bit thấp hơn.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -91,9 +104,7 @@ function minimizeOrGreedy(nums: number[], k: number): number {
 console.log(minimizeOrGreedy([3, 5, 3, 2, 7], 2)); // 3
 console.log(minimizeOrGreedy([7, 3, 15, 14, 2, 8], 4)); // 2
 console.log(minimizeOrGreedy([10, 7, 10, 3, 9, 14, 9, 4], 1)); // 15
-```
 
-```typescript
 /**
  * Approach 2: Greedy với segment counting chuẩn
  * Time: O(30 * n)  Space: O(1)
@@ -152,9 +163,7 @@ function minimizeOr(nums: number[], k: number): number {
 console.log(minimizeOr([3, 5, 3, 2, 7], 2)); // 3
 console.log(minimizeOr([7, 3, 15, 14, 2, 8], 4)); // 2
 console.log(minimizeOr([1], 0)); // 1
-```
 
-```typescript
 /**
  * Approach 3: Tương đương — tính trực tiếp result bit-by-bit
  * Time: O(30 * n)  Space: O(1)
@@ -212,7 +221,9 @@ console.log(minimizeOrDirect([7, 3, 15, 14, 2, 8], 4)); // 2
 console.log(minimizeOrDirect([10, 7, 10, 3, 9, 14, 9, 4], 1)); // 15
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                                                | Difficulty | Pattern          |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------- |

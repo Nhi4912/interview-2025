@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/maximum-difference-score-in-a-grid"
 
 # Maximum Difference Score in a Grid / Điểm Chênh Lệch Tối Đa Trong Lưới
 
-🟡 Medium | Dynamic Programming · Matrix
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** You can move right or down. The score of a path from cell A to cell B is `grid[B] - grid[A]`. Maximize over all valid paths. Key insight: for each cell (i,j), find the **minimum value** in any cell you could have come from (i.e., any cell (r,c) where r≤i, c≤j, not equal to (i,j)). Track this with `minDP[i][j]`.
+**Analogy:** **EN:** You can move right or down. The score of a path from cell A to cell B is `grid[B] - grid[A]`. Maximize over all valid paths. Key insight: for each cell (i,j), find the **minimum value** in any cell you could have come from (i.e., any cell (r,c) where r≤i, c≤j, not equal to (i,j)). Track this with `minDP[i][j]`.
 
 **VI:** Di chuyển phải hoặc xuống. Điểm từ A đến B là `grid[B] - grid[A]`. Tối đa hóa qua mọi đường đi hợp lệ. Chìa khóa: với mỗi ô (i,j), tìm giá trị **tối thiểu** trong mọi ô có thể đến từ đó (r≤i, c≤j, khác (i,j)). Theo dõi bằng `minDP[i][j]`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Difference Score in a Grid example:**
 
 ```
 Grid:     minDP (min value reachable to reach this cell):
@@ -33,6 +36,18 @@ minDP[i][j] = min(grid[i][j-1], minDP[i][j-1],
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                           | Difficulty | Pattern              |
+| ------------------------------------------------------------------------------------------------- | ---------- | -------------------- |
+| [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum/)                               | 🟡 Medium  | Grid DP              |
+| [Maximal Square](https://leetcode.com/problems/maximal-square/)                                   | 🟡 Medium  | Grid DP              |
+| [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock/) | 🟢 Easy    | Track Min + Max Diff |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Score of a single move from (r,c)→(i,j) = `grid[i][j] - grid[r][c]`. Best = maximize `grid[i][j] - min_value_in_upper_left`. **VI:** Điểm di chuyển = grid[i][j] - grid[r][c]. Tối đa = grid[i][j] - giá trị_nhỏ_nhất_trên_trái.
@@ -44,7 +59,9 @@ minDP[i][j] = min(grid[i][j-1], minDP[i][j-1],
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

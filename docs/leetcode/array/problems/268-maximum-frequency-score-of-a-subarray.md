@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/maximum-frequency-score-of-a-subarr
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một cửa hàng với nhiều loại sản phẩm. "Điểm phổ biến" của một cửa sổ k sản phẩm bằng tổng `(giá^số_lần_xuất_hiện)` cho mỗi loại. Khi cửa sổ trượt sang phải: ta thêm một sản phẩm (tăng lũy thừa lên 1) và xóa một sản phẩm (giảm lũy thừa). Thủ thuật: thay vì tính lại từ đầu, ta cập nhật điểm số delta: `+value^newFreq - value^oldFreq` mỗi bước trượt.
+**Analogy:** Hãy tưởng tượng một cửa hàng với nhiều loại sản phẩm. "Điểm phổ biến" của một cửa sổ k sản phẩm bằng tổng `(giá^số_lần_xuất_hiện)` cho mỗi loại. Khi cửa sổ trượt sang phải: ta thêm một sản phẩm (tăng lũy thừa lên 1) và xóa một sản phẩm (giảm lũy thừa). Thủ thuật: thay vì tính lại từ đầu, ta cập nhật điểm số delta: `+value^newFreq - value^oldFreq` mỗi bước trượt.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Frequency Score of a Subarray example:**
 
 ```
 nums = [1,1,1,2,1,2], k = 3, MOD = 10^9+7
@@ -35,7 +38,9 @@ Window [3..5] = [2,1,2]: freq={2:2, 1:1} → score = 2^2 + 1^1 = 5 ← MAX ✓
 Answer = 5
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 The **frequency score** of an array is `Σ value^frequency(value)` (mod 10^9+7) for each distinct value. Given `nums` and integer `k`, return the **maximum frequency score** among all subarrays of size `k`.
 
@@ -44,7 +49,9 @@ The **frequency score** of an array is `Σ value^frequency(value)` (mod 10^9+7) 
 
 **Constraints:** `1 ≤ nums.length ≤ 10^5`, `1 ≤ k ≤ nums.length`, `1 ≤ nums[i] ≤ 10^6`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Sliding window + incremental update** / Cửa sổ trượt + cập nhật từng bước: Tránh tính lại toàn bộ O(k) mỗi bước
 - **Modular exponentiation** / Lũy thừa modular: `value^freq mod MOD` — cần `modPow` để tính nhanh
@@ -53,7 +60,9 @@ The **frequency score** of an array is `Σ value^frequency(value)` (mod 10^9+7) 
 - **Why MOD is needed** / Tại sao cần MOD: `nums[i]^k` có thể cực lớn với k=10^5 và nums[i]=10^6
 - **Brute O(n·k)** / Brute force: Tính lại score cho mỗi window từ đầu → chấp nhận được với n≤10^5, k nhỏ
 
-## Solution 1 - Brute Force (O(n·k))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +92,7 @@ function maxFrequencyScoreBrute(nums: number[], k: number): number {
   }
   return Number(maxScore);
 }
-```
 
-## Solution 2 - Sliding Window with Incremental Score (Optimal O(n·log(k)))
-
-```typescript
 /**
  * @complexity Time: O(n·log k) | Space: O(k)
  * Slide window; update score by removing contribution of old freq, adding new freq
@@ -144,18 +149,17 @@ function maxFrequencyScore(nums: number[], k: number): number {
 
   return Number(maxScore);
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(maxFrequencyScore([1, 1, 1, 2, 1, 2], 3)); // → 5
 console.log(maxFrequencyScore([1, 2, 3, 4, 5, 6, 7, 8], 2)); // → 65
 console.log(maxFrequencyScore([1], 1)); // → 1
 console.log(maxFrequencyScoreBrute([1, 1, 1, 2, 1, 2], 3)); // → 5
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                | Difficulty | Link                                                                            |
 | -------------------------------------- | ---------- | ------------------------------------------------------------------------------- |

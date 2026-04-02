@@ -7,15 +7,18 @@ tags: [Array, Dynamic Programming, Bit Manipulation, Bitmask]
 leetcode_url: "https://leetcode.com/problems/number-of-ways-to-wear-different-hats-to-each-other"
 ---
 
-## 🎩 1434. Number of Ways to Wear Different Hats to Each Other / Số Cách Đội Mũ Khác Nhau
-
-**Difficulty:** 🔴 Hard
+# number of ways to wear different hats to each other
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Có 40 chiếc mũ và tối đa 10 người. Thay vì "người nào đội mũ gì", ta lật chiều: **duyệt từng chiếc mũ** và quyết định ai được đội nó. Bitmask theo **người** (tối đa 10 người = 2^10 = 1024 trạng thái) — rất nhỏ!
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Hats processed: 1 → 2 → 3 → ... → 40
@@ -29,12 +32,16 @@ Key: iterate hats (outer loop), not people → prevents assigning 2 hats to 1 pe
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `n` people (≤10) and hats 1–40. Each person has a preferred hat list. Count assignments where every person wears a **different** hat (from their list). Return result mod 10^9+7.
 
 - Example: `hats = [[3,4],[4,5],[5]]` → **1** (person 0 wears hat 3, person 1 wears hat 4, person 2 wears hat 5)
 - Example: `hats = [[3,5,1],[3,5]]` → **4**
+
+---
 
 ---
 
@@ -49,9 +56,9 @@ Given `n` people (≤10) and hats 1–40. Each person has a preferred hat list. 
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Bottom-Up Bitmask DP
+## Solutions
 
 ```typescript
 function numberWays(hats: number[][]): number {
@@ -85,11 +92,7 @@ function numberWays(hats: number[][]): number {
 
   return Number(dp[full]);
 }
-```
 
-### Solution 2: Top-Down Memoization
-
-```typescript
 function numberWaysMemo(hats: number[][]): number {
   const MOD = 1_000_000_007;
   const n = hats.length;
@@ -120,11 +123,7 @@ function numberWaysMemo(hats: number[][]): number {
 
   return solve(1, 0);
 }
-```
 
-### Solution 3: Compact Bottom-Up with flat array
-
-```typescript
 function numberWaysCompact(hats: number[][]): number {
   const MOD = 1_000_000_007;
   const n = hats.length;

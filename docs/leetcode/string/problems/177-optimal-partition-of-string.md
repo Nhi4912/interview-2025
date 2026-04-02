@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/optimal-partition-of-string"
 
 # Optimal Partition of String / Phân Chia Chuỗi Tối Ưu
 
-**Difficulty:** 🟡 Medium | **Tags:** Hash Table, String, Greedy
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Bài toán giống **cắt bánh**: cắt sớm nhất khi có ký tự lặp, để mỗi miếng có ký tự không trùng.
+**Analogy:** Bài toán giống **cắt bánh**: cắt sớm nhất khi có ký tự lặp, để mỗi miếng có ký tự không trùng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Optimal Partition of String example:**
 
 ```
 s = "abacaba"
@@ -39,7 +42,19 @@ Answer: 4
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                                           | Difficulty | Pattern         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Partition Labels](https://leetcode.com/problems/partition-labels/)                                                                               | 🟡 Medium  | Greedy interval |
+| [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/)                   | 🟡 Medium  | Sliding window  |
+| [Maximum Number of Vowels in a Substring of Given Length](https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length/) | 🟡 Medium  | Sliding window  |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Greedy cắt trễ nhất**: khi gặp ký tự trùng mới cắt — tối ưu vì cắt sớm chỉ tăng số lượng
 - 🇺🇸 **Greedy cut latest**: cut only when forced — earlier cuts never reduce total count
@@ -56,9 +71,9 @@ Answer: 4
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Greedy with Set (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +98,7 @@ function partitionString(s: string): number {
 console.log(partitionString("abacaba")); // 4
 console.log(partitionString("ssssss")); // 6
 console.log(partitionString("abcde")); // 1
-```
 
-### Solution 2 — Greedy with Bitmask (Faster)
-
-```typescript
 /**
  * Use 26-bit integer instead of Set for O(1) ops with smaller constant.
  * Time: O(n)  Space: O(1)
@@ -111,11 +122,7 @@ function partitionString2(s: string): number {
 console.log(partitionString2("abacaba")); // 4
 console.log(partitionString2("ssssss")); // 6
 console.log(partitionString2("abcde")); // 1
-```
 
-### Solution 3 — Sliding Window with Array
-
-```typescript
 /**
  * Explicit sliding window tracking start of current partition.
  * Time: O(n)  Space: O(26) = O(1)

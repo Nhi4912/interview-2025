@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/find-polygon-with-the-largest-perim
 
 # Find Polygon With the Largest Perimeter / Tìm Đa Giác Có Chu Vi Lớn Nhất
 
-🟡 Medium | 🏷️ Array, Greedy, Sorting, Prefix Sum | [LeetCode](https://leetcode.com/problems/find-polygon-with-the-largest-perimeter)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Một đa giác hợp lệ cần: cạnh lớn nhất < tổng các cạnh còn lại. Sau khi sắp xếp tăng dần, với mỗi phần tử `nums[i]` làm cạnh lớn nhất, điều kiện là `prefixSum[i-1] > nums[i]`. Để có chu vi lớn nhất, duyệt từ phải sang trái và dừng ở phần tử đầu tiên thỏa mãn.
+**Analogy:** **Vietnamese:** Một đa giác hợp lệ cần: cạnh lớn nhất < tổng các cạnh còn lại. Sau khi sắp xếp tăng dần, với mỗi phần tử `nums[i]` làm cạnh lớn nhất, điều kiện là `prefixSum[i-1] > nums[i]`. Để có chu vi lớn nhất, duyệt từ phải sang trái và dừng ở phần tử đầu tiên thỏa mãn.
 
 **Analogy:** Bạn dựng lều bằng những cây gậy — cây dài nhất phải ngắn hơn tổng tất cả cây còn lại, nếu không lều sẽ không khép kín.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Polygon With the Largest Perimeter example:**
 
 ```
 nums = [5, 5, 5]  sorted → [5,5,5]
@@ -34,6 +37,18 @@ i=4: nums[4]=5  < prefix[3]=7? YES ✅ → perimeter = prefix[4] = 12
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                            | Difficulty | Connection               |
+| ------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [Largest Perimeter Triangle](https://leetcode.com/problems/largest-perimeter-triangle)                             | 🟢 Easy    | Same idea, triangle only |
+| [Rearrange Array to Maximize Prefix Score](https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score) | 🟡 Medium  | Prefix sum after sort    |
+| [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal)                 | 🔴 Hard    | Prefix sum optimization  |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** A polygon with k sides is valid if longest side < sum of all others / **VI:** Đa giác hợp lệ: cạnh dài nhất < tổng các cạnh còn lại
@@ -45,9 +60,9 @@ i=4: nums[4]=5  < prefix[3]=7? YES ✅ → perimeter = prefix[4] = 12
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Sort + Prefix Sum + Right Scan
+## Solutions
 
 ```typescript
 /**
@@ -77,11 +92,7 @@ console.log(largestPerimeter([5, 5, 5])); // 15
 console.log(largestPerimeter([1, 12, 1, 2, 5, 3])); // 12
 console.log(largestPerimeter([1, 2, 3])); // 6  (1+2>3? no, 2<3, but 3-sided: 1+2=3 not >3) → -1? Actually 1+2=3 not strictly > 3 → -1
 console.log(largestPerimeter([3, 6, 2, 3])); // 12
-```
 
-### Solution 2: Running Prefix Sum (Space Optimized)
-
-```typescript
 /**
  * No extra array — maintain running prefix as we scan.
  * Time: O(n log n)  Space: O(1) extra

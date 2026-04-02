@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/smallest-value-of-the-rearranged-nu
 
 # Smallest Value of the Rearranged Number / Giá Trị Nhỏ Nhất Của Số Sắp Xếp Lại
 
-🟡 Medium | Math, Sorting | [LeetCode 2165](https://leetcode.com/problems/smallest-value-of-the-rearranged-number)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** For **negative** numbers: to get the smallest (most negative) value, we want the largest absolute value → sort digits **descending** and negate. For **positive** numbers: sort digits **ascending** but move the smallest non-zero digit to the front to avoid a leading zero.
+**Analogy:** **EN:** For **negative** numbers: to get the smallest (most negative) value, we want the largest absolute value → sort digits **descending** and negate. For **positive** numbers: sort digits **ascending** but move the smallest non-zero digit to the front to avoid a leading zero.
 
 **VI:** Với số **âm**: muốn số nhỏ nhất (âm nhất) → giá trị tuyệt đối lớn nhất → sắp xếp chữ số **giảm dần** rồi phủ định. Với số **dương**: sắp xếp **tăng dần** nhưng chuyển chữ số khác 0 nhỏ nhất lên đầu để tránh số 0 đứng đầu.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Smallest Value of the Rearranged Number example:**
 
 ```
 num = -7605  →  digits: [7,6,0,5]
@@ -35,7 +38,19 @@ num = 0       →  return 0
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                         | Difficulty | Pattern             |
+| --- | ------------------------------- | ---------- | ------------------- |
+| 1   | Largest Number                  | 🟡 Medium  | custom digit sort   |
+| 2   | Next Permutation                | 🟡 Medium  | digit rearrangement |
+| 3   | Smallest Number in Infinite Set | 🟡 Medium  | greedy construction |
+
+---
+
+## 📝 Interview Tips
 
 - ➕➖ **EN:** Three cases: zero, negative, positive. Handle `num === 0` separately. **VI:** Ba trường hợp: không, âm, dương. Xử lý `num === 0` riêng.
 - 🔢 **EN:** For negative: sort absolute value digits descending → largest abs value → most negative. **VI:** Số âm: sắp giảm dần → giá trị tuyệt đối lớn nhất → số âm nhỏ nhất.
@@ -46,9 +61,9 @@ num = 0       →  return 0
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Sort Digits, Handle Sign (Clean)
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +98,7 @@ console.log(smallestNumber(0)); // 0
 console.log(smallestNumber(-1)); // -1
 console.log(smallestNumber(100200)); // 100002
 console.log(smallestNumber(-100)); // -100 (sort desc [1,0,0] → "100" → -100)
-```
 
-### Solution 2 — Digit Frequency Count (O(d) sort for digits 0-9)
-
-```typescript
 /**
  * Count digit frequencies; build result by reading freq array in order.
  * Effectively counting sort — O(d) time for digit processing.
@@ -131,11 +142,7 @@ function smallestNumber2(num: number): number {
 console.log(smallestNumber2(310)); // 103
 console.log(smallestNumber2(-7605)); // -7650
 console.log(smallestNumber2(100200)); // 100002
-```
 
-### Solution 3 — One-liner Style (Readable)
-
-```typescript
 /**
  * Functional style using spread + sort with sign correction
  * Time: O(d log d)  Space: O(d)
@@ -158,7 +165,7 @@ console.log(smallestNumber3(310)); // 103
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                         | Difficulty | Pattern             |
 | --- | ------------------------------- | ---------- | ------------------- |

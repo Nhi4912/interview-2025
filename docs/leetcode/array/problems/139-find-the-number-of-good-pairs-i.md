@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/find-the-number-of-good-pairs-i"
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Phiên bản đơn giản hơn của Good Pairs II: constraints nhỏ hơn cho phép dùng brute force O(n\*m). Vẫn có thể tối ưu bằng divisor enumeration như bài II, nhưng brute force là đủ vì n, m ≤ 50.
+**Analogy:** **VI:** Phiên bản đơn giản hơn của Good Pairs II: constraints nhỏ hơn cho phép dùng brute force O(n\*m). Vẫn có thể tối ưu bằng divisor enumeration như bài II, nhưng brute force là đủ vì n, m ≤ 50.
 
 **EN:** Simpler version of Good Pairs II: smaller constraints (n, m ≤ 50, values ≤ 50) allow brute force O(n\*m). The divisor approach also works and is good practice for the interview follow-up.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find the Number of Good Pairs I example:**
 
 ```
 nums1=[1,3,4], nums2=[1,3,4], k=1
@@ -32,7 +37,19 @@ Total = 5
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                          | Difficulty | Pattern                 |
+| ---- | -------------------------------- | ---------- | ----------------------- |
+| 3163 | Find the Number of Good Pairs II | 🟡 Medium  | Divisor Enum + Hash Map |
+| 1512 | Number of Good Pairs             | 🟢 Easy    | Hash Map                |
+| 2176 | Count Equal and Divisible Pairs  | 🟢 Easy    | Brute Force             |
+
+---
+
+## 📝 Interview Tips
 
 - 🟢 **EN:** With n, m ≤ 50 and values ≤ 50, brute force O(n*m) = 2500 ops — perfectly fine.
   **VI:** Với n, m ≤ 50, brute force O(n*m) = 2500 phép tính — hoàn toàn ổn.
@@ -49,9 +66,9 @@ Total = 5
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Brute Force — O(n \* m) Time, O(1) Space ✅ Sufficient for Constraints
+## Solutions
 
 ```typescript
 function numberOfPairsI(nums1: number[], nums2: number[], k: number): number {
@@ -68,11 +85,7 @@ function numberOfPairsI(nums1: number[], nums2: number[], k: number): number {
 console.log(numberOfPairsI([1, 3, 4], [1, 3, 4], 1)); // Expected: 5
 console.log(numberOfPairsI([1, 2, 4, 12], [2, 4], 3)); // Expected: 2
 console.log(numberOfPairsI([1], [1], 1)); // Expected: 1
-```
 
-### Solution 2: Divisor Enumeration + Hash Map — O(n\*sqrt(max) + m) ✅ Scalable
-
-```typescript
 function numberOfPairsI_opt(nums1: number[], nums2: number[], k: number): number {
   // Frequency map of nums2
   const freq = new Map<number, number>();
@@ -105,7 +118,7 @@ console.log(numberOfPairsI_opt([10, 20, 30], [2, 5], 2)); // Expected: 3
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                          | Difficulty | Pattern                 |
 | ---- | -------------------------------- | ---------- | ----------------------- |

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/critical-connections-in-a-network"
 
 # Critical Connections in a Network / Các kết nối quan trọng trong mạng
 
-🔴 Hard | Graph | Tarjan's Bridge Algorithm | DFS
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Một cạnh là "cầu" (bridge) nếu xóa nó sẽ chia đồ thị thành 2 phần không liên thông. Dùng thuật toán Tarjan: mỗi đỉnh có `disc` (thời điểm khám phá) và `low` (đỉnh sớm nhất có thể đến được qua nhánh DFS). Nếu `low[v] > disc[u]`, cạnh `u-v` là cầu.
+**Analogy:** **Vietnamese:** Một cạnh là "cầu" (bridge) nếu xóa nó sẽ chia đồ thị thành 2 phần không liên thông. Dùng thuật toán Tarjan: mỗi đỉnh có `disc` (thời điểm khám phá) và `low` (đỉnh sớm nhất có thể đến được qua nhánh DFS). Nếu `low[v] > disc[u]`, cạnh `u-v` là cầu.
 
 **English:** A **bridge** is an edge whose removal disconnects the graph. Tarjan's algorithm tracks discovery time `disc` and `low` (earliest reachable ancestor). Edge `(u,v)` is a bridge when `low[v] > disc[u]` — `v`'s subtree cannot back-reach `u` or earlier.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Critical Connections in a Network example:**
 
 ```
 0 -- 1 -- 2
@@ -32,6 +35,18 @@ Edge (0,1): low[1]=0 = disc[0]=0 → not bridge (back-edge via cycle)
 
 ---
 
+---
+
+## Problem Description
+
+| #    | Problem                                     | Difficulty | Pattern          |
+| ---- | ------------------------------------------- | ---------- | ---------------- |
+| 1192 | Critical Connections (this)                 | Hard       | Tarjan's Bridge  |
+| 1568 | Minimum Number of Days to Disconnect Island | Hard       | Bridge Detection |
+| 323  | Number of Connected Components              | Medium     | DFS / Union Find |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Key insight / Nhận xét chính:** Bridge detection requires `low[v] > disc[u]` (strictly greater), not `>=`.
@@ -43,9 +58,9 @@ Edge (0,1): low[1]=0 = disc[0]=0 → not bridge (back-edge via cycle)
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Tarjan's Bridge Algorithm
+## Solutions
 
 ```typescript
 /**
@@ -97,11 +112,7 @@ console.log(
 // [[1,3]]
 console.log(criticalConnections(2, [[0, 1]]));
 // [[0,1]]
-```
 
-### Solution 2 — Iterative DFS (Stack-based, avoids recursion limit)
-
-```typescript
 /**
  * Iterative version using explicit stack to avoid call-stack overflow on large inputs.
  *

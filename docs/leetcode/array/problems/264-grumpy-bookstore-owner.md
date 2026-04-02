@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/grumpy-bookstore-owner"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Chủ hiệu sách có tính cáu kỉnh — khi ông ta khó chịu, khách hàng bỏ đi không mua. Ông ta có một bí kíp đặc biệt dùng được đúng `k` phút liên tiếp để kiềm chế bản thân. Bài toán: chọn khoảng thời gian `k` phút nào để ông dùng bí kíp sao cho tổng số khách hàng hài lòng là nhiều nhất. Khách đã hài lòng (lúc ông không cáu) vẫn đến bất kể bí kíp. Chỉ những phút ông đang cáu mới cần bí kíp!
+**Analogy:** Chủ hiệu sách có tính cáu kỉnh — khi ông ta khó chịu, khách hàng bỏ đi không mua. Ông ta có một bí kíp đặc biệt dùng được đúng `k` phút liên tiếp để kiềm chế bản thân. Bài toán: chọn khoảng thời gian `k` phút nào để ông dùng bí kíp sao cho tổng số khách hàng hài lòng là nhiều nhất. Khách đã hài lòng (lúc ông không cáu) vẫn đến bất kể bí kíp. Chỉ những phút ông đang cáu mới cần bí kíp!
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Grumpy Bookstore Owner example:**
 
 ```
 customers = [1,0,1,2,1,1,7,5], grumpy = [0,1,0,1,0,1,0,1], k = 3
@@ -35,7 +38,9 @@ Window [4..6]: grumpy[5]=1 → gain=1      total=11
 Window [5..7]: grumpy[5,7]=1,1 → gain=1+5=6  total=16 ← MAX ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 A bookstore owner has customers arriving each minute. `grumpy[i]=1` means the owner is grumpy that minute (customers lost). The owner can use a secret technique for `k` consecutive minutes to suppress grumpiness. Return the **maximum total satisfied customers**.
 
@@ -44,7 +49,9 @@ A bookstore owner has customers arriving each minute. `grumpy[i]=1` means the ow
 
 **Constraints:** `1 ≤ customers.length ≤ 2×10^4`, `0 ≤ customers[i] ≤ 1000`, `grumpy[i] ∈ {0,1}`, `1 ≤ k ≤ customers.length`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Decompose the problem** / Phân tách: Base (lúc không cáu) + Extra (cáu nhưng dùng bí kíp trong window k)
 - **Fixed-size sliding window** / Cửa sổ trượt kích thước cố định: Tìm max extra trong window k
@@ -53,7 +60,9 @@ A bookstore owner has customers arriving each minute. `grumpy[i]=1` means the ow
 - **Why add base separately** / Tại sao tách base: Tránh đếm trùng khách đã hài lòng vào extra
 - **Brute O(n²)** / Brute force: Thử mọi window bắt đầu từ 0..n-k → vẫn chấp nhận được với n≤2×10^4
 
-## Solution 1 - Brute Force (O(n·k))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -74,11 +83,7 @@ function maxSatisfiedBrute(customers: number[], grumpy: number[], k: number): nu
   }
   return base + maxExtra;
 }
-```
 
-## Solution 2 - Sliding Window (Optimal O(n))
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Fixed-size sliding window over grumpy minutes to maximize extra gain
@@ -109,18 +114,17 @@ function maxSatisfied(customers: number[], grumpy: number[], k: number): number 
 
   return base + maxExtra;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(maxSatisfied([1, 0, 1, 2, 1, 1, 7, 5], [0, 1, 0, 1, 0, 1, 0, 1], 3)); // → 16
 console.log(maxSatisfied([1], [0], 1)); // → 1
 console.log(maxSatisfied([4, 10, 10], [1, 1, 0], 2)); // → 24
 console.log(maxSatisfiedBrute([1, 0, 1, 2, 1, 1, 7, 5], [0, 1, 0, 1, 0, 1, 0, 1], 3)); // → 16
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                               | Difficulty | Link                                                                           |
 | ------------------------------------- | ---------- | ------------------------------------------------------------------------------ |

@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/add-digits"
 
 # Add Digits / Cộng Các Chữ Số
 
-**Difficulty:** Easy | **Category:** Math, Number Theory | **LeetCode:** [258](https://leetcode.com/problems/add-digits)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Như đếm hạt cườm theo vòng 9 — số cuối cùng là vị trí trên vòng tròn đó.**
+**Analogy:** > **Như đếm hạt cườm theo vòng 9 — số cuối cùng là vị trí trên vòng tròn đó.**
 > Tổng các chữ số lặp lại là "digital root" — có công thức O(1) từ số học modulo 9.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Add Digits example:**
 
 ```
 num = 38
@@ -30,7 +35,13 @@ Nhưng ta muốn [1..9], không phải [0..8] → dịch thành 1 + (num-1) % 9
 num = 0 → đặc biệt trả 0
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Digital root = 0** khi num = 0. Xử lý đặc biệt trước.
 2. **Công thức O(1):** `1 + (num - 1) % 9` cho num > 0.
@@ -39,7 +50,9 @@ num = 0 → đặc biệt trả 0
 5. **Số lần lặp tối đa:** rất ít (log10(num) lần) — với num ≤ 2³¹ chỉ cần ~10 lần.
 6. **Follow-up không dùng loop/recursion** → dùng công thức `1 + (num-1) % 9`.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -59,9 +72,7 @@ console.log(addDigits(0)); // 0   (edge case)
 console.log(addDigits(9)); // 9   (single digit)
 console.log(addDigits(10)); // 1   (1+0=1)
 console.log(addDigits(99)); // 9   (9+9=18 → 1+8=9)
-```
 
-```typescript
 /**
  * Approach 2: Iterative digit summation (simulation)
  * Time: O(log num * digits) | Space: O(1)
@@ -84,9 +95,7 @@ console.log(addDigits2(38)); // 2
 console.log(addDigits2(0)); // 0
 console.log(addDigits2(1)); // 1
 console.log(addDigits2(1234)); // 1  (1+2+3+4=10 → 1+0=1)
-```
 
-```typescript
 /**
  * Approach 3: Recursive (concise, shows recursion thinking)
  * Time: O(log num) | Space: O(log num) call stack
@@ -105,7 +114,9 @@ console.log(addDigits3(9999)); // 9  (9+9+9+9=36 → 3+6=9)
 console.log(addDigits3(100)); // 1  (1+0+0=1)
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                         | Difficulty | Connection                                     |
 | --------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------------------------------- |

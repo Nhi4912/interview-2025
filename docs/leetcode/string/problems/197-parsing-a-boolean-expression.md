@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/parsing-a-boolean-expression"
 
 # Parsing A Boolean Expression / Phân Tích Biểu Thức Boolean
 
-🔴 Hard
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống máy tính tay — mỗi khi gặp `(`, mở ngoặc mới; khi gặp `)`, tính kết quả rồi đóng lại. Toán tử `!`, `&`, `|` áp dụng lên tập giá trị bên trong.
+**Analogy:** > **Phép so sánh:** Giống máy tính tay — mỗi khi gặp `(`, mở ngoặc mới; khi gặp `)`, tính kết quả rồi đóng lại. Toán tử `!`, `&`, `|` áp dụng lên tập giá trị bên trong.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Parsing A Boolean Expression example:**
 
 ```
 Expression: |(f,&(t,f))
@@ -28,6 +33,8 @@ Stack:
  ')' → pop to '(' → | → false
 Result: false
 ```
+
+---
 
 ## Problem Description
 
@@ -46,6 +53,8 @@ Return the result of evaluating a boolean expression string. An expression is on
 
 **Constraints:** `1 <= expression.length <= 20000`
 
+---
+
 ## 📝 Interview Tips
 
 - **Pattern signal:** Nested/recursive structure → Stack hoặc Recursive Descent Parser
@@ -55,9 +64,9 @@ Return the result of evaluating a boolean expression string. An expression is on
 - **Complexity:** O(n) time, O(n) space — mỗi ký tự xử lý tối đa 1 lần
 - **Interview insight:** Đây là Recursive Descent Parser — mẫu phổ biến trong compiler design
 
-## Solutions
+---
 
-### Solution 1: Stack (Iterative) — O(n) time, O(n) space
+## Solutions
 
 ```typescript
 function parseBoolExpr(expression: string): boolean {
@@ -90,11 +99,7 @@ function parseBoolExpr(expression: string): boolean {
 
   return stack[0] === "t";
 }
-```
 
-### Solution 2: Recursive Descent Parser — O(n) time, O(n) space
-
-```typescript
 function parseBoolExpr(expression: string): boolean {
   let idx = 0;
 
@@ -120,11 +125,7 @@ function parseBoolExpr(expression: string): boolean {
 
   return parse();
 }
-```
 
-### Solution 3: Stack with bitmask — O(n) time, O(n) space
-
-```typescript
 function parseBoolExpr(expression: string): boolean {
   const stack: string[] = [];
 
@@ -153,6 +154,8 @@ function parseBoolExpr(expression: string): boolean {
   return stack[0] === "t";
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

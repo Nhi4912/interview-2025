@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/robot-return-to-origin"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một robot giao hàng trong kho hàng dạng lưới ô vuông. Robot nhận lệnh di chuyển dạng chuỗi ký tự: `U` (lên), `D` (xuống), `L` (trái), `R` (phải). Sau khi thực hiện hết lệnh, người quản lý hỏi: "Robot có trở về điểm xuất phát không?" Đây không cần mô phỏng từng bước — chỉ cần đếm: `U` và `D` phải bằng nhau (dọc cân bằng), `L` và `R` phải bằng nhau (ngang cân bằng). Nếu cả hai cặp cân bằng, robot ắt đứng đúng chỗ ban đầu.
+**Analogy:** Hãy tưởng tượng một robot giao hàng trong kho hàng dạng lưới ô vuông. Robot nhận lệnh di chuyển dạng chuỗi ký tự: `U` (lên), `D` (xuống), `L` (trái), `R` (phải). Sau khi thực hiện hết lệnh, người quản lý hỏi: "Robot có trở về điểm xuất phát không?" Đây không cần mô phỏng từng bước — chỉ cần đếm: `U` và `D` phải bằng nhau (dọc cân bằng), `L` và `R` phải bằng nhau (ngang cân bằng). Nếu cả hai cặp cân bằng, robot ắt đứng đúng chỗ ban đầu.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Robot Return to Origin example:**
 
 ```
 moves = "UDLR"
@@ -42,7 +45,9 @@ Counter approach:
   Count U=count D AND count L=count R  →  O(n), O(1)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given string `moves` where each character is `'U'`, `'D'`, `'L'`, or `'R'`, return `true` if the robot returns to the origin `(0,0)` after executing all moves.
 
@@ -52,7 +57,9 @@ Given string `moves` where each character is `'U'`, `'D'`, `'L'`, or `'R'`, retu
 
 **Constraints:** `1 ≤ moves.length ≤ 2×10⁴`, `moves` only contains `'U'`, `'D'`, `'L'`, `'R'`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Counter không cần tọa độ** / Counter beats coordinates: Chỉ cần đếm `U==D && L==R` — không cần lưu `x,y` nếu muốn space O(1)
 - **Hoặc tọa độ đơn giản** / Coordinate is clearer: `x,y` tracking dễ đọc hơn và mở rộng tốt cho biến thể phức tạp hơn
@@ -61,7 +68,9 @@ Given string `moves` where each character is `'U'`, `'D'`, `'L'`, or `'R'`, retu
 - **Không cần visited set** / No Set needed: Đây chỉ là về vị trí cuối, không phải đường đi — khác với "Path Crossing"
 - **String vs char array** / String vs array: Dùng `for...of` trên string để tránh `.split('')`
 
-## Solution 1 - Coordinate Tracking O(n)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -79,11 +88,7 @@ function judgeCircle(moves: string): boolean {
   }
   return x === 0 && y === 0;
 }
-```
 
-## Solution 2 - Count-Based O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Just count each direction; balanced pairs = return to origin
@@ -101,11 +106,7 @@ function judgeCircleCount(moves: string): boolean {
   }
   return u === d && l === r;
 }
-```
 
-## Solution 3 - Frequency Map One-Liner
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Count all chars; compare pairs
@@ -121,11 +122,8 @@ function judgeCircleFP(moves: string): boolean {
   const count = (c: string) => [...moves].filter((m) => m === c).length;
   return count("U") === count("D") && count("L") === count("R");
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(judgeCircle("UD")); // → true
 console.log(judgeCircle("LL")); // → false
 console.log(judgeCircle("UUDDLR")); // → true
@@ -135,7 +133,9 @@ console.log(judgeCircleOneLiner("UUUU")); // → false
 console.log(judgeCircleFP("UDLR")); // → true
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                         | Difficulty | Link                                                                     |
 | ------------------------------- | ---------- | ------------------------------------------------------------------------ |

@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/expressive-words"
 
 # Expressive Words / Từ Ngữ Điệu
 
-🟡 Medium | 🏷️ Array, Two Pointers, String
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Một từ gốc có thể "kéo dài" thành `s` bằng cách lặp ký tự. Quy tắc: nếu `s` có đoạn `k` ký tự giống nhau liên tiếp thì đoạn tương ứng trong `word` phải có `j` ký tự sao cho `j == k` (không kéo) hoặc `k >= 3` (đoạn trong `s` đủ dài để kéo). Dùng **run-length encoding** để so sánh.
+**Analogy:** **VI:** Một từ gốc có thể "kéo dài" thành `s` bằng cách lặp ký tự. Quy tắc: nếu `s` có đoạn `k` ký tự giống nhau liên tiếp thì đoạn tương ứng trong `word` phải có `j` ký tự sao cho `j == k` (không kéo) hoặc `k >= 3` (đoạn trong `s` đủ dài để kéo). Dùng **run-length encoding** để so sánh.
 
 **EN:** Convert both strings to run-length encoding (char, count). A run in `word` can "stretch" to a run in `s` if `s`'s count `>= 3` and `word`'s count `<= s`'s count; otherwise counts must match exactly.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Expressive Words example:**
 
 ```
 s    = "heeellooo"  →  [h,1][e,3][l,2][o,3]
@@ -26,6 +31,18 @@ word = "helo"       →  [h,1][e,1][l,1][o,1]
        e:1≤3,3≥3 ✅  l:1≤2,but 2<3 ❌  → NOT stretchy
 ```
 
+---
+
+## Problem Description
+
+| #    | Problem                                 | Difficulty | Key Idea                    |
+| ---- | --------------------------------------- | ---------- | --------------------------- |
+| 443  | String Compression                      | 🟡 Medium  | Run-length encoding         |
+| 1163 | Last Substring in Lexicographical Order | 🔴 Hard    | Two-pointer on strings      |
+| 844  | Backspace String Compare                | 🟢 Easy    | Two-pointer string matching |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Run-length encoding:** nhóm các ký tự liên tiếp giống nhau thành `(char, count)` pairs
@@ -35,9 +52,9 @@ word = "helo"       →  [h,1][e,1][l,1][o,1]
 - 🇻🇳 **Fail fast:** số đoạn RLE khác nhau → ngay lập tức sai
 - 🇬🇧 **Same char check:** chars at each run must match, else immediately false
 
-## Solutions
+---
 
-### Solution 1: Run-length encoding comparison
+## Solutions
 
 ```typescript
 /**
@@ -78,11 +95,7 @@ function expressiveWords(s: string, words: string[]): number {
 
 console.log(expressiveWords("heeellooo", ["hello", "hi", "helo"])); // 1
 console.log(expressiveWords("zzzzzyyyyy", ["zzyy", "zy", "zyy"])); // 3
-```
 
-### Solution 2: Two-pointer without RLE array
-
-```typescript
 /**
  * Direct two-pointer on raw strings.
  * Time: O(n + m * L) | Space: O(1) extra per word
@@ -111,6 +124,8 @@ console.log(expressiveWords2("heeellooo", ["hello", "hi", "helo"])); // 1
 console.log(expressiveWords2("aaa", ["aaaa"])); // 0
 console.log(expressiveWords2("aaa", ["a", "aa", "aaa"])); // 3
 ```
+
+---
 
 ## 🔗 Related Problems
 

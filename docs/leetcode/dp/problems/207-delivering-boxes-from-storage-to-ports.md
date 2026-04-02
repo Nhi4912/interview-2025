@@ -7,15 +7,18 @@ tags: [Array, Dynamic Programming, Segment Tree, Queue, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/delivering-boxes-from-storage-to-ports"
 ---
 
-## 🚢 1687. Delivering Boxes from Storage to Ports / Giao Hộp Từ Kho Đến Cảng
-
-**Difficulty:** 🔴 Hard
+# delivering boxes from storage to ports
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Bạn có một chiếc tàu chở hàng với giới hạn số hộp (`maxBoxes`) và tải trọng (`maxWeight`). Mỗi chuyến, tàu lấy một đoạn liên tiếp `boxes[i..j]` từ kho, đến các cảng theo thứ tự, rồi quay về. Chi phí = số lần đổi cảng + 2 (đi + về). Tìm số chuyến tàu tối thiểu để giao tất cả hộp.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 boxes=[[1,1],[2,1],[1,1]], maxBoxes=3, maxWeight=3
@@ -35,12 +38,16 @@ Use monotone deque to maintain min dp[j] - portChanges_prefix[j]
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `boxes[i] = [port, weight]`, `maxBoxes`, `maxWeight`. Each trip: load consecutive boxes with total ≤ maxBoxes, total weight ≤ maxWeight. Trip cost = #port-changes in load + 2. Minimize total trip cost.
 
 - Example: `boxes=[[1,1],[2,1],[1,1]], maxBoxes=3, maxWeight=3` → **4**
 - Example: `boxes=[[1,2],[3,3],[3,1],[3,1],[2,4]], maxBoxes=3, maxWeight=6` → **6**
+
+---
 
 ---
 
@@ -55,9 +62,9 @@ Given `boxes[i] = [port, weight]`, `maxBoxes`, `maxWeight`. Each trip: load cons
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: DP + Monotone Deque (Optimal O(n))
+## Solutions
 
 ```typescript
 function boxDelivering(
@@ -116,11 +123,7 @@ function boxDelivering(
 
   return dp[n];
 }
-```
 
-### Solution 2: DP + Deque with explicit window tracking
-
-```typescript
 function boxDeliveringV2(
   boxes: number[][],
   portsCount: number,

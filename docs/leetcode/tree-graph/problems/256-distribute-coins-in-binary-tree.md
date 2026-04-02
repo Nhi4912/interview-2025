@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/distribute-coins-in-binary-tree"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một gia đình lớn có nhiều thế hệ. Mỗi thành viên có một số tiền xu, nhưng quy tắc là cuối cùng mỗi người phải có đúng 1 xu. Tiền xu chỉ được chuyển qua "quan hệ cha-con" — tức là theo cạnh của cây gia phả. Mỗi lần chuyển qua một cạnh tốn 1 bước. Bí quyết: mỗi node cần xuất khẩu `(tổng xu trong cây con) - (số node trong cây con)` xu sang cha — giá trị này có thể âm (cần nhập thêm) hoặc dương (có dư).
+**Analogy:** Hãy tưởng tượng một gia đình lớn có nhiều thế hệ. Mỗi thành viên có một số tiền xu, nhưng quy tắc là cuối cùng mỗi người phải có đúng 1 xu. Tiền xu chỉ được chuyển qua "quan hệ cha-con" — tức là theo cạnh của cây gia phả. Mỗi lần chuyển qua một cạnh tốn 1 bước. Bí quyết: mỗi node cần xuất khẩu `(tổng xu trong cây con) - (số node trong cây con)` xu sang cha — giá trị này có thể âm (cần nhập thêm) hoặc dương (có dư).
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Distribute Coins in Binary Tree example:**
 
 ```
 Tree: [3,0,0]       Tree: [0,3,0]
@@ -39,7 +42,9 @@ General formula at each node:
   return excess  (to parent)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given a binary tree with `n` nodes where each node has `node.val` coins, and there are exactly `n` coins total. In one move, you can transfer a coin between two **adjacent** nodes. Return the **minimum number of moves** to give every node exactly 1 coin.
 
@@ -50,7 +55,9 @@ Given a binary tree with `n` nodes where each node has `node.val` coins, and the
 
 **Constraints:** `1 ≤ n ≤ 100`, `0 ≤ Node.val ≤ n`, sum of all vals equals `n`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Excess = flow through edge** / Thặng dư = dòng chảy qua cạnh: |excess| qua mỗi cạnh chính xác là số lần coin đi qua cạnh đó
 - **Post-order DFS** / DFS hậu thứ tự: Phải biết excess của con trước khi tính của cha — do đó dùng post-order
@@ -59,7 +66,9 @@ Given a binary tree with `n` nodes where each node has `node.val` coins, and the
 - **Absolute value** / Giá trị tuyệt đối: Không quan tâm hướng di chuyển — `|excess|` là số moves qua cạnh đó
 - **Base case null = 0** / Trường hợp cơ sở null = 0: `excess(null) = 0` — lá ảo không đóng góp
 
-## Solution 1 - DFS Recursive
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -91,11 +100,7 @@ function distributeCoins(root: TreeNode | null): number {
   dfs(root);
   return moves;
 }
-```
 
-## Solution 2 - Iterative Post-Order
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Iterative post-order using explicit stack; avoids recursion depth issues
@@ -128,11 +133,8 @@ function distributeCoinsIterative(root: TreeNode | null): number {
 
   return moves;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 const build = (vals: (number | null)[]): TreeNode | null => {
   if (!vals.length || vals[0] == null) return null;
   const root = new TreeNode(vals[0]!);
@@ -161,7 +163,9 @@ console.log(distributeCoins(build([1, 0, 0, null, 3]))); // → 4
 console.log(distributeCoinsIterative(build([3, 0, 0]))); // → 2
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                      | Difficulty | Link                                                                                  |
 | -------------------------------------------- | ---------- | ------------------------------------------------------------------------------------- |

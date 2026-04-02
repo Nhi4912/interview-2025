@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/xor-queries-of-a-subarray"
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Giống prefix sum nhưng dùng XOR thay vì cộng. XOR có tính chất tự nghịch đảo: `a ^ a = 0`. Vì vậy `prefix[r+1] ^ prefix[l]` cho XOR của đoạn `[l, r]` — cùng lý do như `sum[r+1] - sum[l]` cho tổng đoạn.
+**Analogy:** **VI:** Giống prefix sum nhưng dùng XOR thay vì cộng. XOR có tính chất tự nghịch đảo: `a ^ a = 0`. Vì vậy `prefix[r+1] ^ prefix[l]` cho XOR của đoạn `[l, r]` — cùng lý do như `sum[r+1] - sum[l]` cho tổng đoạn.
 
 **EN:** Just like prefix sums but with XOR. XOR is self-inverse: `a ^ a = 0`. So `prefix[r+1] ^ prefix[l]` gives XOR of range `[l, r]` — same reasoning as range sum with prefix array.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — XOR Queries of a Subarray example:**
 
 ```
 arr = [1, 3, 4, 8]
@@ -34,7 +39,19 @@ Query [0,3]: prefix[4] ^ prefix[0] = 14^0 = 14 ✓ (1^3^4^8=14)
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                              | Difficulty | Pattern    |
+| ---- | ---------------------------------------------------- | ---------- | ---------- |
+| 303  | Range Sum Query - Immutable                          | 🟢 Easy    | Prefix Sum |
+| 1442 | Count Triplets That Can Form Two Arrays of Equal XOR | 🟡 Medium  | Prefix XOR |
+| 1310 | XOR Queries of a Subarray                            | 🟡 Medium  | Prefix XOR |
+
+---
+
+## 📝 Interview Tips
 
 - 🟡 **EN:** XOR range query: `prefix[r+1] ^ prefix[l]` — memorize this formula.
   **VI:** Truy vấn XOR đoạn: `prefix[r+1] ^ prefix[l]` — ghi nhớ công thức này.
@@ -51,9 +68,9 @@ Query [0,3]: prefix[4] ^ prefix[0] = 14^0 = 14 ✓ (1^3^4^8=14)
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Brute Force — O(n \* q) Time, O(1) Extra Space
+## Solutions
 
 ```typescript
 function xorQueries_brute(arr: number[], queries: number[][]): number[] {
@@ -76,11 +93,7 @@ console.log(
   ),
 );
 // Expected: [2, 7, 14, 8]
-```
 
-### Solution 2: Prefix XOR — O(n + q) Time, O(n) Space ✅ Optimal
-
-```typescript
 function xorQueries(arr: number[], queries: number[][]): number[] {
   const n = arr.length;
   // Build prefix XOR array; prefix[i] = XOR of arr[0..i-1]
@@ -119,11 +132,7 @@ console.log(
 // Expected: [8, 0, 4, 4]
 console.log(xorQueries([1], [[0, 0]]));
 // Expected: [1]
-```
 
-### Solution 3: In-Place Prefix XOR (Space O(1) Extra) ✅
-
-```typescript
 function xorQueriesInPlace(arr: number[], queries: number[][]): number[] {
   // Modify arr to be prefix XOR in-place
   for (let i = 1; i < arr.length; i++) arr[i] ^= arr[i - 1];
@@ -146,7 +155,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                                              | Difficulty | Pattern    |
 | ---- | ---------------------------------------------------- | ---------- | ---------- |

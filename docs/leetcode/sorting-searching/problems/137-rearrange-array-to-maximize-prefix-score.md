@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/rearrange-array-to-maximize-prefix-
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy + Sort
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Bạn muốn xây một chuỗi dài nhất sao cho tất cả các tổng tích lũy đều dương. Chiến lược tham lam: đặt số lớn nhất trước. Như xếp những người nặng nhất vào đầu đội, đảm bảo tổng trọng luôn dương càng lâu càng tốt.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Bạn muốn xây một chuỗi dài nhất sao cho tất cả các tổng tích lũy đều dương. Chiến lược tham lam: đặt số lớn nhất trước. Như xếp những người nặng nhất vào đầu đội, đảm bảo tổng trọng luôn dương càng lâu càng tốt.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Rearrange Array to Maximize Prefix Score example:**
 
 ```
 nums = [-1, -3, -2, 4, 5, 6]
@@ -31,7 +38,20 @@ sorted desc: [-3, -5]
 prefix:      [-3, ...]  ← negative at index 0 → score = 0
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                     | Pattern       |
+| ---- | ------------------------------------------- | ------------- |
+| 2587 | Rearrange Array to Maximize Prefix Score    | This problem  |
+| 1403 | Minimum Subsequence in Non-Increasing Order | Greedy + Sort |
+| 976  | Largest Perimeter Triangle                  | Greedy + Sort |
+| 2405 | Optimal Partition of String                 | Greedy        |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Greedy insight** / Sắp xếp giảm dần — lớn nhất trước để trì hoãn tổng âm lâu nhất
 - 🔑 **Why descending?** / Nếu đặt số nhỏ trước, tổng sẽ âm sớm hơn — mọi hoán vị khác đều tệ hơn
@@ -39,6 +59,8 @@ prefix:      [-3, ...]  ← negative at index 0 → score = 0
 - 🔑 **Prefix sum** / Tích lũy tổng từ trái sang phải, kiểm tra dấu sau mỗi bước
 - 🔑 **Edge case** / Mảng toàn số âm → score = 0 (không có prefix sum dương)
 - 🔑 **Complexity** / O(n log n) sort + O(n) scan = O(n log n) total
+
+---
 
 ## Solutions
 
@@ -97,7 +119,9 @@ console.log(maxScoreV2([1, 2, 3, 4])); // 4 — all sums positive
 console.log(maxScoreV2([-1, 1])); // 1
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                     | Pattern       |
 | ---- | ------------------------------------------- | ------------- |

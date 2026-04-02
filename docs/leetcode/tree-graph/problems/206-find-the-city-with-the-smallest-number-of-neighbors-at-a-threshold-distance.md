@@ -7,15 +7,18 @@ tags: [Dynamic Programming, Graph, Shortest Path]
 leetcode_url: "https://leetcode.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance"
 ---
 
-## 1334. Find the City With the Smallest Number of Neighbors at a Threshold Distance
-
-### Tìm Thành Phố Có Ít Hàng Xóm Nhất Trong Ngưỡng Khoảng Cách | 🟡 Medium
+# find the city with the smallest number of neighbors at a threshold distance
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Với ngưỡng khoảng cách `d`, đếm mỗi thành phố có thể đến bao nhiêu thành phố khác. Thành phố nào đến được ít nhất (tức biệt lập hơn), với index lớn nhất nếu hòa — đó là kết quả.
+**Analogy:** > **Vietnamese analogy:** Với ngưỡng khoảng cách `d`, đếm mỗi thành phố có thể đến bao nhiêu thành phố khác. Thành phố nào đến được ít nhất (tức biệt lập hơn), với index lớn nhất nếu hòa — đó là kết quả.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 n=4, edges=[[0,1,3],[1,2,1],[1,3,4],[2,3,1]], dist=4
@@ -38,7 +41,9 @@ Min = 2, largest index = city 3 → answer = 3
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `n` cities and `edges[i] = [from, to, weight]`, find the city with the **fewest** number of cities reachable within distance `distanceThreshold`. Return the city with the largest index if tied.
 
@@ -47,6 +52,8 @@ Given `n` cities and `edges[i] = [from, to, weight]`, find the city with the **f
 - `2 <= n <= 100`
 - `1 <= edges.length <= n*(n-1)/2`
 - `1 <= distanceThreshold <= 10^4`
+
+---
 
 ---
 
@@ -61,9 +68,9 @@ Given `n` cities and `edges[i] = [from, to, weight]`, find the city with the **f
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Floyd-Warshall (All-Pairs Shortest Path)
+## Solutions
 
 ```typescript
 function findTheCity(n: number, edges: number[][], distanceThreshold: number): number {
@@ -106,11 +113,7 @@ function findTheCity(n: number, edges: number[][], distanceThreshold: number): n
 
   return bestCity;
 }
-```
 
-### Solution 2: Dijkstra from Each City
-
-```typescript
 function findTheCityDijkstra(n: number, edges: number[][], distanceThreshold: number): number {
   const adj: [number, number][][] = Array.from({ length: n }, () => []);
   for (const [u, v, w] of edges) {

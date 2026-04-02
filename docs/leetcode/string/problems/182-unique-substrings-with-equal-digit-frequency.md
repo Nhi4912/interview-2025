@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/unique-substrings-with-equal-digit-
 
 # Unique Substrings With Equal Digit Frequency / Xâu Con Duy Nhất Với Tần Số Chữ Số Bằng Nhau
 
-**Difficulty:** 🟡 Medium | **Tags:** Hash Table, String, Rolling Hash, Counting
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Đếm **xâu con phân biệt** mà mọi chữ số xuất hiện cùng số lần.
+**Analogy:** Đếm **xâu con phân biệt** mà mọi chữ số xuất hiện cùng số lần.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Unique Substrings With Equal Digit Frequency example:**
 
 ```
 s = "1212"
@@ -40,7 +43,19 @@ Equal-frequency check trick:
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                         | Difficulty | Pattern        |
+| --------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Distinct Echo Substrings](https://leetcode.com/problems/distinct-echo-substrings/)                             | 🔴 Hard    | Rolling hash   |
+| [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element/) | 🟡 Medium  | Sliding window |
+| [Find All Anagrams in a String](https://leetcode.com/problems/find-all-anagrams-in-a-string/)                   | 🟡 Medium  | Freq map       |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **`maxFreq × nonZeroCount === len`**: kiểm tra bằng nhau O(1) thay vì O(10)
 - 🇺🇸 **`maxFreq × nonZeroCount === len`**: O(1) equality check instead of O(10) scan
@@ -57,9 +72,9 @@ Equal-frequency check trick:
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — O(n²) with Set<string> dedup (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -94,11 +109,7 @@ function equalDigitFrequency(s: string): number {
 console.log(equalDigitFrequency("1212")); // 5
 console.log(equalDigitFrequency("12321")); // 9
 console.log(equalDigitFrequency("0")); // 1
-```
 
-### Solution 2 — Rolling Hash for O(n²) dedup
-
-```typescript
 /**
  * Use polynomial rolling hash to avoid O(len) string slice per substring.
  * Time: O(n²)  Space: O(n²)
@@ -140,11 +151,7 @@ function equalDigitFrequency2(s: string): number {
 
 console.log(equalDigitFrequency2("1212")); // 5
 console.log(equalDigitFrequency2("12321")); // 9
-```
 
-### Solution 3 — Brute-force with verification (clearest intent)
-
-```typescript
 /**
  * Explicit frequency check for interview clarity.
  * Time: O(n³)  Space: O(n²)

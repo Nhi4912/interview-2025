@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/battleships-in-a-board"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix Scan (O(1) space)
 
-## 🧠 Intuition
+---
 
-**VI**: Mỗi tàu chiến là một dãy ô 'X' liên tiếp theo hàng ngang hoặc dọc. Thay vì DFS đánh dấu toàn bộ tàu, ta chỉ đếm "ô đầu tiên" của mỗi tàu: ô 'X' mà KHÔNG có 'X' phía trên (hàng trước) VÀ KHÔNG có 'X' bên trái (cột trước). Đây là thuật toán O(1) space!
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Mỗi tàu chiến là một dãy ô 'X' liên tiếp theo hàng ngang hoặc dọc. Thay vì DFS đánh dấu toàn bộ tàu, ta chỉ đếm "ô đầu tiên" của mỗi tàu: ô 'X' mà KHÔNG có 'X' phía trên (hàng trước) VÀ KHÔNG có 'X' bên trái (cột trước). Đây là thuật toán O(1) space!
 
 **EN**: A battleship's "head" cell is any 'X' with no 'X' above (`board[r-1][c] !== 'X'`) and no 'X' to the left (`board[r][c-1] !== 'X'`). Count only head cells — one per battleship.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Battleships in a Board example:**
 
 ```
 Board:                Head detection:
@@ -26,6 +33,19 @@ X . . X               ✓ . . ✓   ← (0,0) and (0,3) are heads
 Count = 2 ✓
 ```
 
+---
+
+## Problem Description
+
+| #   | Title              | Difficulty | Pattern        |
+| --- | ------------------ | ---------- | -------------- |
+| 200 | Number of Islands  | 🟡 Medium  | DFS/BFS Matrix |
+| 695 | Max Area of Island | 🟡 Medium  | DFS Matrix     |
+| 463 | Island Perimeter   | 🟢 Easy    | Matrix Scan    |
+| 130 | Surrounded Regions | 🟡 Medium  | DFS/BFS        |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Trick quan trọng: chỉ đếm "đầu tàu" — ô 'X' không có 'X' phía trên và bên trái.
@@ -34,6 +54,8 @@ Count = 2 ✓
 - 🇬🇧 No board modification, no visited array — pure O(1) space solution.
 - 🇻🇳 DFS/BFS cũng đúng nhưng O(n\*m) space và modify board (phải restore).
 - 🇬🇧 DFS works too but uses O(nm) space or requires board restoration — worse tradeoff.
+
+---
 
 ## Solutions
 
@@ -127,6 +149,8 @@ console.log(countBattleshipsUF(board1)); // 2
 const board2 = [["."]];
 console.log(countBattleships(board2)); // 0
 ```
+
+---
 
 ## 🔗 Related Problems
 

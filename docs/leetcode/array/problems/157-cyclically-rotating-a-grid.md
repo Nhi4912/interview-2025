@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/cyclically-rotating-a-grid"
 
 # Cyclically Rotating a Grid / Xoay Lưới Theo Vòng Tròn
 
-**Difficulty:** Medium | **Category:** Array, Matrix, Simulation | **LeetCode:** [1914](https://leetcode.com/problems/cyclically-rotating-a-grid)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Phép so sánh tiếng Việt:** Hãy nghĩ đến những chiếc khung ảnh lồng nhau — khung ngoài cùng, rồi khung trong, rồi khung trong nữa. Mỗi khung là một "layer" (lớp). Bài này yêu cầu xoay từng lớp theo chiều kim đồng hồ k bước. Kỹ thuật: "trải phẳng" mỗi lớp thành mảng 1D, rotate mảng đó, rồi "ghi ngược lại" vào grid.
+**Analogy:** **Phép so sánh tiếng Việt:** Hãy nghĩ đến những chiếc khung ảnh lồng nhau — khung ngoài cùng, rồi khung trong, rồi khung trong nữa. Mỗi khung là một "layer" (lớp). Bài này yêu cầu xoay từng lớp theo chiều kim đồng hồ k bước. Kỹ thuật: "trải phẳng" mỗi lớp thành mảng 1D, rotate mảng đó, rồi "ghi ngược lại" vào grid.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Cyclically Rotating a Grid example:**
 
 ```
 Grid 4x4, layer 0 (viền ngoài):
@@ -25,7 +30,13 @@ Grid 4x4, layer 0 (viền ngoài):
 └─────────────┘    Ghi ngược lại vào grid.
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Số lớp = min(m,n)/2**: Grid m×n có tối đa `floor(min(m,n)/2)` lớp.
 2. **Trải phẳng theo chiều kim đồng hồ**: Top → Right → Bottom (ngược) → Left (ngược) → tạo mảng 1D.
@@ -34,7 +45,9 @@ Grid 4x4, layer 0 (viền ngoài):
 5. **Layer i**: hàng trên: row=i, col từ i đến n-1-i; cột phải: col=n-1-i, row từ i+1 đến m-1-i; v.v.
 6. **In-place vs new grid**: Nên tạo grid mới (deep copy) để không bị conflict khi ghi.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -102,9 +115,7 @@ console.log(
   ),
 );
 // [[3,4,8,12],[2,11,10,16],[1,7,6,15],[5,9,13,14]]
-```
 
-```typescript
 /**
  * Approach 2: Helper functions tách biệt để dễ đọc
  * Time: O(m * n)  Space: O(m * n)
@@ -174,7 +185,9 @@ console.log(
 // [[3,4,8,12],[2,11,10,16],[1,7,6,15],[5,9,13,14]]
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                            | Difficulty | Pattern         |
 | ------------------------------------------------------------------ | ---------- | --------------- |

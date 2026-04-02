@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/destination-city"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Set
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Trong mạng lưới đường một chiều, thành phố đích cuối cùng là thành phố không có chuyến đi nào khởi hành từ đó. Thu thập tất cả điểm xuất phát vào Set, rồi tìm điểm đến không nằm trong Set.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Trong mạng lưới đường một chiều, thành phố đích cuối cùng là thành phố không có chuyến đi nào khởi hành từ đó. Thu thập tất cả điểm xuất phát vào Set, rồi tìm điểm đến không nằm trong Set.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Destination City example:**
 
 ```
 paths = [["London","New York"],["New York","Lima"],["Lima","Sao Paulo"]]
@@ -26,7 +33,20 @@ Destinations = { "New York", "Lima", "Sao Paulo" }
 
 **Key insight**: Collect all `cityA` (sources) into a Set. Find the one `cityB` (destination) not in that set.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                   | Difficulty | Pattern        |
+| ---- | ------------------------- | ---------- | -------------- |
+| 997  | Find the Town Judge       | 🟢 Easy    | Graph / Degree |
+| 1791 | Find Center of Star Graph | 🟢 Easy    | Graph          |
+| 277  | Find the Celebrity        | 🟡 Medium  | Graph          |
+| 2360 | Longest Cycle in a Graph  | 🔴 Hard    | DFS            |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Only source cities go into the Set — destinations are not added
   **VI**: Chỉ thêm thành phố xuất phát vào Set — thành phố đích không thêm vào
@@ -127,7 +147,14 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                   | Difficulty | Pattern        |
 | ---- | ------------------------- | ---------- | -------------- |

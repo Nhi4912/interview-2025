@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/maximum-score-words-formed-by-lette
 
 # Maximum Score Words Formed by Letters / Điểm Tối Đa Từ Được Tạo Từ Chữ Cái
 
-🔴 Hard | Bitmask DP · Backtracking
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** At most 14 words → enumerate all `2^14` subsets. For each subset, check if total letter usage ≤ available letters, then sum up scores. Take the maximum.
+**Analogy:** **EN:** At most 14 words → enumerate all `2^14` subsets. For each subset, check if total letter usage ≤ available letters, then sum up scores. Take the maximum.
 
 **VI:** Tối đa 14 từ → duyệt hết `2^14` tập con. Mỗi tập con kiểm tra tổng chữ cái dùng ≤ chữ cái có sẵn, rồi cộng điểm. Lấy max.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Score Words Formed by Letters example:**
 
 ```
 words = ["dog","cat","dad","good"], letters = "aadddgoo", score=[...a=1,c=0,d=2,g=3,o=2...]
@@ -34,6 +37,18 @@ Enumerate all 2^14 subsets, track max valid score
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                             | Difficulty | Pattern              |
+| ----------------------------------------------------------------------------------- | ---------- | -------------------- |
+| [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word/)     | 🔴 Hard    | Bitmask DP           |
+| [Maximum AND Sum of Array](https://leetcode.com/problems/maximum-and-sum-of-array/) | 🔴 Hard    | Bitmask DP           |
+| [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement/)       | 🟡 Medium  | Bitmask Backtracking |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** At most 14 words → 2^14 = 16384 subsets, tractable. Key flag: `words.length ≤ 14`. **VI:** Tối đa 14 từ → 2^14 = 16384 tập con, có thể duyệt hết.
@@ -45,7 +60,9 @@ Enumerate all 2^14 subsets, track max valid score
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-operations-to-make-a-uni-va
 
 # Minimum Operations to Make a Uni-Value Grid / Số Thao Tác Tối Thiểu để Grid Đồng Đều
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Bạn có nhiều cột nước với độ cao khác nhau. Mỗi lần bơm/rút thêm/bớt đúng `x` đơn vị. Muốn tất cả bằng nhau với ít thao tác nhất — đây là bài toán tìm **trung vị** (median) vì median tối thiểu hóa tổng độ lệch tuyệt đối.
+**Analogy:** > **Hình ảnh:** Bạn có nhiều cột nước với độ cao khác nhau. Mỗi lần bơm/rút thêm/bớt đúng `x` đơn vị. Muốn tất cả bằng nhau với ít thao tác nhất — đây là bài toán tìm **trung vị** (median) vì median tối thiểu hóa tổng độ lệch tuyệt đối.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Operations to Make a Uni-Value Grid example:**
 
 ```
 grid=[[2,4],[6,8]], x=2
@@ -28,7 +33,9 @@ Ops = |2-4|/2 + |4-4|/2 + |6-4|/2 + |8-4|/2
 
 **Chiến lược:** Flatten → sort → check divisibility by x → median minimizes total ops.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `m×n` grid and integer `x`. Each operation: choose any element, add or subtract `x`. Return minimum operations to make all elements equal, or `-1` if impossible.
 
@@ -37,6 +44,8 @@ Given `m×n` grid and integer `x`. Each operation: choose any element, add or su
 **Example 3:** `grid=[[1,2],[3,4]]`, `x=2` → `-1`
 
 **Constraints:** `1 ≤ m, n ≤ 10^5`, `1 ≤ x, grid[i][j] ≤ 10^4`
+
+---
 
 ## 📝 Interview Tips
 
@@ -47,9 +56,9 @@ Given `m×n` grid and integer `x`. Each operation: choose any element, add or su
 - **Prefix sum trick:** Compute prefix sums on sorted array for O(1) half-sum queries
 - **Even-length array:** Any value between two middle elements works — median[n/2] is safe choice
 
-## 💡 Solutions
+---
 
-### Solution 1: Flatten + Sort + Median — O(mn log(mn))
+## Solutions
 
 ```typescript
 function minOperations(grid: number[][], x: number): number {
@@ -75,11 +84,7 @@ function minOperations(grid: number[][], x: number): number {
   }
   return ops;
 }
-```
 
-### Solution 2: Prefix Sum for Efficient Cost Calculation — O(mn log(mn))
-
-```typescript
 function minOperationsPrefix(grid: number[][], x: number): number {
   const vals: number[] = [];
   for (const row of grid) for (const v of row) vals.push(v);
@@ -108,11 +113,7 @@ function minOperationsPrefix(grid: number[][], x: number): number {
 
   return minCost;
 }
-```
 
-### Solution 3: Linear Scan After Sort (Median Proof) — O(mn log(mn))
-
-```typescript
 function minOperationsClean(grid: number[][], x: number): number {
   const flat = grid.flat().sort((a, b) => a - b);
   const n = flat.length;
@@ -127,6 +128,8 @@ function minOperationsClean(grid: number[][], x: number): number {
   return flat.reduce((sum, v) => sum + Math.abs(v - median) / x, 0);
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

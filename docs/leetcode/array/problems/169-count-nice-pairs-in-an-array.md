@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/count-nice-pairs-in-an-array"
 
 # Count Nice Pairs in an Array / Đếm Các Cặp Đẹp Trong Mảng
 
-🟡 Medium | 🏷️ Array, Hash Table, Math, Counting | 🔗 [LeetCode](https://leetcode.com/problems/count-nice-pairs-in-an-array)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Một cặp (i, j) là đẹp nếu nums[i] + rev(nums[j]) == nums[j] + rev(nums[i]). Đặt lại: nums[i] - rev(nums[i]) == nums[j] - rev(nums[j]). Tính diff[i] = nums[i] - rev(nums[i]) cho mỗi i, rồi đếm cặp có cùng diff.
+**Analogy:** **Tiếng Việt:** Một cặp (i, j) là đẹp nếu nums[i] + rev(nums[j]) == nums[j] + rev(nums[i]). Đặt lại: nums[i] - rev(nums[i]) == nums[j] - rev(nums[j]). Tính diff[i] = nums[i] - rev(nums[i]) cho mỗi i, rồi đếm cặp có cùng diff.
 
 **English:** Rearrange the nice pair condition: nums[i] - rev(nums[i]) == nums[j] - rev(nums[j]). Compute diff[i] = nums[i] - rev(nums[i]) for each element, then count pairs with equal diffs using C(n,2) = n\*(n-1)/2.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Nice Pairs in an Array example:**
 
 ```
 nums = [42, 11, 1, 97]
@@ -29,7 +34,19 @@ Groups: {18:[0,3], 0:[1,2]}
 Pairs: C(2,2)=1 + C(2,2)=1 = 2
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                             | Difficulty | Pattern             |
+| --------------------------------------------------------------------------------------------------- | ---------- | ------------------- |
+| [Finding Pairs with a Certain Sum](https://leetcode.com/problems/finding-pairs-with-a-certain-sum/) | 🟡 Medium  | Hash Map            |
+| [Count Number of Bad Pairs](https://leetcode.com/problems/count-number-of-bad-pairs/)               | 🟡 Medium  | Complement Counting |
+| [Two Sum](https://leetcode.com/problems/two-sum/)                                                   | 🟢 Easy    | Hash Map            |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Algebraic key: nums[i]-rev(i) == nums[j]-rev(j) ↔ nice pair | **VI:** Chìa khóa đại số: nums[i]-rev(i) == nums[j]-rev(j) ↔ cặp đẹp
 - 🔑 **EN:** Count pairs per group: C(n,2) = n*(n-1)/2 | **VI:** Đếm cặp trong nhóm: C(n,2) = n*(n-1)/2
@@ -38,9 +55,9 @@ Pairs: C(2,2)=1 + C(2,2)=1 = 2
 - 🔑 **EN:** Use a Map to group indices by their diff value | **VI:** Dùng Map để nhóm chỉ số theo giá trị diff
 - 🔑 **EN:** Diff can be negative — that's fine for Map keys | **VI:** Diff có thể âm — vẫn dùng được làm khóa Map
 
-## Solutions
+---
 
-### Solution 1: Hash Map on Diff Values (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -78,11 +95,7 @@ function countNicePairs(nums: number[]): number {
 console.log(countNicePairs([42, 11, 1, 97])); // 2
 console.log(countNicePairs([13, 10, 35, 24, 76])); // 4
 console.log(countNicePairs([1])); // 0
-```
 
-### Solution 2: Count Incrementally (Running Pairs)
-
-```typescript
 /**
  * Count new pairs as we process each element
  * Time: O(n log maxNum) | Space: O(n)
@@ -114,11 +127,7 @@ function countNicePairs2(nums: number[]): number {
 
 console.log(countNicePairs2([42, 11, 1, 97])); // 2
 console.log(countNicePairs2([13, 10, 35, 24, 76])); // 4
-```
 
-### Solution 3: One-Liner with Array Methods
-
-```typescript
 /**
  * Compact version using map + reduce
  * Time: O(n log maxNum) | Space: O(n)
@@ -141,6 +150,8 @@ function countNicePairs3(nums: number[]): number {
 console.log(countNicePairs3([42, 11, 1, 97])); // 2
 console.log(countNicePairs3([13, 10, 35, 24, 76])); // 4
 ```
+
+---
 
 ## 🔗 Related Problems
 

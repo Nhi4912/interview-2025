@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/check-if-one-string-swap-can-make-s
 
 # Check if One String Swap Can Make Strings Equal / Kiểm Tra Một Lần Hoán Đổi Làm Chuỗi Bằng Nhau
 
-**Difficulty:** 🟢 Easy | **Tags:** Hash Table, String, Counting
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Tìm **đúng vị trí khác nhau** giữa hai chuỗi, sau đó kiểm tra swap có hợp lệ không.
+**Analogy:** Tìm **đúng vị trí khác nhau** giữa hai chuỗi, sau đó kiểm tra swap có hợp lệ không.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Check if One String Swap Can Make Strings Equal example:**
 
 ```
 s1 = "bank"  s2 = "kanb"
@@ -38,7 +41,19 @@ Cases:
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                               | Difficulty | Pattern           |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------- |
+| [Buddy Strings](https://leetcode.com/problems/buddy-strings/)                                                         | 🟢 Easy    | Swap validation   |
+| [Determine if Two Strings Are Close](https://leetcode.com/problems/determine-if-two-strings-are-close/)               | 🟡 Medium  | Frequency map     |
+| [Check if Two String Arrays are Equivalent](https://leetcode.com/problems/check-if-two-string-arrays-are-equivalent/) | 🟢 Easy    | String comparison |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Chiều dài khác nhau**: trả về false ngay lập tức
 - 🇺🇸 **Unequal lengths**: return false immediately
@@ -55,9 +70,9 @@ Cases:
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Collect Diffs and Validate (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -87,11 +102,7 @@ console.log(areAlmostEqual("attack", "defend")); // false
 console.log(areAlmostEqual("kelb", "kelb")); // true  (0 diffs)
 console.log(areAlmostEqual("abcd", "dcba")); // false (4 diffs)
 console.log(areAlmostEqual("aa", "ac")); // false (1 diff)
-```
 
-### Solution 2 — Early-return with tuple pair
-
-```typescript
 /**
  * Track first and second diff as tuples; validate at end.
  * Time: O(n)  Space: O(1)
@@ -115,11 +126,7 @@ function areAlmostEqual2(s1: string, s2: string): boolean {
 
 console.log(areAlmostEqual2("bank", "kanb")); // true
 console.log(areAlmostEqual2("attack", "defend")); // false
-```
 
-### Solution 3 — Character frequency + diff count
-
-```typescript
 /**
  * Multi-check: same frequency map AND at most 2 diffs.
  * Time: O(n)  Space: O(26)

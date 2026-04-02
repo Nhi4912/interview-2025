@@ -7,15 +7,18 @@ tags: [Math, Backtracking, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/stepping-numbers"
 ---
 
-## 1215. Stepping Numbers
-
-### Số Bậc Thang | 🟡 Medium
+# stepping numbers
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Số bậc thang là số mà các chữ số cạnh nhau chênh lệch đúng 1 — như đi lên hoặc xuống từng bậc một. BFS/DFS từ các chữ số 1-9 để xây dựng tất cả số bậc thang trong khoảng.
+**Analogy:** > **Vietnamese analogy:** Số bậc thang là số mà các chữ số cạnh nhau chênh lệch đúng 1 — như đi lên hoặc xuống từng bậc một. BFS/DFS từ các chữ số 1-9 để xây dựng tất cả số bậc thang trong khoảng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Stepping numbers: 0,1,2,...,9,10,12,21,23,32,...,98
@@ -29,7 +32,9 @@ Filter by [low, high] range.
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 A **stepping number** is an integer where every two adjacent digits differ by exactly 1. Given two integers `low` and `high`, return all stepping numbers in `[low, high]` in **sorted** order.
 
@@ -39,6 +44,8 @@ A **stepping number** is an integer where every two adjacent digits differ by ex
 - Output: `[0,1,2,3,4,5,6,7,8,9,10,12,21]`
 
 **Constraints:** `0 <= low <= high <= 2 * 10^9`
+
+---
 
 ---
 
@@ -53,9 +60,9 @@ A **stepping number** is an integer where every two adjacent digits differ by ex
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: BFS
+## Solutions
 
 ```typescript
 function countSteppingNumbers(low: number, high: number): number[] {
@@ -80,11 +87,7 @@ function countSteppingNumbers(low: number, high: number): number[] {
 
   return result.sort((a, b) => a - b);
 }
-```
 
-### Solution 2: DFS / Backtracking
-
-```typescript
 function countSteppingNumbersDFS(low: number, high: number): number[] {
   const result: number[] = [];
   if (low === 0) result.push(0);
@@ -102,11 +105,7 @@ function countSteppingNumbersDFS(low: number, high: number): number[] {
 
   return result.sort((a, b) => a - b);
 }
-```
 
-### Solution 3: BFS with Level-by-Level Processing
-
-```typescript
 function countSteppingNumbersLevel(low: number, high: number): number[] {
   const result: number[] = [];
   if (low === 0) result.push(0);

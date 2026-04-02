@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/ugly-number-iii"
 
 # Ugly Number III / Số Xấu III
 
-🟡 Medium | 🏷️ Math, Binary Search, Number Theory | [LeetCode](https://leetcode.com/problems/ugly-number-iii)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Số xấu = bội số của a HOẶC b. Binary search trên giá trị x: đếm số ugly ≤ x dùng inclusion-exclusion: `count(x) = x/a + x/b − x/lcm(a,b)`. Tìm x nhỏ nhất thỏa count(x) ≥ n.
+**Analogy:** **Vietnamese:** Số xấu = bội số của a HOẶC b. Binary search trên giá trị x: đếm số ugly ≤ x dùng inclusion-exclusion: `count(x) = x/a + x/b − x/lcm(a,b)`. Tìm x nhỏ nhất thỏa count(x) ≥ n.
 
 **Analogy:** Đếm bội số trong dãy số — dùng nguyên lý bao hàm-loại trừ như đếm bạn học thích Toán HOẶC Văn: |Toán ∪ Văn| = |Toán| + |Văn| − |Toán ∩ Văn|.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Ugly Number III example:**
 
 ```
 n=3  a=2  b=3
@@ -33,6 +36,18 @@ But 4 must actually BE a multiple of 2 or 3!
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                                  | Difficulty | Connection                          |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------- | ----------------------------------- |
+| [Ugly Number II](https://leetcode.com/problems/ugly-number-ii)                                                           | 🟡 Medium  | Min-heap approach for ugly numbers  |
+| [Minimize the Maximum of Two Arrays](https://leetcode.com/problems/minimize-the-maximum-of-two-arrays)                   | 🟡 Medium  | Binary search + inclusion-exclusion |
+| [Kth Smallest Number in Multiplication Table](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table) | 🔴 Hard    | Binary search on value + count      |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** Count ugly numbers ≤ x = `x/a + x/b − x/lcm(a,b)` (inclusion-exclusion) / **VI:** Đếm số xấu ≤ x bằng bao hàm-loại trừ
@@ -44,9 +59,9 @@ But 4 must actually BE a multiple of 2 or 3!
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Binary Search + Inclusion-Exclusion
+## Solutions
 
 ```typescript
 /**
@@ -86,11 +101,7 @@ console.log(nthUglyNumber(3, 2, 3, 5)); // 4
 console.log(nthUglyNumber(4, 2, 3, 4)); // 6
 console.log(nthUglyNumber(5, 2, 11, 13)); // 10
 console.log(nthUglyNumber(1000000000, 2, 217983653, 336916467)); // 1999999984
-```
 
-### Solution 2: Two factors only (a and b, no c)
-
-```typescript
 /**
  * Simpler version: only a and b (no c parameter).
  * Time: O(log(maxVal))  Space: O(1)

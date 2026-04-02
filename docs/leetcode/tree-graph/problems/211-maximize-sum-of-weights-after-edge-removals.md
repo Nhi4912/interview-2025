@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximize-sum-of-weights-after-edge-
 
 # Maximize Sum of Weights after Edge Removals / Tối Đa Tổng Trọng Số Sau Khi Xóa Cạnh
 
-## Analogy / Tương Tự
+---
 
-> Bạn có một cây gia phả. Mỗi mối quan hệ cha-con có điểm số. Quy tắc: mỗi người chỉ được giữ tối đa **k mối quan hệ** (degree ≤ k). Hãy chọn giữ lại những mối quan hệ có tổng điểm cao nhất.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Bạn có một cây gia phả. Mỗi mối quan hệ cha-con có điểm số. Quy tắc: mỗi người chỉ được giữ tối đa **k mối quan hệ** (degree ≤ k). Hãy chọn giữ lại những mối quan hệ có tổng điểm cao nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximize Sum of Weights after Edge Removals example:**
 
 ```
 Tree (k=2):           Strategy per node:
@@ -25,11 +30,15 @@ Tree (k=2):           Strategy per node:
 Node 0: edges to 1(5), 2(3), 3(8), keep top-2 → 8+5=13
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given a tree with `n` nodes (0-indexed) and weighted edges, and integer `k`. Each node can have at most `k` edges in the final subgraph. Maximize the total sum of edge weights in the remaining edges.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Tree DP** — for each node, decide how many edges to keep with parent vs children
 2. **Two states** — `dp[node][0]` (no parent edge kept) and `dp[node][1]` (parent edge kept, 1 slot used)
@@ -38,9 +47,9 @@ Given a tree with `n` nodes (0-indexed) and weighted edges, and integer `k`. Eac
 5. **Root at 0** — root the tree, then DFS; parent edge decision propagates
 6. **Time complexity** — O(n log n) due to sorting children at each node
 
-## Solutions
+---
 
-### Solution 1: Tree DP with Greedy Child Selection
+## Solutions
 
 ```typescript
 function maximizeSumOfWeights(edges: number[][], k: number): number {
@@ -111,11 +120,7 @@ console.log(
     1,
   ),
 ); // 17 (keep 1-2 and 0-3)
-```
 
-### Solution 2: Iterative DFS (Stack-Based)
-
-```typescript
 function maximizeSumOfWeightsIterative(edges: number[][], k: number): number {
   const n = edges.length + 1;
   const adj: [number, number][][] = Array.from({ length: n }, () => []);
@@ -183,7 +188,9 @@ console.log(
 ); // 15
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                     | Difficulty | Tags      |
 | ---- | ------------------------------------------- | ---------- | --------- |

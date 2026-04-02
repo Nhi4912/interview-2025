@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/merge-strings-alternately"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Như xáo bài — lấy một lá từ bộ bài trái, một lá từ bộ bài phải, xen kẽ nhau. Khi một bộ hết trước, ghép toàn bộ phần còn lại của bộ kia vào cuối.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Như xáo bài — lấy một lá từ bộ bài trái, một lá từ bộ bài phải, xen kẽ nhau. Khi một bộ hết trước, ghép toàn bộ phần còn lại của bộ kia vào cuối.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Merge Strings Alternately example:**
 
 ```
 word1 = "abc"   word2 = "pqr"
@@ -31,7 +38,20 @@ Result: "apbqrs"
 
 **Key insight**: Walk both strings simultaneously; after one runs out, append the rest of the longer one.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                | Difficulty | Pattern      |
+| ---- | -------------------------------------- | ---------- | ------------ |
+| 21   | Merge Two Sorted Lists                 | 🟢 Easy    | Two Pointers |
+| 88   | Merge Sorted Array                     | 🟢 Easy    | Two Pointers |
+| 1768 | Merge Strings Alternately              | 🟢 Easy    | Two Pointers |
+| 2645 | Minimum Additions to Make Valid String | 🟡 Medium  | Greedy       |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Single loop condition `i < word1.length || j < word2.length` handles unequal lengths
   **VI**: Điều kiện vòng lặp `i < word1.length || j < word2.length` xử lý độ dài khác nhau
@@ -109,7 +129,14 @@ console.log(mergeAlternately3("ab", "pqrs")); // "apbqrs"
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                | Difficulty | Pattern      |
 | ---- | -------------------------------------- | ---------- | ------------ |

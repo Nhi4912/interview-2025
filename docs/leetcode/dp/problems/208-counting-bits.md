@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/counting-bits"
 
 # Counting Bits / Đếm Bit 1
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Đếm số bit 1 trong biểu diễn nhị phân của mỗi số từ 0 đến n.  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Đếm số bit 1 trong biểu diễn nhị phân của mỗi số từ 0 đến n.  
 > Mẹo: i >> 1 chính là i chia 2 (bỏ bit cuối). Số bit 1 của i = số bit 1 của (i>>1) + bit cuối của i.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Counting Bits example:**
 
 ```
 i:    0   1   2   3   4   5   6   7
@@ -26,7 +31,9 @@ dp[5] = dp[5>>1] + (5&1) = dp[2] + 1 = 1 + 1 = 2  ✓
 dp[7] = dp[7>>1] + (7&1) = dp[3] + 1 = 2 + 1 = 3  ✓
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given an integer `n`, return an array `ans` of length `n + 1` such that for each `i` (0 ≤ i ≤ n),
 `ans[i]` is the **number of 1's** in the binary representation of `i`.
@@ -35,7 +42,9 @@ Given an integer `n`, return an array `ans` of length `n + 1` such that for each
 
 **Constraints:** `0 <= n <= 10^5`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Key recurrence** — `dp[i] = dp[i >> 1] + (i & 1)`: shift right drops last bit, add that last bit back.
 2. **Alternative** — `dp[i] = dp[i & (i-1)] + 1`: `i & (i-1)` clears the lowest set bit.
@@ -44,9 +53,9 @@ Given an integer `n`, return an array `ans` of length `n + 1` such that for each
 5. **Space** — O(n) for output array; no extra space needed.
 6. **Follow-up** — Can you do it in O(n) time without built-in popcount? Yes — both DP approaches above.
 
-## Solutions
+---
 
-### Solution 1: DP with Right Shift — O(n) time, O(n) space
+## Solutions
 
 ```typescript
 function countBits(n: number): number[] {
@@ -63,11 +72,7 @@ console.log(countBits(2)); // [0, 1, 1]
 console.log(countBits(5)); // [0, 1, 1, 2, 1, 2]
 console.log(countBits(0)); // [0]
 console.log(countBits(8)); // [0,1,1,2,1,2,2,3,1]
-```
 
-### Solution 2: DP with Last Set Bit — O(n) time, O(n) space
-
-```typescript
 function countBitsV2(n: number): number[] {
   const dp = new Array<number>(n + 1).fill(0);
   for (let i = 1; i <= n; i++) {
@@ -79,11 +84,7 @@ function countBitsV2(n: number): number[] {
 
 console.log(countBitsV2(5)); // [0, 1, 1, 2, 1, 2]
 console.log(countBitsV2(7)); // [0, 1, 1, 2, 1, 2, 2, 3]
-```
 
-### Solution 3: Highest Power of 2 Approach — O(n) time
-
-```typescript
 function countBitsV3(n: number): number[] {
   // Every number i = highest_power_of_2 + remainder
   // dp[i] = dp[remainder] + 1; remainder = i - highest_power_of_2
@@ -106,7 +107,9 @@ console.log(JSON.stringify(a) === JSON.stringify(c)); // true
 console.log(a); // [0,1,1,2,1,2,2,3,1,2,2]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                                         | Difficulty | Key Concept      |
 | ------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------- |

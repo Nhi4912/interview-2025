@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-number-of-pairs-in-array"
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Bài toán giống ghép đôi tất: đếm tần số từng số, số cặp = `tần_số // 2`, số còn dư = `tần_số % 2`. Tổng cặp = tổng tất cả `freq // 2`, tổng còn dư = tổng tất cả `freq % 2`.
+**Analogy:** **VI:** Bài toán giống ghép đôi tất: đếm tần số từng số, số cặp = `tần_số // 2`, số còn dư = `tần_số % 2`. Tổng cặp = tổng tất cả `freq // 2`, tổng còn dư = tổng tất cả `freq % 2`.
 
 **EN:** Like pairing socks: count frequencies, pairs = `freq // 2`, leftover = `freq % 2`. Total pairs = sum of all `freq // 2`, leftover count = sum of all `freq % 2`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Number of Pairs in Array example:**
 
 ```
 nums = [1, 3, 2, 1, 3, 2, 2]
@@ -32,7 +37,19 @@ Total: pairs=3, leftover=1 → [3, 1]
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                          | Difficulty | Pattern  |
+| ---- | -------------------------------- | ---------- | -------- |
+| 1512 | Number of Good Pairs             | 🟢 Easy    | Hash Map |
+| 2206 | Divide Array Into Equal Pairs    | 🟢 Easy    | Counting |
+| 2341 | Maximum Number of Pairs in Array | 🟢 Easy    | Hash Map |
+
+---
+
+## 📝 Interview Tips
 
 - 🟢 **EN:** Core formula: pairs = Math.floor(freq / 2), leftover = freq % 2.
   **VI:** Công thức cốt lõi: cặp = Math.floor(tần_số / 2), còn dư = tần_số % 2.
@@ -49,9 +66,9 @@ Total: pairs=3, leftover=1 → [3, 1]
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Frequency Map — O(n) Time, O(n) Space ✅
+## Solutions
 
 ```typescript
 function numberOfPairs_freq(nums: number[]): number[] {
@@ -70,11 +87,7 @@ function numberOfPairs_freq(nums: number[]): number[] {
 console.log(numberOfPairs_freq([1, 3, 2, 1, 3, 2, 2])); // [3, 1]
 console.log(numberOfPairs_freq([1, 1])); // [1, 0]
 console.log(numberOfPairs_freq([0])); // [0, 1]
-```
 
-### Solution 2: Toggle Set (Simulated Matching) — O(n) Time, O(n) Space ✅ Optimal
-
-```typescript
 function numberOfPairs(nums: number[]): number[] {
   const waiting = new Set<number>(); // elements waiting for a match
   let pairs = 0;
@@ -96,11 +109,7 @@ console.log(numberOfPairs([1, 1])); // Expected: [1, 0]
 console.log(numberOfPairs([0])); // Expected: [0, 1]
 console.log(numberOfPairs([5, 5, 5, 5])); // Expected: [2, 0]
 console.log(numberOfPairs([1, 2, 3, 4])); // Expected: [0, 4]
-```
 
-### Solution 3: Sort + Count — O(n log n) Time, O(1) Extra Space
-
-```typescript
 function numberOfPairs_sort(nums: number[]): number[] {
   nums.sort((a, b) => a - b);
   let pairs = 0,
@@ -123,7 +132,7 @@ console.log(numberOfPairs_sort([1, 3, 2, 1, 3, 2, 2])); // [3, 1]
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                          | Difficulty | Pattern  |
 | ---- | -------------------------------- | ---------- | -------- |

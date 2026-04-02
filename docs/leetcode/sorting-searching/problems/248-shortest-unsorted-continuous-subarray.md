@@ -7,103 +7,91 @@ tags: [Array, Two Pointers, Stack, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/shortest-unsorted-continuous-subarray"
 ---
 
-# Shortest Unsorted Continuous Subarray / Shortest Unsorted Continuous Subarray
-
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Create Maximum Number](https://leetcode.com/problems/create-maximum-number) | [The Number of Weak Characters in the Game](https://leetcode.com/problems/the-number-of-weak-characters-in-the-game)
+# shortest unsorted continuous subarray
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống dãy núi — giữ stack luôn đơn điệu (tăng hoặc giảm). Khi gặp phần tử phá vỡ tính đơn điệu, ta biết ngay đáp án cho các phần tử trước đó.
+**Analogy:** Tưởng tượng một dãy núi bị "xáo trộn" ở giữa. Bạn muốn tìm đoạn ngắn nhất cần san bằng
+để cả dãy tạo thành dốc đều tăng. Bí quyết: phần tử nào đang "lạc chỗ" thì nằm trong đoạn
+cần sắp xếp. Một phần tử `nums[i]` lạc chỗ nếu nó nhỏ hơn max của bên trái nó (quá thấp
+so với vị trí) hoặc lớn hơn min của bên phải nó (quá cao). Quét từ hai phía để tìm biên.
 
 **Pattern Recognition:**
+- Key insight: see analogy above
 
-- Signal: "next greater/smaller element" → **Monotonic Stack**
-- Bài này thuộc dạng Monotonic Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Shortest Unsorted Continuous Subarray example:**
+**Visual —  example:**
 
 ```
-arr = [2, 1, 5, 6, 2, 3]
-stack (indices): []
+nums = [2, 6, 4, 8, 10, 9, 15]
 
-i=0: push 0         stack=[0]          (vals: [2])
-i=1: 1<2 → push     stack=[0,1]        (vals: [2,1])
-i=2: 5>1 → pop, process; 5>2 → pop, process
-     push           stack=[2]          (vals: [5])
-...
+Quét trái→phải (theo dõi max, tìm right):
+  i=0: max=2,  nums[0]=2  ≥ max → OK
+  i=1: max=6,  nums[1]=6  ≥ max → OK
+  i=2: max=6,  nums[2]=4  < max → right=2  ← lạc chỗ!
+  i=3: max=6,  nums[3]=8  ≥ max → OK,  max=8
+  i=4: max=8,  nums[4]=10 ≥ max → OK,  max=10
+  i=5: max=10, nums[5]=9  < max → right=5  ← lạc chỗ!
+  i=6: max=10, nums[6]=15 ≥ max → OK
+  → right = 5
+
+Quét phải→trái (theo dõi min, tìm left):
+  i=6: min=15, nums[6]=15 ≤ min → OK
+  i=5: min=15, nums[5]=9  ≤ min → OK,  min=9
+  i=4: min=9,  nums[4]=10 > min → left=4  ← lạc chỗ!
+  i=3: min=9,  nums[3]=8  ≤ min → OK,  min=8
+  ...
+  → left = 3
+
+Answer: right - left + 1 = 5 - 3 + 1 = 3  ✓  (đoạn [8,10,9])
 ```
 
 ---
 
 ## Problem Description
 
-Shortest Unsorted Continuous Subarray. ([LeetCode](https://leetcode.com/problems/shortest-unsorted-continuous-subarray))
-
-Difficulty: Medium | Acceptance: 37.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/shortest-unsorted-continuous-subarray) for full constraints
+| Problem                                                                                                                                           | Difficulty | Tags                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| [977. Squares of a Sorted Array](https://leetcode.com/problems/squares-of-a-sorted-array/)                                                        | Easy       | Two Pointers, Sorting |
+| [1574. Shortest Subarray to be Removed to Make Array Sorted](https://leetcode.com/problems/shortest-subarray-to-be-removed-to-make-array-sorted/) | Medium     | Two Pointers, Stack   |
+| [496. Next Greater Element I](https://leetcode.com/problems/next-greater-element-i/)                                                              | Easy       | Monotonic Stack       |
+| [739. Daily Temperatures](https://leetcode.com/problems/daily-temperatures/)                                                                      | Medium     | Monotonic Stack       |
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Sort-and-compare is clearest** — Clone, sort, find first/last mismatch. O(n log n) but very readable.
+   _Sort-và-so-sánh là rõ ràng nhất — Nhân bản, sắp xếp, tìm vị trí khác nhau đầu/cuối. O(n log n) nhưng rất dễ đọc._
+
+2. **Two-pass O(n) saves sorting** — Forward pass tracks running max to find right boundary; backward pass tracks running min for left.
+   _Hai lần quét O(n) không cần sort — Quét trước theo dõi max để tìm biên phải; quét sau theo dõi min để tìm biên trái._
+
+3. **Right boundary logic** — `nums[i] < runningMax` means `nums[i]` is out of place; update `right = i`.
+   _Logic biên phải — `nums[i] < runningMax` nghĩa là `nums[i]` lạc chỗ; cập nhật `right = i`._
+
+4. **Left boundary logic** — `nums[i] > runningMin` (scanning right-to-left) means `nums[i]` is too large; update `left = i`.
+   _Logic biên trái — `nums[i] > runningMin` (quét phải sang trái) nghĩa là `nums[i]` quá lớn; cập nhật `left = i`._
+
+5. **Stack approach** — Monotonic increasing stack finds left; monotonic decreasing stack finds right. Same O(n) time.
+   _Cách dùng stack — Stack đơn điệu tăng tìm biên trái; stack đơn điệu giảm tìm biên phải. Cùng O(n)._
+
+6. **Already-sorted edge case** — If `right == -1` after forward pass, array is sorted; return 0 immediately.
+   _Trường hợp đã sắp xếp — Nếu `right == -1` sau lần quét đầu, mảng đã sắp xếp; trả về 0 ngay._
 
 ---
 
 ## Solutions
 
-```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shortestUnsortedContinuousSubarrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
-
-/**
- * Solution 2: Optimized — Monotonic Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function shortestUnsortedContinuousSubarray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Monotonic Stack
-  // Hint: Maintain monotonic property, pop when new element breaks it
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(shortestUnsortedContinuousSubarray(/* example 1 */)); // expected
-// console.log(shortestUnsortedContinuousSubarray(/* example 2 */)); // expected
-// console.log(shortestUnsortedContinuousSubarray(/* edge case */)); // expected
-```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Create Maximum Number](https://leetcode.com/problems/create-maximum-number) — same pattern: Monotonic Stack
-- [The Number of Weak Characters in the Game](https://leetcode.com/problems/the-number-of-weak-characters-in-the-game) — same pattern: Monotonic Stack
-- [Max Chunks To Make Sorted](https://leetcode.com/problems/max-chunks-to-make-sorted) — same pattern: Monotonic Stack
-- [Boats to Save People](https://leetcode.com/problems/boats-to-save-people) — same pattern: Two Pointers
-- [Shortest Unsorted Continuous Subarray — LeetCode](https://leetcode.com/problems/shortest-unsorted-continuous-subarray) — problem page
+| Problem                                                                                                                                           | Difficulty | Tags                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| [977. Squares of a Sorted Array](https://leetcode.com/problems/squares-of-a-sorted-array/)                                                        | Easy       | Two Pointers, Sorting |
+| [1574. Shortest Subarray to be Removed to Make Array Sorted](https://leetcode.com/problems/shortest-subarray-to-be-removed-to-make-array-sorted/) | Medium     | Two Pointers, Stack   |
+| [496. Next Greater Element I](https://leetcode.com/problems/next-greater-element-i/)                                                              | Easy       | Monotonic Stack       |
+| [739. Daily Temperatures](https://leetcode.com/problems/daily-temperatures/)                                                                      | Medium     | Monotonic Stack       |

@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/most-profitable-path-in-a-tree"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS + Path Simulation
 
-## 🧠 Intuition
+---
 
-**VI**: Alice đi từ gốc xuống lá, Bob đi từ `bob` lên gốc. Họ cùng thu tiền ở cổng, nhưng nếu đến cùng lúc thì chia đôi. Chiến lược: (1) Tìm đường đi của Bob từ `bob` lên gốc + thời gian tới mỗi nút. (2) DFS cho Alice, tại mỗi nút xem Bob có đến trước/cùng lúc/sau hay không để quyết định lấy bao nhiêu.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Alice đi từ gốc xuống lá, Bob đi từ `bob` lên gốc. Họ cùng thu tiền ở cổng, nhưng nếu đến cùng lúc thì chia đôi. Chiến lược: (1) Tìm đường đi của Bob từ `bob` lên gốc + thời gian tới mỗi nút. (2) DFS cho Alice, tại mỗi nút xem Bob có đến trước/cùng lúc/sau hay không để quyết định lấy bao nhiêu.
 
 **EN**: Find Bob's path to root with timestamps first. Then DFS Alice root→leaf, at each gate compare Alice's time vs Bob's time to determine income (full / half / 0).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Most Profitable Path in a Tree example:**
 
 ```
 Tree:              Bob path: 3→1→0
@@ -30,6 +37,19 @@ Alice path 0→1→3: -2 + 4/2 + 0 = 0
 Alice path 0→4:   -2 + 6 = 4 ← MAX
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                           | Difficulty | Pattern      |
+| ---- | ----------------------------------------------- | ---------- | ------------ |
+| 337  | House Robber III                                | 🟡 Medium  | Tree DP      |
+| 543  | Diameter of Binary Tree                         | 🟢 Easy    | DFS          |
+| 2096 | Step-By-Step Directions From a Binary Tree Node | 🟡 Medium  | DFS + LCA    |
+| 834  | Sum of Distances in Tree                        | 🔴 Hard    | Two-pass DFS |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Tìm đường Bob trước bằng DFS/BFS từ gốc đến `bob`, lưu thời gian tới từng nút.
@@ -38,6 +58,8 @@ Alice path 0→4:   -2 + 6 = 4 ← MAX
 - 🇬🇧 Alice reaches a node at depth `d`; compare with `bobTime[node]`: d < bt → full, d === bt → half, d > bt → 0.
 - 🇻🇳 Alice chỉ có leaf mới tính kết quả — dùng `!adj[node] has children besides parent` để phát hiện leaf.
 - 🇬🇧 Only leaf nodes (no unvisited neighbors) contribute to Alice's final score comparison.
+
+---
 
 ## Solutions
 
@@ -173,6 +195,8 @@ console.log(
 ); // 6
 console.log(mostProfitablePath([[0, 1]], 1, [-7280, 2350])); // -7280
 ```
+
+---
 
 ## 🔗 Related Problems
 

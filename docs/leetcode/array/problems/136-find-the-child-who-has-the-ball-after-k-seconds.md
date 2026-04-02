@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/find-the-child-who-has-the-ball-aft
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Hãy tưởng tượng n đứa trẻ xếp hàng, truyền bóng qua lại như quả lắc đồng hồ: đi từ 0→n-1 rồi quay ngược n-1→0. Chu kỳ đầy đủ dài `2*(n-1)` bước. Dùng modulo để tìm vị trí trong chu kỳ, rồi xác định đang đi xuôi hay ngược.
+**Analogy:** **VI:** Hãy tưởng tượng n đứa trẻ xếp hàng, truyền bóng qua lại như quả lắc đồng hồ: đi từ 0→n-1 rồi quay ngược n-1→0. Chu kỳ đầy đủ dài `2*(n-1)` bước. Dùng modulo để tìm vị trí trong chu kỳ, rồi xác định đang đi xuôi hay ngược.
 
 **EN:** Think of a pendulum: ball goes 0→n-1 (forward) then n-1→0 (backward). Full cycle = `2*(n-1)` steps. Use `k % cycle` to find position, then decide direction.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find the Child Who Has the Ball After K Seconds example:**
 
 ```
 n=4, positions: 0   1   2   3
@@ -31,7 +36,19 @@ k=3→pos 3  k=4→pos 2  k=5→pos 1  k=6→pos 0 (repeats)
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                        | Difficulty | Pattern        |
+| ---- | ------------------------------ | ---------- | -------------- |
+| 2582 | Pass the Pillow                | 🟢 Easy    | Math / Modular |
+| 874  | Walking Robot Simulation       | 🟡 Medium  | Simulation     |
+| 1688 | Count of Matches in Tournament | 🟢 Easy    | Math           |
+
+---
+
+## 📝 Interview Tips
 
 - 🟢 **EN:** Recognize the oscillation pattern — same as bouncing ball or palindrome traversal.
   **VI:** Nhận ra mẫu dao động — giống bóng nảy hoặc duyệt palindrome.
@@ -48,9 +65,9 @@ k=3→pos 3  k=4→pos 2  k=5→pos 1  k=6→pos 0 (repeats)
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Brute Force Simulation — O(k) Time, O(1) Space
+## Solutions
 
 ```typescript
 function numberOfChild_brute(n: number, k: number): number {
@@ -67,11 +84,7 @@ function numberOfChild_brute(n: number, k: number): number {
 console.log(numberOfChild_brute(3, 5)); // 1
 console.log(numberOfChild_brute(5, 6)); // 2
 console.log(numberOfChild_brute(1, 100)); // 0
-```
 
-### Solution 2: Math / Modular Arithmetic — O(1) Time, O(1) Space ✅ Optimal
-
-```typescript
 function numberOfChild(n: number, k: number): number {
   if (n === 1) return 0;
   const cycle = 2 * (n - 1);
@@ -93,7 +106,7 @@ console.log(numberOfChild(4, 6)); // Expected: 0  (full cycle)
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                        | Difficulty | Pattern        |
 | ---- | ------------------------------ | ---------- | -------------- |

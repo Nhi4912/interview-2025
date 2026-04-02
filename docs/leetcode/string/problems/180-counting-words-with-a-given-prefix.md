@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/counting-words-with-a-given-prefix"
 
 # Counting Words With a Given Prefix / Đếm Từ Có Tiền Tố Cho Trước
 
-**Difficulty:** 🟢 Easy | **Tags:** Array, String, String Matching
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Bài toán đơn giản: **lọc và đếm** những từ bắt đầu bằng `pref`.
+**Analogy:** Bài toán đơn giản: **lọc và đếm** những từ bắt đầu bằng `pref`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Counting Words With a Given Prefix example:**
 
 ```
 words = ["pay","attention","practice","attend"]   pref = "at"
@@ -37,7 +40,19 @@ Count = 2
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                 | Difficulty | Pattern         |
+| ------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Find Words Containing Character](https://leetcode.com/problems/find-words-containing-character/)       | 🟢 Easy    | String filter   |
+| [Longest Common Prefix](https://leetcode.com/problems/longest-common-prefix/)                           | 🟢 Easy    | Prefix matching |
+| [Implement strStr()](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/) | 🟢 Easy    | String search   |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **`startsWith` là cách đọc rõ nhất**: ưu tiên dùng trong phỏng vấn
 - 🇺🇸 **`startsWith` is most readable**: prefer it in interview for clarity
@@ -54,9 +69,9 @@ Count = 2
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — filter + startsWith (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -70,11 +85,7 @@ function prefixCount(words: string[], pref: string): number {
 console.log(prefixCount(["pay", "attention", "practice", "attend"], "at")); // 2
 console.log(prefixCount(["leetcode", "win", "loops", "success"], "code")); // 0
 console.log(prefixCount(["a", "b", "c", "ab", "bc", "abc"], "a")); // 3
-```
 
-### Solution 2 — Imperative counter
-
-```typescript
 /**
  * Single for-loop with explicit counter.
  * Time: O(n × |pref|)  Space: O(1)
@@ -89,11 +100,7 @@ function prefixCount2(words: string[], pref: string): number {
 
 console.log(prefixCount2(["pay", "attention", "practice", "attend"], "at")); // 2
 console.log(prefixCount2(["leetcode", "win", "loops", "success"], "code")); // 0
-```
 
-### Solution 3 — Manual slice comparison (no built-ins)
-
-```typescript
 /**
  * Manually compare prefix chars — useful in constrained environments.
  * Time: O(n × |pref|)  Space: O(1)

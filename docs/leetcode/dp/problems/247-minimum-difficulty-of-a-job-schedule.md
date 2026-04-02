@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/minimum-difficulty-of-a-job-schedul
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn có một danh sách công việc cần làm theo thứ tự trong d ngày. Mỗi ngày bạn phải làm ít nhất 1 việc, và độ khó của một ngày là độ khó cao nhất trong các việc bạn làm hôm đó. Mục tiêu: phân chia công việc vào d ngày sao cho tổng độ khó tối thiểu. Giống như lập lịch thi đấu thể thao: bạn phải xếp các trận đấu (có độ khắc nghiệt khác nhau) vào d vòng — mỗi vòng ít nhất một trận — sao cho tổng sức ép thấp nhất.
+**Analogy:** Bạn có một danh sách công việc cần làm theo thứ tự trong d ngày. Mỗi ngày bạn phải làm ít nhất 1 việc, và độ khó của một ngày là độ khó cao nhất trong các việc bạn làm hôm đó. Mục tiêu: phân chia công việc vào d ngày sao cho tổng độ khó tối thiểu. Giống như lập lịch thi đấu thể thao: bạn phải xếp các trận đấu (có độ khắc nghiệt khác nhau) vào d vòng — mỗi vòng ít nhất một trận — sao cho tổng sức ép thấp nhất.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Difficulty of a Job Schedule example:**
 
 ```
 jobDifficulty = [6,5,4,3,2,1], d = 2
@@ -39,7 +42,9 @@ day1=[6,5,4,3,2], day2=[1]: 6+1=7  ← optimal
 dp[2][6] = 7
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given `jobDifficulty[i]` (difficulty of job `i`, must be done in order) and `d` days (at least 1 job/day), return the **minimum sum of daily difficulties**. Each day's difficulty = max job difficulty that day. Return `-1` if impossible.
 
@@ -51,7 +56,9 @@ Given `jobDifficulty[i]` (difficulty of job `i`, must be done in order) and `d` 
 
 **Constraints:** `1 ≤ jobDifficulty.length ≤ 300`, `0 ≤ jobDifficulty[i] ≤ 1000`, `1 ≤ d ≤ 10`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Infeasible check** / Kiểm tra bất khả thi: Nếu `n < d` → `-1` (không đủ việc cho mỗi ngày)
 - **dp[day][i]** / Định nghĩa: Chi phí tối thiểu dùng `day` ngày để hoàn thành `i` công việc đầu
@@ -60,7 +67,9 @@ Given `jobDifficulty[i]` (difficulty of job `i`, must be done in order) and `d` 
 - **d ≤ 10** / d nhỏ: Chỉ 10 ngày → O(d·n²) = O(10·90000) = O(900k) — OK
 - **Base case** / Trường hợp cơ sở: `dp[1][i]` = max(jobs[0..i-1]) — tất cả trong ngày đầu
 
-## Solution 1 - DP O(d·n²)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -91,11 +100,7 @@ function minDifficulty(jobDifficulty: number[], d: number): number {
 
   return dp[d][n] === INF ? -1 : dp[d][n];
 }
-```
 
-## Solution 2 - DP with Monotone Stack (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(d·n) | Space: O(n)
  * Use monotone stack to optimize transition for each day to O(n)
@@ -139,11 +144,8 @@ function minDifficultyOptimal(jobDifficulty: number[], d: number): number {
 
   return prev[n] === Infinity ? -1 : prev[n];
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(minDifficulty([6, 5, 4, 3, 2, 1], 2)); // → 7
 console.log(minDifficulty([9, 9, 9], 4)); // → -1
 console.log(minDifficulty([1, 1, 1], 3)); // → 3
@@ -151,7 +153,9 @@ console.log(minDifficulty([7, 1, 7, 1, 7, 1], 3)); // → 15
 console.log(minDifficultyOptimal([6, 5, 4, 3, 2, 1], 2)); // → 7
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                 | Difficulty | Link                                                            |
 | ----------------------- | ---------- | --------------------------------------------------------------- |

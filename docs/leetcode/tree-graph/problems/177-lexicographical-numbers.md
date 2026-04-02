@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/lexicographical-numbers"
 
 # Lexicographical Numbers / Số Theo Thứ Tự Từ Điển
 
-🟡 Medium | DFS on Virtual Trie | [LeetCode 386](https://leetcode.com/problems/lexicographical-numbers)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Các số 1..n theo thứ tự từ điển giống như duyệt cây 10-phân (10-ary trie) theo thứ tự trước (pre-order). Gốc là 1..9, mỗi nút x có con x*10, x*10+1, ..., x\*10+9 (nếu ≤ n). Duyệt DFS là đúng thứ tự lexicographic.
+**Analogy:** **Vietnamese:** Các số 1..n theo thứ tự từ điển giống như duyệt cây 10-phân (10-ary trie) theo thứ tự trước (pre-order). Gốc là 1..9, mỗi nút x có con x*10, x*10+1, ..., x\*10+9 (nếu ≤ n). Duyệt DFS là đúng thứ tự lexicographic.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Lexicographical Numbers example:**
 
 ```
 n=13: trie dfs order:
@@ -28,7 +31,20 @@ Iterative: start=1, go deeper (*10) when ≤n,
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                        | Difficulty | Key Idea                    |
+| -------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------- |
+| [K-th Smallest in Lexicographic Order 440](https://leetcode.com/problems/k-th-smallest-in-lexicographic-order) | Hard       | Count subtree nodes in trie |
+| [Implement Trie 208](https://leetcode.com/problems/implement-trie-prefix-tree)                                 | Medium     | Build trie structure        |
+| [Search Autocomplete System 642](https://leetcode.com/problems/design-search-autocomplete-system)              | Hard       | Trie with frequency         |
+| [Concatenated Words 472](https://leetcode.com/problems/concatenated-words)                                     | Hard       | DFS + trie on words         |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Think of it as DFS pre-order traversal of a virtual 10-ary trie | **VI:** DFS tiền thứ tự trên cây 10-phân ảo
 - 🔑 **EN:** From current number cur: go deeper (cur*10) if ≤ n | **VI:** Đi sâu hơn nếu cur*10 ≤ n
@@ -39,7 +55,9 @@ Iterative: start=1, go deeper (*10) when ≤n,
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -72,9 +90,7 @@ function lexicalOrder(n: number): number[] {
 console.log(lexicalOrder(13)); // [1,10,11,12,13,2,3,4,5,6,7,8,9]
 console.log(lexicalOrder(2)); // [1,2]
 console.log(lexicalOrder(100).slice(0, 5)); // [1,10,100,11,12]
-```
 
-```typescript
 /**
  * Recursive DFS — cleaner but O(log n) stack depth
  * Time: O(n)  Space: O(log n) call stack
@@ -98,9 +114,7 @@ function lexicalOrderRecursive(n: number): number[] {
 
 console.log(lexicalOrderRecursive(13)); // [1,10,11,12,13,2,3,4,5,6,7,8,9]
 console.log(lexicalOrderRecursive(2)); // [1,2]
-```
 
-```typescript
 /**
  * Brute Force — sort as strings (simpler to explain, worse complexity)
  * Time: O(n log n)  Space: O(n)
@@ -117,7 +131,7 @@ console.log(lexicalOrderBrute(13)); // [1,10,11,12,13,2,3,4,5,6,7,8,9]
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                                        | Difficulty | Key Idea                    |
 | -------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------- |

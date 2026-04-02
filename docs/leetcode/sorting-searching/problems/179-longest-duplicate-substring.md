@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/longest-duplicate-substring"
 
 # Longest Duplicate Substring / Chuỗi Con Trùng Lặp Dài Nhất
 
-🔴 Hard | Binary Search + Rolling Hash | [LeetCode 1044](https://leetcode.com/problems/longest-duplicate-substring)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** Binary search on the duplicate substring length `L`. For each `L`, use Rabin-Karp rolling hash to find if any two substrings of length `L` have the same hash (with string verification to avoid false positives). Double hashing reduces collision probability.
+**Analogy:** **EN:** Binary search on the duplicate substring length `L`. For each `L`, use Rabin-Karp rolling hash to find if any two substrings of length `L` have the same hash (with string verification to avoid false positives). Double hashing reduces collision probability.
 
 **VI:** Binary search trên độ dài `L` của chuỗi con trùng lặp. Với mỗi `L`, dùng Rabin-Karp rolling hash để tìm hai chuỗi con có cùng hash (xác minh chuỗi thực tế để tránh collision). Dùng hai hàm hash để giảm khả năng va chạm.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Longest Duplicate Substring example:**
 
 ```
 s = "banana"   Binary search: L in [0,5]
@@ -37,7 +40,19 @@ Rolling Hash:
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                     | Difficulty | Pattern            |
+| --- | --------------------------- | ---------- | ------------------ |
+| 1   | Longest Common Substring    | 🟡 Medium  | rolling hash       |
+| 2   | Repeated DNA Sequences      | 🟡 Medium  | rolling hash + set |
+| 3   | String Matching in an Array | 🟢 Easy    | substring search   |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Binary search is on length L (monotone: if dup of len L exists, dup of len L-1 also exists). **VI:** Binary search trên độ dài L (đơn điệu: nếu có dup dài L thì cũng có dup dài L-1).
 - 🧮 **EN:** Double hashing: use two different (mod, base) pairs to minimize collision probability. **VI:** Dùng hai hàm hash khác nhau để giảm xác suất va chạm giả.
@@ -48,9 +63,9 @@ Rolling Hash:
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Binary Search + Double Rolling Hash (Rabin-Karp)
+## Solutions
 
 ```typescript
 /**
@@ -129,11 +144,7 @@ function longestDupSubstring(s: string): string {
 console.log(longestDupSubstring("banana")); // "ana"
 console.log(longestDupSubstring("abcd")); // ""
 console.log(longestDupSubstring("aababaa")); // "abaa" or "aaba"
-```
 
-### Solution 2 — Binary Search + Single Hash with Verification
-
-```typescript
 /**
  * Simpler single-hash version; relies on string verification for correctness
  * Time: O(n log n) average  Space: O(n)
@@ -187,7 +198,7 @@ console.log(longestDupSubstring2("abcd")); // ""
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                     | Difficulty | Pattern            |
 | --- | --------------------------- | ---------- | ------------------ |

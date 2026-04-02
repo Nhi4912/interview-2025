@@ -7,15 +7,18 @@ tags: [Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/count-number-of-ways-to-place-houses"
 ---
 
-## 🏠 2320. Count Number of Ways to Place Houses / Đếm Số Cách Đặt Nhà
-
-**Difficulty:** 🟡 Medium
+# count number of ways to place houses
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Hai dãy đất đối diện nhau, mỗi dãy có `n` lô. Bạn đặt nhà vào các lô sao cho **không có 2 nhà liền kề** trên cùng một dãy (nhưng đối diện thì được). Đây là biến thể kinh điển của bài toán "không chọn 2 liền nhau" — giống Fibonacci!
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 One side (n=3):
@@ -35,12 +38,16 @@ For one side: `f(i) = f(i-1) + f(i-2)` (either no house at slot i, or house at i
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `n` plots on each side of a street (2 sides total). Count arrangements placing houses such that no two adjacent plots (on the same side) both have houses. Return answer mod 10^9+7.
 
 - Example: `n=1` → **4** (each side: house or no-house = 2 choices; 2×2=4)
 - Example: `n=2` → **9** (one side has 3 ways: `00,10,01`; 3×3=9)
+
+---
 
 ---
 
@@ -55,9 +62,9 @@ Given `n` plots on each side of a street (2 sides total). Count arrangements pla
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Fibonacci DP — Space Optimized
+## Solutions
 
 ```typescript
 function countHousePlacements(n: number): number {
@@ -84,11 +91,7 @@ function countHousePlacements(n: number): number {
   // Two independent sides: answer = oneSide^2 mod MOD
   return (prev1 * prev1) % MOD;
 }
-```
 
-### Solution 2: Full DP Array (explicit)
-
-```typescript
 function countHousePlacementsDPArray(n: number): number {
   const MOD = 1_000_000_007;
 
@@ -104,11 +107,7 @@ function countHousePlacementsDPArray(n: number): number {
   // Both sides are independent
   return (dp[n] * dp[n]) % MOD;
 }
-```
 
-### Solution 3: Compact Fibonacci via matrix (for large n)
-
-```typescript
 function countHousePlacementsMatrix(n: number): number {
   const MOD = 1_000_000_007n;
   const bigN = BigInt(n);

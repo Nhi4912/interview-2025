@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-points-tourist-can-earn"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: 2D DP (days × cities)
 
-## 🧠 Intuition
+---
 
-**VI:** Mỗi ngày du khách ở một thành phố và nhận điểm từ bảng điểm. Họ có thể ở lại hoặc di chuyển sang thành phố khác (trả chi phí từ `travel` matrix). Tìm điểm tối đa sau `k` ngày.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Mỗi ngày du khách ở một thành phố và nhận điểm từ bảng điểm. Họ có thể ở lại hoặc di chuyển sang thành phố khác (trả chi phí từ `travel` matrix). Tìm điểm tối đa sau `k` ngày.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Points Tourist Can Earn example:**
 
 ```
 k=1, n=2, stay=[[2,3],[1,2]], travel=[[0,2],[1,0]]
@@ -34,6 +41,19 @@ dp[1][1] = max(dp[0][1]+stay[1][1], dp[0][0]+travel[0][1]+stay[1][1])
 Answer: max(dp[k-1]) = max(5,6) = 6
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                             | Difficulty | Connection                       |
+| ---- | --------------------------------- | ---------- | -------------------------------- |
+| 787  | Cheapest Flights Within K Stops   | 🟡 Medium  | dp[stops][city] — same structure |
+| 1235 | Maximum Profit in Job Scheduling  | 🔴 Hard    | Days/intervals DP                |
+| 62   | Unique Paths                      | 🟡 Medium  | Grid DP traversal                |
+| 329  | Longest Increasing Path in Matrix | 🔴 Hard    | Matrix DP with movement          |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** `dp[d][c]` = max points after visiting `d+1` days (0-indexed) ending in city `c` | **VI:** `dp[d][c]` = điểm tối đa sau d+1 ngày, đang ở thành phố c
@@ -42,6 +62,8 @@ Answer: max(dp[k-1]) = max(5,6) = 6
 - 🔑 **EN:** Space: only need previous day's row → O(n) space | **VI:** Chỉ cần hàng ngày trước → O(n) không gian
 - 🔑 **EN:** Time: O(k·n²) — need to check all source cities for each destination | **VI:** O(k·n²) — vì phải xét tất cả thành phố nguồn cho mỗi đích đến
 - 🔑 **EN:** Answer = max over all cities of `dp[k-1][c]` | **VI:** Đáp án = max của hàng cuối cùng trong dp
+
+---
 
 ## Solutions
 
@@ -160,6 +182,8 @@ console.log(
   ),
 ); // 3
 ```
+
+---
 
 ## 🔗 Related Problems
 

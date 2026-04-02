@@ -7,15 +7,18 @@ tags: [Array, Hash Table, String, Depth-First Search, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/similar-string-groups"
 ---
 
-## 839. Similar String Groups
-
-### Nhóm Chuỗi Tương Tự | 🔴 Hard
+# similar string groups
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Các từ như những người bạn — hai người "quen" nhau nếu chỉ khác nhau đúng 2 chữ cái (hoán đổi). Bài toán hỏi có bao nhiêu nhóm bạn bè (components)?
+**Analogy:** > **Vietnamese analogy:** Các từ như những người bạn — hai người "quen" nhau nếu chỉ khác nhau đúng 2 chữ cái (hoán đổi). Bài toán hỏi có bao nhiêu nhóm bạn bè (components)?
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 strs = ["tars","rats","arts","star"]
@@ -30,7 +33,9 @@ Groups: {tars, rats, arts}, {star} → 2 groups
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Two strings are **similar** if we can swap exactly two letters (in different positions) of one string to equal the other, or if they're identical. Given a list of strings `strs` (all anagrams of each other), return the number of groups of similar strings.
 
@@ -47,6 +52,8 @@ Two strings are **similar** if we can swap exactly two letters (in different pos
 
 ---
 
+---
+
 ## 📝 Interview Tips
 
 - 🔑 Two strings are similar if they differ in exactly 0 or 2 positions
@@ -58,9 +65,9 @@ Two strings are **similar** if we can swap exactly two letters (in different pos
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Union-Find (Optimal)
+## Solutions
 
 ```typescript
 function numSimilarGroups(strs: string[]): number {
@@ -106,11 +113,7 @@ function numSimilarGroups(strs: string[]): number {
   for (let i = 0; i < n; i++) roots.add(find(i));
   return roots.size;
 }
-```
 
-### Solution 2: DFS with Adjacency
-
-```typescript
 function numSimilarGroupsDFS(strs: string[]): number {
   const n = strs.length;
   const visited = new Array(n).fill(false);

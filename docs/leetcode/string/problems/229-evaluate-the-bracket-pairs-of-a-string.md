@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/evaluate-the-bracket-pairs-of-a-str
 
 # Evaluate the Bracket Pairs of a String / Tính Giá Trị Các Cặp Ngoặc Trong Chuỗi
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Cho chuỗi `s` chứa các cặp ngoặc `(key)` và mảng `knowledge` là danh sách `[key, value]`. Thay thế mỗi `(key)` trong `s` bằng giá trị tương ứng. Nếu không tìm thấy `key`, thay bằng `"?"`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Cho chuỗi `s` chứa các cặp ngoặc `(key)` và mảng `knowledge` là danh sách `[key, value]`. Thay thế mỗi `(key)` trong `s` bằng giá trị tương ứng. Nếu không tìm thấy `key`, thay bằng `"?"`.
 
 **Ví dụ:** `s = "(name)is(age)yearsold"`, `knowledge = [["name","bob"],["age","two"]]` → `"bobistwoyearsold"`.
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như điền vào mẫu đơn: có mẫu với chỗ trống `(tên)`, `(tuổi)` và một bảng tra cứu. Tra từng chỗ trống và điền giá trị. Nếu không có trong bảng, ghi `"?"`.
-
-## Minhှo ASCII
+**Visual — Evaluate the Bracket Pairs of a String example:**
 
 ```
 s = "(a)bc(d)ef(g)"
@@ -41,7 +42,9 @@ Parsing:
 Result: "1bc4ef?"
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - `s` chứa chữ thường và các cặp `(key)`.
 - `knowledge[i] = [key_i, value_i]`.
@@ -49,7 +52,9 @@ Result: "1bc4ef?"
 
 **Constraints:** `1 <= s.length <= 10^5`, `0 <= knowledge.length <= 10^5`.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **HashMap trước** — convert `knowledge` sang `Map` để O(1) lookup.
 2. **State machine** — dùng flag `inBracket` và buffer để thu thập key.
@@ -58,9 +63,9 @@ Result: "1bc4ef?"
 5. **Fallback `"?"`** — nếu Map không có key, push `"?"`.
 6. **Độ phức tạp** — O(n + m) với n = |s|, m = |knowledge|.
 
-## Giải pháp
+---
 
-### Giải pháp 1: State Machine với Map (Tối ưu)
+## Solutions
 
 ```typescript
 function evaluate(s: string, knowledge: string[][]): string {
@@ -109,11 +114,7 @@ console.log(
   ]),
 );
 // "1bc4"
-```
 
-### Giải pháp 2: Regex replace
-
-```typescript
 function evaluateRegex(s: string, knowledge: string[][]): string {
   const map = new Map<string, string>(knowledge.map(([k, v]) => [k, v]));
 
@@ -132,11 +133,7 @@ console.log(evaluateRegex("hi(name)", [["a", "b"]]));
 // "hi?"
 console.log(evaluateRegex("(a)(a)(a)aaa", [["a", "yes"]]));
 // "yesyesyesaaa"
-```
 
-### Giải pháp 3: Character-by-character với inBracket flag
-
-```typescript
 function evaluateCharByChar(s: string, knowledge: string[][]): string {
   const map = new Map<string, string>();
   for (const [k, v] of knowledge) map.set(k, v);
@@ -173,18 +170,12 @@ console.log(evaluateCharByChar("(missing)", []));
 // "?"
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp     | Thời gian | Không gian | Ghi chú         |
 | ------------- | --------- | ---------- | --------------- |
 | State Machine | O(n + m)  | O(n + m)   | Tối ưu, rõ ràng |
 | Regex replace | O(n + m)  | O(n + m)   | Ngắn gọn        |
 | Char by char  | O(n + m)  | O(n + m)   | Trực quan nhất  |
-
-## Bài liên quan
-
-| #    | Tên                        | Độ khó | Tags               |
-| ---- | -------------------------- | ------ | ------------------ |
-| 20   | Valid Parentheses          | Easy   | Stack              |
-| 726  | Number of Atoms            | Hard   | Hash Table, String |
-| 1807 | Evaluate the Bracket Pairs | Medium | Hash Table         |

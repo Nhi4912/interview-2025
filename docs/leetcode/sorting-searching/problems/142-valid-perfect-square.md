@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/valid-perfect-square"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Binary Search / Math
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Cho số `num`, kiểm tra có tồn tại số nguyên `x` sao cho `x * x = num` không — **không dùng sqrt()**. Tìm nhị phân trên đoạn `[1, num]`: nếu `mid²` = num → true, < num → tìm nửa phải, > num → tìm nửa trái.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Cho số `num`, kiểm tra có tồn tại số nguyên `x` sao cho `x * x = num` không — **không dùng sqrt()**. Tìm nhị phân trên đoạn `[1, num]`: nếu `mid²` = num → true, < num → tìm nửa phải, > num → tìm nửa trái.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Valid Perfect Square example:**
 
 ```
 num = 16
@@ -30,7 +37,20 @@ lo=1, hi=14
   lo>hi → return false ✅
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem               | Pattern       |
+| --- | --------------------- | ------------- |
+| 367 | Valid Perfect Square  | This problem  |
+| 69  | Sqrt(x)               | Binary Search |
+| 633 | Sum of Square Numbers | Two Pointers  |
+| 268 | Missing Number        | Math          |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **No Math.sqrt** / Đề cấm dùng sqrt — phải binary search hoặc Newton's method
 - 🔑 **Search range** / Tìm trong [1, num] — giới hạn trên có thể là num/2+1 nếu num > 1
@@ -38,6 +58,8 @@ lo=1, hi=14
 - 🔑 **Newton's method** / `x = (x + num/x) / 2` hội tụ nhanh — O(log log n)
 - 🔑 **Edge cases** / num = 1 → true (1² = 1); num = 2 → false
 - 🔑 **Odd square pattern** / 1=1, 4=1+3, 9=1+3+5 — cộng liên tiếp các số lẻ là O(√n)
+
+---
 
 ## Solutions
 
@@ -103,7 +125,9 @@ console.log(isPerfectSquareMath(9)); // true
 console.log(isPerfectSquareMath(14)); // false
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #   | Problem               | Pattern       |
 | --- | --------------------- | ------------- |

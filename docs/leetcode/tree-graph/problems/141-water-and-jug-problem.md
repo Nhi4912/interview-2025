@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/water-and-jug-problem"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math (Bézout's Identity) / BFS
 
-## 🧠 Intuition
+---
 
-**VI**: Bài toán kinh điển về số học! Định lý Bézout: mọi số đạt được từ các phép cộng/trừ bội số của x và y đều là bội số của `gcd(x, y)`. Vậy ta có thể đong được `z` lít khi và chỉ khi `z` chia hết cho `gcd(x, y)` VÀ `z ≤ x + y`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Bài toán kinh điển về số học! Định lý Bézout: mọi số đạt được từ các phép cộng/trừ bội số của x và y đều là bội số của `gcd(x, y)`. Vậy ta có thể đong được `z` lít khi và chỉ khi `z` chia hết cho `gcd(x, y)` VÀ `z ≤ x + y`.
 
 **EN**: Bézout's identity: any integer representable as `ax + by` is a multiple of `gcd(x, y)`. So z is achievable iff `z % gcd(x, y) === 0` and `z <= x + y`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Water and Jug Problem example:**
 
 ```
 x=3, y=5, z=4:
@@ -28,6 +35,14 @@ BFS states: (jug_x, jug_y) current water amounts
 Start: (0,0)  Goal: x==z or y==z or x+y==z
 ```
 
+---
+
+## Problem Description
+
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math (Bézout's Identity) / BFS
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Giải pháp O(1): `z % gcd(x,y) === 0 && z <= x + y` — luôn ưu tiên giải thích toán học.
@@ -36,6 +51,8 @@ Start: (0,0)  Goal: x==z or y==z or x+y==z
 - 🇬🇧 BFS for intuition: state is `(water_in_x, water_in_y)`, 6 transitions per state.
 - 🇻🇳 6 hành động: đổ đầy x, đổ đầy y, đổ hết x, đổ hết y, rót x→y, rót y→x.
 - 🇬🇧 6 operations: fill x, fill y, empty x, empty y, pour x→y, pour y→x.
+
+---
 
 ## Solutions
 
@@ -132,6 +149,8 @@ console.log(canMeasureWater(1, 2, 3)); // true
 console.log(canMeasureWaterBFS(3, 5, 4)); // true
 console.log(canMeasureWaterBFS(2, 6, 5)); // false
 ```
+
+---
 
 ## 🔗 Related Problems
 

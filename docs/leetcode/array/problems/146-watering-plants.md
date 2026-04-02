@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/watering-plants"
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Mô phỏng hành trình tưới cây. Bắt đầu tại vòi nước (vị trí -1), đi theo thứ tự cây từ trái sang phải. Nếu bình đang có đủ nước thì tưới và đi tiếp (+1 bước). Nếu không đủ: quay về vòi (i bước ngược), nạp đầy, rồi đi lại đến cây (i+1 bước tới).
+**Analogy:** **VI:** Mô phỏng hành trình tưới cây. Bắt đầu tại vòi nước (vị trí -1), đi theo thứ tự cây từ trái sang phải. Nếu bình đang có đủ nước thì tưới và đi tiếp (+1 bước). Nếu không đủ: quay về vòi (i bước ngược), nạp đầy, rồi đi lại đến cây (i+1 bước tới).
 
 **EN:** Simulate the watering journey. Start at the river (position -1), visit plants left to right. If enough water: water and step forward (+1 step). If not: go back to river (i steps), refill, walk forward again (i+1 steps).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Watering Plants example:**
 
 ```
 plants=[2,2,3,3], capacity=5
@@ -34,7 +39,19 @@ Total steps = 1+1+2+3+3+4 = 14
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem            | Difficulty | Pattern                  |
+| ---- | ------------------ | ---------- | ------------------------ |
+| 2079 | Watering Plants    | 🟢 Easy    | Simulation (single trip) |
+| 2105 | Watering Plants II | 🟡 Medium  | Two Pointers             |
+| 1598 | Crawler Log Folder | 🟢 Easy    | Simulation / Stack       |
+
+---
+
+## 📝 Interview Tips
 
 - 🟡 **EN:** Key insight: when refilling, you walk back i steps to river (position 0) and i+1 steps forward to plant i.
   **VI:** Điểm mấu chốt: khi nạp đầy, đi ngược i bước về vòi (pos 0) và i+1 bước tới cây i.
@@ -51,9 +68,9 @@ Total steps = 1+1+2+3+3+4 = 14
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Direct Simulation — O(n) Time, O(1) Space ✅ Optimal
+## Solutions
 
 ```typescript
 function wateringPlants(plants: number[], capacity: number): number {
@@ -85,11 +102,7 @@ function wateringPlants(plants: number[], capacity: number): number {
 console.log(wateringPlants([2, 2, 3, 3], 5)); // Expected: 14
 console.log(wateringPlants([1, 1, 1, 4, 2, 3], 4)); // Expected: 30
 console.log(wateringPlants([7, 7, 7, 7, 7, 7, 7], 8)); // Expected: 49
-```
 
-### Solution 2: Cleaner Formula — O(n) Time, O(1) Space ✅
-
-```typescript
 function wateringPlants_v2(plants: number[], capacity: number): number {
   let steps = 0;
   let water = capacity;
@@ -119,7 +132,7 @@ console.log(wateringPlants_v2([1], 1)); // Expected: 1
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem            | Difficulty | Pattern                  |
 | ---- | ------------------ | ---------- | ------------------------ |

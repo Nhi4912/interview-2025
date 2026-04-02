@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/minimum-index-sum-of-two-lists"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hai người bạn đến thành phố mới và mỗi người có danh sách nhà hàng yêu thích theo thứ tự ưu tiên. Họ muốn ăn tối cùng nhau tại nhà hàng mà cả hai đều thích và có **tổng thứ hạng nhỏ nhất** (ưu tiên cao nhất cộng lại). Nếu hai người đều xếp hạng 1 một nhà hàng, đó rõ ràng là lựa chọn tốt nhất! Giải pháp: lưu chỉ số của list1 vào Map, rồi duyệt list2 — nếu trùng, tính tổng chỉ số và cập nhật nhỏ nhất. Tất cả các kết quả có cùng tổng nhỏ nhất đều được trả về.
+**Analogy:** Hai người bạn đến thành phố mới và mỗi người có danh sách nhà hàng yêu thích theo thứ tự ưu tiên. Họ muốn ăn tối cùng nhau tại nhà hàng mà cả hai đều thích và có **tổng thứ hạng nhỏ nhất** (ưu tiên cao nhất cộng lại). Nếu hai người đều xếp hạng 1 một nhà hàng, đó rõ ràng là lựa chọn tốt nhất! Giải pháp: lưu chỉ số của list1 vào Map, rồi duyệt list2 — nếu trùng, tính tổng chỉ số và cập nhật nhỏ nhất. Tất cả các kết quả có cùng tổng nhỏ nhất đều được trả về.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Index Sum of Two Lists example:**
 
 ```
 list1 = ["Shogun","Tapioca Express","Burger King","KFC"]
@@ -40,7 +43,9 @@ list1=["a","b"],  list2=["b","a"]
   "b": 1+0=1  "a": 0+1=1  → both tied → ["b","a"] or ["a","b"]
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given two string arrays `list1` and `list2`, return all strings that appear in both lists with the **minimum index sum** `i + j` (where `i` is index in `list1`, `j` in `list2`). Order doesn't matter.
 
@@ -50,7 +55,9 @@ Given two string arrays `list1` and `list2`, return all strings that appear in b
 
 **Constraints:** `1 ≤ list1.length, list2.length ≤ 1000`, strings are unique within each list
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Index map first** / Map chỉ số trước: Dùng Map với list1 (thường ngắn hơn) để O(1) lookup khi duyệt list2
 - **Track minSum** / Theo dõi tổng nhỏ nhất: Reset result khi tìm sum nhỏ hơn, append khi bằng nhau
@@ -59,7 +66,9 @@ Given two string arrays `list1` and `list2`, return all strings that appear in b
 - **Dừng sớm khi có thể** / Early exit: Nếu tìm được sum=0 (cả hai ở index 0), dừng ngay
 - **Guaranteed answer** / Luôn có đáp án: Constraints đảm bảo "answer exists" (có ít nhất một chung)... actually đề có thể return empty nếu không chung
 
-## Solution 1 - Brute Force O(m·n)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +92,7 @@ function findRestaurantBrute(list1: string[], list2: string[]): string[] {
   }
   return result;
 }
-```
 
-## Solution 2 - Hash Map O(m+n)
-
-```typescript
 /**
  * @complexity Time: O(m+n) | Space: O(m)
  * Index list1 into Map, scan list2 for matches, track minimum sum
@@ -110,11 +115,7 @@ function findRestaurant(list1: string[], list2: string[]): string[] {
   }
   return result;
 }
-```
 
-## Solution 3 - Two-Way Map for Sorted Output
-
-```typescript
 /**
  * @complexity Time: O(m+n) | Space: O(m+n)
  * Build both index maps, find intersection, sort by index sum
@@ -132,11 +133,8 @@ function findRestaurantSorted(list1: string[], list2: string[]): string[] {
   for (const [, sum] of candidates) minSum = Math.min(minSum, sum);
   return candidates.filter(([, sum]) => sum === minSum).map(([s]) => s);
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   findRestaurantBrute(
     ["Shogun", "Tapioca Express", "Burger King", "KFC"],
@@ -150,7 +148,9 @@ console.log(findRestaurant(["happy"], ["sad"])); // → []
 console.log(findRestaurantSorted(["a", "b"], ["b", "a"])); // → ["a","b"] or ["b","a"]
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                       | Difficulty | Link                                                                  |
 | ----------------------------- | ---------- | --------------------------------------------------------------------- |

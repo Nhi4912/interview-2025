@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/available-captures-for-rook"
 
 # Available Captures for Rook / Quân Xe Có Thể Ăn Bao Nhiêu Quân
 
-🟢 Easy | 🏷️ Array, Matrix, Simulation | 🔗 [LeetCode](https://leetcode.com/problems/available-captures-for-rook)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Tìm vị trí quân Xe (R). Quét 4 hướng: Trên, Dưới, Trái, Phải. Đếm số quân Tốt (p) gặp được trước khi bị chặn bởi quân Tượng (B) hoặc hết bàn cờ.
+**Analogy:** **Tiếng Việt:** Tìm vị trí quân Xe (R). Quét 4 hướng: Trên, Dưới, Trái, Phải. Đếm số quân Tốt (p) gặp được trước khi bị chặn bởi quân Tượng (B) hoặc hết bàn cờ.
 
 **English:** Find the Rook 'R'. Scan all 4 directions. In each direction: stop at bishop 'B' (blocked), count a pawn 'p' (capture available), or stop at board edge.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Available Captures for Rook example:**
 
 ```
 Board (8x8):
@@ -36,7 +41,19 @@ Right: (4,3)='.', (4,4)='.', (4,5)='B' → blocked, 0
 Answer: 1
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                           | Difficulty | Pattern          |
+| ------------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Queens That Can Attack the King](https://leetcode.com/problems/queens-that-can-attack-the-king/) | 🟡 Medium  | 8-direction scan |
+| [Battleships in a Board](https://leetcode.com/problems/battleships-in-a-board/)                   | 🟡 Medium  | Matrix           |
+| [Robot Return to Origin](https://leetcode.com/problems/robot-return-to-origin/)                   | 🟢 Easy    | Simulation       |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Find 'R' first — guaranteed exactly one rook on the board | **VI:** Tìm 'R' trước — đề đảm bảo đúng một quân Xe trên bàn cờ
 - 🔑 **EN:** Scan each direction independently until boundary or 'B' | **VI:** Quét mỗi hướng độc lập cho đến khi gặp biên hoặc 'B'
@@ -45,9 +62,9 @@ Answer: 1
 - 🔑 **EN:** '.' means empty square — continue scanning | **VI:** '.' là ô trống — tiếp tục quét
 - 🔑 **EN:** O(8²) = O(1) since board is always 8×8 | **VI:** O(8²) = O(1) vì bàn cờ luôn là 8×8
 
-## Solutions
+---
 
-### Solution 1: Direction Vectors (Concise)
+## Solutions
 
 ```typescript
 /**
@@ -88,11 +105,7 @@ const board1 = [
   ['.','.','.','.','.','.','.','.'],['.','.','.','.','.','.','.','.'],['.','.','.','p','.','.','.','.'],['.','.','.','.','.','.','.','.'],['.','.','.','.','.','.','.','.']]
 ];
 console.log(numRookCaptures(board1)); // 3
-```
 
-### Solution 2: Explicit Four Directional Loops
-
-```typescript
 /**
  * Scan each direction with explicit loops — easier to read
  * Time: O(1) | Space: O(1)
@@ -157,6 +170,8 @@ const board2 = [
 ];
 console.log(numRookCaptures2(board2)); // 1
 ```
+
+---
 
 ## 🔗 Related Problems
 

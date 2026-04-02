@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/count-alternating-subarrays"
 
 # Count Alternating Subarrays / Đếm Mảng Con Xen Kẽ
 
-🟡 Medium | 🏷️ Array, Math | 🔗 [LeetCode](https://leetcode.com/problems/count-alternating-subarrays)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Một mảng con là "xen kẽ" nếu các phần tử liên tiếp có tính chẵn-lẻ khác nhau. Tại mỗi vị trí i, nếu nums[i] và nums[i-1] có tính chẵn-lẻ khác nhau thì kéo dài chuỗi; ngược lại reset về 1. Số mảng con xen kẽ kết thúc tại i = chiều dài chuỗi hiện tại.
+**Analogy:** **Tiếng Việt:** Một mảng con là "xen kẽ" nếu các phần tử liên tiếp có tính chẵn-lẻ khác nhau. Tại mỗi vị trí i, nếu nums[i] và nums[i-1] có tính chẵn-lẻ khác nhau thì kéo dài chuỗi; ngược lại reset về 1. Số mảng con xen kẽ kết thúc tại i = chiều dài chuỗi hiện tại.
 
 **English:** Track the current alternating run length. At each position i: if parity differs from prev, extend run by 1; else reset to 1. Subarrays ending at i = run length. Sum all run lengths.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Alternating Subarrays example:**
 
 ```
 nums = [0, 1, 1, 0]
@@ -28,7 +33,19 @@ i=3: 1≠0 → run=2  → [1,0],[0]                     total=6
 Answer: 6
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                               | Difficulty | Pattern        |
+| ----------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Longest Alternating Subarray](https://leetcode.com/problems/longest-alternating-subarray/)           | 🟢 Easy    | Run Length     |
+| [Number of Alternating Groups](https://leetcode.com/problems/number-of-alternating-groups/)           | 🟢 Easy    | Sliding Window |
+| [Count Subarrays with Fixed Bounds](https://leetcode.com/problems/count-subarrays-with-fixed-bounds/) | 🔴 Hard    | Two Pointer    |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Key insight: number of alternating subarrays ending at i = current run length | **VI:** Nhận xét chính: số mảng con xen kẽ kết thúc tại i = độ dài chuỗi hiện tại
 - 🔑 **EN:** "Different parity" = nums[i] % 2 !== nums[i-1] % 2 | **VI:** "Khác chẵn lẻ" = nums[i] % 2 !== nums[i-1] % 2
@@ -37,9 +54,9 @@ Answer: 6
 - 🔑 **EN:** O(n) time and O(1) space — optimal | **VI:** O(n) thời gian và O(1) không gian — tối ưu
 - 🔑 **EN:** Subarrays of length 1 are always alternating (all single elements count) | **VI:** Mảng con độ dài 1 luôn là xen kẽ (mọi phần tử đơn đều tính)
 
-## Solutions
+---
 
-### Solution 1: Run-Length Counting (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -68,11 +85,7 @@ console.log(countAlternatingSubarrays([0, 1, 1, 0])); // 6
 console.log(countAlternatingSubarrays([1, 0, 1, 0])); // 10
 console.log(countAlternatingSubarrays([1, 1, 1])); // 3
 console.log(countAlternatingSubarrays([0])); // 1
-```
 
-### Solution 2: Arithmetic Sum of Run Segments
-
-```typescript
 /**
  * Identify full runs, then use sum formula n*(n+1)/2 per run
  * Time: O(n) | Space: O(1)
@@ -98,11 +111,7 @@ function countAlternatingSubarrays2(nums: number[]): number {
 console.log(countAlternatingSubarrays2([0, 1, 1, 0])); // 6
 console.log(countAlternatingSubarrays2([1, 0, 1, 0])); // 10
 console.log(countAlternatingSubarrays2([1, 1, 1])); // 3
-```
 
-### Solution 3: XOR-based Parity Check
-
-```typescript
 /**
  * Use XOR to check parity change: (a ^ b) & 1 === 1 means different parity
  * Time: O(n) | Space: O(1)
@@ -127,6 +136,8 @@ function countAlternatingSubarrays3(nums: number[]): number {
 console.log(countAlternatingSubarrays3([0, 1, 1, 0])); // 6
 console.log(countAlternatingSubarrays3([1, 0, 1, 0])); // 10
 ```
+
+---
 
 ## 🔗 Related Problems
 

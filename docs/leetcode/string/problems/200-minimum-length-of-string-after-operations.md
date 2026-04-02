@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-length-of-string-after-oper
 
 # Minimum Length of String After Operations / Độ Dài Nhỏ Nhất Sau Khi Thao Tác
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống bộ bài — mỗi khi có đủ 3 lá cùng loại, bạn bỏ 2 lá (1 trái, 1 phải). Bạn cứ bỏ đến khi không còn bỏ được nữa. Kết quả chỉ phụ thuộc vào tần suất mỗi ký tự.
+**Analogy:** > **Phép so sánh:** Giống bộ bài — mỗi khi có đủ 3 lá cùng loại, bạn bỏ 2 lá (1 trái, 1 phải). Bạn cứ bỏ đến khi không còn bỏ được nữa. Kết quả chỉ phụ thuộc vào tần suất mỗi ký tự.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Length of String After Operations example:**
 
 ```
 Operation: pick char s[i], if s[j]==s[i] (j<i) and s[k]==s[i] (k>i) → delete j and k
@@ -27,6 +32,8 @@ freq=5 → remove 2 → remove 2 → remains 1
 Pattern: odd freq → 1 left, even freq → 2 left
 ```
 
+---
+
 ## Problem Description
 
 Given string `s`, repeatedly pick index `i` where `s[j] == s[i]` for some `j < i` and `s[k] == s[i]` for some `k > i`, then delete `s[j]` and `s[k]`. Return the minimum length achievable.
@@ -37,6 +44,8 @@ Given string `s`, repeatedly pick index `i` where `s[j] == s[i]` for some `j < i
 
 **Constraints:** `1 <= s.length <= 2*10^5`, s contains only lowercase letters
 
+---
+
 ## 📝 Interview Tips
 
 - **Key insight:** Operation reduces frequency of a char by 2 — repeat until freq < 3
@@ -46,9 +55,9 @@ Given string `s`, repeatedly pick index `i` where `s[j] == s[i]` for some `j < i
 - **Complexity:** O(n) time, O(1) space (26 letters)
 - **Interview insight:** Nhận ra phép toán giảm 2 là chìa khóa — không cần mô phỏng từng bước
 
-## Solutions
+---
 
-### Solution 1: Frequency counting — O(n) time, O(1) space
+## Solutions
 
 ```typescript
 function minimumLength(s: string): number {
@@ -65,11 +74,7 @@ function minimumLength(s: string): number {
   }
   return result;
 }
-```
 
-### Solution 2: Map-based counting — O(n) time, O(26) space
-
-```typescript
 function minimumLength(s: string): number {
   const freq = new Map<string, number>();
   for (const ch of s) {
@@ -83,11 +88,7 @@ function minimumLength(s: string): number {
   }
   return total;
 }
-```
 
-### Solution 3: Simulation for clarity — O(n) time, O(1) space
-
-```typescript
 function minimumLength(s: string): number {
   const freq = new Array(26).fill(0);
   for (const ch of s) freq[ch.charCodeAt(0) - 97]++;
@@ -104,6 +105,8 @@ function minimumLength(s: string): number {
   return len;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

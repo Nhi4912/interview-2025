@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/best-position-for-a-service-centre"
 
 # Best Position for a Service Centre / Vị Trí Tốt Nhất Cho Trung Tâm Dịch Vụ
 
-🔴 Hard | Tags: Array, Math, Geometry, Randomized
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Tìm điểm tối thiểu hóa tổng khoảng cách Euclidean đến tất cả khách hàng — đây là bài toán **Geometric Median**. Không có công thức đóng, dùng Weiszfeld's algorithm (trung bình có trọng số lặp lại) hoặc gradient descent bước nhỏ.
+**Analogy:** **VN:** Tìm điểm tối thiểu hóa tổng khoảng cách Euclidean đến tất cả khách hàng — đây là bài toán **Geometric Median**. Không có công thức đóng, dùng Weiszfeld's algorithm (trung bình có trọng số lặp lại) hoặc gradient descent bước nhỏ.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Best Position for a Service Centre example:**
 
 ```
 Customers: (0,1) (1,0) (1,2) (2,1)
@@ -23,6 +26,18 @@ Customers: (0,1) (1,0) (1,2) (2,1)
        Optimal center ≈ (1, 1)
        sum of distances ≈ 4.0
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                             | Difficulty | Pattern               |
+| ------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal/)                 | 🔴 Hard    | Math / Ternary Search |
+| [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs/) | 🟡 Medium  | Binary Search         |
+| [Minimum Total Distance Traveled](https://leetcode.com/problems/minimum-total-distance-traveled/)                   | 🔴 Hard    | DP                    |
 
 ---
 
@@ -37,9 +52,9 @@ Customers: (0,1) (1,0) (1,2) (2,1)
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Gradient Descent (Simulated Annealing Style)
+## Solutions
 
 ```typescript
 /**
@@ -100,11 +115,7 @@ console.log(
     [3, 3],
   ]),
 ); // ≈ 2.828
-```
 
-### Solution 2: Weiszfeld's Algorithm (Iterative Weighted Centroid)
-
-```typescript
 /**
  * Weiszfeld: update position as weighted average (weight = 1/distance).
  * Time: O(n * iterations) | Space: O(1)

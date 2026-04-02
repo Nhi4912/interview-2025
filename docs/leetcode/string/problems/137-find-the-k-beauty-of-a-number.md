@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/find-the-k-beauty-of-a-number"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Sliding Window
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Chuyển số thành chuỗi, rồi trượt cửa sổ kích thước `k` từ trái sang phải. Mỗi cửa sổ là một số con — kiểm tra có chia hết `num` không và khác 0.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Chuyển số thành chuỗi, rồi trượt cửa sổ kích thước `k` từ trái sang phải. Mỗi cửa sổ là một số con — kiểm tra có chia hết `num` không và khác 0.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find the K-Beauty of a Number example:**
 
 ```
 num=240, k=2   →  s="240"
@@ -25,7 +32,20 @@ Answer = 2
 
 **Key insight**: Convert `num` to string → slide fixed-size window of `k` chars → `parseInt` each → check divisibility (skip 0s).
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                                   | Difficulty | Pattern        |
+| ---- | --------------------------------------------------------- | ---------- | -------------- |
+| 1876 | Substrings of Size Three with Distinct Characters         | 🟢 Easy    | Sliding Window |
+| 567  | Permutation in String                                     | 🟡 Medium  | Sliding Window |
+| 2269 | Find the K-Beauty of a Number                             | 🟢 Easy    | Sliding Window |
+| 1984 | Minimum Difference Between Highest and Lowest of K Scores | 🟢 Easy    | Sliding Window |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Convert number to string for easy character access
   **VI**: Chuyển số thành chuỗi để truy cập từng ký tự dễ dàng
@@ -97,7 +117,14 @@ console.log(divisorSubstrings2(5, 1)); // 1
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                                   | Difficulty | Pattern        |
 | ---- | --------------------------------------------------------- | ---------- | -------------- |

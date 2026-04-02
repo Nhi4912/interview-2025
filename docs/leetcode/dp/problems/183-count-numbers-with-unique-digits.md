@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/count-numbers-with-unique-digits"
 
 # Count Numbers with Unique Digits / Đếm Số Có Chữ Số Không Lặp
 
-🟡 Medium | Dynamic Programming · Combinatorics
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** For exactly `d` digits (d≥2): first digit has 9 choices (1-9), second has 9 (0-9 minus first), third has 8, etc. Sum over `d` from 1 to `n`. For `n=0` answer is 1 (just the number 0). For `n=1` answer is 10 (0–9).
+**Analogy:** **EN:** For exactly `d` digits (d≥2): first digit has 9 choices (1-9), second has 9 (0-9 minus first), third has 8, etc. Sum over `d` from 1 to `n`. For `n=0` answer is 1 (just the number 0). For `n=1` answer is 10 (0–9).
 
 **VI:** Với đúng `d` chữ số (d≥2): chữ số đầu có 9 lựa chọn (1-9), chữ số hai có 9 (0-9 trừ chữ số đầu), chữ số ba có 8, v.v. Cộng tổng từ d=1 đến n. n=0 → 1 (chỉ số 0). n=1 → 10 (0–9).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Numbers with Unique Digits example:**
 
 ```
 Exactly d unique digits (d >= 2):
@@ -36,6 +39,18 @@ Total for n digits = 1 (for 0) + Σ count(d) for d=1..n
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                               | Difficulty | Pattern       |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | ------------- |
+| [The Number of Beautiful Subsets](https://leetcode.com/problems/the-number-of-beautiful-subsets/)                     | 🟡 Medium  | Combinatorics |
+| [Permutations](https://leetcode.com/problems/permutations/)                                                           | 🟡 Medium  | Backtracking  |
+| [Numbers With Same Consecutive Differences](https://leetcode.com/problems/numbers-with-same-consecutive-differences/) | 🟡 Medium  | Digit DP      |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** For d-digit numbers: first digit 9 choices (1-9), then remaining d-1 digits from remaining 9,8,7... **VI:** Số d chữ số: chữ số đầu có 9 cách (1-9), các chữ số tiếp theo từ 9,8,7... còn lại.
@@ -47,7 +62,9 @@ Total for n digits = 1 (for 0) + Σ count(d) for d=1..n
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

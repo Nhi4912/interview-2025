@@ -9,16 +9,21 @@ leetcode_url: "https://leetcode.com/problems/find-all-possible-stable-binary-arr
 
 # Find All Possible Stable Binary Arrays II / Tìm Tất Cả Mảng Nhị Phân Ổn Định II
 
-🔴 Hard | DP with prefix sums — limit consecutive 0s and 1s
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Xây dựng mảng nhị phân có đúng `zero` số 0 và `one` số 1 sao cho không có
+**Analogy:** **VI:** Xây dựng mảng nhị phân có đúng `zero` số 0 và `one` số 1 sao cho không có
 hơn `limit` chữ số liên tiếp giống nhau. Dùng DP với tiền tố tổng để tối ưu.
 
 **EN:** Count binary arrays with exactly `zero` 0s and `one` 1s where no more than
 `limit` consecutive identical digits appear. DP state tracks (zeros placed, ones placed,
 last digit) with prefix sum optimisation.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find All Possible Stable Binary Arrays II example:**
 
 ```
 dp[i][j][d] = ways to place i zeros & j ones, last digit = d
@@ -27,6 +32,19 @@ Transition:
   dp[i][j][1] += dp[i][j-k][0]  for k=1..min(j, limit)
 Prefix sum: avoid O(limit) inner loop → O(1) per cell
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                         | Difficulty | Key Idea                   |
+| ------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------- |
+| [2400. Number of Ways to Split Array](https://leetcode.com/problems/number-of-ways-to-split-array/)                             | 🟡 Medium  | Prefix sum counting        |
+| [920. Number of Music Playlists](https://leetcode.com/problems/number-of-music-playlists/)                                      | 🔴 Hard    | Constrained arrangement DP |
+| [1359. Count All Valid Pickup and Delivery Options](https://leetcode.com/problems/count-all-valid-pickup-and-delivery-options/) | 🔴 Hard    | Combinatorial DP           |
+| [3129. Find All Possible Stable Binary Arrays I](https://leetcode.com/problems/find-all-possible-stable-binary-arrays-i/)       | 🟡 Medium  | Easier version             |
+
+---
 
 ## 📝 Interview Tips
 
@@ -43,9 +61,9 @@ Prefix sum: avoid O(limit) inner loop → O(1) per cell
 - 🔑 **EN:** Answer = `dp[zero][one][0] + dp[zero][one][1]`.
   **VI:** Kết quả = `dp[zero][one][0] + dp[zero][one][1]`.
 
-## Solutions
+---
 
-### Solution 1: DP + Prefix Sum O(zero \* one)
+## Solutions
 
 ```typescript
 /**
@@ -150,6 +168,8 @@ console.log(numberOfStableArrays2(1, 1, 2)); // 2
 console.log(numberOfStableArrays2(1, 1, 1)); // 2
 console.log(numberOfStableArrays2(3, 3, 2)); // 14
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/pancake-sorting"
 
 # Pancake Sorting / Sắp Xếp Bánh Kếp
 
-🟡 Medium | Greedy, Simulation | [LeetCode 969](https://leetcode.com/problems/pancake-sorting)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** Like flipping a stack of pancakes: to move the biggest to its correct spot, first flip it to the front (position 0), then flip the whole prefix to its target. Repeat for decreasing sizes.
+**Analogy:** **EN:** Like flipping a stack of pancakes: to move the biggest to its correct spot, first flip it to the front (position 0), then flip the whole prefix to its target. Repeat for decreasing sizes.
 
 **VI:** Giống lật chồng bánh kếp: để đưa bánh lớn nhất đến đúng vị trí, trước tiên lật nó lên đầu, rồi lật toàn bộ tiền tố đến vị trí đích.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Pancake Sorting example:**
 
 ```
 arr = [3, 2, 4, 1]  target: [1, 2, 3, 4]
@@ -38,7 +41,19 @@ Done! At most 2*(n-1) flips
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem             | Difficulty | Pattern           |
+| --- | ------------------- | ---------- | ----------------- |
+| 1   | Reverse Linked List | 🟢 Easy    | in-place reversal |
+| 2   | Sort an Array       | 🟡 Medium  | sorting variants  |
+| 3   | Selection Sort      | 🟢 Easy    | find-max pattern  |
+
+---
+
+## 📝 Interview Tips
 
 - 🥞 **EN:** Each element needs at most 2 flips → total ≤ 2*(n-1) flips (within the 10*n limit). **VI:** Mỗi phần tử cần tối đa 2 lần lật → tổng ≤ 2\*(n-1).
 - 🔍 **EN:** Find the max in `arr[0..size-1]`, not the whole array — already-placed elements stay untouched. **VI:** Tìm max trong `arr[0..size-1]`, không phải toàn bộ mảng.
@@ -49,9 +64,9 @@ Done! At most 2*(n-1) flips
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Selection Sort with Pancake Flips
+## Solutions
 
 ```typescript
 /**
@@ -98,11 +113,7 @@ function pancakeSort(arr: number[]): number[] {
 console.log(pancakeSort([3, 2, 4, 1])); // [3,4,2,3,2] or any valid sequence
 console.log(pancakeSort([1, 2, 3])); // [] (already sorted)
 console.log(pancakeSort([2, 1])); // [2] or [1,2]
-```
 
-### Solution 2 — Recursive Version
-
-```typescript
 /**
  * Recursive pancake sort — cleaner to reason about
  * Time: O(n²)  Space: O(n) call stack
@@ -153,7 +164,7 @@ console.log(verify(input, result)); // true
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem             | Difficulty | Pattern           |
 | --- | ------------------- | ---------- | ----------------- |

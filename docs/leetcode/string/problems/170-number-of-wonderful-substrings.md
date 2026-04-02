@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/number-of-wonderful-substrings"
 
 # Number of Wonderful Substrings / Số Chuỗi Con Kỳ Diệu
 
-🟡 Medium | 🏷️ Hash Table, String, Bit Manipulation, Prefix Sum
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Chuỗi "kỳ diệu" có **tối đa 1 ký tự với tần số lẻ**. Dùng **bitmask XOR prefix**: bit thứ `i` = 1 nếu ký tự `'a'+i` xuất hiện số lẻ lần. Chuỗi con `[i+1..j]` kỳ diệu khi `prefix[j] XOR prefix[i]` có 0 hoặc 1 bit được set. Đếm các cặp prefix trước đó có mask phù hợp.
+**Analogy:** **VI:** Chuỗi "kỳ diệu" có **tối đa 1 ký tự với tần số lẻ**. Dùng **bitmask XOR prefix**: bit thứ `i` = 1 nếu ký tự `'a'+i` xuất hiện số lẻ lần. Chuỗi con `[i+1..j]` kỳ diệu khi `prefix[j] XOR prefix[i]` có 0 hoặc 1 bit được set. Đếm các cặp prefix trước đó có mask phù hợp.
 
 **EN:** Track parity of each char's frequency with a 10-bit mask (bits a–j). A substring is wonderful if its XOR has at most 1 bit set. For prefix at index j, count prior prefixes with mask `== prefix[j]` (0 bits differ) or `prefix[j] ^ (1<<k)` (exactly 1 bit differs).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Wonderful Substrings example:**
 
 ```
 word = "aba"
@@ -25,6 +30,18 @@ Mask:      00  01   11    00
            pairs with 0-bit diff: (0,3) → "aba" ✅
            pairs with 1-bit diff: (0,1),(1,2),(2,3) check...
 ```
+
+---
+
+## Problem Description
+
+| #    | Problem                                                     | Difficulty | Key Idea              |
+| ---- | ----------------------------------------------------------- | ---------- | --------------------- |
+| 1371 | Find the Longest Substring Containing Vowels in Even Counts | 🟡 Medium  | Bitmask prefix XOR    |
+| 1542 | Find Longest Awesome Substring                              | 🔴 Hard    | Same bitmask pattern  |
+| 560  | Subarray Sum Equals K                                       | 🟡 Medium  | Prefix sum + hash map |
+
+---
 
 ## 📝 Interview Tips
 
@@ -36,9 +53,9 @@ Mask:      00  01   11    00
 - 🇻🇳 **1 bit lẻ:** flip từng bit trong 10 bit → cộng thêm `count[mask ^ (1<<k)]` với k=0..9
 - 🇬🇧 **O(10n) time:** for each position check 11 masks (current + 10 single-bit flips)
 
-## Solutions
+---
 
-### Solution 1: Bitmask prefix XOR with count array
+## Solutions
 
 ```typescript
 /**
@@ -71,11 +88,7 @@ console.log(wonderfulSubstrings("aba")); // 4
 console.log(wonderfulSubstrings("aabb")); // 9
 console.log(wonderfulSubstrings("he")); // 2
 console.log(wonderfulSubstrings("abcd")); // 4 (each single char)
-```
 
-### Solution 2: Same with explicit mask tracking
-
-```typescript
 /**
  * Equivalent approach with more verbose comments for clarity.
  * Time: O(10n) | Space: O(1024)
@@ -103,11 +116,7 @@ function wonderfulSubstrings2(word: string): number {
 
 console.log(wonderfulSubstrings2("aba")); // 4
 console.log(wonderfulSubstrings2("aabb")); // 9
-```
 
-### Solution 3: Counting directly with prefix sum pattern
-
-```typescript
 /**
  * Highlight the prefix-sum analogy clearly.
  * For prefix mask at j: wonderful substrings ending at j =
@@ -131,6 +140,8 @@ function wonderfulSubstrings3(word: string): number {
 console.log(wonderfulSubstrings3("aba")); // 4
 console.log(wonderfulSubstrings3("aabb")); // 9
 ```
+
+---
 
 ## 🔗 Related Problems
 

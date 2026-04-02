@@ -9,15 +9,20 @@ leetcode_url: "https://leetcode.com/problems/count-number-of-texts"
 
 # Count Number of Texts / Đếm Số Cách Gõ Tin Nhắn
 
-🟡 Medium | DP like Decode Ways — group consecutive identical digits
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Giống bài "Decode Ways": với mỗi chữ số, ta có thể tạo nhóm 1, 2, hoặc 3 (hoặc 4
+**Analogy:** **VI:** Giống bài "Decode Ways": với mỗi chữ số, ta có thể tạo nhóm 1, 2, hoặc 3 (hoặc 4
 với phím 7/9) chữ số liên tiếp giống nhau để biểu diễn một ký tự.
 
 **EN:** Like Decode Ways: group 1–3 (or 1–4 for `7`/`9`) identical consecutive digits to
 represent one letter. `dp[i]` = number of valid messages for `pressedKeys[0..i-1]`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Number of Texts example:**
 
 ```
 pressedKeys = "22233"
@@ -31,6 +36,19 @@ dp[3]= dp[2]+dp[1]+dp[0]   = 4   ("2","2","2") or "22","2" etc.
 dp[4]= dp[3]               = 4   (switch to digit 3, can't extend back)
 dp[5]= dp[4]+dp[3]         = 8
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                             | Difficulty | Key Idea           |
+| ----------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [91. Decode Ways](https://leetcode.com/problems/decode-ways/)                       | 🟡 Medium  | Group digits DP    |
+| [639. Decode Ways II](https://leetcode.com/problems/decode-ways-ii/)                | 🔴 Hard    | Wildcard decode DP |
+| [70. Climbing Stairs](https://leetcode.com/problems/climbing-stairs/)               | 🟢 Easy    | Fibonacci DP       |
+| [2266. Count Number of Texts](https://leetcode.com/problems/count-number-of-texts/) | 🟡 Medium  | This problem       |
+
+---
 
 ## 📝 Interview Tips
 
@@ -47,9 +65,9 @@ dp[5]= dp[4]+dp[3]         = 8
 - 🔑 **EN:** Single pass O(n) — inner loop at most 4 iterations (constant time).
   **VI:** Một vòng O(n) — vòng trong tối đa 4 lần lặp (thời gian hằng số).
 
-## Solutions
+---
 
-### Solution 1: Bottom-Up DP
+## Solutions
 
 ```typescript
 /**
@@ -80,11 +98,7 @@ function countTexts(pressedKeys: string): number {
 console.log(countTexts("22233")); // 8
 console.log(countTexts("222222222222222222222222222222222222")); // large
 console.log(countTexts("9999")); // 8 (4^groups for digit 9)
-```
 
-### Solution 2: Space-Optimised (rolling 4 values)
-
-```typescript
 /**
  * Keep only last 4 dp values — max group size is 4.
  * Time: O(n)  Space: O(1)
@@ -114,6 +128,8 @@ function countTexts2(pressedKeys: string): number {
 console.log(countTexts2("22233")); // 8
 console.log(countTexts2("9999")); // 8
 ```
+
+---
 
 ## 🔗 Related Problems
 

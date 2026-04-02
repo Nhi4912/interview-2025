@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/buildings-with-an-ocean-view"
 
 # Buildings With an Ocean View / Những Tòa Nhà Có Tầm Nhìn Ra Biển
 
-🟡 Medium | Tags: Array, Stack, Monotonic Stack
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Biển ở phía phải. Một tòa nhà có tầm nhìn ra biển khi không có tòa nhà nào cao hơn hoặc bằng nó ở phía phải. Quét từ phải sang trái, theo dõi chiều cao lớn nhất đã gặp.
+**Analogy:** **VN:** Biển ở phía phải. Một tòa nhà có tầm nhìn ra biển khi không có tòa nhà nào cao hơn hoặc bằng nó ở phía phải. Quét từ phải sang trái, theo dõi chiều cao lớn nhất đã gặp.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Buildings With an Ocean View example:**
 
 ```
 heights = [4, 2, 3, 1]
@@ -30,6 +33,18 @@ Result (reversed): [0,2,3]
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                         | Difficulty | Pattern         |
+| ----------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [Daily Temperatures](https://leetcode.com/problems/daily-temperatures/)                         | 🟡 Medium  | Monotonic Stack |
+| [Next Greater Element I](https://leetcode.com/problems/next-greater-element-i/)                 | 🟢 Easy    | Monotonic Stack |
+| [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/) | 🔴 Hard    | Monotonic Stack |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Quét từ phải → trái: tòa nhà nào cao hơn `maxRight` đều có tầm nhìn.
@@ -41,9 +56,9 @@ Result (reversed): [0,2,3]
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Right-to-Left Scan (Simplest)
+## Solutions
 
 ```typescript
 /**
@@ -68,11 +83,7 @@ console.log(findBuildings([4, 2, 3, 1])); // [0, 2, 3]
 console.log(findBuildings([4, 3, 2, 1])); // [0, 1, 2, 3]
 console.log(findBuildings([1, 3, 2, 4])); // [3]
 console.log(findBuildings([2, 2, 2, 2])); // [3]
-```
 
-### Solution 2: Monotonic Stack (Left-to-Right)
-
-```typescript
 /**
  * Use a stack maintaining decreasing order; pop buildings blocked by taller ones.
  * Time: O(n) | Space: O(n)
@@ -94,11 +105,7 @@ function findBuildings2(heights: number[]): number[] {
 console.log(findBuildings2([4, 2, 3, 1])); // [0, 2, 3]
 console.log(findBuildings2([4, 3, 2, 1])); // [0, 1, 2, 3]
 console.log(findBuildings2([1, 3, 2, 4])); // [3]
-```
 
-### Solution 3: Suffix Max Array
-
-```typescript
 /**
  * Precompute suffix max; building i has view iff heights[i] > suffixMax[i+1].
  * Time: O(n) | Space: O(n)

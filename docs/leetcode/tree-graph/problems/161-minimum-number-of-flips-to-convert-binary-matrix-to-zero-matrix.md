@@ -9,21 +9,36 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-flips-to-convert-
 
 # Minimum Number of Flips to Convert Binary Matrix to Zero Matrix / Số lần lật tối thiểu để chuyển ma trận nhị phân thành ma trận 0
 
-🔴 Hard | BFS | Bitmask State
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mỗi trạng thái ma trận có thể biểu diễn bằng một số nguyên (bitmask). BFS trên không gian trạng thái — mỗi bước là 1 lần lật một ô (ô đó và 4 hàng xóm bị đảo ngược).
+**Analogy:** **Vietnamese:** Mỗi trạng thái ma trận có thể biểu diễn bằng một số nguyên (bitmask). BFS trên không gian trạng thái — mỗi bước là 1 lần lật một ô (ô đó và 4 hàng xóm bị đảo ngược).
 
 **English:** Encode the entire matrix as a single bitmask integer. BFS explores all reachable states level-by-level; each step flips cell (r,c) and its 4 neighbors. The goal state is `0`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Flips to Convert Binary Matrix to Zero Matrix example:**
 
 ```
 Matrix [[0,0],[0,1]] → bitmask = 0b0001 = 1
 Flip (1,1): toggle (1,1),(0,1),(1,0) → 0b0110 = 6
 Flip (0,1): toggle (0,1),(0,0),(1,1) → 0b0000 = 0  ← done in 2 steps
 ```
+
+---
+
+---
+
+## Problem Description
+
+| #    | Problem                          | Difficulty | Pattern       |
+| ---- | -------------------------------- | ---------- | ------------- |
+| 847  | Shortest Path Visiting All Nodes | Hard       | BFS + Bitmask |
+| 864  | Shortest Path to Get All Keys    | Hard       | BFS + State   |
+| 1284 | Minimum Number of Flips (this)   | Hard       | BFS + Bitmask |
 
 ---
 
@@ -38,9 +53,9 @@ Flip (0,1): toggle (0,1),(0,0),(1,1) → 0b0000 = 0  ← done in 2 steps
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — BFS on Bitmask State (Optimal)
+## Solutions
 
 ```typescript
 /**

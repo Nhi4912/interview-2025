@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-removals-to-make-
 
 # Minimum Number of Removals to Make Mountain Array / Xóa Ít Nhất Để Tạo Mảng Núi
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Bạn có một dãy số, muốn tạo "hình núi" (tăng rồi giảm, đỉnh không ở đầu/cuối).  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Bạn có một dãy số, muốn tạo "hình núi" (tăng rồi giảm, đỉnh không ở đầu/cuối).  
 > Đếm LIS từ trái vào và LIS từ phải vào, tìm đỉnh tối ưu. Xóa = n - max_mountain_length.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Removals to Make Mountain Array example:**
 
 ```
 nums = [2, 1, 1, 5, 6, 2, 3, 1]
@@ -27,14 +32,18 @@ Mountain at peak i=4: lis[4]+lds[4]-1 = 3+2-1 = 4
 Best = 4, removals = 8 - 4 = 4
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given integer array `nums`, return the **minimum** number of elements to remove so the remaining
 array is a **mountain array**: strictly increasing then strictly decreasing, peak not at endpoints.
 
 **Constraints:** `3 <= nums.length <= 1000`, `1 <= nums[i] <= 10^9`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Mountain = LIS + LDS at peak** — compute LIS ending at each i, LDS starting at each i.
 2. **Valid peak** — must have `lis[i] >= 2` AND `lds[i] >= 2` (at least one element on each side).
@@ -43,9 +52,9 @@ array is a **mountain array**: strictly increasing then strictly decreasing, pea
 5. **LIS computation** — O(n²) DP or O(n log n) binary search; O(n²) sufficient here (n≤1000).
 6. **Edge case** — if no valid peak exists, impossible (but constraints guarantee one exists).
 
-## Solutions
+---
 
-### Solution 1: LIS + LDS DP — O(n²)
+## Solutions
 
 ```typescript
 function minimumMountainRemovals(nums: number[]): number {
@@ -82,11 +91,7 @@ console.log(minimumMountainRemovals([1, 3, 1])); // 0
 console.log(minimumMountainRemovals([2, 1, 1, 5, 6, 2, 3, 1])); // 3
 console.log(minimumMountainRemovals([4, 3, 2, 1, 1, 2, 3, 1])); // 4
 console.log(minimumMountainRemovals([1, 2, 3, 4, 4, 3, 2, 1])); // 1
-```
 
-### Solution 2: O(n log n) LIS with Binary Search
-
-```typescript
 function minimumMountainRemovalsOpt(nums: number[]): number {
   const n = nums.length;
 
@@ -126,7 +131,9 @@ console.log(minimumMountainRemovalsOpt([2, 1, 1, 5, 6, 2, 3, 1])); // 3
 console.log(minimumMountainRemovalsOpt([4, 3, 2, 1, 1, 2, 3, 1])); // 4
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                         | Difficulty | Key Concept |
 | ----------------------------------------------------------------------------------------------- | ---------- | ----------- |

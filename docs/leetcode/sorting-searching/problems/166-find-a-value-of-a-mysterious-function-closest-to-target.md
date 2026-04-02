@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/find-a-value-of-a-mysterious-functi
 
 # Find a Value of a Mysterious Function Closest to Target / Tìm Giá Trị Hàm Bí Ẩn Gần Target Nhất
 
-🔴 Hard | 🏷️ Array, Binary Search, Bit Manipulation | [LeetCode](https://leetcode.com/problems/find-a-value-of-a-mysterious-function-closest-to-target)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** `func(l,r) = arr[l] AND arr[l+1] AND ... AND arr[r]`. Quan trọng: AND chỉ có thể giữ nguyên hoặc giảm khi mở rộng dãy sang trái. Với mỗi r cố định, khi dịch l từ r về 0, tập hợp các giá trị AND khác nhau có kích thước tối đa O(log max_val) ≈ 30. Ta duy trì tập này bằng sliding window và kiểm tra min |x - target|.
+**Analogy:** **Vietnamese:** `func(l,r) = arr[l] AND arr[l+1] AND ... AND arr[r]`. Quan trọng: AND chỉ có thể giữ nguyên hoặc giảm khi mở rộng dãy sang trái. Với mỗi r cố định, khi dịch l từ r về 0, tập hợp các giá trị AND khác nhau có kích thước tối đa O(log max_val) ≈ 30. Ta duy trì tập này bằng sliding window và kiểm tra min |x - target|.
 
 **Analogy:** Đèn AND — thêm bóng đèn mới chỉ có thể tắt thêm bit, không thể bật. Vì vậy với r cố định, chỉ có tối đa 30 giá trị AND khác nhau khi l thay đổi.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find a Value of a Mysterious Function Closest to Target example:**
 
 ```
 arr = [9, 12, 3, 7, 15]  target = 5
@@ -32,6 +35,18 @@ All candidates: 0,3,7,8,9,12,15  → closest to 5 is 3 (|3-5|=2) or 7 (|7-5|=2) 
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                          | Difficulty | Connection                              |
+| ---------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------- |
+| [Number of Subarrays With AND Value of K](https://leetcode.com/problems/number-of-subarrays-with-and-value-of-k) | 🔴 Hard    | Same AND sliding set pattern            |
+| [Bitwise ORs of Subarrays](https://leetcode.com/problems/bitwise-ors-of-subarrays)                               | 🟡 Medium  | OR version, same O(log) distinct values |
+| [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k)                                     | 🟡 Medium  | Subarray value tracking                 |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** AND is monotone non-increasing as left pointer moves left / **VI:** AND chỉ giảm hoặc giữ nguyên khi mở rộng dãy sang trái
@@ -43,9 +58,9 @@ All candidates: 0,3,7,8,9,12,15  → closest to 5 is 3 (|3-5|=2) or 7 (|7-5|=2) 
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Sliding Set of AND Values
+## Solutions
 
 ```typescript
 /**
@@ -81,11 +96,7 @@ function closestToTarget(arr: number[], target: number): number {
 console.log(closestToTarget([9, 12, 3, 7, 15], 5)); // 3 (|3-5|=2? actually |7-5|=2, |3-5|=2 → min=2? No: 3 is closest: |3-5|=2)
 console.log(closestToTarget([1000000, 1000000, 1000000], 1)); // 999999
 console.log(closestToTarget([1], 1)); // 0
-```
 
-### Solution 2: Set-Based (deduplication with Set<number>)
-
-```typescript
 /**
  * Cleaner version using Set<number> — deduplicates automatically.
  * Time: O(n log maxVal)  Space: O(log maxVal)

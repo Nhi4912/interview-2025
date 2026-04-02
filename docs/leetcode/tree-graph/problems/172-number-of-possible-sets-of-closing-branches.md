@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/number-of-possible-sets-of-closing-
 
 # Number of Possible Sets of Closing Branches / Số Tập Hợp Nhánh Đóng Có Thể
 
-🔴 Hard | Bitmask Enumeration + Floyd-Warshall | [LeetCode 2959](https://leetcode.com/problems/number-of-possible-sets-of-closing-branches)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Bài toán như chọn chi nhánh ngân hàng để giữ lại. Với mỗi tập con nhánh (bitmask), kiểm tra xem khoảng cách tối đa giữa bất kỳ hai nhánh nào ≤ maxDistance không. Vì n ≤ 10, ta chỉ có 2^10 = 1024 tập con — brute force hoàn toàn ổn.
+**Analogy:** **Vietnamese:** Bài toán như chọn chi nhánh ngân hàng để giữ lại. Với mỗi tập con nhánh (bitmask), kiểm tra xem khoảng cách tối đa giữa bất kỳ hai nhánh nào ≤ maxDistance không. Vì n ≤ 10, ta chỉ có 2^10 = 1024 tập con — brute force hoàn toàn ổn.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Possible Sets of Closing Branches example:**
 
 ```
 Nodes: 0,1,2   edges: 0-1(w=2), 1-2(w=10)   maxDistance=5
@@ -31,7 +34,20 @@ Answer: count valid subsets
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                    | Difficulty | Key Idea                  |
+| -------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| [Network Delay Time 743](https://leetcode.com/problems/network-delay-time)                                                 | Medium     | Floyd-Warshall / Dijkstra |
+| [Subsets 78](https://leetcode.com/problems/subsets)                                                                        | Medium     | Bitmask enumeration       |
+| [Find Critical Edges 1489](https://leetcode.com/problems/find-critical-and-pseudo-critical-edges-in-minimum-spanning-tree) | Hard       | Graph + bitmask           |
+| [Shortest Path Visiting All Nodes 847](https://leetcode.com/problems/shortest-path-visiting-all-nodes)                     | Hard       | BFS + bitmask state       |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** n ≤ 10 → only 1024 subsets, bitmask brute force is feasible | **VI:** n nhỏ → 2^n tập con, duyệt brute force OK
 - 🔑 **EN:** Floyd-Warshall O(n³) per subset → total O(2^n × n³) ≈ 10^6 | **VI:** Floyd-Warshall O(n³) mỗi tập
@@ -42,7 +58,9 @@ Answer: count valid subsets
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -115,9 +133,7 @@ console.log(
     [2, 3, 1],
   ]),
 ); // 8
-```
 
-```typescript
 /**
  * Same approach — helper extracts nodes list for clarity
  * Time: O(2^n × n³)  Space: O(n²)
@@ -167,7 +183,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                                                    | Difficulty | Key Idea                  |
 | -------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |

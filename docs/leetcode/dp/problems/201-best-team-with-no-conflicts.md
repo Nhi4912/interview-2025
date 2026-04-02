@@ -7,15 +7,18 @@ tags: [Array, Dynamic Programming, Sorting]
 leetcode_url: "https://leetcode.com/problems/best-team-with-no-conflicts"
 ---
 
-## ⚽ 1626. Best Team With No Conflicts / Đội Bóng Tốt Nhất Không Xung Đột
-
-**Difficulty:** 🟡 Medium
+# best team with no conflicts
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Bạn chọn cầu thủ vào đội. Quy tắc: không được có xung đột — cầu thủ trẻ hơn không được điểm cao hơn cầu thủ già hơn trong đội (vì cầu thủ già hơn sẽ "tức"). Sắp xếp theo tuổi, sau đó bài toán trở thành: **tìm dãy con điểm tăng** (giống LIS nhưng maximize tổng thay vì độ dài).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Sort by (age, score):
@@ -31,12 +34,16 @@ dp[2] = 6+9=15...
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `scores[]` and `ages[]` for `n` players. Select a team (subset) to **maximize total score** with no conflicts: a conflict exists if player A is younger than player B but has a higher score. Return max score.
 
 - Example: `scores=[1,3,5,10,15]`, `ages=[1,2,3,4,5]` → **34**
 - Example: `scores=[4,5,6,5]`, `ages=[2,1,2,1]` → **16**
+
+---
 
 ---
 
@@ -51,9 +58,9 @@ Given `scores[]` and `ages[]` for `n` players. Select a team (subset) to **maxim
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: O(n²) DP (Sort + Weighted LIS)
+## Solutions
 
 ```typescript
 function bestTeamScore(scores: number[], ages: number[]): number {
@@ -78,11 +85,7 @@ function bestTeamScore(scores: number[], ages: number[]): number {
 
   return ans;
 }
-```
 
-### Solution 2: Binary Indexed Tree (O(n log n))
-
-```typescript
 function bestTeamScoreBIT(scores: number[], ages: number[]): number {
   const n = scores.length;
   const players = scores.map((s, i) => [ages[i], s] as [number, number]);
@@ -115,11 +118,7 @@ function bestTeamScoreBIT(scores: number[], ages: number[]): number {
 
   return ans;
 }
-```
 
-### Solution 3: Concise DP variant
-
-```typescript
 function bestTeamScoreConcise(scores: number[], ages: number[]): number {
   const n = scores.length;
   const idx = Array.from({ length: n }, (_, i) => i);

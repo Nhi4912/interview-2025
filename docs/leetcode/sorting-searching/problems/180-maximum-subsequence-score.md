@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/maximum-subsequence-score"
 
 # Maximum Subsequence Score / Điểm Số Dãy Con Lớn Nhất
 
-🟡 Medium | Sort + Min-Heap | [LeetCode 2542](https://leetcode.com/problems/maximum-subsequence-score)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** Score = (sum of chosen nums1 values) × (minimum nums2 value). Sort indices by nums2 descending — as we iterate, nums2[i] becomes the current minimum multiplier. Maintain a min-heap of size k on nums1 values to maximize their sum. Update answer at each step where heap size reaches k.
+**Analogy:** **EN:** Score = (sum of chosen nums1 values) × (minimum nums2 value). Sort indices by nums2 descending — as we iterate, nums2[i] becomes the current minimum multiplier. Maintain a min-heap of size k on nums1 values to maximize their sum. Update answer at each step where heap size reaches k.
 
 **VI:** Điểm = (tổng các giá trị nums1 chọn) × (giá trị nhỏ nhất nums2 tương ứng). Sắp xếp theo nums2 giảm dần — khi duyệt, nums2[i] là hệ số nhân nhỏ nhất hiện tại. Dùng min-heap kích thước k trên nums1 để tối đa tổng. Cập nhật kết quả khi heap đủ k phần tử.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Subsequence Score example:**
 
 ```
 nums1=[1,3,3,2]  nums2=[2,1,3,4]  k=3
@@ -36,7 +39,19 @@ Min-heap lets us evict the smallest nums1 value to maximize sum.
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                         | Difficulty | Pattern         |
+| --- | ------------------------------- | ---------- | --------------- |
+| 1   | K Closest Points to Origin      | 🟡 Medium  | heap top-k      |
+| 2   | IPO                             | 🔴 Hard    | two-heap greedy |
+| 3   | Find K Pairs with Smallest Sums | 🟡 Medium  | heap + sorting  |
+
+---
+
+## 📝 Interview Tips
 
 - 📊 **EN:** Sorting by nums2 descending means the minimum nums2 encountered so far is always `nums2[i]` (current iteration). **VI:** Sắp xếp nums2 giảm dần → giá trị nhỏ nhất nums2 đến thời điểm hiện tại luôn là `nums2[i]`.
 - 🔢 **EN:** Use a min-heap of size k: when adding a new nums1 value, if heap size exceeds k, remove the minimum. **VI:** Heap min kích thước k: khi thêm phần tử mới, nếu heap vượt k thì loại bỏ phần tử nhỏ nhất.
@@ -47,9 +62,9 @@ Min-heap lets us evict the smallest nums1 value to maximize sum.
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Sort + Min-Heap (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -109,11 +124,7 @@ function maxScore(nums1: number[], nums2: number[], k: number): number {
 // Tests
 console.log(maxScore([1, 3, 3, 2], [2, 1, 3, 4], 3)); // 12
 console.log(maxScore([4, 2, 3, 1, 1], [7, 5, 10, 9, 6], 1)); // 30  (idx=2: 3×10)
-```
 
-### Solution 2 — Brute Force O(n² log n) for Validation
-
-```typescript
 /**
  * Try all combinations of k indices — only feasible for small n.
  * Used to verify Solution 1 is correct.
@@ -153,7 +164,7 @@ console.log(maxScore(t1, t2, 3) === maxScoreBrute(t1, t2, 3)); // true
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                         | Difficulty | Pattern         |
 | --- | ------------------------------- | ---------- | --------------- |

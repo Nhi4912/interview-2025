@@ -7,15 +7,18 @@ tags: [Tree, Depth-First Search, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/maximum-depth-of-n-ary-tree"
 ---
 
-## 559. Maximum Depth of N-ary Tree
-
-### Chiều Sâu Tối Đa của Cây N-nhánh | 🟢 Easy
+# maximum depth of n ary tree
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Giống như đo chiều cao của cây phả hệ — bạn hỏi mỗi nhánh "mày sâu bao nhiêu?" rồi lấy cái sâu nhất cộng thêm 1 (cho tầng hiện tại).
+**Analogy:** > **Vietnamese analogy:** Giống như đo chiều cao của cây phả hệ — bạn hỏi mỗi nhánh "mày sâu bao nhiêu?" rồi lấy cái sâu nhất cộng thêm 1 (cho tầng hiện tại).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
         1
@@ -29,7 +32,9 @@ DFS returns: max(2, 1, 1) + 1 = 3
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given the `root` of an N-ary tree, return its **maximum depth** — the number of nodes along the longest path from the root down to the farthest leaf node.
 
@@ -45,6 +50,8 @@ Given the `root` of an N-ary tree, return its **maximum depth** — the number o
 
 ---
 
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Base case:** empty tree → depth 0; leaf node → depth 1
@@ -56,9 +63,9 @@ Given the `root` of an N-ary tree, return its **maximum depth** — the number o
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: DFS Recursive
+## Solutions
 
 ```typescript
 class Node {
@@ -80,11 +87,7 @@ function maxDepth(root: Node | null): number {
   }
   return maxChildDepth + 1;
 }
-```
 
-### Solution 2: BFS Iterative (Level-by-Level)
-
-```typescript
 function maxDepthBFS(root: Node | null): number {
   if (!root) return 0;
 
@@ -104,11 +107,7 @@ function maxDepthBFS(root: Node | null): number {
 
   return depth;
 }
-```
 
-### Solution 3: DFS Iterative with Stack
-
-```typescript
 function maxDepthIterativeDFS(root: Node | null): number {
   if (!root) return 0;
 

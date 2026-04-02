@@ -9,16 +9,21 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-flips-to-make-the
 
 # Minimum Number of Flips to Make the Binary String Alternating / Số Lần Lật Tối Thiểu Để Chuỗi Xen Kẽ
 
-🟡 Medium | Circular sliding window on doubled string
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Vì phép quay (type-1 flip) tương đương với dịch chuyển vòng, ta nhân đôi chuỗi rồi
+**Analogy:** **VI:** Vì phép quay (type-1 flip) tương đương với dịch chuyển vòng, ta nhân đôi chuỗi rồi
 dùng cửa sổ trượt kích thước n để tìm đoạn nào cần ít lần lật nhất để thành xen kẽ.
 
 **EN:** Type-1 moves (rotate) are equivalent to cyclic shifts. Doubling the string and
 sliding a window of length n captures all rotations. Compare against both target patterns
 `010101...` and `101010...`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Flips to Make the Binary String Alternating example:**
 
 ```
 s = "111000"  n=6
@@ -29,6 +34,19 @@ Window [0..5]: "111000" vs "010101" → mismatches = 4  vs "101010" → 3
 Window [1..6]: "110001" vs "010101" → ...
 Track count[0] and count[1] (mismatches) in window, answer = min over all windows.
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                   | Difficulty | Key Idea        |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------- |
+| [1004. Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii/)                                 | 🟡 Medium  | Sliding window  |
+| [76. Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/)                                   | 🔴 Hard    | Sliding window  |
+| [1423. Maximum Points You Can Obtain from Cards](https://leetcode.com/problems/maximum-points-you-can-obtain-from-cards/) | 🟡 Medium  | Circular window |
+| [2027. Minimum Moves to Convert String](https://leetcode.com/problems/minimum-moves-to-convert-string/)                   | 🟢 Easy    | Greedy flips    |
+
+---
 
 ## 📝 Interview Tips
 
@@ -45,9 +63,9 @@ Track count[0] and count[1] (mismatches) in window, answer = min over all window
 - 🔑 **EN:** Window update: add `s[i]`, remove `s[i-n]`. O(n) total.
   **VI:** Cập nhật cửa sổ: thêm `s[i]`, xóa `s[i-n]`. Tổng O(n).
 
-## Solutions
+---
 
-### Solution 1: Sliding Window on Doubled String
+## Solutions
 
 ```typescript
 /**
@@ -89,11 +107,7 @@ function minFlips(s: string): number {
 console.log(minFlips("111000")); // 2
 console.log(minFlips("010")); // 0
 console.log(minFlips("1110")); // 1
-```
 
-### Solution 2: Prefix Mismatch Array (explicit, easier to reason)
-
-```typescript
 /**
  * Precompute cumulative mismatches for both patterns.
  * Then sliding window is O(1) per step using prefix sums.
@@ -128,6 +142,8 @@ console.log(minFlips2("111000")); // 2
 console.log(minFlips2("010")); // 0
 console.log(minFlips2("1110")); // 1
 ```
+
+---
 
 ## 🔗 Related Problems
 

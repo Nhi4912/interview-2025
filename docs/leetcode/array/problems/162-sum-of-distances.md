@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/sum-of-distances"
 
 # Sum of Distances / Tổng Khoảng Cách
 
-🟡 Medium | 🏷️ Array, Hash Table, Prefix Sum | 🔗 [LeetCode](https://leetcode.com/problems/sum-of-distances)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Nhóm các chỉ số theo giá trị. Với mỗi nhóm [p0, p1, p2, ...], tính tổng khoảng cách từ pi đến tất cả pj khác. Dùng prefix sum để tính trong O(k) thay vì O(k²).
+**Analogy:** **Tiếng Việt:** Nhóm các chỉ số theo giá trị. Với mỗi nhóm [p0, p1, p2, ...], tính tổng khoảng cách từ pi đến tất cả pj khác. Dùng prefix sum để tính trong O(k) thay vì O(k²).
 
 **English:** Group indices by their value. For each group, use prefix sums to compute sum of distances in O(k): left distances = k*pos - prefixLeft; right distances = suffixRight - (total-k-1)*pos.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Sum of Distances example:**
 
 ```
 nums = [1, 3, 1, 1, 2]
@@ -26,7 +31,19 @@ For index 2 (k=1): left = 1*2-0=2, right = 3-1*2=1 → result[2]=3
 For index 3 (k=2): left = 2*3-(0+2)=4 → result[3]=4
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                             | Difficulty | Pattern    |
+| ------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| [Sum of Distances in Tree](https://leetcode.com/problems/sum-of-distances-in-tree/)                                 | 🔴 Hard    | Tree DP    |
+| [Minimum Moves to Equal Array Elements II](https://leetcode.com/problems/minimum-moves-to-equal-array-elements-ii/) | 🟡 Medium  | Prefix Sum |
+| [Count Good Triplets in an Array](https://leetcode.com/problems/count-good-triplets-in-an-array/)                   | 🔴 Hard    | BIT        |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Group same-value indices using a Map before computing | **VI:** Nhóm chỉ số cùng giá trị bằng Map trước khi tính
 - 🔑 **EN:** Positions within a group are already in sorted order (left to right) | **VI:** Các chỉ số trong nhóm đã có thứ tự tăng dần
@@ -35,9 +52,9 @@ For index 3 (k=2): left = 2*3-(0+2)=4 → result[3]=4
 - 🔑 **EN:** Maintain running prefixSum as you iterate | **VI:** Duy trì prefix sum trong khi duyệt
 - 🔑 **EN:** O(n) overall — each index is processed exactly once | **VI:** O(n) tổng cộng — mỗi chỉ số xử lý đúng một lần
 
-## Solutions
+---
 
-### Solution 1: Prefix Sum per Group (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -79,11 +96,7 @@ function distance(nums: number[]): number[] {
 console.log(distance([1, 3, 1, 1, 2])); // [5,0,3,4,0]
 console.log(distance([0, 5, 3])); // [0,0,0]
 console.log(distance([1, 1, 1, 1])); // [6,4,4,6]
-```
 
-### Solution 2: Brute Force (O(n²) for reference)
-
-```typescript
 /**
  * Naive O(n²) — useful for small inputs and verification
  * Time: O(n²) | Space: O(n)
@@ -104,11 +117,7 @@ function distanceBrute(nums: number[]): number[] {
 }
 
 console.log(distanceBrute([1, 3, 1, 1, 2])); // [5,0,3,4,0]
-```
 
-### Solution 3: Two-Pass Prefix Sum (Explicit)
-
-```typescript
 /**
  * Two explicit passes: left contribution, then right contribution
  * Time: O(n) | Space: O(n)
@@ -144,6 +153,8 @@ function distance3(nums: number[]): number[] {
 
 console.log(distance3([1, 3, 1, 1, 2])); // [5,0,3,4,0]
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-fruits-harvested-after-at-m
 
 # Maximum Fruits Harvested After at Most K Steps / Thu Hoạch Quả Tối Đa Trong K Bước
 
-🔴 Hard
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Bạn đứng tại vị trí `startPos` trên con đường dài. Có thể đi tối đa `k` bước — nhưng có thể đổi hướng **đúng một lần**. Mục tiêu: thu thập nhiều quả nhất trong đoạn đường ghé qua.
+**Analogy:** > **Hình ảnh:** Bạn đứng tại vị trí `startPos` trên con đường dài. Có thể đi tối đa `k` bước — nhưng có thể đổi hướng **đúng một lần**. Mục tiêu: thu thập nhiều quả nhất trong đoạn đường ghé qua.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Fruits Harvested After at Most K Steps example:**
 
 ```
 Fruits:  pos=[0,1,2,3,4,5,6],  amounts=[2,8,6,0,3,1,0]
@@ -28,7 +33,9 @@ Best: go left first → 19 ✓
 
 **Chiến lược:** Sliding window trên positions array. Với window [L, R], chi phí bước đi = `min(|L-start|, |R-start|) * 2 + max(|L-start|, |R-start|)`.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 On a number line, `fruits[i] = [position, amount]`. You start at `startPos`, can take ≤ `k` steps. At each position you collect all available fruits. Return maximum fruits collectible.
 
@@ -36,6 +43,8 @@ On a number line, `fruits[i] = [position, amount]`. You start at `startPos`, can
 **Example 2:** `fruits=[[0,9],[4,1],[5,7],[6,2],[7,4],[10,9]]`, `startPos=5`, `k=4` → `14`
 
 **Constraints:** `1 ≤ fruits.length ≤ 10^5`, `0 ≤ pos ≤ 2×10^5`, `0 ≤ amount ≤ 10^4`, `0 ≤ startPos, k ≤ 2×10^5`
+
+---
 
 ## 📝 Interview Tips
 
@@ -46,9 +55,9 @@ On a number line, `fruits[i] = [position, amount]`. You start at `startPos`, can
 - **Prefix sum:** Pre-compute fruit sums for O(1) range queries within the window
 - **Edge cases:** startPos outside all fruit positions; k=0 (only harvest at startPos)
 
-## 💡 Solutions
+---
 
-### Solution 1: Sliding Window with Binary Search — O(n log n)
+## Solutions
 
 ```typescript
 function maxTotalFruits(fruits: number[][], startPos: number, k: number): number {
@@ -80,11 +89,7 @@ function maxTotalFruits(fruits: number[][], startPos: number, k: number): number
   }
   return ans;
 }
-```
 
-### Solution 2: Two-Pass Approach (Left-first, Right-first) — O(n log n)
-
-```typescript
 function maxTotalFruitsAlt(fruits: number[][], startPos: number, k: number): number {
   const n = fruits.length;
   const prefix = new Array(n + 1).fill(0);
@@ -130,11 +135,7 @@ function maxTotalFruitsAlt(fruits: number[][], startPos: number, k: number): num
 
   return ans;
 }
-```
 
-### Solution 3: Optimized Single Pass Sliding Window — O(n)
-
-```typescript
 function maxTotalFruitsOptimal(fruits: number[][], startPos: number, k: number): number {
   const n = fruits.length;
   const prefix = new Array(n + 1).fill(0);
@@ -160,6 +161,8 @@ function maxTotalFruitsOptimal(fruits: number[][], startPos: number, k: number):
   return ans;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/double-modular-exponentiation"
 
 # Double Modular Exponentiation / Lũy Thừa Mô-đun Kép
 
-🟡 Medium | 🏷️ Array, Math, Simulation | 🔗 [LeetCode](https://leetcode.com/problems/double-modular-exponentiation)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Với mỗi biến [a, b, c, m], tính (a^b % 10)^c % m bằng cách áp dụng mô-đun hai lần. Dùng fast modular exponentiation để tránh tràn số. Kiểm tra kết quả có bằng target không.
+**Analogy:** **Tiếng Việt:** Với mỗi biến [a, b, c, m], tính (a^b % 10)^c % m bằng cách áp dụng mô-đun hai lần. Dùng fast modular exponentiation để tránh tràn số. Kiểm tra kết quả có bằng target không.
 
 **English:** For each [a, b, c, m] in variables, compute (a^b % 10)^c % m using fast modpow. Two levels of modular exponentiation — hence "double". Return indices where result equals target.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Double Modular Exponentiation example:**
 
 ```
 variables = [[2,3,3,10],[3,3,3,1],[6,1,1,4]]  target=2
@@ -27,7 +32,19 @@ i=2: base = 6^1 % 10 = 6, result = 6^1 % 4 = 2  ✓
 Answer: [0, 2]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                         | Difficulty | Pattern                |
+| ------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Pow(x, n)](https://leetcode.com/problems/powx-n/)                              | 🟡 Medium  | Fast Exponentiation    |
+| [Super Pow](https://leetcode.com/problems/super-pow/)                           | 🟡 Medium  | Modular Exponentiation |
+| [Find the Pivot Integer](https://leetcode.com/problems/find-the-pivot-integer/) | 🟢 Easy    | Math                   |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Use fast modular exponentiation (binary exponentiation) for large powers | **VI:** Dùng lũy thừa mô-đun nhanh (bình phương liên tiếp) cho số mũ lớn
 - 🔑 **EN:** First mod is always 10 (last digit); second mod is m | **VI:** Mô-đun đầu tiên luôn là 10 (chữ số cuối); mô-đun thứ hai là m
@@ -36,9 +53,9 @@ Answer: [0, 2]
 - 🔑 **EN:** Collect indices (not values) where final result equals target | **VI:** Thu thập chỉ số (không phải giá trị) khi kết quả cuối bằng target
 - 🔑 **EN:** O(n log maxExp) total time | **VI:** Tổng thời gian O(n log maxExp)
 
-## Solutions
+---
 
-### Solution 1: Fast Modular Exponentiation (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -85,11 +102,7 @@ console.log(
 ); // [0,2]
 console.log(getGoodIndices([[39, 3, 1000, 1000]], 17)); // []
 console.log(getGoodIndices([[1, 1, 1, 2]], 1)); // [0]
-```
 
-### Solution 2: Iterative (No Recursion)
-
-```typescript
 /**
  * Same logic, explicit iterative loop style
  * Time: O(n log maxExp) | Space: O(1)
@@ -122,11 +135,7 @@ console.log(
     2,
   ),
 ); // [0,2]
-```
 
-### Solution 3: Built-in BigInt (Safe for very large numbers)
-
-```typescript
 /**
  * Use BigInt for guaranteed overflow safety
  * Time: O(n log maxExp) | Space: O(1)
@@ -165,6 +174,8 @@ console.log(
   ),
 ); // [0,2]
 ```
+
+---
 
 ## 🔗 Related Problems
 

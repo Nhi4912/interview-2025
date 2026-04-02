@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximize-sum-of-array-after-k-negat
 
 # Maximize Sum Of Array After K Negations / Tối Đa Hóa Tổng Sau K Lần Đảo Dấu
 
-🟢 Easy
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Bạn có k lần "lật dấu" một số. Muốn tổng lớn nhất. Chiến thuật: **lật hết số âm lớn nhất trước** (âm → dương tăng tổng nhiều nhất). Còn k dư thì lật đi lật lại số **nhỏ nhất tuyệt đối** (thiệt hại ít nhất).
+**Analogy:** > **Hình ảnh:** Bạn có k lần "lật dấu" một số. Muốn tổng lớn nhất. Chiến thuật: **lật hết số âm lớn nhất trước** (âm → dương tăng tổng nhiều nhất). Còn k dư thì lật đi lật lại số **nhỏ nhất tuyệt đối** (thiệt hại ít nhất).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximize Sum Of Array After K Negations example:**
 
 ```
 nums = [3, -1, 0, 2],  k = 3
@@ -30,7 +35,9 @@ Key: if k is odd after negating all negatives → negate min(|nums[i]|) once
 
 **Chiến lược:** Sort by value, negate negatives from smallest to largest. If k remaining is odd, negate element with minimum absolute value.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given integer array `nums` and integer `k`, apply operation (negate any element) exactly `k` times to maximize the array sum. Same element can be chosen multiple times.
 
@@ -38,6 +45,8 @@ Given integer array `nums` and integer `k`, apply operation (negate any element)
 **Example 2:** `nums=[3,-1,0,2]`, `k=3` → `6`
 
 **Constraints:** `1 ≤ n ≤ 10^4`, `-100 ≤ nums[i] ≤ 100`, `1 ≤ k ≤ 10^4`
+
+---
 
 ## 📝 Interview Tips
 
@@ -48,9 +57,9 @@ Given integer array `nums` and integer `k`, apply operation (negate any element)
 - **Alternative:** Sort by absolute value descending — negate negatives in order
 - **Edge case:** All positive, k odd → negate the smallest element (minimize loss)
 
-## 💡 Solutions
+---
 
-### Solution 1: Two-Phase Greedy Sort — O(n log n)
+## Solutions
 
 ```typescript
 function largestSumAfterKNegations(nums: number[], k: number): number {
@@ -73,11 +82,7 @@ function largestSumAfterKNegations(nums: number[], k: number): number {
 
   return nums.reduce((s, v) => s + v, 0);
 }
-```
 
-### Solution 2: Sort by Absolute Value — O(n log n)
-
-```typescript
 function largestSumAfterKNegationsAbsSort(nums: number[], k: number): number {
   // Sort by absolute value descending: handle biggest impact first
   nums.sort((a, b) => Math.abs(b) - Math.abs(a));
@@ -96,11 +101,7 @@ function largestSumAfterKNegationsAbsSort(nums: number[], k: number): number {
 
   return nums.reduce((s, v) => s + v, 0);
 }
-```
 
-### Solution 3: Counting Sort (O(n) for bounded input)
-
-```typescript
 function largestSumAfterKNegationsCounting(nums: number[], k: number): number {
   // Since -100 <= nums[i] <= 100, use frequency count
   const OFFSET = 100;
@@ -136,6 +137,8 @@ function largestSumAfterKNegationsCounting(nums: number[], k: number): number {
   return total;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

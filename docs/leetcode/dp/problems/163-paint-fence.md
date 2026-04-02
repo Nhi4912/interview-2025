@@ -9,17 +9,22 @@ leetcode_url: "https://leetcode.com/problems/paint-fence"
 
 # Paint Fence / Sơn Hàng Rào
 
-🟡 Medium | DP: same/diff recurrence prevents 3 consecutive same colours
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Không được sơn 3 cột liên tiếp cùng màu. Chia trạng thái thành:
+**Analogy:** **VI:** Không được sơn 3 cột liên tiếp cùng màu. Chia trạng thái thành:
 
 - `same[i]`: cột i và i-1 cùng màu (có k cách)
 - `diff[i]`: cột i khác màu so với i-1 (có k-1 cách mỗi trạng thái trước)
 
 **EN:** Track two states: last two posts same colour (`same`) vs different (`diff`).
 Constraint: no three consecutive same → can't extend `same` again.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Paint Fence example:**
 
 ```
 n=3, k=2
@@ -32,6 +37,19 @@ same[i] = diff[i-1]                  (post i copies post i-1, only legal if i-1 
 diff[i] = (same[i-1] + diff[i-1]) * (k-1)   (post i picks any other colour)
 total[i] = same[i] + diff[i]
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                  | Difficulty | Key Idea               |
+| ---------------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [256. Paint House](https://leetcode.com/problems/paint-house/)                           | 🟡 Medium  | Row colour DP          |
+| [198. House Robber](https://leetcode.com/problems/house-robber/)                         | 🟡 Medium  | Adjacent constraint DP |
+| [70. Climbing Stairs](https://leetcode.com/problems/climbing-stairs/)                    | 🟢 Easy    | Fibonacci DP           |
+| [746. Min Cost Climbing Stairs](https://leetcode.com/problems/min-cost-climbing-stairs/) | 🟢 Easy    | Linear DP              |
+
+---
 
 ## 📝 Interview Tips
 
@@ -48,9 +66,9 @@ total[i] = same[i] + diff[i]
 - 🔑 **EN:** Alternative: total[i] = (total[i-1]) _ (k-1) + (k-1) _ diff[i-2] — simplifies to k*(k-1)^(n-1).
   **VI:** Rút gọn thành công thức: k*(k-1)^(n-1) — kiểm tra lại bằng DP.
 
-## Solutions
+---
 
-### Solution 1: DP with same/diff states
+## Solutions
 
 ```typescript
 /**
@@ -80,11 +98,7 @@ console.log(numWays(3, 2)); // 6
 console.log(numWays(1, 1)); // 1
 console.log(numWays(7, 2)); // 42
 console.log(numWays(2, 4)); // 16
-```
 
-### Solution 2: Total recurrence (collapsed)
-
-```typescript
 /**
  * total[i] = (k-1) * (total[i-1] + total[i-2])
  * Derived by substituting same/diff recurrence.
@@ -110,11 +124,7 @@ function numWays2(n: number, k: number): number {
 console.log(numWays2(3, 2)); // 6
 console.log(numWays2(1, 1)); // 1
 console.log(numWays2(7, 2)); // 42
-```
 
-### Solution 3: Closed-form verification
-
-```typescript
 /**
  * Mathematical: k * (k-1)^(n-1)
  * Valid because at each fence post after the first,
@@ -129,6 +139,8 @@ function numWays3(n: number, k: number): number {
 console.log(numWays3(3, 2)); // 6
 console.log(numWays3(7, 2)); // 42 — matches DP
 ```
+
+---
 
 ## 🔗 Related Problems
 

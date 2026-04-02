@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/invert-binary-tree"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DFS / BFS
 
-## 🧠 Intuition
+---
 
-**VI**: Bài toán kinh điển về đệ quy cây. Để đảo ngược cây: hoán đổi con trái và con phải của nút hiện tại, rồi đệ quy làm tương tự cho hai con. Đây là post-order DFS hoặc pre-order — cả hai đều hoạt động vì ta chỉ swap.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Bài toán kinh điển về đệ quy cây. Để đảo ngược cây: hoán đổi con trái và con phải của nút hiện tại, rồi đệ quy làm tương tự cho hai con. Đây là post-order DFS hoặc pre-order — cả hai đều hoạt động vì ta chỉ swap.
 
 **EN**: Classic recursion problem. Invert = swap left/right children at every node. Works top-down (pre-order) or bottom-up (post-order). BFS level-order works too — swap children while enqueuing.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Invert Binary Tree example:**
 
 ```
 Before:          After:
@@ -29,6 +36,19 @@ At each node: [left, right] = [right, left]
 Then recurse into both children.
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                             | Difficulty | Pattern |
+| ---- | --------------------------------- | ---------- | ------- |
+| 101  | Symmetric Tree                    | 🟢 Easy    | DFS/BFS |
+| 100  | Same Tree                         | 🟢 Easy    | DFS     |
+| 951  | Flip Equivalent Binary Trees      | 🟡 Medium  | DFS     |
+| 2415 | Reverse Odd Levels of Binary Tree | 🟡 Medium  | BFS     |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Đây là bài "warm-up" phỏng vấn — phải code nhanh và clean trong 2 phút.
@@ -37,6 +57,8 @@ Then recurse into both children.
 - 🇬🇧 Recursive solution is 3 lines; also explain iterative BFS for follow-up.
 - 🇻🇳 Base case: `if (!root) return null` — xử lý null trước khi swap.
 - 🇬🇧 Base case: handle null before swapping; single node is already "inverted".
+
+---
 
 ## Solutions
 
@@ -144,6 +166,8 @@ console.log(treeToArray(t2)); // [2,3,1]
 const t3 = makeTree([]);
 console.log(invertTree(t3)); // null
 ```
+
+---
 
 ## 🔗 Related Problems
 

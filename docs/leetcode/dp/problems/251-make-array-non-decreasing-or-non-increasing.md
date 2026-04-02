@@ -7,102 +7,162 @@ tags: [Dynamic Programming, Greedy]
 leetcode_url: "https://leetcode.com/problems/make-array-non-decreasing-or-non-increasing"
 ---
 
-# Make Array Non-decreasing or Non-increasing / Make Array Non-decreasing or Non-increasing
-
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Wildcard Matching](https://leetcode.com/problems/wildcard-matching)
+# make array non decreasing or non increasing
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Hình dung hàng người xếp hàng chụp ảnh: ta muốn sắp theo chiều cao tăng dần (hoặc giảm dần), mỗi lần "điều chỉnh" 1 cm tốn 1 đồng. Mấu chốt: **nghiệm tối ưu luôn nằm trong tập giá trị ban đầu** — tính chất L1 median — nên chỉ cần xét _m_ giá trị duy nhất thay vì toàn bộ miền số nguyên.
 
 **Pattern Recognition:**
+- Key insight: see analogy above
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Make Array Non-decreasing or Non-increasing example:**
+**Visual —  example:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+nums = [3, 2, 4, 5, 0]
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Slope Trick – non-increasing (run on reversed [0,5,4,2,3]):
+  x=0 → heap=[0]                    cost=0
+  x=5 → heap=[5,0]                  cost=0  (5 ≤ 5, no clip)
+  x=4 → clip 5→4, heap=[4,4,0]      cost=1
+  x=2 → clip 4→2, heap=[4,2,2,0]    cost=3
+  x=3 → clip 4→3, heap=[3,3,2,2,0]  cost=4
+
+Non-decreasing=6, Non-increasing=4  →  Answer: min(6, 4) = 4
 ```
 
 ---
 
 ## Problem Description
 
-Make Array Non-decreasing or Non-increasing. ([LeetCode](https://leetcode.com/problems/make-array-non-decreasing-or-non-increasing))
-
-Difficulty: Hard | Acceptance: 65.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/make-array-non-decreasing-or-non-increasing) for full constraints
+| Problem                                                                                                                                     | Difficulty | Note                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| [Minimum Number of Removals to Make Mountain Array](https://leetcode.com/problems/minimum-number-of-removals-to-make-mountain-array/)       | Hard       | LIS-based bitonic variant |
+| [Non-decreasing Array](https://leetcode.com/problems/non-decreasing-array/)                                                                 | Medium     | Greedy, no cost model     |
+| [Minimum Cost to Move Chips to the Same Position](https://leetcode.com/problems/minimum-cost-to-move-chips-to-the-same-position/)           | Easy       | Cost function insight     |
+| [Best Time to Buy and Sell Stock with Transaction Fee](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/) | Medium     | DP with slope analysis    |
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Split into two sub-problems** — Solve non-decreasing and non-increasing separately, return min. / Giải riêng 2 chiều rồi lấy min.
+2. **L1 median property** — Optimal mapped values always come from the original array; enables coordinate compression. / Nghiệm tối ưu luôn nằm trong tập giá trị ban đầu.
+3. **Prefix-min DP** — `dp[j] = min(dp[0..j]) + |nums[i] − sorted[j]|` reduces each row to O(m). / Prefix-min giúp tối ưu từ O(n·m²) → O(n·m).
+4. **Non-increasing via reversal** — Reverse the array, then run the non-decreasing DP. / Lật mảng là đủ, không cần code riêng cho chiều giảm.
+5. **Slope trick is O(n log n)** — Max-heap tracks breakpoints of the convex cost function. / Max-heap lưu các điểm bẻ gãy của hàm chi phí lồi.
+6. **Pop = cost** — Each time `heap.top > x`, pop and add `top − x` to cost, then push `x` back. / Mỗi lần pop, phần chênh lệch đúng bằng chi phí phải bù.
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function makeArrayNonDecreasingOrNonIncreasingBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minCostDP(nums: number[]): number {
+  const sorted = [...new Set(nums)].sort((a, b) => a - b);
+  const m = sorted.length;
+
+  // Base case: cost to map nums[0] to each unique value
+  let dp = sorted.map((v) => Math.abs(nums[0] - v));
+
+  for (let i = 1; i < nums.length; i++) {
+    const next = new Array<number>(m);
+    let pMin = Infinity;
+    for (let j = 0; j < m; j++) {
+      pMin = Math.min(pMin, dp[j]);
+      next[j] = pMin + Math.abs(nums[i] - sorted[j]);
+    }
+    dp = next;
+  }
+
+  return Math.min(...dp);
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function makeArrayNonDecreasingOrNonIncreasing(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function minCost(nums: number[]): number {
+  // Non-increasing ≡ non-decreasing on the reversed array (cost is symmetric)
+  return Math.min(minCostDP(nums), minCostDP([...nums].reverse()));
+}
+
+class MaxHeap {
+  private h: number[] = [];
+
+  push(x: number): void {
+    this.h.push(x);
+    let i = this.h.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (this.h[p] >= this.h[i]) break;
+      [this.h[p], this.h[i]] = [this.h[i], this.h[p]];
+      i = p;
+    }
+  }
+
+  pop(): number {
+    const top = this.h[0];
+    const last = this.h.pop()!;
+    if (this.h.length > 0) {
+      this.h[0] = last;
+      let i = 0;
+      while (true) {
+        let hi = i;
+        const l = 2 * i + 1,
+          r = 2 * i + 2;
+        if (l < this.h.length && this.h[l] > this.h[hi]) hi = l;
+        if (r < this.h.length && this.h[r] > this.h[hi]) hi = r;
+        if (hi === i) break;
+        [this.h[hi], this.h[i]] = [this.h[i], this.h[hi]];
+        i = hi;
+      }
+    }
+    return top;
+  }
+
+  peek(): number {
+    return this.h[0];
+  }
+}
+
+function slopeTrick(arr: number[]): number {
+  const heap = new MaxHeap();
+  let cost = 0;
+  for (const x of arr) {
+    heap.push(x);
+    if (heap.peek() > x) {
+      cost += heap.pop() - x;
+      heap.push(x); // restore heap size to maintain isotonic breakpoint count
+    }
+  }
+  return cost;
+}
+
+function minCostSlopeTrick(nums: number[]): number {
+  return Math.min(
+    slopeTrick(nums),
+    slopeTrick([...nums].reverse()), // reverse → non-increasing
+  );
 }
 
 // === Test Cases ===
-// console.log(makeArrayNonDecreasingOrNonIncreasing(/* example 1 */)); // expected
-// console.log(makeArrayNonDecreasingOrNonIncreasing(/* example 2 */)); // expected
-// console.log(makeArrayNonDecreasingOrNonIncreasing(/* edge case */)); // expected
+// Solution 1 – DP
+console.log(minCost([3, 2, 4, 5, 0])); // 4
+console.log(minCost([2, 2, 2])); // 0
+console.log(minCost([3, 1, 2])); // 1
+
+// Solution 2 – Slope Trick
+console.log(minCostSlopeTrick([3, 2, 4, 5, 0])); // 4
+console.log(minCostSlopeTrick([2, 2, 2])); // 0
+console.log(minCostSlopeTrick([3, 1, 2])); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum) — same pattern: Prefix Sum
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [Make Array Non-decreasing or Non-increasing — LeetCode](https://leetcode.com/problems/make-array-non-decreasing-or-non-increasing) — problem page
+| Problem                                                                                                                                     | Difficulty | Note                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| [Minimum Number of Removals to Make Mountain Array](https://leetcode.com/problems/minimum-number-of-removals-to-make-mountain-array/)       | Hard       | LIS-based bitonic variant |
+| [Non-decreasing Array](https://leetcode.com/problems/non-decreasing-array/)                                                                 | Medium     | Greedy, no cost model     |
+| [Minimum Cost to Move Chips to the Same Position](https://leetcode.com/problems/minimum-cost-to-move-chips-to-the-same-position/)           | Easy       | Cost function insight     |
+| [Best Time to Buy and Sell Stock with Transaction Fee](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/) | Medium     | DP with slope analysis    |

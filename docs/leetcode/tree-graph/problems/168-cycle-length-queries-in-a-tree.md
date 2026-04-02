@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/cycle-length-queries-in-a-tree"
 
 # Cycle Length Queries in a Tree / Truy vấn độ dài chu trình trong cây
 
-🔴 Hard | Complete Binary Tree | LCA | Bit Manipulation
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Trong cây nhị phân hoàn chỉnh (đánh số 1..2^n-1), cha của nút `x` luôn là `x >> 1`. Để tìm LCA của hai nút, chia đôi nút lớn hơn cho đến khi chúng bằng nhau. Độ dài chu trình = (khoảng cách từ a đến LCA) + (khoảng cách từ b đến LCA) + 1.
+**Analogy:** **Vietnamese:** Trong cây nhị phân hoàn chỉnh (đánh số 1..2^n-1), cha của nút `x` luôn là `x >> 1`. Để tìm LCA của hai nút, chia đôi nút lớn hơn cho đến khi chúng bằng nhau. Độ dài chu trình = (khoảng cách từ a đến LCA) + (khoảng cách từ b đến LCA) + 1.
 
 **English:** In a 1-indexed complete binary tree, `parent(x) = x >> 1`. To find LCA of (a,b): repeatedly halve the larger node until a == b. The cycle length = steps taken to reach LCA from both sides + 1 (for the added edge).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Cycle Length Queries in a Tree example:**
 
 ```
 n=3 tree (7 nodes): 1-indexed
@@ -37,6 +40,18 @@ Query (4, 7):
 
 ---
 
+---
+
+## Problem Description
+
+| #    | Problem                                  | Difficulty | Pattern            |
+| ---- | ---------------------------------------- | ---------- | ------------------ |
+| 236  | Lowest Common Ancestor of Binary Tree    | Medium     | DFS / LCA          |
+| 1123 | Lowest Common Ancestor of Deepest Leaves | Medium     | LCA                |
+| 2509 | Cycle Length Queries (this)              | Hard       | LCA in Complete BT |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Key insight / Nhận xét chính:** `parent(x) = x >> 1` in a complete binary tree. LCA is found when both nodes are equal.
@@ -48,9 +63,9 @@ Query (4, 7):
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — LCA via Parent Halving
+## Solutions
 
 ```typescript
 /**
@@ -84,11 +99,7 @@ console.log(cycleLengthQueries(2, [[1, 2]]));
 // [2]  (1 → 2, add edge → cycle length 2)
 console.log(cycleLengthQueries(4, [[7, 11]]));
 // [5]
-```
 
-### Solution 2 — Collect Ancestors Set (Explicit)
-
-```typescript
 /**
  * Collect ancestors of a into a Set, then walk b up until hitting a known ancestor.
  * More explicit but uses O(n) space per query.

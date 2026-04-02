@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/subsequence-with-the-minimum-score"
 
 # Subsequence With the Minimum Score / Dãy Con Với Điểm Tối Thiểu
 
-🔴 Hard
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** String `t` cần trở thành subsequence của `s`. Bạn có thể **xóa một đoạn liên tiếp** `t[i..j]` (score = j-i+1). Muốn xóa ít nhất. Trick: Tính prefix match từ trái và suffix match từ phải, rồi binary search vào giữa.
+**Analogy:** > **Hình ảnh:** String `t` cần trở thành subsequence của `s`. Bạn có thể **xóa một đoạn liên tiếp** `t[i..j]` (score = j-i+1). Muốn xóa ít nhất. Trick: Tính prefix match từ trái và suffix match từ phải, rồi binary search vào giữa.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Subsequence With the Minimum Score example:**
 
 ```
 s = "abacaba",  t = "bzb"
@@ -32,7 +37,9 @@ Binary search: for each left boundary l, find smallest r such that
 
 **Chiến lược:** Precompute prefix/suffix match arrays → binary search on cut size.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given strings `s` and `t`, find minimum **score** of a subsequence of `t` that is a subsequence of `s`. Score = length of contiguous deletion from `t`. (After deletion, remaining chars of `t` must appear as subsequence in `s`.)
 
@@ -40,6 +47,8 @@ Given strings `s` and `t`, find minimum **score** of a subsequence of `t` that i
 **Example 2:** `s="dcbacba"`, `t="abcd"` → `1`
 
 **Constraints:** `1 ≤ s.length, t.length ≤ 10^5`, strings are lowercase English letters
+
+---
 
 ## 📝 Interview Tips
 
@@ -50,9 +59,9 @@ Given strings `s` and `t`, find minimum **score** of a subsequence of `t` that i
 - **Two pointers check:** Given score bound `x`, verify if any deletion of size `x` yields valid subsequence
 - **Edge cases:** Empty t after deletion → score = len(t); t already subsequence of s → score = 0
 
-## 💡 Solutions
+---
 
-### Solution 1: Prefix/Suffix Arrays + Greedy Merge — O(n + m)
+## Solutions
 
 ```typescript
 function minimumScore(s: string, t: string): number {
@@ -97,11 +106,7 @@ function minimumScore(s: string, t: string): number {
 
   return ans;
 }
-```
 
-### Solution 2: Binary Search on Score — O((n + m) log m)
-
-```typescript
 function minimumScoreBinarySearch(s: string, t: string): number {
   const n = s.length,
     m = t.length;
@@ -140,11 +145,7 @@ function minimumScoreBinarySearch(s: string, t: string): number {
   }
   return lo;
 }
-```
 
-### Solution 3: Optimized with Precomputed Next-Match Array — O(n + m)
-
-```typescript
 function minimumScoreOptimal(s: string, t: string): number {
   const n = s.length,
     m = t.length;
@@ -176,6 +177,8 @@ function minimumScoreOptimal(s: string, t: string): number {
   return ans;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

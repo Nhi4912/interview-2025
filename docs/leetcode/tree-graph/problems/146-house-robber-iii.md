@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/house-robber-iii"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Tree DP (Post-order DFS)
 
-## 🧠 Intuition
+---
 
-**VI**: Không thể cướp cả cha lẫn con. Mỗi nút có 2 lựa chọn: cướp nó (không cướp con) hoặc không cướp (con tự quyết). DFS hậu thứ tự trả về `[rob, skip]` — giá trị tối đa khi cướp/không cướp nút này. Combine từ dưới lên.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Không thể cướp cả cha lẫn con. Mỗi nút có 2 lựa chọn: cướp nó (không cướp con) hoặc không cướp (con tự quyết). DFS hậu thứ tự trả về `[rob, skip]` — giá trị tối đa khi cướp/không cướp nút này. Combine từ dưới lên.
 
 **EN**: Classic tree DP. Each node returns `[rob_this, skip_this]`. If we rob this node, we can't rob direct children. If we skip, children can independently choose to rob or skip.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — House Robber III example:**
 
 ```
        3           rob_this = 3 + skip_left + skip_right
@@ -27,6 +34,19 @@ leetcode_url: "https://leetcode.com/problems/house-robber-iii"
                Root 3: [3+3+1, max(2,3)+max(3,1)] = [7, 3+3=6] → max=7
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                | Difficulty | Pattern        |
+| ---- | ------------------------------------ | ---------- | -------------- |
+| 198  | House Robber                         | 🟡 Medium  | Linear DP      |
+| 213  | House Robber II                      | 🟡 Medium  | Circular DP    |
+| 968  | Binary Tree Cameras                  | 🔴 Hard    | Tree Greedy/DP |
+| 1372 | Longest ZigZag Path in a Binary Tree | 🟡 Medium  | Tree DP        |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Trả về `[rob, skip]` từ mỗi DFS — tránh memoization phức tạp với Map<node, value>.
@@ -35,6 +55,8 @@ leetcode_url: "https://leetcode.com/problems/house-robber-iii"
 - 🇬🇧 `rob_this = node.val + skip_left + skip_right` (force children to be skipped).
 - 🇻🇳 `skip_this = max(rob_l, skip_l) + max(rob_r, skip_r)` (con tự quyết tối ưu).
 - 🇬🇧 `skip_this = max(rob_l, skip_l) + max(rob_r, skip_r)` (children choose optimally).
+
+---
 
 ## Solutions
 
@@ -160,6 +182,8 @@ console.log(rob(makeTree([3, 4, 5, 1, 3, null, 1]))); // 9
 console.log(rob2(makeTree([3, 2, 3, null, 3, null, 1]))); // 7
 console.log(rob3(makeTree([3, 4, 5, 1, 3, null, 1]))); // 9
 ```
+
+---
 
 ## 🔗 Related Problems
 

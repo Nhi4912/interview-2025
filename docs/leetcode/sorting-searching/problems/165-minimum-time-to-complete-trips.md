@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-to-complete-trips"
 
 # Minimum Time to Complete Trips / Thời Gian Tối Thiểu Để Hoàn Thành Các Chuyến Đi
 
-🟡 Medium | 🏷️ Array, Binary Search | [LeetCode](https://leetcode.com/problems/minimum-time-to-complete-trips)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Binary search trên thời gian t. Hàm kiểm tra: "với t đơn vị thời gian, tổng số chuyến = Σ⌊t/time[i]⌋ ≥ totalTrips không?". Hàm này đơn điệu tăng theo t → binary search tìm t nhỏ nhất thỏa mãn.
+**Analogy:** **Vietnamese:** Binary search trên thời gian t. Hàm kiểm tra: "với t đơn vị thời gian, tổng số chuyến = Σ⌊t/time[i]⌋ ≥ totalTrips không?". Hàm này đơn điệu tăng theo t → binary search tìm t nhỏ nhất thỏa mãn.
 
 **Analogy:** Đặt bánh — bạn hỏi "nếu đặt lò t phút, đủ bánh không?" — tăng t đến khi đủ. Binary search trên thời gian t thay vì thử từng t.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Time to Complete Trips example:**
 
 ```
 time=[1,2,3]  totalTrips=5
@@ -28,6 +31,18 @@ t=2: 2/1+2/2+2/3 = 2+1+0=3 < 5 ❌
 
 Search range: [1, min(time) * totalTrips]
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                            | Difficulty | Connection                |
+| -------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)                           | 🟡 Medium  | Binary search on answer   |
+| [Capacity to Ship Packages](https://leetcode.com/problems/capacity-to-ship-packages-within-d-days) | 🟡 Medium  | Binary search on capacity |
+| [Find Peak Element](https://leetcode.com/problems/find-peak-element)                               | 🟡 Medium  | Binary search variant     |
 
 ---
 
@@ -42,9 +57,9 @@ Search range: [1, min(time) * totalTrips]
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Binary Search on Time
+## Solutions
 
 ```typescript
 /**
@@ -73,11 +88,7 @@ function minimumTime(time: number[], totalTrips: number): number {
 console.log(minimumTime([1, 2, 3], 5)); // 3
 console.log(minimumTime([2], 1)); // 2
 console.log(minimumTime([5, 10, 10], 9)); // 25
-```
 
-### Solution 2: Binary Search with BigInt (large input safe)
-
-```typescript
 /**
  * Use BigInt arithmetic to avoid overflow for large inputs.
  * Time: O(n log(minTime * totalTrips))  Space: O(1)
@@ -104,11 +115,7 @@ function minimumTime2(time: number[], totalTrips: number): number {
 console.log(minimumTime2([1, 2, 3], 5)); // 3
 console.log(minimumTime2([2], 1)); // 2
 console.log(minimumTime2([1], 1_000_000_000)); // 1000000000
-```
 
-### Solution 3: Binary Search with Early Termination Check
-
-```typescript
 /**
  * Short-circuit check: stop counting once we hit totalTrips.
  * Time: O(n log(minTime * totalTrips))  Space: O(1)

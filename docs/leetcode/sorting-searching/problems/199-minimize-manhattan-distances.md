@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimize-manhattan-distances"
 
 # Minimize Manhattan Distances / Tối Thiểu Hóa Khoảng Cách Manhattan
 
-🔴 Hard
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Khoảng cách Manhattan `|x1-x2| + |y1-y2|` trông phức tạp — nhưng có một phép biến đổi kỳ diệu: xoay 45°. Đặt `u = x+y`, `v = x-y` thì `|x1-x2| + |y1-y2| = max(|u1-u2|, |v1-v2|)`.
+**Analogy:** > **Hình ảnh:** Khoảng cách Manhattan `|x1-x2| + |y1-y2|` trông phức tạp — nhưng có một phép biến đổi kỳ diệu: xoay 45°. Đặt `u = x+y`, `v = x-y` thì `|x1-x2| + |y1-y2| = max(|u1-u2|, |v1-v2|)`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimize Manhattan Distances example:**
 
 ```
 Point (x,y) → (u=x+y, v=x-y)
@@ -28,7 +33,9 @@ where range_u = max(u) - min(u),  range_v = max(v) - min(v)
 
 **Chiến lược:** Loại bỏ từng điểm, tính lại max Manhattan distance → chọn điểm nào loại bỏ làm khoảng cách giảm nhiều nhất. O(n log n) với sorted sets.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `points[i] = [xi, yi]`, remove **exactly one** point to minimize the **maximum Manhattan distance** between any two remaining points. Return that minimum possible maximum distance.
 
@@ -36,6 +43,8 @@ Given `points[i] = [xi, yi]`, remove **exactly one** point to minimize the **max
 **Example 2:** `points=[[1,1],[1,3],[3,3],[3,1]]` → `2`
 
 **Constraints:** `3 ≤ n ≤ 10^5`, `-10^8 ≤ xi, yi ≤ 10^8`
+
+---
 
 ## 📝 Interview Tips
 
@@ -46,9 +55,9 @@ Given `points[i] = [xi, yi]`, remove **exactly one** point to minimize the **max
 - **Why only 4 candidates?** The point maximizing/minimizing u or v is the only one that can shrink the range
 - **Sorted order:** Use sorted arrays to get second-max/second-min in O(1) after sorting
 
-## 💡 Solutions
+---
 
-### Solution 1: Rotation + Try 4 Candidates — O(n log n)
+## Solutions
 
 ```typescript
 function minimumDistance(points: number[][]): number {
@@ -80,11 +89,7 @@ function minimumDistance(points: number[][]): number {
   }
   return ans;
 }
-```
 
-### Solution 2: Explicit Sorted Arrays with Top-2 Tracking — O(n log n)
-
-```typescript
 function minimumDistanceAlt(points: number[][]): number {
   const n = points.length;
 
@@ -117,11 +122,7 @@ function minimumDistanceAlt(points: number[][]): number {
   }
   return ans;
 }
-```
 
-### Solution 3: Brute Force for Verification — O(n²) (interview starter)
-
-```typescript
 function minimumDistanceBrute(points: number[][]): number {
   const n = points.length;
   let ans = Infinity;
@@ -141,6 +142,8 @@ function minimumDistanceBrute(points: number[][]): number {
   return ans;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

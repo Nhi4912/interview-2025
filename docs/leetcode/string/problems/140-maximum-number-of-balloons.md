@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-number-of-balloons"
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map / Counting
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Từ "balloon" cần `b×1, a×1, l×2, o×2, n×1`. Đếm từng chữ trong chuỗi, rồi tính xem có thể ghép được bao nhiêu từ "balloon" — bị giới hạn bởi chữ xuất hiện ít nhất.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Từ "balloon" cần `b×1, a×1, l×2, o×2, n×1`. Đếm từng chữ trong chuỗi, rồi tính xem có thể ghép được bao nhiêu từ "balloon" — bị giới hạn bởi chữ xuất hiện ít nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Number of Balloons example:**
 
 ```
 text = "nlaebolko"
@@ -26,7 +33,20 @@ Instances = min(b/1, a/1, l/2, o/2, n/1)
 
 **Key insight**: Only 5 letters matter. `l` and `o` each appear twice in "balloon" → divide their counts by 2.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                     | Difficulty | Pattern  |
+| ---- | ------------------------------------------- | ---------- | -------- |
+| 383  | Ransom Note                                 | 🟢 Easy    | Hash Map |
+| 242  | Valid Anagram                               | 🟢 Easy    | Hash Map |
+| 1160 | Find Words That Can Be Formed by Characters | 🟢 Easy    | Counting |
+| 2287 | Rearrange Characters to Make Target String  | 🟢 Easy    | Counting |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Only count letters `b, a, l, o, n` — others are irrelevant
   **VI**: Chỉ đếm chữ cái `b, a, l, o, n` — các chữ khác không quan trọng
@@ -120,7 +140,14 @@ console.log(maxNumberOfBalloons3("loonbalxballpoon")); // 2
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                     | Difficulty | Pattern  |
 | ---- | ------------------------------------------- | ---------- | -------- |

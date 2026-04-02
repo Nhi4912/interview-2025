@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/minimum-cost-to-move-chips-to-the-s
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng các chiếc xe trên một con đường số. Di chuyển 2 bước (cùng chẵn hoặc cùng lẻ) miễn phí — như đi qua làn đường song song. Nhưng đổi làn (từ chẵn sang lẻ hoặc ngược lại) tốn 1 đồng. Bài toán trở thành: gom tất cả xe về cùng một làn chẵn (tốn số xe ở làn lẻ đồng) hoặc làn lẻ (tốn số xe ở làn chẵn đồng). Chọn phương án rẻ hơn!
+**Analogy:** Hãy tưởng tượng các chiếc xe trên một con đường số. Di chuyển 2 bước (cùng chẵn hoặc cùng lẻ) miễn phí — như đi qua làn đường song song. Nhưng đổi làn (từ chẵn sang lẻ hoặc ngược lại) tốn 1 đồng. Bài toán trở thành: gom tất cả xe về cùng một làn chẵn (tốn số xe ở làn lẻ đồng) hoặc làn lẻ (tốn số xe ở làn chẵn đồng). Chọn phương án rẻ hơn!
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Cost to Move Chips example:**
 
 ```
 position = [1, 2, 3]
@@ -39,7 +42,9 @@ Phương án B: Gom tất cả về vị trí lẻ
 Answer = min(evenCount, oddCount) = min(1, 2) = 1 ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 There are `n` chips on a number line. `position[i]` is the position of the `i`-th chip. Moving a chip **2 steps** costs `0`; moving **1 step** costs `1`. Return the **minimum cost** to move all chips to the same position.
 
@@ -49,7 +54,9 @@ There are `n` chips on a number line. `position[i]` is the position of the `i`-t
 
 **Constraints:** `1 ≤ n ≤ 100`, `1 ≤ position[i] ≤ 10^9`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Key insight** / Nhận xét chính: Di chuyển 2 bước miễn phí → tất cả chip cùng tính chẵn/lẻ có thể gom lại không tốn gì
 - **Reduce to parity** / Quy về tính chẵn lẻ: Chỉ cần biết bao nhiêu chip ở vị trí chẵn, bao nhiêu ở lẻ
@@ -58,7 +65,9 @@ There are `n` chips on a number line. `position[i]` is the position of the `i`-t
 - **Edge case** / Trường hợp đặc biệt: Tất cả cùng vị trí → 0; tất cả cùng tính chẵn/lẻ → 0
 - **O(n) solution** / Giải pháp O(n): Chỉ một lần duyệt để đếm, không cần sort
 
-## Solution 1 - Count Parity (Optimal O(n))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -74,11 +83,7 @@ function minCostToMoveChips(position: number[]): number {
   }
   return Math.min(evenCount, oddCount);
 }
-```
 
-## Solution 2 - Simulation (Brute Force O(n·max_pos))
-
-```typescript
 /**
  * @complexity Time: O(n·max_pos) | Space: O(max_pos)
  * Simulate moving all chips to each possible position, find min cost
@@ -97,11 +102,7 @@ function minCostToMoveChipsBrute(position: number[]): number {
   }
   return minCost;
 }
-```
 
-## Solution 3 - Reduce (Functional O(n))
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * One-liner using reduce
@@ -110,11 +111,8 @@ function minCostToMoveChipsFunctional(position: number[]): number {
   const odd = position.reduce((acc, p) => acc + (p % 2), 0);
   return Math.min(odd, position.length - odd);
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(minCostToMoveChips([1, 2, 3])); // → 1
 console.log(minCostToMoveChips([2, 2, 2, 3, 3])); // → 2
 console.log(minCostToMoveChips([1, 1000000000])); // → 1
@@ -122,7 +120,9 @@ console.log(minCostToMoveChips([1, 1, 1])); // → 0
 console.log(minCostToMoveChipsBrute([1, 2, 3])); // → 1
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                  | Difficulty | Link                                                                              |
 | ---------------------------------------- | ---------- | --------------------------------------------------------------------------------- |

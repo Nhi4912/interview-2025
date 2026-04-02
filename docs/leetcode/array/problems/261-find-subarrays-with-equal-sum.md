@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/find-subarrays-with-equal-sum"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn đang kiểm tra biên lai mua hàng. Mỗi "hóa đơn" là tổng của 2 mặt hàng liên tiếp. Nếu hai hóa đơn ở hai vị trí khác nhau có cùng tổng tiền, bạn tìm thấy "trùng hợp đáng ngờ". Thay vì so sánh từng cặp hóa đơn (O(n²)), ta chỉ cần lưu tất cả tổng đã thấy vào một tập hợp — nếu tổng mới đã có trong tập → ngay lập tức trả về `true`.
+**Analogy:** Bạn đang kiểm tra biên lai mua hàng. Mỗi "hóa đơn" là tổng của 2 mặt hàng liên tiếp. Nếu hai hóa đơn ở hai vị trí khác nhau có cùng tổng tiền, bạn tìm thấy "trùng hợp đáng ngờ". Thay vì so sánh từng cặp hóa đơn (O(n²)), ta chỉ cần lưu tất cả tổng đã thấy vào một tập hợp — nếu tổng mới đã có trong tập → ngay lập tức trả về `true`.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Subarrays With Equal Sum example:**
 
 ```
 nums = [4, 2, 4, 5, 2, 4]
@@ -34,7 +37,9 @@ Tại sao không cần kiểm tra xa hơn:
   Problem just asks for two subarrays of length 2 with equal sum (can be adjacent)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given a 0-indexed integer array `nums`, determine if there exist **two subarrays of length 2** with equal sum. The subarrays must begin at different indices.
 
@@ -44,7 +49,9 @@ Given a 0-indexed integer array `nums`, determine if there exist **two subarrays
 
 **Constraints:** `2 ≤ nums.length ≤ 1000`, `-10^9 ≤ nums[i] ≤ 10^9`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Set for O(1) lookup** / Set cho O(1): Lưu tổng đã thấy → kiểm tra O(1) mỗi bước thay vì so sánh O(n)
 - **Subarrays of length 2** / Mảng con dài 2: Chỉ cần `nums[i] + nums[i+1]` — không cần sliding window phức tạp
@@ -53,7 +60,9 @@ Given a 0-indexed integer array `nums`, determine if there exist **two subarrays
 - **Brute O(n²)** / Brute force: So sánh mọi cặp `(i,j)` thỏa `i ≠ j` — dễ code nhưng chậm hơn
 - **Edge case** / Trường hợp đặc biệt: `[0,0,0]` → cả 3 tổng đều = 0 → true ngay ở bước 2
 
-## Solution 1 - Brute Force (O(n²))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -69,11 +78,7 @@ function findSubarraysWithEqualSumBrute(nums: number[]): boolean {
   }
   return false;
 }
-```
 
-## Solution 2 - Hash Set (Optimal O(n))
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Store each pair sum in a set; return true if duplicate found
@@ -87,11 +92,7 @@ function findSubarraysWithEqualSum(nums: number[]): boolean {
   }
   return false;
 }
-```
 
-## Solution 3 - Map with Indices (Extended)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Map sum → first index; also returns which indices were equal
@@ -105,11 +106,8 @@ function findSubarraysWithEqualSumDetailed(nums: number[]): [number, number] | n
   }
   return null;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(findSubarraysWithEqualSum([4, 2, 4, 5, 2, 4])); // → true
 console.log(findSubarraysWithEqualSum([1, 2, 3, 4, 5])); // → false
 console.log(findSubarraysWithEqualSum([0, 0, 0])); // → true
@@ -117,7 +115,9 @@ console.log(findSubarraysWithEqualSum([1, 1])); // → false (only one pair)
 console.log(findSubarraysWithEqualSumBrute([4, 2, 4, 5, 2, 4])); // → true
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                  | Difficulty | Link                                                                             |
 | ---------------------------------------- | ---------- | -------------------------------------------------------------------------------- |

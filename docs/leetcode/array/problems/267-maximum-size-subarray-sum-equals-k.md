@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/maximum-size-subarray-sum-equals-k"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn đang đi bộ trên đường thẳng, mỗi bước đi tăng hoặc giảm độ cao. Bạn muốn tìm đoạn đường dài nhất mà tổng thay đổi độ cao bằng đúng k mét. Thủ thuật: ghi lại tổng tích lũy (prefix sum) tại mỗi vị trí. Nếu tại vị trí j có prefix[j] = p, và trước đó tại vị trí i có prefix[i] = p - k, thì đoạn từ i+1 đến j có tổng đúng bằng k — và ta muốn i càng nhỏ càng tốt để đoạn dài nhất!
+**Analogy:** Hãy tưởng tượng bạn đang đi bộ trên đường thẳng, mỗi bước đi tăng hoặc giảm độ cao. Bạn muốn tìm đoạn đường dài nhất mà tổng thay đổi độ cao bằng đúng k mét. Thủ thuật: ghi lại tổng tích lũy (prefix sum) tại mỗi vị trí. Nếu tại vị trí j có prefix[j] = p, và trước đó tại vị trí i có prefix[i] = p - k, thì đoạn từ i+1 đến j có tổng đúng bằng k — và ta muốn i càng nhỏ càng tốt để đoạn dài nhất!
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Size Subarray Sum Equals k example:**
 
 ```
 nums = [1, -1, 5, -2, 3], k = 3
@@ -37,7 +40,9 @@ i=4: prefix=6  → need 6-3=3,  3 in map at 3! → len=4-3=1
 Answer = 4 ✓ (subarray [1,-1,5,-2] = 3)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an integer array `nums` and an integer `k`, return the **maximum length** of a subarray that sums to `k`. Return `0` if no such subarray exists.
 
@@ -46,7 +51,9 @@ Given an integer array `nums` and an integer `k`, return the **maximum length** 
 
 **Constraints:** `1 ≤ nums.length ≤ 2×10^5`, `-10^4 ≤ nums[i] ≤ 10^4`, `-10^9 ≤ k ≤ 10^9`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Prefix sum trick** / Trick tổng tiền tố: `sum(i..j) = prefix[j] - prefix[i-1]` → tìm prefix[i-1] = prefix[j] - k
 - **Store first occurrence** / Lưu lần đầu: Chỉ lưu index đầu tiên gặp mỗi prefix sum → tối đa hóa độ dài
@@ -55,7 +62,9 @@ Given an integer array `nums` and an integer `k`, return the **maximum length** 
 - **Negative numbers OK** / Số âm: Khác với sliding window (chỉ dùng cho số dương), prefix sum xử lý cả âm
 - **Compare to #560** / So với bài 560: Bài 560 đếm số lượng, bài này tìm độ dài lớn nhất
 
-## Solution 1 - Brute Force (O(n²))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -74,11 +83,7 @@ function maxSubArrayLenBrute(nums: number[], k: number): number {
   }
   return maxLen;
 }
-```
 
-## Solution 2 - Prefix Sum + Hash Map (Optimal O(n))
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * prefix[j] - prefix[i] = k → find earliest i where prefix[i] = prefix[j] - k
@@ -101,11 +106,8 @@ function maxSubArrayLen(nums: number[], k: number): number {
   }
   return maxLen;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(maxSubArrayLen([1, -1, 5, -2, 3], 3)); // → 4
 console.log(maxSubArrayLen([-2, -1, 2, 1], 1)); // → 2
 console.log(maxSubArrayLen([1, 0, 0], 0)); // → 2 (subarray [0,0])
@@ -114,7 +116,9 @@ console.log(maxSubArrayLen([1, 2, 3], 10)); // → 0
 console.log(maxSubArrayLenBrute([1, -1, 5, -2, 3], 3)); // → 4
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                   | Difficulty | Link                                                              |
 | ------------------------- | ---------- | ----------------------------------------------------------------- |

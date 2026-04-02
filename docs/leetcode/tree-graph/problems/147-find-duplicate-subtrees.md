@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/find-duplicate-subtrees"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS + Serialization + HashMap
 
-## 🧠 Intuition
+---
 
-**VI**: Hai cây con "giống nhau" khi chúng có cùng cấu trúc và giá trị. Cách nhận diện: serialize mỗi cây con thành chuỗi duy nhất (tương tự serialize/deserialize cây). Dùng HashMap đếm số lần xuất hiện — khi count === 2, thêm root nút đó vào kết quả (chỉ lần đầu để tránh trùng).
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Hai cây con "giống nhau" khi chúng có cùng cấu trúc và giá trị. Cách nhận diện: serialize mỗi cây con thành chuỗi duy nhất (tương tự serialize/deserialize cây). Dùng HashMap đếm số lần xuất hiện — khi count === 2, thêm root nút đó vào kết quả (chỉ lần đầu để tránh trùng).
 
 **EN**: Serialize each subtree with post-order DFS: `"left_serial,right_serial,val"`. Use a HashMap counting occurrences. When a serialization appears for the 2nd time, add that node's root to results.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Duplicate Subtrees example:**
 
 ```
 Tree:         Serialization (post-order):
@@ -30,6 +37,19 @@ Tree:         Serialization (post-order):
 Result: [node with val 2, node with val 4] (one representative each)
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                 | Difficulty | Pattern              |
+| ---- | ------------------------------------- | ---------- | -------------------- |
+| 297  | Serialize and Deserialize Binary Tree | 🔴 Hard    | DFS Serialization    |
+| 572  | Subtree of Another Tree               | 🟢 Easy    | DFS + Hashing        |
+| 652  | Find Duplicate Subtrees               | 🟡 Medium  | This problem         |
+| 1948 | Delete Duplicate Folders in System    | 🔴 Hard    | Trie + Serialization |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Serialize post-order: `serialize(left) + "," + serialize(right) + "," + val`.
@@ -38,6 +58,8 @@ Result: [node with val 2, node with val 4] (one representative each)
 - 🇬🇧 Use `"#"` for null nodes — distinguishes `[1,null,2]` from `[1,2,null]`.
 - 🇻🇳 Chỉ thêm vào result khi count === 2 (lần thứ hai thấy), không thêm lần 3 trở đi.
 - 🇬🇧 Add to result only when count becomes exactly 2 — prevents duplicate root entries.
+
+---
 
 ## Solutions
 
@@ -155,6 +177,8 @@ const t3 = makeTree([2, 2, 2, 3, null, 3, null]);
 const r3 = findDuplicateSubtrees3(t3);
 console.log(r3.map((n) => n?.val)); // [3, 2] (inner subtrees first)
 ```
+
+---
 
 ## 🔗 Related Problems
 

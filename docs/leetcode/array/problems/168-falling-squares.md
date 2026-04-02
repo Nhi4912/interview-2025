@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/falling-squares"
 
 # Falling Squares / Hình Vuông Rơi
 
-🔴 Hard | 🏷️ Array, Segment Tree, Ordered Set | 🔗 [LeetCode](https://leetcode.com/problems/falling-squares)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Mỗi hình vuông rơi xuống và chồng lên hình vuông cao nhất phía dưới vùng của nó. Với mỗi hình vuông mới, tìm chiều cao tối đa trong vùng [left, left+size) từ các hình vuông trước. Hình vuông mới có chiều cao = maxBelow + size.
+**Analogy:** **Tiếng Việt:** Mỗi hình vuông rơi xuống và chồng lên hình vuông cao nhất phía dưới vùng của nó. Với mỗi hình vuông mới, tìm chiều cao tối đa trong vùng [left, left+size) từ các hình vuông trước. Hình vuông mới có chiều cao = maxBelow + size.
 
 **English:** Each square falls and lands on the tallest existing square intersecting its range. For square i: find max height in [left, left+size) from previously placed squares, then new height = maxBelow + size. Track global max after each drop.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Falling Squares example:**
 
 ```
 positions = [[1,2],[2,2],[1,2]]
@@ -36,7 +41,19 @@ Square 3: [1,3) overlaps both: maxBelow=4, height=6. Gmax=6
 Answer: [2, 4, 6]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                   | Difficulty | Pattern      |
+| ------------------------------------------------------------------------- | ---------- | ------------ |
+| [The Skyline Problem](https://leetcode.com/problems/the-skyline-problem/) | 🔴 Hard    | Segment Tree |
+| [Range Module](https://leetcode.com/problems/range-module/)               | 🔴 Hard    | Segment Tree |
+| [My Calendar III](https://leetcode.com/problems/my-calendar-iii/)         | 🔴 Hard    | Segment Tree |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Two squares overlap if left1 < right2 AND right1 > left2 | **VI:** Hai hình vuông chồng nhau nếu left1 < right2 VÀ right1 > left2
 - 🔑 **EN:** O(n²) brute force is acceptable for n ≤ 1000 | **VI:** O(n²) vũ phu chấp nhận được khi n ≤ 1000
@@ -45,9 +62,9 @@ Answer: [2, 4, 6]
 - 🔑 **EN:** Global max must be recorded AFTER each square settles | **VI:** Max toàn cục phải được ghi lại SAU KHI mỗi hình vuông đặt xong
 - 🔑 **EN:** right boundary = left + size (exclusive), so [left, left+size) | **VI:** Biên phải = left + size (không bao gồm), tức [left, left+size)
 
-## Solutions
+---
 
-### Solution 1: Brute Force O(n²) — Simple & Clear
+## Solutions
 
 ```typescript
 /**
@@ -102,11 +119,7 @@ console.log(
     [7, 5],
   ]),
 ); // [5,5,5]
-```
 
-### Solution 2: Coordinate Compression + Range Max (O(n² log n))
-
-```typescript
 /**
  * Coordinate compressed interval heights
  * Time: O(n² log n) | Space: O(n)
@@ -159,11 +172,7 @@ console.log(
     [200, 100],
   ]),
 ); // [100,100]
-```
 
-### Solution 3: Lazy Propagation Segment Tree (O(n log n))
-
-```typescript
 /**
  * Segment tree with lazy propagation for O(n log n)
  * Time: O(n log n) | Space: O(n)
@@ -229,6 +238,8 @@ console.log(
   ]),
 ); // [2,4,6]
 ```
+
+---
 
 ## 🔗 Related Problems
 

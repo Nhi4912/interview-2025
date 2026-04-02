@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-equal-frequency"
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Tại mỗi vị trí prefix `p`, kiểm tra xem có thể xóa đúng 1 phần tử để tất cả các phần tử còn lại có tần số bằng nhau không. Dùng hai map: `freq[x]` = số lần x xuất hiện trong prefix, `freqCount[f]` = số phần tử có tần số f. Có 4 trường hợp hợp lệ:
+**Analogy:** **VI:** Tại mỗi vị trí prefix `p`, kiểm tra xem có thể xóa đúng 1 phần tử để tất cả các phần tử còn lại có tần số bằng nhau không. Dùng hai map: `freq[x]` = số lần x xuất hiện trong prefix, `freqCount[f]` = số phần tử có tần số f. Có 4 trường hợp hợp lệ:
 
 **EN:** At each prefix position `p`, check if removing exactly 1 element makes all remaining frequencies equal. Track `freq[x]` and `freqCount[f]` (how many elements have frequency f). There are exactly 4 valid cases to check:
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Equal Frequency example:**
 
 ```
 4 Valid Cases (prefix length = p+1, distinct count = d):
@@ -33,7 +38,19 @@ Track answer = max prefix length where any case holds.
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                              | Difficulty | Pattern           |
+| ---- | ---------------------------------------------------- | ---------- | ----------------- |
+| 451  | Sort Characters By Frequency                         | 🟡 Medium  | Hash Map          |
+| 659  | Split Array into Consecutive Subsequences            | 🟡 Medium  | Greedy + Hash Map |
+| 2982 | Find Longest Special Substring That Occurs Thrice II | 🔴 Hard    | Hash Map          |
+
+---
+
+## 📝 Interview Tips
 
 - 🔴 **EN:** Maintain `freq` (element→count) and `freqCount` (count→how many elements have it).
   **VI:** Duy trì `freq` (phần tử→đếm) và `freqCount` (đếm→số phần tử có đếm đó).
@@ -50,9 +67,9 @@ Track answer = max prefix length where any case holds.
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Hash Map with 4-Case Check — O(n) Time, O(n) Space ✅ Optimal
+## Solutions
 
 ```typescript
 function maxEqualFreq(nums: number[]): number {
@@ -105,11 +122,7 @@ console.log(maxEqualFreq([1, 1, 1, 2, 2, 2])); // Expected: 5
 console.log(maxEqualFreq([1, 1, 1, 2, 2, 2, 3, 3, 3, 4])); // Expected: 10
 console.log(maxEqualFreq([1])); // Expected: 1
 console.log(maxEqualFreq([1, 2])); // Expected: 2
-```
 
-### Solution 2: Same Logic with Explicit Case Labels — O(n) Time, O(n) Space
-
-```typescript
 function maxEqualFreq_labeled(nums: number[]): number {
   const cnt = new Map<number, number>(); // val → freq
   const fcnt = new Map<number, number>(); // freq → # vals with that freq
@@ -161,7 +174,7 @@ console.log(maxEqualFreq_labeled([1, 1, 1, 2, 2, 2, 3, 3, 3, 4])); // Expected: 
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                                              | Difficulty | Pattern           |
 | ---- | ---------------------------------------------------- | ---------- | ----------------- |

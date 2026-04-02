@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/get-watched-videos-by-your-friends"
 
 # Get Watched Videos by Your Friends / Lấy Video Được Xem Bởi Bạn Bè Của Bạn
 
-## Analogy / Tương Tự
+---
 
-> Mạng xã hội: bạn là người số `id`. Bạn muốn biết người ở **cách bạn đúng k bậc kết nối** đã xem video gì. Đếm tần số video, sắp xếp theo tần số tăng dần, cùng tần số thì theo thứ tự chữ cái.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Mạng xã hội: bạn là người số `id`. Bạn muốn biết người ở **cách bạn đúng k bậc kết nối** đã xem video gì. Đếm tần số video, sắp xếp theo tần số tăng dần, cùng tần số thì theo thứ tự chữ cái.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Get Watched Videos by Your Friends example:**
 
 ```
 Friends graph:        k=2 from id=0:
@@ -27,11 +32,15 @@ Videos watched by friends at level 2:
 Count: A=1, B=2, C=1 → sort: A(1), C(1), B(2)
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given `watchedVideos` (each person's watched videos), `friends` graph, `id` (your node), and `k`. Return all videos watched by people exactly `k` levels away from `id`, sorted by watch frequency ascending, then alphabetically.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **BFS for exactly k levels** — don't go further or return earlier
 2. **Visited set** — prevent revisiting nodes (including `id` itself)
@@ -40,9 +49,9 @@ Given `watchedVideos` (each person's watched videos), `friends` graph, `id` (you
 5. **Custom sort** — primary: frequency ascending; secondary: alphabetical
 6. **Edge case** — if k=0, return person `id`'s own videos sorted
 
-## Solutions
+---
 
-### Solution 1: BFS Level-by-Level
+## Solutions
 
 ```typescript
 function watchedVideosByFriends(
@@ -94,11 +103,7 @@ const friends = [
 ];
 console.log(watchedVideosByFriends(watched, friends, 0, 1)); // ["B","C"]
 console.log(watchedVideosByFriends(watched, friends, 0, 2)); // ["D"]
-```
 
-### Solution 2: BFS with Queue and Distance Map
-
-```typescript
 function watchedVideosByFriendsV2(
   watchedVideos: string[][],
   friends: number[][],
@@ -153,7 +158,9 @@ console.log(
 ); // ["B","C","D"] (sorted by freq then alpha)
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                               | Difficulty | Tags       |
 | ---- | ------------------------------------- | ---------- | ---------- |

@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/sum-of-square-numbers"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers / Math
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Kiểm tra xem số `c` có thể viết là `a² + b²` với `a, b ≥ 0` không. Dùng hai con trỏ: `a=0` và `b=√c`. Nếu `a² + b² = c` → true; nếu nhỏ hơn tăng `a`; nếu lớn hơn giảm `b`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Kiểm tra xem số `c` có thể viết là `a² + b²` với `a, b ≥ 0` không. Dùng hai con trỏ: `a=0` và `b=√c`. Nếu `a² + b² = c` → true; nếu nhỏ hơn tăng `a`; nếu lớn hơn giảm `b`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Sum of Square Numbers example:**
 
 ```
 c = 5
@@ -26,7 +33,20 @@ a=1, b=1: 1+1=2 < 3 → a++
 a=2 > b=1 → return false ✅
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem               | Pattern                 |
+| --- | --------------------- | ----------------------- |
+| 633 | Sum of Square Numbers | This problem            |
+| 367 | Valid Perfect Square  | Binary Search           |
+| 1   | Two Sum               | Two Pointers / Hash Map |
+| 202 | Happy Number          | Math / Floyd Cycle      |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Two pointers** / a=0, b=floor(√c): hội tụ vào giữa — O(√c) time
 - 🔑 **Why √c?** / b² ≤ c nên b ≤ √c — đây là giới hạn trên chặt
@@ -34,6 +54,8 @@ a=2 > b=1 → return false ✅
 - 🔑 **Binary search variant** / Với mỗi a, binary search tìm b² = c - a² — O(√c log c)
 - 🔑 **HashSet variant** / Tính mọi bình phương ≤ c vào set, kiểm tra (c - a²) ∈ set
 - 🔑 **Edge c=0** / 0 = 0² + 0² → true
+
+---
 
 ## Solutions
 
@@ -96,7 +118,9 @@ console.log(judgeSquareSumSet(3)); // false
 console.log(judgeSquareSumSet(25)); // true (3²+4²)
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #   | Problem               | Pattern                 |
 | --- | --------------------- | ----------------------- |

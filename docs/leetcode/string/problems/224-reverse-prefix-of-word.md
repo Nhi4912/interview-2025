@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/reverse-prefix-of-word"
 
 # Reverse Prefix of Word / Đảo Ngược Tiền Tố Của Từ
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Cho chuỗi `word` và ký tự `ch`. Tìm vị trí đầu tiên của `ch` trong `word`, rồi đảo ngược phần từ đầu đến vị trí đó (inclusive). Nếu không tìm thấy `ch`, giữ nguyên `word`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Cho chuỗi `word` và ký tự `ch`. Tìm vị trí đầu tiên của `ch` trong `word`, rồi đảo ngược phần từ đầu đến vị trí đó (inclusive). Nếu không tìm thấy `ch`, giữ nguyên `word`.
 
 **Ví dụ:** `word = "abcdefd"`, `ch = 'd'` → vị trí `d` đầu tiên là 3 → đảo ngược `"abcd"` → `"dcba"` → kết quả `"dcbaefd"`.
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như lật một đoạn băng tải: tìm ô đầu tiên có nhãn `ch`, lật toàn bộ đoạn từ đầu đến ô đó. Các ô sau không bị ảnh hưởng.
-
-## Minh họa ASCII
+**Visual — Reverse Prefix of Word example:**
 
 ```
 word = "abcdefd", ch = 'd'
@@ -34,7 +35,9 @@ Before: a b c d e f d
 After:  d c b a e f d
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - Tìm chỉ số `i` của lần xuất hiện đầu tiên của `ch` trong `word`.
 - Đảo ngược chuỗi con `word[0..i]`.
@@ -42,7 +45,9 @@ After:  d c b a e f d
 
 **Constraints:** `1 <= word.length <= 250`, `word` và `ch` chỉ chứa chữ thường.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **indexOf** — dùng `indexOf(ch)` để tìm vị trí đầu tiên nhanh nhất.
 2. **Slice + reverse** — `word.slice(0, i+1).split('').reverse().join('')`.
@@ -51,9 +56,9 @@ After:  d c b a e f d
 5. **ch ở đầu** — nếu `i = 0`, đảo ngược 1 ký tự = không thay đổi.
 6. **String immutable** — trong JS, cần convert sang array để đảo ngược.
 
-## Giải pháp
+---
 
-### Giải pháp 1: indexOf + Slice (Ngắn gọn)
+## Solutions
 
 ```typescript
 function reversePrefix(word: string, ch: string): string {
@@ -75,11 +80,7 @@ console.log(reversePrefix("xyxzxe", "z")); // "zxyxxe"
 console.log(reversePrefix("abcd", "z")); // "abcd" (not found)
 console.log(reversePrefix("a", "a")); // "a"
 console.log(reversePrefix("abcdefd", "a")); // "abcdefd" (reverse single char)
-```
 
-### Giải pháp 2: Two Pointers (In-place trên Array)
-
-```typescript
 function reversePrefixTwoPtr(word: string, ch: string): string {
   const arr = word.split("");
   let right = -1;
@@ -108,11 +109,7 @@ function reversePrefixTwoPtr(word: string, ch: string): string {
 console.log(reversePrefixTwoPtr("abcdefd", "d")); // "dcbaefd"
 console.log(reversePrefixTwoPtr("xyxzxe", "z")); // "zxyxxe"
 console.log(reversePrefixTwoPtr("abcd", "z")); // "abcd"
-```
 
-### Giải pháp 3: Stack
-
-```typescript
 function reversePrefixStack(word: string, ch: string): string {
   const idx = word.indexOf(ch);
   if (idx === -1) return word;
@@ -132,18 +129,12 @@ console.log(reversePrefixStack("abcdefd", "d")); // "dcbaefd"
 console.log(reversePrefixStack("xyxzxe", "z")); // "zxyxxe"
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp       | Thời gian | Không gian | Ghi chú        |
 | --------------- | --------- | ---------- | -------------- |
 | indexOf + slice | O(n)      | O(n)       | Ngắn gọn nhất  |
 | Two Pointers    | O(n)      | O(n)       | In-place logic |
 | Stack           | O(n)      | O(n)       | Trực quan      |
-
-## Bài liên quan
-
-| #   | Tên                  | Độ khó | Tags         |
-| --- | -------------------- | ------ | ------------ |
-| 344 | Reverse String       | Easy   | Two Pointers |
-| 541 | Reverse String II    | Easy   | String       |
-| 917 | Reverse Only Letters | Easy   | Two Pointers |

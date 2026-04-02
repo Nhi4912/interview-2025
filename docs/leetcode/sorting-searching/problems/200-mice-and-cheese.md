@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/mice-and-cheese"
 
 # Mice and Cheese / Chuột và Pho Mát
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Có hai loại pho mát. Chuột 1 ăn tất cả pho mát loại 1 mà con người chỉ định, chuột 2 ăn phần còn lại. Mỗi miếng pho mát `i` có reward nếu do chuột 1 ăn (`r1[i]`) hoặc chuột 2 ăn (`r2[i]`). Hỏi k miếng nào giao cho chuột 1 để **tổng reward tối đa**?
+**Analogy:** > **Hình ảnh:** Có hai loại pho mát. Chuột 1 ăn tất cả pho mát loại 1 mà con người chỉ định, chuột 2 ăn phần còn lại. Mỗi miếng pho mát `i` có reward nếu do chuột 1 ăn (`r1[i]`) hoặc chuột 2 ăn (`r2[i]`). Hỏi k miếng nào giao cho chuột 1 để **tổng reward tối đa**?
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Mice and Cheese example:**
 
 ```
 reward1=[1,1,3,4], reward2=[4,4,1,1], k=2
@@ -28,7 +33,9 @@ Answer = 10 + 5 = 15 ✓
 
 **Chiến lược:** Start with all cheese given to mouse 2. Greedily switch k cheeses to mouse 1 that maximize the gain = r1[i] - r2[i].
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Two mice eat cheese. Mouse 1 eats **exactly k** cheeses, mouse 2 eats the rest. `reward1[i]` / `reward2[i]` = points if mouse 1/2 eats cheese `i`. Maximize total reward.
 
@@ -36,6 +43,8 @@ Two mice eat cheese. Mouse 1 eats **exactly k** cheeses, mouse 2 eats the rest. 
 **Example 2:** `reward1=[1,2,3]`, `reward2=[3,2,1]`, `k=1` → `6`
 
 **Constraints:** `1 ≤ n ≤ 10^5`, `1 ≤ k < n`, `1 ≤ reward1[i], reward2[i] ≤ 1000`
+
+---
 
 ## 📝 Interview Tips
 
@@ -46,9 +55,9 @@ Two mice eat cheese. Mouse 1 eats **exactly k** cheeses, mouse 2 eats the rest. 
 - **Heap variant:** Use min-heap of size k to find top-k gains in O(n log k)
 - **Edge case:** k=n is impossible per constraints. k=0 means all to mouse 2
 
-## 💡 Solutions
+---
 
-### Solution 1: Greedy Sort by Gain — O(n log n)
+## Solutions
 
 ```typescript
 function miceAndCheese(reward1: number[], reward2: number[], k: number): number {
@@ -67,11 +76,7 @@ function miceAndCheese(reward1: number[], reward2: number[], k: number): number 
   }
   return total;
 }
-```
 
-### Solution 2: Sort Indices by Gain — O(n log n)
-
-```typescript
 function miceAndCheeseIdx(reward1: number[], reward2: number[], k: number): number {
   const n = reward1.length;
   const indices = [...Array(n).keys()].sort(
@@ -85,11 +90,7 @@ function miceAndCheeseIdx(reward1: number[], reward2: number[], k: number): numb
   }
   return ans;
 }
-```
 
-### Solution 3: Heap (Top-k Gains) — O(n log k)
-
-```typescript
 function miceAndCheeseHeap(reward1: number[], reward2: number[], k: number): number {
   // Min-heap to track top-k gains (efficient for large n, small k)
   class MinHeap {
@@ -147,6 +148,8 @@ function miceAndCheeseHeap(reward1: number[], reward2: number[], k: number): num
   return base + gainSum;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

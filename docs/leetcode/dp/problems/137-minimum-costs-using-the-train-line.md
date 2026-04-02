@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-costs-using-the-train-line"
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: State-Machine DP
 
-## 🧠 Intuition
+---
 
-**VI:** Hãy tưởng tượng bạn di chuyển giữa hai đường ray song song. Tại mỗi trạm bạn có thể ở lại đường ray hiện tại (miễn phí) hoặc chuyển sang đường ray kia (tốn phí). Bài toán tìm tổng chi phí nhỏ nhất để đến hết mọi trạm.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Hãy tưởng tượng bạn di chuyển giữa hai đường ray song song. Tại mỗi trạm bạn có thể ở lại đường ray hiện tại (miễn phí) hoặc chuyển sang đường ray kia (tốn phí). Bài toán tìm tổng chi phí nhỏ nhất để đến hết mọi trạm.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Costs Using the Train Line example:**
 
 ```
 Stations:  1    2    3    4
@@ -31,6 +38,19 @@ Transition:
                  dp[i-1][0] + r0[i] + c[i-1])
 ```
 
+---
+
+## Problem Description
+
+| #   | Title                              | Difficulty | Connection                      |
+| --- | ---------------------------------- | ---------- | ------------------------------- |
+| 256 | Paint House                        | 🟡 Medium  | Same 2-state machine DP pattern |
+| 265 | Paint House II                     | 🔴 Hard    | Generalised k-state machine     |
+| 714 | Best Time to Buy/Sell Stock w/ Fee | 🟡 Medium  | 2-state (hold/cash) DP          |
+| 188 | Best Time to Buy/Sell Stock IV     | 🔴 Hard    | Multi-state transaction DP      |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** State = (station, current_line); two states per station is classic state-machine DP | **VI:** 2 trạng thái tại mỗi trạm → state machine DP điển hình
@@ -39,6 +59,8 @@ Transition:
 - 🔑 **EN:** Base case: `dp[0][0] = r0[0]`, `dp[0][1] = r1[0]` (no switch cost at first station) | **VI:** Trạm đầu tiên không có phí đổi ray
 - 🔑 **EN:** Answer is `min(dp[n-1][0], dp[n-1][1])` | **VI:** Đáp án là min của hai trạng thái tại trạm cuối
 - 🔑 **EN:** Similar to "Paint House" DP but with only 2 colors | **VI:** Giống bài Paint House nhưng chỉ 2 màu
+
+---
 
 ## Solutions
 
@@ -98,6 +120,8 @@ console.log(minimumCosts([1, 6, 9, 5], [5, 2, 3, 10], 8)); // [1, 7, 14, 19]
 console.log(minimumCosts([11, 5, 13], [7, 10, 13], 20)); // [11, 16, 29]
 console.log(minimumCosts2D([1, 6, 9, 5], [5, 2, 3, 10], 8)); // [1, 7, 14, 19]
 ```
+
+---
 
 ## 🔗 Related Problems
 

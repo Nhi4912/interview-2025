@@ -9,16 +9,21 @@ leetcode_url: "https://leetcode.com/problems/stickers-to-spell-word"
 
 # Stickers to Spell Word / Dán Nhãn Để Đánh Vần Từ
 
-🔴 Hard | Bitmask DP on target character subsets
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Biểu diễn tập con ký tự cần đánh vần bằng bitmask (target tối đa 15 ký tự).
+**Analogy:** **VI:** Biểu diễn tập con ký tự cần đánh vần bằng bitmask (target tối đa 15 ký tự).
 `dp[mask]` = số nhãn tối thiểu để đánh vần các ký tự trong `mask`.
 
 **EN:** Represent which target characters are still needed as a bitmask. `dp[mask]` =
 minimum stickers to cover all characters in `mask`. Transition: for each sticker,
 reduce the mask by characters the sticker provides.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Stickers to Spell Word example:**
 
 ```
 target = "thehat"  (6 chars → 2^6 = 64 states)
@@ -29,6 +34,19 @@ For each mask, try each sticker:
   new_mask = mask, remove chars that sticker provides
   dp[mask] = min(dp[mask], 1 + dp[new_mask])
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                     | Difficulty | Key Idea           |
+| --------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [691. Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word/)                                        | 🔴 Hard    | This problem       |
+| [473. Matchsticks to Square](https://leetcode.com/problems/matchsticks-to-square/)                                          | 🟡 Medium  | Bitmask subset DP  |
+| [698. Partition to K Equal Sum Subsets](https://leetcode.com/problems/partition-to-k-equal-sum-subsets/)                    | 🟡 Medium  | Bitmask DP         |
+| [1986. Minimum Number of Work Sessions](https://leetcode.com/problems/minimum-number-of-work-sessions-to-finish-the-tasks/) | 🟡 Medium  | Bitmask scheduling |
+
+---
 
 ## 📝 Interview Tips
 
@@ -45,9 +63,9 @@ For each mask, try each sticker:
 - 🔑 **EN:** Return `-1` if `dp[(1<<n)-1] === Infinity`.
   **VI:** Trả `-1` nếu `dp[(1<<n)-1] === Infinity`.
 
-## Solutions
+---
 
-### Solution 1: Bitmask DP (bottom-up)
+## Solutions
 
 ```typescript
 /**
@@ -97,11 +115,7 @@ function minStickers(stickers: string[], target: string): number {
 console.log(minStickers(["with", "example", "science"], "thehat")); // 3
 console.log(minStickers(["notice", "possible"], "basicbasic")); // -1
 console.log(minStickers(["ab", "bc", "cd"], "abcd")); // 2
-```
 
-### Solution 2: Top-Down Memoisation
-
-```typescript
 /**
  * Top-down with string-keyed memo (bitmask as string key)
  * Time: O(2^t * s * t)  Space: O(2^t)
@@ -155,6 +169,8 @@ function minStickers2(stickers: string[], target: string): number {
 console.log(minStickers2(["with", "example", "science"], "thehat")); // 3
 console.log(minStickers2(["notice", "possible"], "basicbasic")); // -1
 ```
+
+---
 
 ## 🔗 Related Problems
 

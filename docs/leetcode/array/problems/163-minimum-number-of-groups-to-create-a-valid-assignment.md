@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-groups-to-create-
 
 # Minimum Number of Groups to Create a Valid Assignment / Số Nhóm Tối Thiểu Để Phân Công Hợp Lệ
 
-🟡 Medium | 🏷️ Array, Hash Table, Greedy | 🔗 [LeetCode](https://leetcode.com/problems/minimum-number-of-groups-to-create-a-valid-assignment)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Đếm tần suất xuất hiện của mỗi nhãn. Thử kích thước nhóm k từ min_freq xuống 1. Với mỗi k, kiểm tra xem có thể chia tất cả tần suất thành các nhóm kích thước k hoặc k+1 không. Kích thước k lớn hơn = ít nhóm hơn.
+**Analogy:** **Tiếng Việt:** Đếm tần suất xuất hiện của mỗi nhãn. Thử kích thước nhóm k từ min_freq xuống 1. Với mỗi k, kiểm tra xem có thể chia tất cả tần suất thành các nhóm kích thước k hoặc k+1 không. Kích thước k lớn hơn = ít nhóm hơn.
 
 **English:** Count frequency of each label. Try group size k from minFreq down to 1. A frequency f can be split into groups of size k or k+1 iff ceil(f/(k+1))\*k ≤ f. Return minimum total groups.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Groups to Create a Valid Assignment example:**
 
 ```
 nums = [1,1,1,2,2,3]  →  freq = {1:3, 2:2, 3:1}
@@ -28,7 +33,19 @@ Try k=1: each freq splits into groups of 1 or 2
   total = 2+1+1 = 4 groups ← answer
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                       | Difficulty | Pattern            |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Divide Array in Sets of K Consecutive Numbers](https://leetcode.com/problems/divide-array-in-sets-of-k-consecutive-numbers/) | 🟡 Medium  | Greedy             |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                                                               | 🟡 Medium  | Greedy + Frequency |
+| [Rearrange String k Distance Apart](https://leetcode.com/problems/rearrange-string-k-distance-apart/)                         | 🔴 Hard    | Greedy             |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Iterate k from minFreq downward — larger k gives fewer groups | **VI:** Duyệt k từ minFreq xuống — k lớn hơn cho ít nhóm hơn
 - 🔑 **EN:** Feasibility check: ceil(f/(k+1)) _ k ≤ f for every frequency | **VI:** Kiểm tra tính khả thi: ceil(f/(k+1)) _ k ≤ f với mọi tần suất
@@ -37,9 +54,9 @@ Try k=1: each freq splits into groups of 1 or 2
 - 🔑 **EN:** Edge case: if all elements distinct, minFreq=1, answer = n | **VI:** Trường hợp biên: nếu tất cả phần tử khác nhau, minFreq=1, đáp án = n
 - 🔑 **EN:** O(n + minFreq _ distinct) ≈ O(n) time overall | **VI:** O(n + minFreq _ distinct) ≈ O(n) thời gian tổng cộng
 
-## Solutions
+---
 
-### Solution 1: Greedy — Try Group Sizes from minFreq Down
+## Solutions
 
 ```typescript
 /**
@@ -79,11 +96,7 @@ function minGroupsForValidAssignment(nums: number[]): number {
 console.log(minGroupsForValidAssignment([1, 1, 1, 2, 2, 3])); // 4
 console.log(minGroupsForValidAssignment([3, 2, 3, 2, 3])); // 2
 console.log(minGroupsForValidAssignment([10, 10, 10, 3, 1, 1])); // 4
-```
 
-### Solution 2: Explicit Feasibility with Modulo
-
-```typescript
 /**
  * Alternative: check if f % k <= floor(f / k)
  * This is equivalent to ceil(f/(k+1))*k <= f
@@ -121,6 +134,8 @@ function minGroupsForValidAssignment2(nums: number[]): number {
 console.log(minGroupsForValidAssignment2([1, 1, 1, 2, 2, 3])); // 4
 console.log(minGroupsForValidAssignment2([3, 2, 3, 2, 3])); // 2
 ```
+
+---
 
 ## 🔗 Related Problems
 

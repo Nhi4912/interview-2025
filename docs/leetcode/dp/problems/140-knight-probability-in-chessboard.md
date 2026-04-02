@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/knight-probability-in-chessboard"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Forward DP / Probability Propagation
 
-## 🧠 Intuition
+---
 
-**VI:** Thay vì hỏi "con mã đến đây với xác suất bao nhiêu?", hãy lan truyền xác suất từ vị trí hiện tại ra 8 ô tiếp theo. Sau `k` bước, cộng tất cả xác suất còn trên bàn.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Thay vì hỏi "con mã đến đây với xác suất bao nhiêu?", hãy lan truyền xác suất từ vị trí hiện tại ra 8 ô tiếp theo. Sau `k` bước, cộng tất cả xác suất còn trên bàn.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Knight Probability in Chessboard example:**
 
 ```
 n=3 (3×3), k=2, r=0, c=0
@@ -27,6 +34,19 @@ From (0,0), knight can reach (1,2) and (2,1) each with prob 1/8.
 After k steps, sum all cells still on board.
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                | Difficulty | Connection                                 |
+| ---- | ------------------------------------ | ---------- | ------------------------------------------ |
+| 576  | Out of Boundary Paths                | 🟡 Medium  | Same "probability leaks off grid" DP       |
+| 935  | Knight Dialer                        | 🟡 Medium  | Knight moves on phone keypad — count paths |
+| 688  | Knight Probability in Chessboard     | 🟡 Medium  | This problem                               |
+| 1155 | Number of Dice Rolls With Target Sum | 🟡 Medium  | Forward probability DP over rolls          |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Forward DP: spread probability from each cell to its 8 neighbors | **VI:** Lan truyền xuôi — mỗi ô đẩy xác suất sang 8 ô kế tiếp (chia 8)
@@ -35,6 +55,8 @@ After k steps, sum all cells still on board.
 - 🔑 **EN:** After k steps, answer = sum of all values in current layer | **VI:** Đáp án = tổng toàn bộ lớp hiện tại sau k bước
 - 🔑 **EN:** Backward DP also works: `dp[step][r][c] = sum(dp[step-1][nr][nc])/8` | **VI:** Backward cũng được: gom xác suất từ 8 ô nguồn về
 - 🔑 **EN:** Time O(k·n²), Space O(n²) — both directions equivalent | **VI:** Độ phức tạp O(k·n²) — cả hai hướng như nhau
+
+---
 
 ## Solutions
 
@@ -107,6 +129,8 @@ console.log(knightProbabilityForward(3, 2, 0, 0).toFixed(5)); // 0.06250
 console.log(knightProbability(1, 0, 0, 0).toFixed(5)); // 1.00000
 console.log(knightProbability(8, 30, 6, 4).toFixed(5)); // 0.00018 (approx)
 ```
+
+---
 
 ## 🔗 Related Problems
 

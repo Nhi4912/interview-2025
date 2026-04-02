@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/count-the-number-of-ideal-arrays"
 
 # Count the Number of Ideal Arrays / Đếm Số Mảng Lý Tưởng
 
-🔴 Hard | Dynamic Programming · Combinatorics · Number Theory
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** Every ideal array `a[0] ≤ a[1] ≤ … ≤ a[n-1]` where each element divides the next is equivalent to choosing a **divisibility chain** `v1 | v2 | … | vk ≤ maxValue` then distributing `n` slots into `k` groups (stars-and-bars = `C(n-1, k-1)`).
+**Analogy:** **EN:** Every ideal array `a[0] ≤ a[1] ≤ … ≤ a[n-1]` where each element divides the next is equivalent to choosing a **divisibility chain** `v1 | v2 | … | vk ≤ maxValue` then distributing `n` slots into `k` groups (stars-and-bars = `C(n-1, k-1)`).
 
 **VI:** Mỗi mảng lý tưởng tương đương chuỗi chia hết `v1 | v2 | … | vk`, sau đó dùng "sao và gạch ngang" phân bổ n vị trí → `C(n-1, k-1)`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count the Number of Ideal Arrays example:**
 
 ```
 Chain 1|2|6 (len=3), n=4 positions:
@@ -32,6 +35,18 @@ Max chain length = log2(maxValue) ≤ 13
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                                   | Difficulty | Pattern            |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Count All Valid Pickup and Delivery Options](https://leetcode.com/problems/count-all-valid-pickup-and-delivery-options/) | 🔴 Hard    | Combinatorics      |
+| [Count Sorted Vowel Strings](https://leetcode.com/problems/count-sorted-vowel-strings/)                                   | 🟡 Medium  | Stars and Bars     |
+| [Number of Music Playlists](https://leetcode.com/problems/number-of-music-playlists/)                                     | 🔴 Hard    | DP + Combinatorics |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Key: ideal array ↔ divisibility chain of length k placed in n slots via `C(n-1,k-1)`. **VI:** Mảng lý tưởng ↔ chuỗi chia hết độ dài k, xếp vào n vị trí theo C(n-1,k-1).
@@ -43,7 +58,9 @@ Max chain length = log2(maxValue) ≤ 13
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

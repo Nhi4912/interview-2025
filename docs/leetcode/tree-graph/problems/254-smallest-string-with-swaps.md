@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/smallest-string-with-swaps"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn có một bộ thẻ chữ cái được đánh số. Bạn được phép hoán đổi vị trí của hai thẻ bất kỳ thuộc cùng một "nhóm bạn bè". Trong một nhóm, bạn có thể hoán đổi tùy ý — tức là sắp xếp lại theo bất kỳ thứ tự nào. Bí quyết: các chỉ số có thể hoán đổi trực tiếp hoặc gián tiếp hình thành một thành phần liên thông. Trong mỗi thành phần, sắp xếp các ký tự theo thứ tự bảng chữ cái và gán vào vị trí nhỏ nhất trước.
+**Analogy:** Hãy tưởng tượng bạn có một bộ thẻ chữ cái được đánh số. Bạn được phép hoán đổi vị trí của hai thẻ bất kỳ thuộc cùng một "nhóm bạn bè". Trong một nhóm, bạn có thể hoán đổi tùy ý — tức là sắp xếp lại theo bất kỳ thứ tự nào. Bí quyết: các chỉ số có thể hoán đổi trực tiếp hoặc gián tiếp hình thành một thành phần liên thông. Trong mỗi thành phần, sắp xếp các ký tự theo thứ tự bảng chữ cái và gán vào vị trí nhỏ nhất trước.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Smallest String With Swaps example:**
 
 ```
 s = "dcab", pairs = [[0,3],[1,2],[0,2]]
@@ -43,7 +46,9 @@ Components: {0,1,2}
 Result: "abc" ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given a string `s` and a list of `pairs` where `pairs[i] = [a, b]` means you can swap `s[a]` and `s[b]` any number of times. Return the **lexicographically smallest** string achievable by any number of swaps.
 
@@ -53,7 +58,9 @@ Given a string `s` and a list of `pairs` where `pairs[i] = [a, b]` means you can
 
 **Constraints:** `1 ≤ s.length ≤ 10⁵`, `0 ≤ pairs.length ≤ 10⁵`, `pairs[i].length == 2`, valid indices
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Union Find key insight** / Insight Union Find: Các swap có thể dây chuyền — nếu (0,1) và (1,2) thì (0,2) cũng hoán đổi được
 - **Sort within component** / Sắp xếp trong thành phần: Trong mỗi connected component, có thể sắp xếp tự do → đặt char nhỏ nhất vào index nhỏ nhất
@@ -62,7 +69,9 @@ Given a string `s` and a list of `pairs` where `pairs[i] = [a, b]` means you can
 - **DFS/BFS alternative** / Dùng DFS/BFS thay thế: Xây adjacency list + BFS tìm components — cùng kết quả
 - **Path compression** / Nén đường đi: Dùng path compression trong Union Find để đảm bảo O(α(n)) per operation
 
-## Solution 1 - Union Find
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -111,11 +120,7 @@ function smallestStringWithSwaps(s: string, pairs: number[][]): string {
 
   return result.join("");
 }
-```
 
-## Solution 2 - DFS with Adjacency List
-
-```typescript
 /**
  * @complexity Time: O((n+p) + n log n) | Space: O(n+p)
  * Build adjacency list; DFS to collect each component, then sort and assign
@@ -149,11 +154,8 @@ function smallestStringWithSwapsDFS(s: string, pairs: number[][]): string {
 
   return result.join("");
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   smallestStringWithSwaps("dcab", [
     [0, 3],
@@ -169,7 +171,9 @@ console.log(
 console.log(smallestStringWithSwaps("a", [])); // → "a"
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                      | Difficulty | Link                                                                                  |
 | -------------------------------------------- | ---------- | ------------------------------------------------------------------------------------- |

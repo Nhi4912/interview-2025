@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/reverse-degree-of-a-string"
 
 # Reverse Degree of a String / Bậc Đảo Ngược Của Chuỗi
 
-🟢 Easy | 🏷️ String, Simulation
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Tưởng tượng bảng chữ cái được đánh số ngược: `z=1, y=2, ..., a=26`. "Bậc đảo" của một chuỗi là tổng giá trị ngược này cho mỗi ký tự. Giống như bài kiểm tra ngược — đứng cuối lớp mà được điểm cao nhất!
+**Analogy:** **VI:** Tưởng tượng bảng chữ cái được đánh số ngược: `z=1, y=2, ..., a=26`. "Bậc đảo" của một chuỗi là tổng giá trị ngược này cho mỗi ký tự. Giống như bài kiểm tra ngược — đứng cuối lớp mà được điểm cao nhất!
 
 **EN:** Assign reverse alphabet positions (`a=26`, `z=1`), then sum them all. The "reverse" in the name refers to counting from the end of the alphabet.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Reverse Degree of a String example:**
 
 ```
 String:  "abc"
@@ -27,6 +32,18 @@ a  b  c  d ... y  z
 26 25 24 23... 2  1
 ```
 
+---
+
+## Problem Description
+
+| #   | Problem                 | Difficulty | Key Idea                     |
+| --- | ----------------------- | ---------- | ---------------------------- |
+| 1   | Richest Customer Wealth | 🟢 Easy    | Sum of sums pattern          |
+| 242 | Valid Anagram           | 🟢 Easy    | Character frequency counting |
+| 389 | Find the Difference     | 🟢 Easy    | Character value arithmetic   |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Công thức:** `degree(c) = 26 - (c.charCodeAt(0) - 97)` — đơn giản và trực tiếp
@@ -36,9 +53,9 @@ a  b  c  d ... y  z
 - 🇻🇳 **Edge case:** chuỗi rỗng trả về 0 — `reduce` xử lý tự nhiên với initial value
 - 🇬🇧 **Single pass O(n):** no sorting or extra data structures needed
 
-## Solutions
+---
 
-### Solution 1: One-liner with reduce
+## Solutions
 
 ```typescript
 /**
@@ -57,11 +74,7 @@ console.log(reverseDegree("abc")); // 75 (26+25+24)
 console.log(reverseDegree("z")); // 1
 console.log(reverseDegree("a")); // 26
 console.log(reverseDegree("az")); // 27
-```
 
-### Solution 2: Functional approach
-
-```typescript
 /**
  * Same logic using Array.from + reduce for functional style.
  * Time: O(n) | Space: O(n) — creates char array
@@ -72,11 +85,7 @@ function reverseDegree2(s: string): number {
 
 console.log(reverseDegree2("leetcode")); // l=15,e=22,e=22,t=7,c=24,o=12,d=23,e=22 = 147
 console.log(reverseDegree2("")); // 0
-```
 
-### Solution 3: Precomputed lookup table
-
-```typescript
 /**
  * Build a lookup table for max performance on repeated calls.
  * Time: O(n) | Space: O(1) — fixed 26-entry table
@@ -94,6 +103,8 @@ console.log(reverseDegree3("abc")); // 75
 console.log(reverseDegree3("zzz")); // 3
 console.log(reverseDegree3("aaa")); // 78
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-operations-to-sat
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn có một bảng màu sắc (0-9) cho mỗi ô trong lưới. Điều kiện: mỗi cột phải đồng nhất màu, và hai cột liền kề không được cùng màu. Bạn muốn thay đổi ít ô nhất. Giống như sơn cột đèn trên phố: mỗi cột đèn một màu, hai cột cạnh nhau phải khác màu. DP theo từng cột: `dp[col][color]` = chi phí tối thiểu để cột `col` có màu `color`, với transition lấy min từ tất cả màu khác của cột trước.
+**Analogy:** Bạn có một bảng màu sắc (0-9) cho mỗi ô trong lưới. Điều kiện: mỗi cột phải đồng nhất màu, và hai cột liền kề không được cùng màu. Bạn muốn thay đổi ít ô nhất. Giống như sơn cột đèn trên phố: mỗi cột đèn một màu, hai cột cạnh nhau phải khác màu. DP theo từng cột: `dp[col][color]` = chi phí tối thiểu để cột `col` có màu `color`, với transition lấy min từ tất cả màu khác của cột trước.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Operations to Satisfy Conditions example:**
 
 ```
 grid = [[1,2,3],[2,2,2],[1,2,2]]
@@ -38,7 +41,9 @@ To speed up: track top-2 minimums of previous column
 Answer: min over all c of dp[last_col][c]
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an `m × n` integer grid where `0 ≤ grid[i][j] ≤ 9`. In one operation, change any cell's value. Return the **minimum operations** to make:
 
@@ -51,7 +56,9 @@ Given an `m × n` integer grid where `0 ≤ grid[i][j] ≤ 9`. In one operation,
 
 **Constraints:** `1 ≤ m, n ≤ 1000`, `0 ≤ grid[i][j] ≤ 9`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **10 colors only** / Chỉ 10 màu: Giá trị 0-9 → dp chỉ có 10 states/cột — rất hiệu quả
 - **Column cost precompute** / Tính trước chi phí: `colCost[j][c]` = số ô trong cột `j` không bằng `c`
@@ -60,7 +67,9 @@ Given an `m × n` integer grid where `0 ≤ grid[i][j] ≤ 9`. In one operation,
 - **Total time** / Thời gian: O(m·n + n·100) = O(m·n) — tuyến tính theo kích thước grid
 - **Space O(10)** / Không gian: Chỉ cần lưu dp của cột trước — O(10) = O(1)
 
-## Solution 1 - Column DP Basic O(n·10²)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -91,11 +100,7 @@ function minimumOperationsBasic(grid: number[][]): number {
 
   return Math.min(...dp);
 }
-```
 
-## Solution 2 - Column DP with Top-2 Optimization (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(m·n) | Space: O(10) = O(1)
  * Track top-2 minimums of previous DP row for O(1) transition per cell
@@ -141,11 +146,8 @@ function minimumOperations(grid: number[][]): number {
 
   return Math.min(...dp);
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(minimumOperations([[1,2,3],[2,2,2],[1,2,2]]));  // → 4
 console.log(minimumOperations([[1,0,2],[1,0,2]]));           // → 0
 console.log(minimumOperations([[0]]));                        // → 0
@@ -153,7 +155,9 @@ console.log(minimumOperationsBasic([[1,2,3],[2,2,2],[1,2,2]])); // → 4
 console.log(minimumOperations([[1,1],[1,1]]));                // → 1
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                  | Difficulty | Link                                                             |
 | ------------------------ | ---------- | ---------------------------------------------------------------- |

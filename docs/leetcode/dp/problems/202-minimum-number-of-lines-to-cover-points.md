@@ -7,15 +7,18 @@ tags: [Array, Hash Table, Math, Dynamic Programming, Backtracking]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-lines-to-cover-points"
 ---
 
-## 📏 2152. Minimum Number of Lines to Cover Points / Số Đường Thẳng Tối Thiểu Để Phủ Các Điểm
-
-**Difficulty:** 🟡 Medium
+# minimum number of lines to cover points
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Bạn có một tập điểm trên mặt phẳng và muốn vẽ ít đường thẳng nhất sao cho mỗi điểm nằm trên ít nhất một đường thẳng. Chiến lược tối ưu: với mỗi điểm chưa được phủ, **chọn đường thẳng qua nó và điểm tiếp theo** để phủ được nhiều nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Points: (0,1), (2,3), (4,5), (4,3)
@@ -33,12 +36,16 @@ Backtracking: for first uncovered point p,
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `points[]` (2D coordinates, no duplicates, n ≤ 10). Find minimum number of lines such that every point lies on at least one line. A line through two points covers all collinear points.
 
 - Example: `points = [[0,1],[2,3],[4,5],[4,3]]` → **2**
 - Example: `points = [[0,2],[-2,-2],[1,4]]` → **1** (all collinear)
+
+---
 
 ---
 
@@ -53,9 +60,9 @@ Given `points[]` (2D coordinates, no duplicates, n ≤ 10). Find minimum number 
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Bitmask Backtracking with Memoization
+## Solutions
 
 ```typescript
 function minimumLines(points: number[][]): number {
@@ -116,11 +123,7 @@ function minimumLines(points: number[][]): number {
   const fullMask = (1 << n) - 1;
   return solve(fullMask);
 }
-```
 
-### Solution 2: Backtracking without explicit bitmask
-
-```typescript
 function minimumLinesBacktrack(points: number[][]): number {
   const n = points.length;
   const covered = new Array(n).fill(false);

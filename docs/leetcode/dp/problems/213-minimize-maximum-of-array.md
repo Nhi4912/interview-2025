@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/minimize-maximum-of-array"
 
 # Minimize Maximum of Array / Tối Thiểu Hóa Giá Trị Lớn Nhất Mảng
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Bạn có thể di chuyển một đơn vị từ phần tử sau sang trước (nums[i] → nums[i-1]+1, nums[i]-1).  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Bạn có thể di chuyển một đơn vị từ phần tử sau sang trước (nums[i] → nums[i-1]+1, nums[i]-1).  
 > Giống đổ nước từ bình sau sang bình trước — tổng không đổi, nhưng san bằng được. Đáp án là max của ceil(prefix_sum[i+1]/(i+1)).
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimize Maximum of Array example:**
 
 ```
 nums = [3, 7, 1, 6]
@@ -31,14 +36,18 @@ Verify: [3,7,1,6] → can move 2 from index 1 to 0: [5,5,1,6]
         Best achievable = 5 ✓
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given a 0-indexed array `nums`, you can perform operations: pick `i > 0`, decrement `nums[i]` by 1,
 increment `nums[i-1]` by 1 (requires `nums[i] > 0`). Return the **minimum** possible maximum of `nums`.
 
 **Constraints:** `1 <= nums.length <= 10^5`, `1 <= nums[i] <= 10^9`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Key insight** — You can only move value leftward (i → i-1). The maximum of prefix i is at least `ceil(prefixSum[i] / (i+1))`.
 2. **Why prefix?** — Values to the right of i cannot help reduce max of first i+1 elements.
@@ -47,9 +56,9 @@ increment `nums[i-1]` by 1 (requires `nums[i] > 0`). Return the **minimum** poss
 5. **Integer ceiling** — `Math.ceil(sum / count)` = `Math.floor((sum + count - 1) / count)`.
 6. **Why greedy works?** — Moving excess leftward is always optimal; we never need to move right.
 
-## Solutions
+---
 
-### Solution 1: Prefix Sum / Greedy — O(n)
+## Solutions
 
 ```typescript
 function minimizeArrayValue(nums: number[]): number {
@@ -69,11 +78,7 @@ console.log(minimizeArrayValue([3, 7, 1, 6])); // 5
 console.log(minimizeArrayValue([10, 1])); // 10 (can't move right)
 console.log(minimizeArrayValue([1, 2, 3, 4])); // 4 (already sorted, can only spread left)
 console.log(minimizeArrayValue([6, 9, 3, 8, 14])); // 8
-```
 
-### Solution 2: Regular Number Arithmetic — O(n)
-
-```typescript
 function minimizeArrayValueV2(nums: number[]): number {
   let prefixSum = 0;
   let ans = 0;
@@ -89,11 +94,7 @@ function minimizeArrayValueV2(nums: number[]): number {
 console.log(minimizeArrayValueV2([3, 7, 1, 6])); // 5
 console.log(minimizeArrayValueV2([10, 1])); // 10
 console.log(minimizeArrayValueV2([1, 2, 3, 4])); // 4
-```
 
-### Solution 3: Binary Search on Answer — O(n log maxVal)
-
-```typescript
 function minimizeArrayValueBS(nums: number[]): number {
   function canAchieve(maxVal: number): boolean {
     // Greedily from left to right: pass excess rightward
@@ -128,7 +129,9 @@ console.log(minimizeArrayValueBS([1, 2, 3, 4])); // 4
 // Note: prefix sum approach is simpler and correct
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                             | Difficulty | Key Concept   |
 | --------------------------------------------------------------------------------------------------- | ---------- | ------------- |

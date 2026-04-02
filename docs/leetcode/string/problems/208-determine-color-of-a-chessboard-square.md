@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/determine-color-of-a-chessboard-squ
 
 # Determine Color of a Chessboard Square / Xác Định Màu Ô Cờ Vua
 
-🟢 Easy
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Bàn cờ vua như bảng ô vuông 8×8 — màu ô phụ thuộc vào tính chẵn/lẻ của tọa độ. Nếu cột + hàng chẵn → một màu; lẻ → màu kia.
+**Analogy:** > **Phép so sánh:** Bàn cờ vua như bảng ô vuông 8×8 — màu ô phụ thuộc vào tính chẵn/lẻ của tọa độ. Nếu cột + hàng chẵn → một màu; lẻ → màu kia.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Determine Color of a Chessboard Square example:**
 
 ```
 Chessboard coloring:
@@ -29,6 +34,8 @@ Chessboard coloring:
 "c7": col=3, row=7 → 3+7=10 (even) → white ✓
 ```
 
+---
+
 ## Problem Description
 
 Given a chess board coordinate string `coordinates` (format: letter + digit, e.g., `"a1"`), return `true` if the square is white, `false` if black.
@@ -41,6 +48,8 @@ Given a chess board coordinate string `coordinates` (format: letter + digit, e.g
 
 **Constraints:** `coordinates.length == 2`, `'a' <= coordinates[0] <= 'h'`, `'1' <= coordinates[1] <= '8'`
 
+---
+
 ## 📝 Interview Tips
 
 - **Key insight:** Chessboard has alternating colors → parity of (column + row) determines color
@@ -50,9 +59,9 @@ Given a chess board coordinate string `coordinates` (format: letter + digit, e.g
 - **One-liner:** `(coordinates.charCodeAt(0) + coordinates.charCodeAt(1)) % 2 !== 0`
 - **Complexity:** O(1) time, O(1) space — pure arithmetic on 2 characters
 
-## Solutions
+---
 
-### Solution 1: Parity check — O(1) time, O(1) space
+## Solutions
 
 ```typescript
 function squareIsWhite(coordinates: string): boolean {
@@ -61,21 +70,13 @@ function squareIsWhite(coordinates: string): boolean {
   // White if (col + row) is odd
   return (col + row) % 2 !== 0;
 }
-```
 
-### Solution 2: Direct char code sum — O(1) time, O(1) space
-
-```typescript
 function squareIsWhite(coordinates: string): boolean {
   // Both chars contribute parity: letter code + digit code
   // Sum is odd iff exactly one of them is odd → white square
   return (coordinates.charCodeAt(0) + coordinates.charCodeAt(1)) % 2 !== 0;
 }
-```
 
-### Solution 3: XOR parity — O(1) time, O(1) space
-
-```typescript
 function squareIsWhite(coordinates: string): boolean {
   const colIsOdd = (coordinates.charCodeAt(0) - 96) % 2 === 1;
   const rowIsOdd = parseInt(coordinates[1]) % 2 === 1;
@@ -83,6 +84,8 @@ function squareIsWhite(coordinates: string): boolean {
   return colIsOdd !== rowIsOdd;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/right-triangles"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một bản đồ thành phố dạng lưới, mỗi ô có thể có đèn đường (1) hoặc không (0). Bạn muốn đếm số lượng "ngã tư hình chữ L" — tức ba cột đèn tạo thành góc vuông. Đỉnh góc vuông luôn là điểm giao của một hàng và một cột. Thay vì kiểm tra từng bộ ba, ta nhận ra: mỗi đèn (r,c) có thể là đỉnh góc vuông với (rowCount[r] - 1) đèn cùng hàng và (colCount[c] - 1) đèn cùng cột — nhân lại ta ra số tam giác có đỉnh tại đó.
+**Analogy:** Hãy tưởng tượng một bản đồ thành phố dạng lưới, mỗi ô có thể có đèn đường (1) hoặc không (0). Bạn muốn đếm số lượng "ngã tư hình chữ L" — tức ba cột đèn tạo thành góc vuông. Đỉnh góc vuông luôn là điểm giao của một hàng và một cột. Thay vì kiểm tra từng bộ ba, ta nhận ra: mỗi đèn (r,c) có thể là đỉnh góc vuông với (rowCount[r] - 1) đèn cùng hàng và (colCount[c] - 1) đèn cùng cột — nhân lại ta ra số tam giác có đỉnh tại đó.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Right Triangles example:**
 
 ```
 grid = [[0,1,0],      rowCount = [1, 2, 1]
@@ -38,7 +41,9 @@ Cell (0,1)=1: rowCount[0]=1, colCount[1]=3
 Total = 2 ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an `m x n` 2D binary grid, return the number of **right triangles** that can be formed from three cells (all value `1`). The right angle vertex shares its row with one cell and its column with the third cell.
 
@@ -48,7 +53,9 @@ Given an `m x n` 2D binary grid, return the number of **right triangles** that c
 
 **Constraints:** `1 ≤ m, n ≤ 1000`, `grid[i][j] ∈ {0, 1}`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Combinatorics insight** / Tư duy tổ hợp: Mỗi ô `(r,c)=1` là đỉnh góc vuông → đóng góp `(rowCount[r]-1) * (colCount[c]-1)` tam giác
 - **Precompute row/col counts** / Đếm trước: Duyệt một lần để tính `rowCount[]` và `colCount[]` → tổng O(m\*n)
@@ -57,7 +64,9 @@ Given an `m x n` 2D binary grid, return the number of **right triangles** that c
 - **Brute O(m²n²)** / Brute force: Duyệt mọi cặp ô cùng hàng + mọi ô cùng cột — quá chậm
 - **Edge case** / Trường hợp đặc biệt: Hàng hoặc cột chỉ có 1 ô value 1 → không tạo được tam giác từ đỉnh đó
 
-## Solution 1 - Brute Force (Naive O(m²·n²))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -82,11 +91,7 @@ function rightTrianglesBrute(grid: number[][]): number {
   }
   return count;
 }
-```
 
-## Solution 2 - Row/Column Precount (Optimal O(m·n))
-
-```typescript
 /**
  * @complexity Time: O(m·n) | Space: O(m+n)
  * For each cell (r,c)=1: triangles = (rowCount[r]-1) * (colCount[c]-1)
@@ -111,11 +116,8 @@ function rightTriangles(grid: number[][]): number {
 
   return count;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   rightTriangles([
     [0, 1, 0],
@@ -146,7 +148,9 @@ console.log(
 ); // → 2
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                | Difficulty | Link                                                                            |
 | -------------------------------------- | ---------- | ------------------------------------------------------------------------------- |

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/number-of-beautiful-integers-in-the
 
 # Number of Beautiful Integers in the Range / Số Nguyên Đẹp Trong Khoảng
 
-🔴 Hard | Digit DP · Mathematics
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** A "beautiful" integer has `#even_digits == #odd_digits` and is divisible by `k`. Use **digit DP**: `answer = count(high) - count(low - 1)`. State = `(pos, tight, balance, rem, leadZero)`.
+**Analogy:** **EN:** A "beautiful" integer has `#even_digits == #odd_digits` and is divisible by `k`. Use **digit DP**: `answer = count(high) - count(low - 1)`. State = `(pos, tight, balance, rem, leadZero)`.
 
 **VI:** Số "đẹp" có `#chữ_số_chẵn == #chữ_số_lẻ` và chia hết cho `k`. Dùng **DP chữ số**: `kết_quả = đếm(high) - đếm(low−1)`. Trạng thái gồm (vị trí, tight, cân bằng chẵn−lẻ, số dư mod k, số 0 đầu).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Beautiful Integers in the Range example:**
 
 ```
 State: (pos, tight, balance=even-odd, rem mod k, leadZero)
@@ -34,6 +37,18 @@ Answer = count(high) - count(low - 1)
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                               | Difficulty | Pattern  |
+| ----------------------------------------------------------------------------------------------------- | ---------- | -------- |
+| [Count Digit One](https://leetcode.com/problems/number-of-digit-one/)                                 | 🔴 Hard    | Digit DP |
+| [Numbers At Most N Given Digit Set](https://leetcode.com/problems/numbers-at-most-n-given-digit-set/) | 🔴 Hard    | Digit DP |
+| [Count Special Integers](https://leetcode.com/problems/count-special-integers/)                       | 🔴 Hard    | Digit DP |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Digit DP template: count valid numbers ≤ limit. Use `count(high) - count(low-1)`. **VI:** Mẫu DP chữ số: đếm số hợp lệ ≤ limit. Dùng count(high) − count(low−1).
@@ -45,7 +60,9 @@ Answer = count(high) - count(low - 1)
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

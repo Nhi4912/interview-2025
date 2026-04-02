@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/construct-quad-tree"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn đang phân tích ảnh vệ tinh: nếu một vùng toàn là đất hoặc toàn là biển, bạn đánh dấu nó ngay mà không cần chia nhỏ thêm. Nhưng nếu vùng đó vừa có đất vừa có biển, bạn chia thành 4 góc vuông bằng nhau và kiểm tra lại từng góc. Đây chính là Quad Tree — một cấu trúc dữ liệu nén ảnh thông minh: chia đôi theo cả hai chiều cho đến khi mỗi vùng con đồng nhất. Số node ít hơn nhiều so với lưu từng pixel.
+**Analogy:** Hãy tưởng tượng bạn đang phân tích ảnh vệ tinh: nếu một vùng toàn là đất hoặc toàn là biển, bạn đánh dấu nó ngay mà không cần chia nhỏ thêm. Nhưng nếu vùng đó vừa có đất vừa có biển, bạn chia thành 4 góc vuông bằng nhau và kiểm tra lại từng góc. Đây chính là Quad Tree — một cấu trúc dữ liệu nén ảnh thông minh: chia đôi theo cả hai chiều cho đến khi mỗi vùng con đồng nhất. Số node ít hơn nhiều so với lưu từng pixel.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Construct Quad Tree example:**
 
 ```
 grid = [[0,1],[1,0]]
@@ -40,7 +43,9 @@ Root: isLeaf=false, val=1(arbitrary), 4 children
 grid = [[1,1],[1,1]] → single leaf node: {isLeaf:T, val:T}
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an `n x n` binary matrix `grid`, construct its **Quad Tree**. A Quad Tree node has `val` (true/false), `isLeaf` (boolean), and four children (`topLeft`, `topRight`, `bottomLeft`, `bottomRight`). If a region is uniform, make it a leaf. Otherwise, split into 4 equal quadrants recursively.
 
@@ -50,7 +55,9 @@ Given an `n x n` binary matrix `grid`, construct its **Quad Tree**. A Quad Tree 
 
 **Constraints:** `n == grid.length == grid[i].length`, `n` is a power of 2, `1 ≤ n ≤ 64`, `0 ≤ grid[i][j] ≤ 1`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Check uniform first** / Kiểm tra đồng nhất trước: Dùng prefix sum 2D để kiểm tra tổng một vùng bằng 0 hoặc n² trong O(1)
 - **Divide by 2** / Chia đôi kích thước: Mỗi lần chia, bán kính giảm một nửa — tổng depth là log₂(n)
@@ -59,7 +66,9 @@ Given an `n x n` binary matrix `grid`, construct its **Quad Tree**. A Quad Tree 
 - **Recursion structure** / Cấu trúc đệ quy: `build(row, col, size)` — khi `size=1` luôn là leaf
 - **Merge condition** / Điều kiện gộp: Nếu cả 4 con đều là leaf và cùng val → có thể tối ưu gộp lại (bài này không yêu cầu)
 
-## Solution 1 - Naive Recursive (Check each cell)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -105,11 +114,7 @@ function construct(grid: number[][]): QuadNode | null {
 
   return build(0, 0, n);
 }
-```
 
-## Solution 2 - Prefix Sum 2D (Optimal O(n²))
-
-```typescript
 /**
  * @complexity Time: O(n²) | Space: O(n²) prefix + O(log n) stack
  * Precompute 2D prefix sum; check region uniformity in O(1)
@@ -140,11 +145,8 @@ function constructOptimal(grid: number[][]): QuadNode | null {
 
   return build(0, 0, n);
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 const g1 = [
   [0, 1],
   [1, 0],
@@ -167,7 +169,9 @@ console.log(r3?.isLeaf); // → true
 console.log(r3?.val); // → false
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                        | Difficulty | Link                                                              |
 | ------------------------------ | ---------- | ----------------------------------------------------------------- |

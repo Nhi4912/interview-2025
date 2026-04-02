@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/stone-game-viii"
 
 # Stone Game VIII / Trò Chơi Đá VIII
 
-🔴 Hard | Dynamic Programming · Prefix Sum · Game Theory
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** When Alice picks index `i` (≥1), she scores `prefix[i+1]` = sum of all stones up to i. After that Bob picks from i+1 onward. Define `dp[i]` = best score difference (Alice−Bob) when it's the current player's turn and they choose index ≥ i. Work backwards from right.
+**Analogy:** **EN:** When Alice picks index `i` (≥1), she scores `prefix[i+1]` = sum of all stones up to i. After that Bob picks from i+1 onward. Define `dp[i]` = best score difference (Alice−Bob) when it's the current player's turn and they choose index ≥ i. Work backwards from right.
 
 **VI:** Khi Alice chọn chỉ số `i` (≥1), cô ấy ghi `prefix[i+1]`. Sau đó Bob chọn từ i+1 trở đi. Định nghĩa `dp[i]` = hiệu điểm tốt nhất (Alice−Bob) khi đang đến lượt chọn và chọn chỉ số ≥ i. Tính ngược từ phải.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Stone Game VIII example:**
 
 ```
 prefix[i] = stones[0] + ... + stones[i]
@@ -37,6 +40,18 @@ Answer: dp[1]  (Alice goes first, can pick index 1..n-1)
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                 | Difficulty | Pattern         |
+| ----------------------------------------------------------------------- | ---------- | --------------- |
+| [Predict the Winner](https://leetcode.com/problems/predict-the-winner/) | 🟡 Medium  | Game Theory DP  |
+| [Stone Game](https://leetcode.com/problems/stone-game/)                 | 🟡 Medium  | Game Theory     |
+| [Stone Game VII](https://leetcode.com/problems/stone-game-vii/)         | 🟡 Medium  | Prefix Sum + DP |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Key insight: once Alice picks index i, all stones 0..i are "locked" into prefix[i+1]. **VI:** Khi Alice chọn i, tất cả đá 0..i được "khóa" thành prefix[i+1].
@@ -48,7 +63,9 @@ Answer: dp[1]  (Alice goes first, can pick index 1..n-1)
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

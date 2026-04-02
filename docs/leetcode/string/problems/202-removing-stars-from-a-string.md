@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/removing-stars-from-a-string"
 
 # Removing Stars From a String / Xóa Dấu Sao Khỏi Chuỗi
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống phím Backspace trên bàn phím — mỗi `*` xóa ký tự cuối cùng bạn gõ. Stack là cấu trúc hoàn hảo: push ký tự thường, pop khi gặp `*`.
+**Analogy:** > **Phép so sánh:** Giống phím Backspace trên bàn phím — mỗi `*` xóa ký tự cuối cùng bạn gõ. Stack là cấu trúc hoàn hảo: push ký tự thường, pop khi gặp `*`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Removing Stars From a String example:**
 
 ```
 s = "leet**cod*e"
@@ -32,6 +37,8 @@ Stack evolution:
 Result: "lecoe"
 ```
 
+---
+
 ## Problem Description
 
 Given string `s` containing lowercase letters and `*`. Each `*` removes the **nearest non-star character to its left**. Return the resulting string after processing all stars.
@@ -42,6 +49,8 @@ Given string `s` containing lowercase letters and `*`. Each `*` removes the **ne
 
 **Constraints:** `1 <= s.length <= 10^5`, always valid (enough chars before each `*`)
 
+---
+
 ## 📝 Interview Tips
 
 - **Stack = O(n) solution:** Push regular chars, pop on `*` — clean and intuitive
@@ -51,9 +60,9 @@ Given string `s` containing lowercase letters and `*`. Each `*` removes the **ne
 - **Complexity:** O(n) time, O(n) space
 - **Interview insight:** Mô phỏng text editor — bài này thường xuất hiện trong system design discussion
 
-## Solutions
+---
 
-### Solution 1: Stack — O(n) time, O(n) space
+## Solutions
 
 ```typescript
 function removeStars(s: string): string {
@@ -69,11 +78,7 @@ function removeStars(s: string): string {
 
   return stack.join("");
 }
-```
 
-### Solution 2: Two-pointer (in-place) — O(n) time, O(n) space for output
-
-```typescript
 function removeStars(s: string): string {
   const arr = s.split("");
   let write = 0;
@@ -88,11 +93,7 @@ function removeStars(s: string): string {
 
   return arr.slice(0, write).join("");
 }
-```
 
-### Solution 3: Functional / reduce — O(n) time, O(n) space
-
-```typescript
 function removeStars(s: string): string {
   return s.split("").reduce((acc, ch) => {
     if (ch === "*") return acc.slice(0, -1);
@@ -100,6 +101,8 @@ function removeStars(s: string): string {
   }, "");
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

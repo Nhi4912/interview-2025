@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-to-kill-all-monsters"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn là một chiến binh đang đối mặt với n quái vật, mỗi con có `power[i]` điểm máu. Mỗi ngày bạn đánh giảm đúng `gain` điểm máu, và `gain` tăng thêm 1 sau mỗi con quái bị hạ. Chiến lược thứ tự tiêu diệt rất quan trọng: giết con yếu trước → tăng sức mạnh sớm → giết con mạnh sau nhanh hơn. Bitmask DP lưu trạng thái tập hợp quái đã chết: với mỗi tập, ta thử giết thêm từng con quái còn sống.
+**Analogy:** Bạn là một chiến binh đang đối mặt với n quái vật, mỗi con có `power[i]` điểm máu. Mỗi ngày bạn đánh giảm đúng `gain` điểm máu, và `gain` tăng thêm 1 sau mỗi con quái bị hạ. Chiến lược thứ tự tiêu diệt rất quan trọng: giết con yếu trước → tăng sức mạnh sớm → giết con mạnh sau nhanh hơn. Bitmask DP lưu trạng thái tập hợp quái đã chết: với mỗi tập, ta thử giết thêm từng con quái còn sống.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Time to Kill All Monsters example:**
 
 ```
 power = [3, 4, 2], initialGain = 1
@@ -42,7 +45,9 @@ mask=001: gain=2, kill mon 1: ceil(4/2)=2 → time=3+2=5
 Answer: minimum time when mask = (1<<n)-1
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 You have `n` monsters with given `power[i]`. You start with `gain = 1` attack power per day. After killing each monster, `gain` increases by 1. To kill a monster with power `p`, it takes `⌈p / gain⌉` days. Return the **minimum total days** to kill all monsters.
 
@@ -52,7 +57,9 @@ You have `n` monsters with given `power[i]`. You start with `gain = 1` attack po
 
 **Constraints:** `1 ≤ power.length ≤ 17`, `1 ≤ power[i] ≤ 10^9`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **n ≤ 17 → bitmask** / n ≤ 17: 2^17 = 131,072 states — bitmask DP hoàn toàn khả thi
 - **Gain from popcount** / Gain từ popcount: `gain = initialGain + Integer.bitCount(mask)` — quan trọng
@@ -61,7 +68,9 @@ You have `n` monsters with given `power[i]`. You start with `gain = 1` attack po
 - **Init** / Khởi tạo: `dp[0] = 0`, tất cả còn lại = Infinity
 - **Answer** / Kết quả: `dp[(1<<n) - 1]` — tất cả quái đều đã bị tiêu diệt
 
-## Solution 1 - DFS with Pruning
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -92,11 +101,7 @@ function minimumTimeKillBrute(power: number[]): number {
   dfs(0, 1, 0);
   return ans;
 }
-```
 
-## Solution 2 - Bitmask DP (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(2^n · n) | Space: O(2^n)
  * dp[mask] = min days to kill exactly the monsters in mask
@@ -131,11 +136,8 @@ function countBits(n: number): number {
   }
   return count;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(minimumTime([3, 4, 2])); // → 4
 console.log(minimumTime([1, 1, 4])); // → 4
 console.log(minimumTime([1])); // → 1
@@ -143,7 +145,9 @@ console.log(minimumTime([4, 1, 2])); // → 4
 console.log(minimumTimeKillBrute([3, 4, 2])); // → 4
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                       | Difficulty | Link                                                                   |
 | ----------------------------- | ---------- | ---------------------------------------------------------------------- |

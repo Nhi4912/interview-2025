@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/equal-sum-arrays-with-minimum-numbe
 
 # Equal Sum Arrays With Minimum Number of Operations / Mảng Tổng Bằng Nhau Với Số Phép Toán Tối Thiểu
 
-**Difficulty:** Medium | **Category:** Array, Greedy | **LeetCode:** [1775](https://leetcode.com/problems/equal-sum-arrays-with-minimum-number-of-operations)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Như cân bằng hai chén cân — luôn dùng đòn bẩy lớn nhất trước.**
+**Analogy:** > **Như cân bằng hai chén cân — luôn dùng đòn bẩy lớn nhất trước.**
 > Mỗi phần tử có "tiềm năng thay đổi" tối đa. Chén nhẹ tăng lên 6, chén nặng giảm về 1.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Equal Sum Arrays With Minimum Number of Operations example:**
 
 ```
 nums1=[1,2] sum=3     nums2=[3,4] sum=7
@@ -29,7 +34,13 @@ step 1: gap = 4 - 5 = -1 ≤ 0  →  done! 1 operation
 
 Tham lam: sắp xếp gains giảm dần → áp dụng từng bước cho đến khi `gap ≤ 0`.
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Chuẩn hoá:** luôn để mảng tổng nhỏ hơn là `s1`, lớn hơn là `s2`.
 2. **Gain của s1[i]:** `6 - val` — tăng phần tử lên tối đa (6 là max die value).
@@ -38,7 +49,9 @@ Tham lam: sắp xếp gains giảm dần → áp dụng từng bước cho đế
 5. **Kiểm tra vô nghiệm:** nếu `max_sum(s1) < min_sum(s2)` → trả về -1.
 6. **Counting sort O(n):** chỉ 6 giá trị khả thi → bucket[1..5] thay vì sort.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -83,9 +96,7 @@ console.log(minOperations([1, 2], [3, 4])); // 1
 console.log(minOperations([1, 1, 1, 1], [1])); // 1
 console.log(minOperations([3], [1, 5])); // 1
 console.log(minOperations([1, 1], [6, 6])); // 3
-```
 
-```typescript
 /**
  * Approach 2: Counting sort — O(n+m) gains bucketed by value 1-5
  * Time: O(n+m) | Space: O(1) — only 6 buckets
@@ -123,7 +134,9 @@ console.log(minOperations2([1, 1, 1, 1], [1])); // 1
 console.log(minOperations2([6, 6], [1])); // 0  (12 > 1, but sum6+6=12, sum[1]=1? swap: [1] vs [6,6])
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                                                          | Difficulty | Connection               |
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |

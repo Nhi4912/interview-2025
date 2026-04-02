@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/the-number-of-beautiful-subsets"
 
 # The Number of Beautiful Subsets / Số Tập Con Đẹp
 
-🟡 Medium | Dynamic Programming · Backtracking · Hash Table
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** Group numbers by `value % k` — only numbers in the same group can violate the "no pair differs by k" rule. Within each group (sorted), apply **house robber DP**: you can't pick two adjacent elements (they differ by exactly k). Multiply results across groups, subtract 1 for empty subset.
+**Analogy:** **EN:** Group numbers by `value % k` — only numbers in the same group can violate the "no pair differs by k" rule. Within each group (sorted), apply **house robber DP**: you can't pick two adjacent elements (they differ by exactly k). Multiply results across groups, subtract 1 for empty subset.
 
 **VI:** Nhóm số theo `value % k` — chỉ các số trong cùng nhóm mới vi phạm điều kiện "không có cặp cách nhau k". Trong mỗi nhóm (đã sắp xếp), áp dụng **DP house robber**: không chọn hai phần tử kề nhau (cách nhau đúng k). Nhân kết quả các nhóm, trừ 1 cho tập rỗng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — The Number of Beautiful Subsets example:**
 
 ```
 nums=[2,4,6], k=2  →  group 0%2=0: [2,4,6]
@@ -33,6 +36,18 @@ Final answer = product - 1  (remove empty subset)
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                 | Difficulty | Pattern         |
+| ----------------------------------------------------------------------- | ---------- | --------------- |
+| [House Robber](https://leetcode.com/problems/house-robber/)             | 🟡 Medium  | DP Non-adjacent |
+| [Subsets](https://leetcode.com/problems/subsets/)                       | 🟡 Medium  | Backtracking    |
+| [Combination Sum II](https://leetcode.com/problems/combination-sum-ii/) | 🟡 Medium  | Backtracking    |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Group by `val % k`: numbers in different groups never form a forbidden pair. **VI:** Nhóm theo val%k: số ở nhóm khác nhau không tạo cặp bị cấm.
@@ -44,7 +59,9 @@ Final answer = product - 1  (remove empty subset)
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

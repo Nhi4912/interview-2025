@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/find-the-safest-path-in-a-grid"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Multi-source BFS + Binary Search
 
-## 🧠 Intuition
+---
 
-**VI**: Hãy tưởng tượng các tên trộm phát ra "sóng nguy hiểm" lan ra xung quanh — như ném đá xuống ao. Khoảng cách từ mỗi ô đến tên trộm gần nhất chính là "độ an toàn". BFS đa nguồn tính bản đồ này trong O(n²). Sau đó, binary search trên ngưỡng an toàn tối thiểu để tìm giá trị lớn nhất cho phép đi từ (0,0) đến (n-1,n-1).
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Hãy tưởng tượng các tên trộm phát ra "sóng nguy hiểm" lan ra xung quanh — như ném đá xuống ao. Khoảng cách từ mỗi ô đến tên trộm gần nhất chính là "độ an toàn". BFS đa nguồn tính bản đồ này trong O(n²). Sau đó, binary search trên ngưỡng an toàn tối thiểu để tìm giá trị lớn nhất cho phép đi từ (0,0) đến (n-1,n-1).
 
 **EN**: Multi-source BFS from all thieves simultaneously computes `dist[r][c]` = distance to nearest thief. Binary search on threshold k; check reachability via BFS using only cells with `dist ≥ k`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find the Safest Path in a Grid example:**
 
 ```
 Thieves → dist grid (safeness):   Binary search answer:
@@ -23,6 +30,19 @@ Thieves → dist grid (safeness):   Binary search answer:
 0 0 0  →   1 1 1   →  (0,0)→(2,2) via right-right-down
 0 0 1      2 1 0                  min dist along path = 1
 ```
+
+---
+
+## Problem Description
+
+| #    | Title                          | Difficulty | Pattern             |
+| ---- | ------------------------------ | ---------- | ------------------- |
+| 1091 | Shortest Path in Binary Matrix | 🟡 Medium  | BFS                 |
+| 778  | Swim in Rising Water           | 🔴 Hard    | Binary Search + BFS |
+| 1631 | Path With Minimum Effort       | 🟡 Medium  | Dijkstra            |
+| 2812 | Find the Safest Path in a Grid | 🟡 Medium  | Multi-source BFS    |
+
+---
 
 ## 📝 Interview Tips
 
@@ -32,6 +52,8 @@ Thieves → dist grid (safeness):   Binary search answer:
 - 🇬🇧 Binary search on answer: monotone property — if k is feasible, k-1 is too; find the maximum feasible k.
 - 🇻🇳 Kiểm tra tính khả thi bằng BFS/DFS chỉ qua ô có dist ≥ threshold, O(n²) mỗi lần.
 - 🇬🇧 Feasibility check is BFS/DFS restricted to dist ≥ threshold cells, O(n²) per check.
+
+---
 
 ## Solutions
 
@@ -208,6 +230,8 @@ console.log(
   ]),
 ); // 2
 ```
+
+---
 
 ## 🔗 Related Problems
 

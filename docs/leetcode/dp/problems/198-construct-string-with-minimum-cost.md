@@ -7,15 +7,18 @@ tags: [Array, String, Dynamic Programming, Suffix Array]
 leetcode_url: "https://leetcode.com/problems/construct-string-with-minimum-cost"
 ---
 
-## 🔨 3213. Construct String with Minimum Cost / Xây Chuỗi Với Chi Phí Nhỏ Nhất
-
-**Difficulty:** 🔴 Hard
+# construct string with minimum cost
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Giống như ghép mảnh ghép hình — bạn muốn tạo ra chuỗi `target` bằng cách chọn các từ trong `words[]`, mỗi từ có chi phí riêng. Mỗi lần chọn một từ khớp với `target[i..i+len-1]` thì trả chi phí tương ứng. Tìm cách ghép rẻ nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 target = "abcdef", words = ["ab","bc","cd","bcd"], costs = [1,2,3,5]
@@ -33,12 +36,16 @@ dp[2]=1
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given string `target` and arrays `words`, `costs`. You can use each word unlimited times. Constructing `target[i..i+len-1]` using `words[j]` costs `costs[j]`. Find minimum total cost, or -1 if impossible.
 
 - Example: `target="abcdef"`, `words=["abdef","abc","d","def","ef"]`, `costs=[100,1,1,10,5]` → **7**
 - Example: `target="aaaa"`, `words=["z"]`, `costs=[1]` → **-1**
+
+---
 
 ---
 
@@ -53,9 +60,9 @@ Given string `target` and arrays `words`, `costs`. You can use each word unlimit
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: DP + Hash Map (group words by content, keep min cost)
+## Solutions
 
 ```typescript
 function minimumCost(target: string, words: string[], costs: number[]): number {
@@ -95,11 +102,7 @@ function minimumCost(target: string, words: string[], costs: number[]): number {
 
   return dp[n] === INF ? -1 : dp[n];
 }
-```
 
-### Solution 2: DP + Trie for Fast Matching
-
-```typescript
 function minimumCostTrie(target: string, words: string[], costs: number[]): number {
   const n = target.length;
 
@@ -139,11 +142,7 @@ function minimumCostTrie(target: string, words: string[], costs: number[]): numb
 
   return dp[n] === Infinity ? -1 : dp[n];
 }
-```
 
-### Solution 3: DP + Suffix Matching (check word at every start)
-
-```typescript
 function minimumCostSuffix(target: string, words: string[], costs: number[]): number {
   const n = target.length;
   const dp = new Array(n + 1).fill(Infinity);

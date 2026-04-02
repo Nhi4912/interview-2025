@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/distribute-elements-into-two-arrays
 
 # Distribute Elements Into Two Arrays II / Phân Phối Phần Tử Vào Hai Mảng II
 
-🔴 Hard | 🏷️ Array, BIT, Simulation | 🔗 [LeetCode](https://leetcode.com/problems/distribute-elements-into-two-arrays-ii)
+---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**Tiếng Việt:** Giống bài I nhưng thay vì so sánh phần tử cuối, ta đếm xem có bao nhiêu phần tử trong mảng lớn hơn giá trị hiện tại. Cần BIT (Binary Indexed Tree) để đếm nhanh trong O(log n).
+**Analogy:** **Tiếng Việt:** Giống bài I nhưng thay vì so sánh phần tử cuối, ta đếm xem có bao nhiêu phần tử trong mảng lớn hơn giá trị hiện tại. Cần BIT (Binary Indexed Tree) để đếm nhanh trong O(log n).
 
 **English:** Same greedy as Part I, but greaterCount(arr, val) = count of elements in arr strictly greater than val. Use a Fenwick Tree with coordinate compression for O(log n) queries.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Distribute Elements Into Two Arrays II example:**
 
 ```
 nums = [2, 1, 4, 3]
@@ -35,7 +40,19 @@ i=3, val=3:
 Result: [2,4,3,1]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                   | Difficulty | Pattern          |
+| --------------------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Distribute Elements Into Two Arrays I](./160-distribute-elements-into-two-arrays-i.md)                   | 🟢 Easy    | Greedy           |
+| [Count of Smaller Numbers After Self](https://leetcode.com/problems/count-of-smaller-numbers-after-self/) | 🔴 Hard    | BIT              |
+| [Count of Range Sum](https://leetcode.com/problems/count-of-range-sum/)                                   | 🔴 Hard    | BIT + Merge Sort |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Coordinate compress values before building BIT | **VI:** Nén tọa độ trước khi xây dựng BIT
 - 🔑 **EN:** greaterCount = total - prefixSum(rank) using BIT | **VI:** greaterCount = tổng - prefixSum(rank) qua BIT
@@ -44,9 +61,9 @@ Result: [2,4,3,1]
 - 🔑 **EN:** Coordinate compress all values upfront, not lazily | **VI:** Nén tọa độ tất cả giá trị ngay từ đầu
 - 🔑 **EN:** O(n log n) total — each element causes one BIT update + two queries | **VI:** O(n log n) tổng cộng
 
-## Solutions
+---
 
-### Solution 1: BIT + Coordinate Compression (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -108,11 +125,7 @@ function resultArray(nums: number[]): number[] {
 console.log(resultArray([2, 1, 4, 3])); // [2,4,3,1]
 console.log(resultArray([2, 1, 3, 3])); // [2,3,3,1]
 console.log(resultArray([3, 2, 2, 3, 3, 2])); // [3,3,3,2,2,2]
-```
 
-### Solution 2: Brute Force (O(n²) — for small inputs)
-
-```typescript
 /**
  * Count elements greater than val by linear scan
  * Time: O(n²) | Space: O(n)
@@ -140,6 +153,8 @@ function resultArrayBrute(nums: number[]): number[] {
 console.log(resultArrayBrute([2, 1, 4, 3])); // [2,4,3,1]
 console.log(resultArrayBrute([2, 1, 3, 3])); // [2,3,3,1]
 ```
+
+---
 
 ## 🔗 Related Problems
 

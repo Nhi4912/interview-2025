@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/couples-holding-hands"
 
 # Couples Holding Hands / Các Cặp Đôi Nắm Tay
 
-🔴 Hard | Greedy Swap or Union-Find on Couple Cycles | [LeetCode 765](https://leetcode.com/problems/couples-holding-hands)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** 2n người ngồi thành n ghế đôi. Mỗi cặp (2k, 2k+1) là một couple. Số swap tối thiểu = tổng (kích thước cycle - 1) trong đồ thị couple. Xây đồ thị: mỗi ghế đôi là một nút, nối ghế i với ghế j nếu người ngồi ở ghế i thuộc về couple của người ngồi ở ghế j.
+**Analogy:** **Vietnamese:** 2n người ngồi thành n ghế đôi. Mỗi cặp (2k, 2k+1) là một couple. Số swap tối thiểu = tổng (kích thước cycle - 1) trong đồ thị couple. Xây đồ thị: mỗi ghế đôi là một nút, nối ghế i với ghế j nếu người ngồi ở ghế i thuộc về couple của người ngồi ở ghế j.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Couples Holding Hands example:**
 
 ```
 row = [0,2,1,3]
@@ -32,7 +35,20 @@ Greedy: scan seats left to right, if pair not correct couple → swap right pers
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                                   | Difficulty | Key Idea              |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| [Minimum Number of Swaps to Make String Balanced 1963](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) | Medium     | Greedy swap counting  |
+| [Number of Operations to Make Network Connected 1319](https://leetcode.com/problems/number-of-operations-to-make-network-connected)       | Medium     | Union-Find components |
+| [Minimum Swaps to Group All 1s 1151](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together)                                | Medium     | Sliding window swaps  |
+| [Sort Array by Parity 905](https://leetcode.com/problems/sort-array-by-parity)                                                            | Easy       | In-place swap         |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Partner of person x: if x is even → x+1, if x is odd → x-1 (i.e., x^1) | **VI:** Bạn đôi của x: x XOR 1 (đổi bit cuối)
 - 🔑 **EN:** Greedy: iterate each seat pair, swap right seat with correct partner | **VI:** Tham lam: duyệt từng ghế đôi, hoán đổi người cần thiết
@@ -43,7 +59,9 @@ Greedy: scan seats left to right, if pair not correct couple → swap right pers
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -75,9 +93,7 @@ function minSwapsCouples(row: number[]): number {
 console.log(minSwapsCouples([0, 2, 1, 3])); // 1
 console.log(minSwapsCouples([3, 2, 0, 1])); // 0
 console.log(minSwapsCouples([5, 4, 2, 6, 3, 1, 0, 7])); // 2
-```
 
-```typescript
 /**
  * Union-Find: swaps = n/2 - number of components
  * Time: O(n*α) ≈ O(n)  Space: O(n)
@@ -123,9 +139,7 @@ function minSwapsCouplesUF(row: number[]): number {
 console.log(minSwapsCouplesUF([0, 2, 1, 3])); // 1
 console.log(minSwapsCouplesUF([3, 2, 0, 1])); // 0
 console.log(minSwapsCouplesUF([5, 4, 2, 6, 3, 1, 0, 7])); // 2
-```
 
-```typescript
 /**
  * Position map greedy — O(n) time with lookup table
  * Time: O(n)  Space: O(n)
@@ -158,7 +172,7 @@ console.log(minSwapsCouplesOpt([5, 4, 2, 6, 3, 1, 0, 7])); // 2
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                                                                   | Difficulty | Key Idea              |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |

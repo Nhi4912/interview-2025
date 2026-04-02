@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/maximum-sum-of-subsequence-with-non
 
 # Maximum Sum of Subsequence With Non-adjacent Elements / Tổng Lớn Nhất Dãy Con Không Kề Nhau
 
-🔴 Hard | Segment Tree · Dynamic Programming
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** Each segment tree node stores 4 states `(f00, f01, f10, f11)` where bit X = first element selected, bit Y = last element selected. Merging two nodes: the right child's first must not conflict with the left child's last (no two adjacent selected). After each point update, query root.
+**Analogy:** **EN:** Each segment tree node stores 4 states `(f00, f01, f10, f11)` where bit X = first element selected, bit Y = last element selected. Merging two nodes: the right child's first must not conflict with the left child's last (no two adjacent selected). After each point update, query root.
 
 **VI:** Mỗi node cây đoạn lưu 4 trạng thái (f00,f01,f10,f11): X=phần tử đầu chọn hay không, Y=phần tử cuối chọn hay không. Merge hai node: cuối trái và đầu phải không được cùng chọn. Sau mỗi cập nhật, truy vấn root.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Sum of Subsequence With Non-adjacent Elements example:**
 
 ```
 Node states as 2x2 matrix M[first_sel][last_sel]:
@@ -34,6 +37,18 @@ Leaf node (val): M[0][0]=0, M[0][1]=M[1][0]=M[1][1]=val
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                             | Difficulty | Pattern         |
+| ----------------------------------------------------------------------------------- | ---------- | --------------- |
+| [House Robber](https://leetcode.com/problems/house-robber/)                         | 🟡 Medium  | DP Non-adjacent |
+| [Range Sum Query - Mutable](https://leetcode.com/problems/range-sum-query-mutable/) | 🟡 Medium  | Segment Tree    |
+| [The Skyline Problem](https://leetcode.com/problems/the-skyline-problem/)           | 🔴 Hard    | Segment Tree    |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** State `M[a][b]`: a=first selected, b=last selected. 4 states per node. **VI:** Trạng thái M[a][b]: a=đầu chọn, b=cuối chọn. 4 trạng thái mỗi node.
@@ -45,7 +60,9 @@ Leaf node (val): M[0][0]=0, M[0][1]=M[1][0]=M[1][1]=val
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

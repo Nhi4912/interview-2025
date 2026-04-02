@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/island-perimeter"
 
 # Island Perimeter / Chu Vi Hòn Đảo
 
-🟢 Easy | Count Exposed Edges: 4×land − 2×adjacencies | [LeetCode 463](https://leetcode.com/problems/island-perimeter)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mỗi ô đất đóng góp 4 cạnh vào chu vi. Nhưng mỗi cạnh chung giữa hai ô đất liền kề làm giảm chu vi đi 2 (mỗi phía mất 1 cạnh). Công thức: `chu vi = 4 × số ô đất - 2 × số cặp liền kề`.
+**Analogy:** **Vietnamese:** Mỗi ô đất đóng góp 4 cạnh vào chu vi. Nhưng mỗi cạnh chung giữa hai ô đất liền kề làm giảm chu vi đi 2 (mỗi phía mất 1 cạnh). Công thức: `chu vi = 4 × số ô đất - 2 × số cặp liền kề`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Island Perimeter example:**
 
 ```
 grid:
@@ -34,7 +37,20 @@ Alternative: count exposed edges per cell = 12
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                 | Difficulty | Key Idea                |
+| --------------------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [Max Area of Island 695](https://leetcode.com/problems/max-area-of-island)              | Medium     | BFS/DFS area counting   |
+| [Count Sub Islands 1905](https://leetcode.com/problems/count-sub-islands)               | Medium     | BFS island membership   |
+| [Number of Closed Islands 1254](https://leetcode.com/problems/number-of-closed-islands) | Medium     | BFS/DFS avoid border    |
+| [Number of Islands 200](https://leetcode.com/problems/number-of-islands)                | Medium     | BFS/DFS component count |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Formula: perimeter = 4*land - 2*shared_edges is O(m*n) one-pass | **VI:** Công thức 4*đất - 2*cạnh_chung, một lần duyệt O(m*n)
 - 🔑 **EN:** Only check right and down neighbors to avoid double-counting pairs | **VI:** Chỉ kiểm tra phải và dưới để tránh đếm trùng
@@ -45,7 +61,9 @@ Alternative: count exposed edges per cell = 12
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -89,9 +107,7 @@ console.log(
     [1, 1],
   ]),
 ); // 8
-```
 
-```typescript
 /**
  * Per-cell exposed edges count — equally clean
  * Time: O(m*n)  Space: O(1)
@@ -133,9 +149,7 @@ console.log(
   ]),
 ); // 16
 console.log(islandPerimeterV2([[1]])); // 4
-```
 
-```typescript
 /**
  * DFS approach — traverse island from first land cell
  * Time: O(m*n)  Space: O(m*n) recursion stack
@@ -177,7 +191,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                 | Difficulty | Key Idea                |
 | --------------------------------------------------------------------------------------- | ---------- | ----------------------- |

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/reward-top-k-students"
 
 # Reward Top K Students / Thưởng K Học Sinh Hàng Đầu
 
-🟡 Medium | Hash Table, Sorting | [LeetCode 2592](https://leetcode.com/problems/reward-top-k-students)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** Score each student's feedback by counting positive words (+3 each) and negative words (-1 each). Sort students by score descending, break ties by student ID ascending, then return the top k IDs.
+**Analogy:** **EN:** Score each student's feedback by counting positive words (+3 each) and negative words (-1 each). Sort students by score descending, break ties by student ID ascending, then return the top k IDs.
 
 **VI:** Chấm điểm phản hồi mỗi học sinh: từ tích cực +3, từ tiêu cực -1. Sắp xếp giảm dần theo điểm, cùng điểm thì tăng dần theo ID, trả về k ID đầu tiên.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Reward Top K Students example:**
 
 ```
 positive = ["smart","brilliant"]  negative = ["bad","wrong"]
@@ -32,7 +35,19 @@ top 2 → [1, 3]
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                      | Difficulty | Pattern        |
+| --- | ---------------------------- | ---------- | -------------- |
+| 1   | Rank Teams by Votes          | 🟡 Medium  | custom sort    |
+| 2   | Sort Characters By Frequency | 🟡 Medium  | frequency sort |
+| 3   | K Closest Points to Origin   | 🟡 Medium  | heap top-k     |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Pre-build Set for positive/negative words — O(1) lookup per word instead of O(m). **VI:** Xây dựng Set trước cho từ tích cực/tiêu cực để tra cứu O(1).
 - 📊 **EN:** Score per student: sum across all words, +3 or -1 per word. **VI:** Điểm mỗi học sinh là tổng điểm trên tất cả từ trong phản hồi.
@@ -43,9 +58,9 @@ top 2 → [1, 3]
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Hash Set + Sort (Clean & Simple)
+## Solutions
 
 ```typescript
 /**
@@ -88,11 +103,7 @@ console.log(
 ); // [2, 1]
 
 console.log(topStudents(["a"], ["b"], ["a b a", "b a", "a a a"], [10, 20, 30], 2)); // [30, 10]  scores: [5, -1, 9] → sorted: [9→30, 5→10]
-```
 
-### Solution 2 — Reduce with Early Exit + Stable Sort
-
-```typescript
 /**
  * Same approach using reduce; separates scoring from sorting concerns
  * Time: O(n * w + n log n)  Space: O(n)
@@ -125,11 +136,7 @@ function topStudents2(
 console.log(topStudents2(["smart"], ["bad"], ["smart bad", "smart", "bad"], [3, 1, 2], 2));
 // scores: [2,3,-1] → sorted: [3→id1, 2→id3] → [1,3]... wait
 // [3,1,2] are ids, scores [2,3,-1]: (id=3,s=2),(id=1,s=3),(id=2,s=-1) → sorted: [(1,3),(3,2),(2,-1)] → [1,3]
-```
 
-### Solution 3 — Score Map with Partial Sort (k << n)
-
-```typescript
 /**
  * When k is small, use selection-based partial sort instead of full sort
  * Time: O(n*w + n log k)  Space: O(n)
@@ -160,7 +167,7 @@ function topStudents3(
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                      | Difficulty | Pattern        |
 | --- | ---------------------------- | ---------- | -------------- |

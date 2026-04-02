@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/pour-water-between-buckets-to-make-
 
 # Pour Water Between Buckets to Make Water Levels Equal / Cân Bằng Mực Nước Giữa Các Xô
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Bạn có nhiều xô nước. Khi đổ từ xô đầy sang xô cạn, một phần nước bị hao hụt. Hỏi mực nước cuối cùng **cao nhất** có thể đạt được khi tất cả xô bằng nhau?
+**Analogy:** > **Hình ảnh:** Bạn có nhiều xô nước. Khi đổ từ xô đầy sang xô cạn, một phần nước bị hao hụt. Hỏi mực nước cuối cùng **cao nhất** có thể đạt được khi tất cả xô bằng nhau?
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Pour Water Between Buckets to Make Water Levels Equal example:**
 
 ```
 buckets = [1, 2, 7],  loss = 80%
@@ -30,7 +35,9 @@ Try t = 2:
 
 **Chiến lược:** Binary search trên mực nước target `t`. Kiểm tra feasibility: `sum(excess*(1-loss/100)) >= sum(deficit)`.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `buckets[i]` (water in each bucket) and `loss` (% lost when transferring), find the **maximum equal water level** achievable. Water can only be transferred from fuller to emptier buckets with `loss%` wasted.
 
@@ -38,6 +45,8 @@ Given `buckets[i]` (water in each bucket) and `loss` (% lost when transferring),
 **Example 2:** `buckets=[2,4,6]`, `loss=50` → `3.50000`
 
 **Constraints:** `1 ≤ buckets.length ≤ 10^5`, `0 ≤ buckets[i] ≤ 10^5`, `0 ≤ loss ≤ 99`
+
+---
 
 ## 📝 Interview Tips
 
@@ -48,9 +57,9 @@ Given `buckets[i]` (water in each bucket) and `loss` (% lost when transferring),
 - **Precision:** Use floating-point binary search with ~50 iterations for `1e-5` accuracy
 - **Edge case:** All buckets already equal → answer = that equal level; `loss=0` → level = average
 
-## 💡 Solutions
+---
 
-### Solution 1: Binary Search on Answer (Floating Point) — O(n log(maxVal/ε))
+## Solutions
 
 ```typescript
 function equalizeWater(buckets: number[], loss: number): number {
@@ -79,11 +88,7 @@ function equalizeWater(buckets: number[], loss: number): number {
 
   return lo;
 }
-```
 
-### Solution 2: Binary Search with Explicit Precision Control
-
-```typescript
 function equalizeWaterPrecise(buckets: number[], loss: number): number {
   const keep = 1 - loss / 100; // fraction kept after transfer
 
@@ -107,11 +112,7 @@ function equalizeWaterPrecise(buckets: number[], loss: number): number {
 
   return Math.round(lo * 1e5) / 1e5; // round to 5 decimal places
 }
-```
 
-### Solution 3: Closed-Form Check (O(n log n) sort alternative)
-
-```typescript
 function equalizeWaterSort(buckets: number[], loss: number): number {
   // Sort buckets ascending; binary search on sorted position
   const sorted = [...buckets].sort((a, b) => a - b);
@@ -145,6 +146,8 @@ function equalizeWaterSort(buckets: number[], loss: number): number {
   return lo;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

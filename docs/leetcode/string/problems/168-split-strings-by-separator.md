@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/split-strings-by-separator"
 
 # Split Strings by Separator / Tách Chuỗi Theo Ký Tự Phân Cách
 
-🟢 Easy | 🏷️ Array, String
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Với mỗi chuỗi trong mảng, tách theo ký tự `separator`, lọc bỏ các phần rỗng, rồi gom tất cả kết quả thành một mảng phẳng. Giống như bạn cắt nhiều thanh bánh mì theo từng vết cắt, bỏ những miếng vụn rỗng, rồi xếp tất cả lên đĩa.
+**Analogy:** **VI:** Với mỗi chuỗi trong mảng, tách theo ký tự `separator`, lọc bỏ các phần rỗng, rồi gom tất cả kết quả thành một mảng phẳng. Giống như bạn cắt nhiều thanh bánh mì theo từng vết cắt, bỏ những miếng vụn rỗng, rồi xếp tất cả lên đĩa.
 
 **EN:** Split each string by the separator character, filter out empty parts (from consecutive separators or edge separators), then flatten all results into one array.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Split Strings by Separator example:**
 
 ```
 words = ["one.two.three", "four.five", "six"]
@@ -30,6 +35,18 @@ Edge cases:
 "..."   → ["","","",""] → filter → []
 ```
 
+---
+
+## Problem Description
+
+| #    | Problem                     | Difficulty | Key Idea               |
+| ---- | --------------------------- | ---------- | ---------------------- |
+| 1119 | Remove Vowels from a String | 🟢 Easy    | Character filtering    |
+| 1816 | Truncate Sentence           | 🟢 Easy    | Split and slice        |
+| 58   | Length of Last Word         | 🟢 Easy    | Split and last element |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **`split` tạo ra phần tử rỗng** khi separator ở đầu, cuối, hoặc liên tiếp — phải lọc
@@ -39,9 +56,9 @@ Edge cases:
 - 🇻🇳 **flatMap:** `words.flatMap(w => w.split(sep).filter(Boolean))` — cực ngắn gọn
 - 🇬🇧 **flatMap is ideal:** splits and flattens in one pass — the cleanest solution
 
-## Solutions
+---
 
-### Solution 1: flatMap one-liner
+## Solutions
 
 ```typescript
 /**
@@ -59,11 +76,7 @@ console.log(splitWordsBySeparator(["$easy$", "$problem$"], "$"));
 // ["easy","problem"]
 console.log(splitWordsBySeparator(["|||"], "|"));
 // []
-```
 
-### Solution 2: Manual split with reduce
-
-```typescript
 /**
  * Manually split each string character by character.
  * Time: O(n * L) | Space: O(total parts)
@@ -91,11 +104,7 @@ console.log(splitWordsBySeparator2(["one.two.three", "four.five", "six"], "."));
 // ["one","two","three","four","five","six"]
 console.log(splitWordsBySeparator2(["...a...b..."], "."));
 // ["a","b"]
-```
 
-### Solution 3: reduce + concat
-
-```typescript
 /**
  * Use reduce to accumulate all parts across all words.
  * Time: O(n * L) | Space: O(total parts)
@@ -114,6 +123,8 @@ console.log(splitWordsBySeparator3(["a", "b", "c"], "."));
 console.log(splitWordsBySeparator3(["a,b,,c"], ","));
 // ["a","b","c"]
 ```
+
+---
 
 ## 🔗 Related Problems
 

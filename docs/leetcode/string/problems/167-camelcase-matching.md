@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/camelcase-matching"
 
 # Camelcase Matching / Khớp Chữ Hoa Lạc Đà
 
-🟡 Medium | 🏷️ Array, Two Pointers, String, Trie
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Pattern là "khung" của query — các chữ thường trong pattern **phải** xuất hiện theo thứ tự trong query, còn chữ hoa trong query là "tùy chọn bổ sung". Nếu query có chữ hoa mà không khớp với pattern hiện tại → sai. Dùng **two-pointer**: con trỏ pattern tiến khi ký tự khớp; nếu query có uppercase không khớp → false.
+**Analogy:** **VI:** Pattern là "khung" của query — các chữ thường trong pattern **phải** xuất hiện theo thứ tự trong query, còn chữ hoa trong query là "tùy chọn bổ sung". Nếu query có chữ hoa mà không khớp với pattern hiện tại → sai. Dùng **two-pointer**: con trỏ pattern tiến khi ký tự khớp; nếu query có uppercase không khớp → false.
 
 **EN:** Walk through the query char by char. If it matches the current pattern char, advance both pointers. If it's uppercase and doesn't match the current pattern char, return false. At the end, the pattern must be fully consumed.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Camelcase Matching example:**
 
 ```
 query = "FooBar", pattern = "FB"
@@ -27,6 +32,18 @@ query = "FooBar", pattern = "FoBr"
 F✅ o✅ o:lowercase,next pattern=B → skip. B✅ a:lower→skip. r✅ ✅
 ```
 
+---
+
+## Problem Description
+
+| #   | Problem                         | Difficulty | Key Idea                           |
+| --- | ------------------------------- | ---------- | ---------------------------------- |
+| 522 | Longest Uncommon Subsequence II | 🟡 Medium  | Subsequence matching               |
+| 792 | Number of Matching Subsequences | 🟡 Medium  | Subsequence with multiple patterns |
+| 408 | Valid Word Abbreviation         | 🟢 Easy    | Two-pointer string matching        |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Quy tắc chính:** uppercase trong query mà không match pattern → ngay lập tức false
@@ -36,9 +53,9 @@ F✅ o✅ o:lowercase,next pattern=B → skip. B✅ a:lower→skip. r✅ ✅
 - 🇻🇳 **Pattern phải dùng hết:** sau khi duyệt query, `j === pattern.length` mới hợp lệ
 - 🇬🇧 **Pattern exhausted:** if `j < pattern.length` at end, not all pattern chars were matched
 
-## Solutions
+---
 
-### Solution 1: Two-pointer per query
+## Solutions
 
 ```typescript
 /**
@@ -74,11 +91,7 @@ console.log(
   camelMatch(["FooBar", "FooBarTest", "FootBall", "FrameBuffer", "ForceFeedBack"], "FoBaT"),
 );
 // [false, true, false, false, false]
-```
 
-### Solution 2: Regex construction from pattern
-
-```typescript
 /**
  * Build regex: each pattern char must appear; between them only lowercase allowed.
  * Time: O(m * n) | Space: O(p) for regex
@@ -98,11 +111,7 @@ console.log(
   camelMatch2(["FooBar", "FooBarTest", "FootBall", "FrameBuffer", "ForceFeedBack"], "FoBa"),
 );
 // [true, false, false, false, false]
-```
 
-### Solution 3: Trie-based (for many queries, same pattern)
-
-```typescript
 /**
  * Reuse two-pointer logic but early-return for efficiency.
  * Time: O(m * n) | Space: O(1)
@@ -120,6 +129,8 @@ function camelMatch3(queries: string[], pattern: string): boolean[] {
 
 console.log(camelMatch3(["aa", "aA"], "a")); // [true, false]
 ```
+
+---
 
 ## 🔗 Related Problems
 

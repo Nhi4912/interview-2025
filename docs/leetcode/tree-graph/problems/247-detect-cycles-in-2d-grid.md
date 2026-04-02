@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/detect-cycles-in-2d-grid"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một tòa nhà có các phòng được nối với nhau bằng cửa đi giữa. Mỗi phòng có màu sơn (ký tự), và cửa chỉ tồn tại giữa hai phòng cùng màu. Câu hỏi là: liệu có tồn tại một vòng tham quan — xuất phát từ một phòng, đi qua 4+ phòng cùng màu, và quay lại điểm xuất phát mà không đi ngược lại cửa vừa vào? Nếu có, tòa nhà có "chu trình màu" — một vòng kín gồm toàn phòng cùng màu.
+**Analogy:** Hãy tưởng tượng một tòa nhà có các phòng được nối với nhau bằng cửa đi giữa. Mỗi phòng có màu sơn (ký tự), và cửa chỉ tồn tại giữa hai phòng cùng màu. Câu hỏi là: liệu có tồn tại một vòng tham quan — xuất phát từ một phòng, đi qua 4+ phòng cùng màu, và quay lại điểm xuất phát mà không đi ngược lại cửa vừa vào? Nếu có, tòa nhà có "chu trình màu" — một vòng kín gồm toàn phòng cùng màu.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Detect Cycles in 2D Grid example:**
 
 ```
 grid = [["a","a","a","a"],
@@ -37,7 +40,9 @@ Each 'a' cell: union with same-char neighbors
 When union finds both already in same component → cycle!
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an `m x n` 2D character grid, determine if there exists a **cycle** consisting of at least **4** cells, where every cell in the cycle has the same value, and adjacent cells share an edge (not diagonal). A cycle cannot reuse the edge it just traversed.
 
@@ -47,7 +52,9 @@ Given an `m x n` 2D character grid, determine if there exists a **cycle** consis
 
 **Constraints:** `1 ≤ m, n ≤ 500`, `grid[i][j]` is a lowercase English letter
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Cycle length ≥ 4** / Chu trình ≥ 4: Tránh nhầm lần — không được đi ngược lại ô vừa từ đó đến, nên ô đã thăm nhưng không phải parent mới là cycle
 - **DFS with parent tracking** / DFS theo dõi parent: Lưu `(prevRow, prevCol)` để tránh quay lại ngay liền — không phải DFS thông thường
@@ -56,7 +63,9 @@ Given an `m x n` 2D character grid, determine if there exists a **cycle** consis
 - **Early termination** / Dừng sớm: Ngay khi tìm thấy một cycle, return `true` luôn — không cần tìm hết
 - **Mark visited globally** / Đánh dấu toàn cục: Dùng visited[][] dùng chung cho tất cả DFS calls để không xử lý lại ô đã biết
 
-## Solution 1 - DFS with Parent Tracking
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -93,11 +102,7 @@ function containsCycle(grid: string[][]): boolean {
 
   return false;
 }
-```
 
-## Solution 2 - Union Find (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(m*n*α(m*n)) | Space: O(m*n)
  * Union adjacent same-char cells; if already same component → cycle exists
@@ -140,11 +145,8 @@ function containsCycleUF(grid: string[][]): boolean {
   }
   return false;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   containsCycle([
     ["a", "a", "a", "a"],
@@ -171,7 +173,9 @@ console.log(
 console.log(containsCycleUF([["a"]])); // → false
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem              | Difficulty | Link                                                         |
 | -------------------- | ---------- | ------------------------------------------------------------ |

@@ -15,7 +15,7 @@ leetcode_url: "https://leetcode.com/problems/excel-sheet-column-title"
 
 ---
 
-## Intuition / Tu Duy
+## 🧠 Intuition / Tư Duy
 
 **Analogy:** Giong nhu dem so trong he 26 chu cai — nhung co mot dieu ky la: khong co so "0"!
 Trong Excel, cot 1=A, 26=Z, nhung 27=AA chu khong phai BA. Day la he so co so 26 nhung bat dau tu 1,
@@ -29,6 +29,8 @@ giong nhu dem: 1..26 (A..Z), 27..702 (AA..ZZ). Meo: truoc khi lay phan du, tru 1
 - So sanh: base-10 `1..9,10=10`, base-26 Excel `1..26=Z, 27=AA` — shift by 1 each digit
 
 **Visual — columnNumber = 701:**
+
+**Visual — Excel Sheet Column Title example:**
 
 ```
 Step 1: n=701 → n-- → n=700 → char = A+(700%26) = A+10 = 'K' → n=floor(700/26)=26
@@ -45,6 +47,8 @@ More examples:
   27 → AA  (27-1=26, 26%26=0 → 'A', 26/26=1 → 1-1=0 → 'A')
   28 → AB  (28-1=27, 27%26=1 → 'B', 27/26=1 → 1-1=0 → 'A')
 ```
+
+---
 
 ---
 
@@ -70,7 +74,9 @@ Output: "ZY"
 
 ---
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Clarify**: "He so 26 nhung khong co digit 0 — khac base-26 thong thuong" / Confirm it is 1-indexed base-26 with no zero digit
 2. **Key trick**: "Truoc moi vong, `n--` de shift ve 0-indexed truoc khi lay mod" / Do n-- before each mod to handle no-zero digit
@@ -78,6 +84,8 @@ Output: "ZY"
 4. **Verify manually**: "Kiem tra A=1, Z=26, AA=27, AZ=52, BA=53 de dam bao dung" / Spot-check A,Z,AA,AZ before submitting
 5. **Edge cases**: "n=1 -> 'A'; n=26 -> 'Z'; n=27 -> 'AA'; n rat lon van hoat dong nho vong while" / Single char, boundary Z, two-char start all work
 6. **Follow-up**: "Bai nguoc lai: Excel column title -> so nguyen (LC #171)" / Reverse: column title to number (LC #171)
+
+---
 
 ---
 
@@ -161,7 +169,7 @@ console.log("All solutions agree");
 
 ---
 
-## Related Problems
+## 🔗 Related Problems
 
 | Problem                                                                              | Pattern          | Difficulty |
 | ------------------------------------------------------------------------------------ | ---------------- | ---------- |

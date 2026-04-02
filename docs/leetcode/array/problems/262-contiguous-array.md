@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/contiguous-array"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn đang đếm số lần đội nhà thắng (1) và thua (0) trong một mùa giải. Bạn muốn tìm chuỗi trận dài nhất mà số thắng bằng số thua. Thủ thuật: đổi thua (0) thành -1, lúc đó bài toán trở thành "tìm mảng con dài nhất có tổng = 0". Nếu prefix sum tại vị trí i và j bằng nhau, mảng con từ i+1 đến j có tổng 0 → ta tìm thấy chuỗi cân bằng!
+**Analogy:** Hãy tưởng tượng bạn đang đếm số lần đội nhà thắng (1) và thua (0) trong một mùa giải. Bạn muốn tìm chuỗi trận dài nhất mà số thắng bằng số thua. Thủ thuật: đổi thua (0) thành -1, lúc đó bài toán trở thành "tìm mảng con dài nhất có tổng = 0". Nếu prefix sum tại vị trí i và j bằng nhau, mảng con từ i+1 đến j có tổng 0 → ta tìm thấy chuỗi cân bằng!
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Contiguous Array example:**
 
 ```
 nums  = [0, 1, 0, 0, 1, 1, 0]
@@ -38,7 +41,9 @@ i=5: prefix=0  → 0 in map at -1 → len=5-(-1)=6 → maxLen=6 ✓
 i=6: prefix=-1 → -1 in map at 0 → len=6-0=6 → maxLen=6
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given a binary array `nums`, return the maximum length of a contiguous subarray with equal number of `0`s and `1`s.
 
@@ -48,7 +53,9 @@ Given a binary array `nums`, return the maximum length of a contiguous subarray 
 
 **Constraints:** `1 ≤ nums.length ≤ 10^5`, `nums[i] ∈ {0, 1}`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Transform 0 → -1** / Biến đổi: Bài "số 0 bằng số 1" → "tổng mảng con = 0" — classic trick
 - **Prefix sum + hashmap** / Prefix sum + bảng băm: Lưu lần đầu tiên gặp mỗi prefix sum → O(n) time
@@ -57,7 +64,9 @@ Given a binary array `nums`, return the maximum length of a contiguous subarray 
 - **Don't overwrite** / Không ghi đè: Chỉ lưu lần ĐẦU TIÊN gặp mỗi prefix sum để tối đa hóa độ dài
 - **Related pattern** / Pattern liên quan: Giống hệt "Max Size Subarray Sum = k" với k=0
 
-## Solution 1 - Brute Force (O(n²))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -77,11 +86,7 @@ function findMaxLengthBrute(nums: number[]): number {
   }
   return maxLen;
 }
-```
 
-## Solution 2 - Prefix Sum + Hash Map (Optimal O(n))
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Transform 0→-1, find longest subarray with sum=0 using prefix sum map
@@ -102,11 +107,8 @@ function findMaxLength(nums: number[]): number {
   }
   return maxLen;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(findMaxLength([0, 1])); // → 2
 console.log(findMaxLength([0, 1, 0])); // → 2
 console.log(findMaxLength([0, 1, 0, 0, 1, 1, 0])); // → 6
@@ -115,7 +117,9 @@ console.log(findMaxLength([0, 1, 1, 0, 1, 1, 1, 0])); // → 4
 console.log(findMaxLengthBrute([0, 1, 0, 0, 1, 1, 0])); // → 6
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                            | Difficulty | Link                                                                       |
 | ---------------------------------- | ---------- | -------------------------------------------------------------------------- |

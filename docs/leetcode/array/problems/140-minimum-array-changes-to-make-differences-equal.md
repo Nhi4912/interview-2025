@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-array-changes-to-make-diffe
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Cho mảng n phần tử (n chẵn). Với mỗi cặp (i, n-1-i), tính hiệu `d = |nums[i] - nums[n-1-i]|` và max có thể đạt được với 1 thay đổi: `maxVal = max(nums[i], nums[n-1-i])` hoặc `k`. Dùng difference array: nếu chọn target `x`, pair cần 0 thay đổi nếu d==x, cần 1 nếu x <= maxVal, cần 2 nếu x > maxVal.
+**Analogy:** **VI:** Cho mảng n phần tử (n chẵn). Với mỗi cặp (i, n-1-i), tính hiệu `d = |nums[i] - nums[n-1-i]|` và max có thể đạt được với 1 thay đổi: `maxVal = max(nums[i], nums[n-1-i])` hoặc `k`. Dùng difference array: nếu chọn target `x`, pair cần 0 thay đổi nếu d==x, cần 1 nếu x <= maxVal, cần 2 nếu x > maxVal.
 
 **EN:** For each pair (i, n-1-i): diff `d`, max reach with one change = `max(nums[i], nums[n-1-i])` or `k`. Use a difference array over all possible target values: mark [0, maxReach] needs at most 1 change, but at value `d` needs 0. Then find the minimum over all targets.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Array Changes to Make Differences Equal example:**
 
 ```
 nums=[1,0,1,2,4,3], k=4
@@ -30,7 +35,19 @@ Sweep with diff array to find min total cost over all x in [0,k].
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                                   | Difficulty | Pattern          |
+| ---- | --------------------------------------------------------- | ---------- | ---------------- |
+| 2772 | Apply Operations to Make All Array Elements Equal to Zero | 🟡 Medium  | Difference Array |
+| 1094 | Car Pooling                                               | 🟡 Medium  | Difference Array |
+| 2381 | Shifting Letters II                                       | 🟡 Medium  | Difference Array |
+
+---
+
+## 📝 Interview Tips
 
 - 🟡 **EN:** Each pair independently: cost 0 if target equals current diff, cost 1 if within reach, cost 2 otherwise.
   **VI:** Mỗi cặp độc lập: chi phí 0 nếu target = diff hiện tại, 1 nếu trong tầm với, 2 nếu không.
@@ -47,9 +64,9 @@ Sweep with diff array to find min total cost over all x in [0,k].
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: Brute Force — O(n \* k) Time, O(1) Space
+## Solutions
 
 ```typescript
 function minimumChanges_brute(nums: number[], k: number): number {
@@ -72,11 +89,7 @@ function minimumChanges_brute(nums: number[], k: number): number {
 
 console.log(minimumChanges_brute([1, 0, 1, 2, 4, 3], 4)); // 2
 console.log(minimumChanges_brute([0, 1, 2, 3, 4], 4)); // 0 (odd n, only n/2 pairs)
-```
 
-### Solution 2: Difference Array + Prefix Sum — O(n + k) ✅ Optimal
-
-```typescript
 function minimumChanges(nums: number[], k: number): number {
   const n = nums.length;
   const half = n >> 1;
@@ -121,7 +134,7 @@ console.log(minimumChanges([2, 2], 3)); // Expected: 0
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                                                   | Difficulty | Pattern          |
 | ---- | --------------------------------------------------------- | ---------- | ---------------- |

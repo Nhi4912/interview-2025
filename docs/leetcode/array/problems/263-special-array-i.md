@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/special-array-i"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng một hàng đèn giao thông: đỏ (chẵn) và xanh (lẻ) phải xen kẽ nhau — không được có hai đèn cùng màu đứng cạnh nhau. Mảng được gọi là "đặc biệt" nếu mỗi cặp đèn liền kề luôn khác màu. Ta chỉ cần đi qua hàng đèn một lần và kiểm tra từng cặp kề nhau có đúng quy tắc không.
+**Analogy:** Hãy tưởng tượng một hàng đèn giao thông: đỏ (chẵn) và xanh (lẻ) phải xen kẽ nhau — không được có hai đèn cùng màu đứng cạnh nhau. Mảng được gọi là "đặc biệt" nếu mỗi cặp đèn liền kề luôn khác màu. Ta chỉ cần đi qua hàng đèn một lần và kiểm tra từng cặp kề nhau có đúng quy tắc không.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Special Array I example:**
 
 ```
 nums = [2, 1, 4]
@@ -41,7 +44,9 @@ Key check: nums[i] % 2 !== nums[i+1] % 2
            ↔ nums[i] % 2 !== nums[i+1] % 2
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 An array is **special** if every pair of its adjacent elements contains two numbers with different parity. Given an integer array `nums`, return `true` if it is special, `false` otherwise.
 
@@ -51,7 +56,9 @@ An array is **special** if every pair of its adjacent elements contains two numb
 
 **Constraints:** `1 ≤ nums.length ≤ 100`, `1 ≤ nums[i] ≤ 100`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Parity check** / Kiểm tra tính chẵn lẻ: `nums[i] % 2 !== nums[i+1] % 2` là điều kiện cốt lõi
 - **Single pass** / Một lần duyệt: O(n) với early exit khi tìm vi phạm đầu tiên
@@ -60,7 +67,9 @@ An array is **special** if every pair of its adjacent elements contains two numb
 - **Sum parity trick** / Mẹo tổng: `(a+b) % 2 === 1` ↔ a và b khác tính chẵn lẻ
 - **Follow-up** / Mở rộng: Special Array II hỏi cho từng query range — cần prefix sum để O(1)/query
 
-## Solution 1 - Linear Scan (Optimal O(n))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -73,11 +82,7 @@ function isArraySpecial(nums: number[]): boolean {
   }
   return true;
 }
-```
 
-## Solution 2 - Every/Some (Functional)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Using Array.prototype.every for declarative style
@@ -85,11 +90,7 @@ function isArraySpecial(nums: number[]): boolean {
 function isArraySpecialFunctional(nums: number[]): boolean {
   return nums.every((val, i) => i === nums.length - 1 || val % 2 !== nums[i + 1] % 2);
 }
-```
 
-## Solution 3 - XOR Parity Trick
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * XOR of adjacent elements is odd iff they have different parity
@@ -101,11 +102,8 @@ function isArraySpecialXor(nums: number[]): boolean {
   }
   return true;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(isArraySpecial([1])); // → true (single element)
 console.log(isArraySpecial([2, 1, 4])); // → true
 console.log(isArraySpecial([4, 3, 1, 6])); // → false
@@ -114,7 +112,9 @@ console.log(isArraySpecial([1, 3, 5])); // → false (all odd)
 console.log(isArraySpecialFunctional([2, 1, 4])); // → true
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                              | Difficulty | Link                                                                          |
 | ------------------------------------ | ---------- | ----------------------------------------------------------------------------- |

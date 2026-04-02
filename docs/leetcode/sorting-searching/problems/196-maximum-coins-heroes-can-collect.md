@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-coins-heroes-can-collect"
 
 # Maximum Coins Heroes Can Collect / Lượng Coin Tối Đa Các Anh Hùng Có Thể Thu
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Hãy tưởng tượng một hàng quái vật xếp theo sức mạnh tăng dần. Mỗi anh hùng chỉ hạ được quái vật **yếu hơn** mình và gom hết coin của chúng. Bí quyết là: **biết mình mạnh đến đâu thì dừng**.
+**Analogy:** > **Hình ảnh:** Hãy tưởng tượng một hàng quái vật xếp theo sức mạnh tăng dần. Mỗi anh hùng chỉ hạ được quái vật **yếu hơn** mình và gom hết coin của chúng. Bí quyết là: **biết mình mạnh đến đâu thì dừng**.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Coins Heroes Can Collect example:**
 
 ```
 Monsters sorted: [1,  2,  3,  5,  8]
@@ -26,7 +31,9 @@ Hero(1) → beats nobody          → prefix[0] = 0 coins
 
 **Chiến lược:** Sort monsters + prefix sum coins → mỗi hero binary-search tìm giới hạn → O((n+m) log m).
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `heroes[i]`, `monsters[j]`, `coins[j]`: hero `i` defeats monster `j` iff `heroes[i] > monsters[j]` and earns `coins[j]`. Return `ans[i]` = total coins hero `i` can collect fighting ALL defeatable monsters.
 
@@ -34,6 +41,8 @@ Given `heroes[i]`, `monsters[j]`, `coins[j]`: hero `i` defeats monster `j` iff `
 **Example 2:** `heroes=[5]`, `monsters=[2,3,4]`, `coins=[10,20,30]` → `[60]`
 
 **Constraints:** `1 ≤ n, m ≤ 10^5`, `1 ≤ heroes[i], monsters[j], coins[j] ≤ 10^9`
+
+---
 
 ## 📝 Interview Tips
 
@@ -44,9 +53,9 @@ Given `heroes[i]`, `monsters[j]`, `coins[j]`: hero `i` defeats monster `j` iff `
 - **Binary search boundary:** `monsters[mid] < hero` → move lo up; else move hi down
 - **Edge case:** Hero weaker than all monsters → 0; hero stronger than all → total sum of coins
 
-## 💡 Solutions
+---
 
-### Solution 1: Sort + Prefix Sum + Binary Search — O((n+m) log m)
+## Solutions
 
 ```typescript
 function maximumCoins(heroes: number[], monsters: number[], coins: number[]): number[] {
@@ -74,11 +83,7 @@ function maximumCoins(heroes: number[], monsters: number[], coins: number[]): nu
     return prefix[lo];
   });
 }
-```
 
-### Solution 2: Sort Both + Two Pointers — O((n+m) log(n+m))
-
-```typescript
 function maximumCoinsTwoPointer(heroes: number[], monsters: number[], coins: number[]): number[] {
   const m = monsters.length;
   const n = heroes.length;
@@ -102,11 +107,7 @@ function maximumCoinsTwoPointer(heroes: number[], monsters: number[], coins: num
   }
   return result;
 }
-```
 
-### Solution 3: Functional One-liner Style
-
-```typescript
 function maximumCoinsClean(heroes: number[], monsters: number[], coins: number[]): number[] {
   const sorted = monsters.map((s, i) => ({ s, c: coins[i] })).sort((a, b) => a.s - b.s);
   const prefix = sorted.reduce<number[]>(
@@ -128,6 +129,8 @@ function maximumCoinsClean(heroes: number[], monsters: number[], coins: number[]
   return heroes.map((p) => prefix[upperBound(p)]);
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

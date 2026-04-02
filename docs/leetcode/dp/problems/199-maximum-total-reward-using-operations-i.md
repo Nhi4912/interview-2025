@@ -7,15 +7,18 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/maximum-total-reward-using-operations-i"
 ---
 
-## 🏆 3181. Maximum Total Reward Using Operations I / Tổng Phần Thưởng Tối Đa (I)
-
-**Difficulty:** 🟡 Medium
+# maximum total reward using operations i
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Bạn có một bộ thẻ điểm. Mỗi lần chọn thẻ có giá trị `v`, bạn chỉ được chọn nếu `v > tổng điểm hiện tại`. Sau đó cộng `v` vào tổng. Mục tiêu: tổng điểm cao nhất có thể. Giống như leo thang — chỉ leo bước tiếp nếu bước đó **cao hơn** tổng các bước đã leo.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 rewardValues = [1, 6, 4, 3, 2], sorted = [1,2,3,4,6]
@@ -32,12 +35,16 @@ Answer: max reachable = 11
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `rewardValues[]`, perform operations: pick any unused element `v` where `v > currentTotal`, then `total += v`. Return maximum achievable total. Elements can be used at most once; best strategy is to sort and use DP on reachable sums.
 
 - Example: `rewardValues = [1,1,3,3]` → **4**
 - Example: `rewardValues = [1,6,4,3,2]` → **11**
+
+---
 
 ---
 
@@ -52,9 +59,9 @@ Given `rewardValues[]`, perform operations: pick any unused element `v` where `v
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: DP Boolean Array (Subset Sum variant)
+## Solutions
 
 ```typescript
 function maxTotalReward(rewardValues: number[]): number {
@@ -82,11 +89,7 @@ function maxTotalReward(rewardValues: number[]): number {
   }
   return 0;
 }
-```
 
-### Solution 2: DP with explicit reachable set
-
-```typescript
 function maxTotalRewardSet(rewardValues: number[]): number {
   const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
   let reachable = new Set<number>([0]);
@@ -101,11 +104,7 @@ function maxTotalRewardSet(rewardValues: number[]): number {
 
   return Math.max(...reachable);
 }
-```
 
-### Solution 3: Greedy + DP optimized
-
-```typescript
 function maxTotalRewardGreedy(rewardValues: number[]): number {
   const vals = [...new Set(rewardValues)].sort((a, b) => a - b);
   const n = vals.length;

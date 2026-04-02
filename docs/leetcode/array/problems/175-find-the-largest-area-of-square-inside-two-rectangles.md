@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/find-the-largest-area-of-square-ins
 
 # Find the Largest Area of Square Inside Two Rectangles / Diện Tích Hình Vuông Lớn Nhất Trong Hai Hình Chữ Nhật
 
-🟡 Medium | Tags: Array, Math, Geometry
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Với mỗi cặp hình chữ nhật, tính phần giao nhau. Cạnh hình vuông lớn nhất bên trong phần giao là `min(chiều rộng, chiều cao)` của phần giao đó.
+**Analogy:** **VN:** Với mỗi cặp hình chữ nhật, tính phần giao nhau. Cạnh hình vuông lớn nhất bên trong phần giao là `min(chiều rộng, chiều cao)` của phần giao đó.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find the Largest Area of Square Inside Two Rectangles example:**
 
 ```
 Rect A: bottomLeft=[1,1] topRight=[3,3]
@@ -26,6 +29,18 @@ Intersection:
   y: max(1,2)=2 → min(3,4)=3 → height=1
   side = min(1,1) = 1  → area = 1
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                         | Difficulty | Pattern          |
+| ----------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Rectangle Area](https://leetcode.com/problems/rectangle-area/)                                 | 🟡 Medium  | Geometry         |
+| [Rectangle Overlap](https://leetcode.com/problems/rectangle-overlap/)                           | 🟢 Easy    | Geometry         |
+| [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/) | 🔴 Hard    | Stack / Geometry |
 
 ---
 
@@ -40,9 +55,9 @@ Intersection:
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Brute Force All Pairs
+## Solutions
 
 ```typescript
 /**
@@ -109,11 +124,7 @@ console.log(
     ],
   ),
 ); // 0
-```
 
-### Solution 2: Same Logic — Destructured for Clarity
-
-```typescript
 /**
  * Identical algorithm, destructured for readability.
  * Time: O(n²) | Space: O(1)

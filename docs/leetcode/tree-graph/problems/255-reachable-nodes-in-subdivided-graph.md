@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/reachable-nodes-in-subdivided-graph
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn đang leo núi có nhiều trạm dừng giữa đường. Mỗi tuyến đường giữa hai thành phố A và B có một số trạm dừng nhỏ ở giữa. Bạn có đúng M bước chân. Câu hỏi: bạn có thể ghé thăm tối đa bao nhiêu điểm (cả thành phố lớn và trạm dừng)? Dùng Dijkstra tìm khoảng cách ngắn nhất từ node 0 đến mọi node lớn. Với mỗi cạnh (u,v,cnt), nếu cả u và v đều đến được, ta có thể đi qua cnt trạm nhỏ; ngược lại ta đi từ phía nào gần hơn.
+**Analogy:** Hãy tưởng tượng bạn đang leo núi có nhiều trạm dừng giữa đường. Mỗi tuyến đường giữa hai thành phố A và B có một số trạm dừng nhỏ ở giữa. Bạn có đúng M bước chân. Câu hỏi: bạn có thể ghé thăm tối đa bao nhiêu điểm (cả thành phố lớn và trạm dừng)? Dùng Dijkstra tìm khoảng cách ngắn nhất từ node 0 đến mọi node lớn. Với mỗi cạnh (u,v,cnt), nếu cả u và v đều đến được, ta có thể đi qua cnt trạm nhỏ; ngược lại ta đi từ phía nào gần hơn.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Reachable Nodes In Subdivided Graph example:**
 
 ```
 edges = [[0,1,10],[0,2,1],[1,2,2]], maxMoves=6, n=3
@@ -40,7 +43,9 @@ For each edge, count reachable intermediate nodes:
 Total = 3 + 7 + 1 + 2 = 13 ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an undirected graph of `n` nodes (0-indexed). Each edge `[u, v, cnt]` has `cnt` new nodes inserted between `u` and `v`. Starting at node 0 with `maxMoves` steps, return the **maximum number of nodes** (original + subdivided) you can reach.
 
@@ -50,7 +55,9 @@ Given an undirected graph of `n` nodes (0-indexed). Each edge `[u, v, cnt]` has 
 
 **Constraints:** `0 ≤ edges.length ≤ min(n*(n-1)/2, 10⁴)`, `0 ≤ cnt ≤ 10⁴`, `1 ≤ maxMoves ≤ 10⁹`, `1 ≤ n ≤ 300`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Dijkstra on original nodes** / Dijkstra trên node gốc: Chạy Dijkstra chỉ trên n node gốc — khoảng cách thực tế qua cạnh (u,v,cnt) là cnt+1 bước
 - **Count intermediate nodes per edge** / Đếm node trung gian mỗi cạnh: Với cạnh (u,v,cnt): có thể đi `max(0, maxMoves - dist[u])` từ u, `max(0, maxMoves - dist[v])` từ v; tổng bị chặn bởi cnt
@@ -59,7 +66,9 @@ Given an undirected graph of `n` nodes (0-indexed). Each edge `[u, v, cnt]` has 
 - **Priority queue min-heap** / Hàng đợi min-heap: Dijkstra cần min-heap — JS không có built-in, implement bằng mảng sắp xếp hoặc binary heap
 - **Infinity initialization** / Khởi tạo vô cực: `dist = Array(n).fill(Infinity)` — chỉ node 0 có dist=0
 
-## Solution 1 - Dijkstra + Count Intermediates
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -99,11 +108,7 @@ function reachableNodes(edges: number[][], maxMoves: number, n: number): number 
 
   return total;
 }
-```
 
-## Solution 2 - Dijkstra with Min-Heap (Better for dense graphs)
-
-```typescript
 /**
  * @complexity Time: O((n+e) log(n+e)) | Space: O(n+e)
  * Priority queue Dijkstra for better performance with many edges
@@ -141,11 +146,8 @@ function reachableNodesHeap(edges: number[][], maxMoves: number, n: number): num
   }
   return total;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(
   reachableNodes(
     [
@@ -170,7 +172,9 @@ console.log(
 ); // → 13
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                         | Difficulty | Link                                                                    |
 | ------------------------------- | ---------- | ----------------------------------------------------------------------- |

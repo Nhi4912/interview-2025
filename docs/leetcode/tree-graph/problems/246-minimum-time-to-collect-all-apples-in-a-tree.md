@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-to-collect-all-apples-
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn đang đi hái táo trong một khu vườn hình cây — mỗi nhánh cây là một con đường, mỗi điểm nối là một ngã rẽ. Bạn bắt đầu từ gốc cây (node 0) và muốn hái hết tất cả táo rồi quay về. Mỗi cạnh tốn 1 giây đi và 1 giây về. Bí quyết: chỉ cần đi vào một nhánh nếu nhánh đó có táo — hoặc cây con của nó có táo. Dùng DFS từ lá lên gốc, cộng thêm 2 giây cho mỗi cạnh dẫn đến cây con có táo.
+**Analogy:** Hãy tưởng tượng bạn đang đi hái táo trong một khu vườn hình cây — mỗi nhánh cây là một con đường, mỗi điểm nối là một ngã rẽ. Bạn bắt đầu từ gốc cây (node 0) và muốn hái hết tất cả táo rồi quay về. Mỗi cạnh tốn 1 giây đi và 1 giây về. Bí quyết: chỉ cần đi vào một nhánh nếu nhánh đó có táo — hoặc cây con của nó có táo. Dùng DFS từ lá lên gốc, cộng thêm 2 giây cho mỗi cạnh dẫn đến cây con có táo.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Time to Collect All Apples in a Tree example:**
 
 ```
 n=7, edges=[[0,1],[0,2],[1,4],[1,5],[2,3],[2,6]]
@@ -36,7 +39,9 @@ Tree:         DFS cost from leaves up:
 Total = 8 ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an undirected tree with `n` nodes (0-indexed), a list of `edges`, and boolean array `hasApple` where `hasApple[i]` indicates if node `i` has an apple. Starting and ending at node 0, find the **minimum time** (in seconds) to collect all apples. Each edge takes 1 second to traverse in each direction.
 
@@ -46,7 +51,9 @@ Given an undirected tree with `n` nodes (0-indexed), a list of `edges`, and bool
 
 **Constraints:** `1 ≤ n ≤ 10⁵`, `0 ≤ edges.length ≤ n-1`, `hasApple.length === n`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **DFS post-order** / DFS hậu thứ tự: Tính cost từ lá lên gốc — con nào có cost > 0 hoặc có táo thì cha cộng thêm 2
 - **Build adjacency list** / Danh sách kề: Dùng `Map<number, number[]>` thay vì matrix để tiết kiệm bộ nhớ với n lớn
@@ -55,7 +62,9 @@ Given an undirected tree with `n` nodes (0-indexed), a list of `edges`, and bool
 - **Edge cost = 2** / Mỗi cạnh tốn 2: Đi xuống 1 giây + về 1 giây — chỉ tính khi cây con thực sự có táo
 - **Empty tree edge case** / Cây rỗng táo: Nếu không có táo nào → trả 0 ngay
 
-## Solution 1 - DFS Recursive (Clear)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -84,11 +93,7 @@ function minTime(n: number, edges: number[][], hasApple: boolean[]): number {
 
   return dfs(0, -1);
 }
-```
 
-## Solution 2 - DFS Iterative with Stack (Optimal for large n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Iterative post-order DFS to avoid recursion stack overflow for n=10^5
@@ -130,11 +135,8 @@ function minTimeIterative(n: number, edges: number[][], hasApple: boolean[]): nu
 
   return cost[0];
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 const e = [[0,1],[0,2],[1,4],[1,5],[2,3],[2,6]];
 console.log(minTime(7, e, [false,false,true,false,true,true,false]));  // → 8
 console.log(minTime(7, e, [false,false,true,false,false,true,false])); // → 6
@@ -143,7 +145,9 @@ console.log(minTimeIterative(7, e, [false,false,true,false,true,true,false])); /
 console.log(minTime(1, [], [false])); // → 0
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                             | Difficulty | Link                                                                         |
 | ----------------------------------- | ---------- | ---------------------------------------------------------------------------- |

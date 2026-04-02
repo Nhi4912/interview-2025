@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/partitioning-into-minimum-number-of
 
 # Partitioning Into Minimum Number Of Deci-Binary Numbers / Phân Chia Thành Số Lượng Tối Thiểu Số Deci-Binary
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Số deci-binary là số nguyên không âm chỉ chứa các chữ số 0 và 1 (không có leading zeros). Cho chuỗi `n` là số nguyên dương, tìm số lượng tối thiểu số deci-binary cần cộng lại để được `n`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Số deci-binary là số nguyên không âm chỉ chứa các chữ số 0 và 1 (không có leading zeros). Cho chuỗi `n` là số nguyên dương, tìm số lượng tối thiểu số deci-binary cần cộng lại để được `n`.
 
 **Ví dụ:** `n = "32"` → cần ít nhất `3` số (`11 + 11 + 10 = 32`).
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như xây tháp bằng gạch 1 tầng: mỗi vị trí hàng chục/đơn vị cần bao nhiêu gạch? Số gạch cần = chữ số lớn nhất vì mỗi lần chỉ đặt được tối đa 1 gạch mỗi vị trí!
-
-## Minh họa ASCII
+**Visual — Partitioning Into Minimum Number Of Deci-Binary Numbers example:**
 
 ```
 n = "82213"
@@ -37,14 +38,18 @@ Round 8: 1 0 0 0 0
 Answer = max digit = 8
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - **Deci-binary number**: số nguyên dương chỉ dùng chữ số `0` và `1`.
 - Cho chuỗi `n` biểu diễn số nguyên dương, trả về số lượng tối thiểu số deci-binary cần tổng để bằng `n`.
 
 **Constraints:** `1 <= n.length <= 10^5`, `n` không có leading zeros, chỉ chứa chữ số.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **Insight chính** — mỗi số deci-binary đóng góp tối đa `1` vào mỗi vị trí chữ số.
 2. **Tham lam** — chữ số lớn nhất trong `n` chính là số lượng tối thiểu.
@@ -53,9 +58,9 @@ Answer = max digit = 8
 5. **One-liner** — `+Math.max(...n.split('').map(Number))` đủ để pass.
 6. **String vs Number** — so sánh ký tự `'9'` > `'0'` cũng work vì ASCII ordering.
 
-## Giải pháp
+---
 
-### Giải pháp 1: Tìm chữ số lớn nhất (Tối ưu)
+## Solutions
 
 ```typescript
 function minPartitions(n: string): number {
@@ -76,11 +81,7 @@ console.log(minPartitions("82213")); // 8
 console.log(minPartitions("27346209830709182346")); // 9
 console.log(minPartitions("1")); // 1
 console.log(minPartitions("10")); // 1
-```
 
-### Giải pháp 2: Spread + Math.max (Ngắn gọn)
-
-```typescript
 function minPartitionsShort(n: string): number {
   // Compare characters directly (works because '0'-'9' are ordered in ASCII)
   return parseInt(n.split("").reduce((max, ch) => (ch > max ? ch : max), "0"));
@@ -90,11 +91,7 @@ function minPartitionsShort(n: string): number {
 console.log(minPartitionsShort("32")); // 3
 console.log(minPartitionsShort("82213")); // 8
 console.log(minPartitionsShort("1")); // 1
-```
 
-### Giải pháp 3: Minh chứng bằng xây dựng thực tế
-
-```typescript
 function minPartitionsVerify(n: string): number {
   // Find max digit — this IS the minimum number of deci-binary numbers
   const maxD = Math.max(...n.split("").map(Number));
@@ -122,18 +119,12 @@ console.log(minPartitionsVerify("32")); // 3, shows: "11", "11", "10"
 console.log(minPartitionsVerify("82213")); // 8
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp        | Thời gian | Không gian | Ghi chú             |
 | ---------------- | --------- | ---------- | ------------------- |
 | Duyệt tìm max    | O(n)      | O(1)       | Tối ưu nhất         |
 | Spread + reduce  | O(n)      | O(n)       | Ngắn gọn, tạo array |
 | Xây dựng thực tế | O(n²)     | O(n²)      | Chỉ để hiểu bài     |
-
-## Bài liên quan
-
-| #    | Tên                              | Độ khó | Tags          |
-| ---- | -------------------------------- | ------ | ------------- |
-| 2279 | Maximum Bags With Full Capacity  | Medium | Greedy        |
-| 1689 | Partitioning Into Minimum Number | Medium | Greedy        |
-| 410  | Split Array Largest Sum          | Hard   | Binary Search |

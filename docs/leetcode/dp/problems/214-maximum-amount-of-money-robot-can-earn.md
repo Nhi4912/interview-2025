@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/maximum-amount-of-money-robot-can-e
 
 # Maximum Amount of Money Robot Can Earn / Robot Kiếm Tiền Tối Đa
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Robot di chuyển từ ô trên-trái đến dưới-phải, thu tiền ở mỗi ô. Có tên trộm (ô âm) nhưng robot có thể vô hiệu hóa tối đa 2 tên.  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Robot di chuyển từ ô trên-trái đến dưới-phải, thu tiền ở mỗi ô. Có tên trộm (ô âm) nhưng robot có thể vô hiệu hóa tối đa 2 tên.  
 > Giống đi qua phố có cướp — nếu bạn có 2 lần "vượt qua miễn phí", chọn khôn ngoan hai điểm tệ nhất.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Amount of Money Robot Can Earn example:**
 
 ```
 coin = [[1,-1,-1],[2,-1,3]]
@@ -28,7 +33,9 @@ Optimal path: (0,0)→(1,0)→(1,1)→(1,2)
 Coins: 1 + 2 + skip(-1) + 3 = 6, with 1 neutralization
 ```
 
-## Problem
+---
+
+## Problem Description
 
 A robot starts at `(0,0)` and moves only right or down to reach `(m-1, n-1)`.
 `coin[i][j]` is the value at each cell (negative = robber steals money).
@@ -37,7 +44,9 @@ Return the **maximum** coins collected.
 
 **Constraints:** `m, n <= 500`, `-1000 <= coin[i][j] <= 1000`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **DP state** — `dp[i][j][k]` = max coins at `(i,j)` having neutralized `k` robbers (k=0,1,2).
 2. **Transition** — move from `(i-1,j)` or `(i,j-1)`; if `coin[i][j] < 0` can optionally neutralize (+1 to k).
@@ -46,9 +55,9 @@ Return the **maximum** coins collected.
 5. **Base case** — `dp[0][0][0] = coin[0][0]`; if `coin[0][0] < 0`, also `dp[0][0][1] = 0`.
 6. **Answer** — `max(dp[m-1][n-1][0..2])`.
 
-## Solutions
+---
 
-### Solution 1: 3D DP — O(m·n) time, O(m·n) space
+## Solutions
 
 ```typescript
 function maximumAmount(coin: number[][]): number {
@@ -114,11 +123,7 @@ console.log(
     [3, -2],
   ]),
 ); // 4
-```
 
-### Solution 2: Cleaner 3D DP (unified transition)
-
-```typescript
 function maximumAmountV2(coin: number[][]): number {
   const m = coin.length,
     n = coin[0].length;
@@ -169,7 +174,9 @@ console.log(
 console.log(maximumAmountV2([[-1]])); // 0
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                             | Difficulty | Key Concept            |
 | ------------------------------------------------------------------- | ---------- | ---------------------- |

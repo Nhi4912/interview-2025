@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-to-eat-all-grains"
 
 # Minimum Time to Eat All Grains / Thời Gian Tối Thiểu Để Ăn Hết Ngũ Cốc
 
-🔴 Hard | Binary Search + Greedy | [LeetCode 2513](https://leetcode.com/problems/minimum-time-to-eat-all-grains)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** Binary search on time `t`. For a given `t`, greedily check: sort both hens and grains. Each hen covers a range of grains — if grains are to the right only, reach is `h + t`; if grains extend left, the hen must travel left then right (or right then left), computed as `max(t - 2*leftDist, floor((t-leftDist)/2))` extra rightward reach.
+**Analogy:** **EN:** Binary search on time `t`. For a given `t`, greedily check: sort both hens and grains. Each hen covers a range of grains — if grains are to the right only, reach is `h + t`; if grains extend left, the hen must travel left then right (or right then left), computed as `max(t - 2*leftDist, floor((t-leftDist)/2))` extra rightward reach.
 
 **VI:** Binary search trên thời gian `t`. Với `t` cho trước, kiểm tra tham lam: sắp xếp cả gà và ngũ cốc. Mỗi con gà phủ một dải ngũ cốc — nếu chỉ bên phải thì đến `h + t`; nếu có phía trái, phải tính đường đi trái-rồi-phải.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Time to Eat All Grains example:**
 
 ```
 hens = [3, 6, 7]   grains = [2, 4, 7, 9]   t = 2
@@ -38,7 +41,19 @@ All grains eaten in t=2 ✓
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                | Difficulty | Pattern                     |
+| --- | ---------------------- | ---------- | --------------------------- |
+| 1   | Koko Eating Bananas    | 🟡 Medium  | binary search on answer     |
+| 2   | Minimum Number of Days | 🔴 Hard    | binary search + greedy      |
+| 3   | Swim in Rising Water   | 🔴 Hard    | binary search + feasibility |
+
+---
+
+## 📝 Interview Tips
 
 - 🔍 **EN:** Binary search range: `lo=0`, `hi=max(grains) + max(hens)` (safe upper bound). **VI:** Phạm vi binary search: `lo=0`, `hi` là khoảng cách tối đa có thể.
 - 🐔 **EN:** Sort both arrays — greedy assignment only works when both are sorted left to right. **VI:** Phải sắp xếp cả hai mảng — tham lam chỉ đúng khi cả hai đã được sắp xếp.
@@ -49,9 +64,9 @@ All grains eaten in t=2 ✓
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Binary Search + Greedy Two-Pointer
+## Solutions
 
 ```typescript
 /**
@@ -103,11 +118,7 @@ function minimumTime(hens: number[], grains: number[]): number {
 console.log(minimumTime([3, 6, 7], [2, 4, 7, 9])); // 2
 console.log(minimumTime([4, 6, 109], [5, 6])); // 1
 console.log(minimumTime([10], [1, 2, 3, 4, 5])); // 9
-```
 
-### Solution 2 — Binary Search with Explicit Bounds Calculation
-
-```typescript
 /**
  * Same logic but computes hi more precisely from constraints
  * Time: O((H+G) log D)  Space: O(H+G) for sorted copies
@@ -152,7 +163,7 @@ console.log(minimumTime2([10], [1, 2, 3, 4, 5])); // 9
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                | Difficulty | Pattern                     |
 | --- | ---------------------- | ---------- | --------------------------- |

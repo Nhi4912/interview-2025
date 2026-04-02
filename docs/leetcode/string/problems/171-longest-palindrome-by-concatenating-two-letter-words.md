@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/longest-palindrome-by-concatenating
 
 # Longest Palindrome by Concatenating Two Letter Words / Chuỗi Đối Xứng Dài Nhất Bằng Cách Ghép Các Từ Hai Chữ
 
-🟡 Medium | 🏷️ Array, Hash Table, String, Greedy, Counting
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Để tạo palindrome từ các từ 2 ký tự: **Nhóm 1** — ghép `"ab"` với `"ba"` (reverse của nhau): mỗi cặp đóng góp 4 ký tự. **Nhóm 2** — từ tự đối xứng `"aa"`, `"bb"`: mỗi cặp đóng góp 4 ký tự, và 1 từ thừa có thể đặt chính giữa (+2). Tổng = `4 * pairs + 4 * selfPairs + (2 nếu có từ self-palindrome lẻ)`.
+**Analogy:** **VI:** Để tạo palindrome từ các từ 2 ký tự: **Nhóm 1** — ghép `"ab"` với `"ba"` (reverse của nhau): mỗi cặp đóng góp 4 ký tự. **Nhóm 2** — từ tự đối xứng `"aa"`, `"bb"`: mỗi cặp đóng góp 4 ký tự, và 1 từ thừa có thể đặt chính giữa (+2). Tổng = `4 * pairs + 4 * selfPairs + (2 nếu có từ self-palindrome lẻ)`.
 
 **EN:** Two categories: (1) non-palindrome pairs `"ab"+"ba"` add 4 chars each. (2) self-palindromes `"aa"` can pair with each other for 4 chars, and one leftover can sit in the middle for +2.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Longest Palindrome by Concatenating Two Letter Words example:**
 
 ```
 words = ["lc","cl","gg"]
@@ -28,6 +33,18 @@ words = ["ab","ty","yt","lc","cl","ab"]
 Total = 8
 ```
 
+---
+
+## Problem Description
+
+| #   | Problem                       | Difficulty | Key Idea                      |
+| --- | ----------------------------- | ---------- | ----------------------------- |
+| 409 | Longest Palindrome            | 🟢 Easy    | Count odd-frequency chars     |
+| 336 | Palindrome Pairs              | 🔴 Hard    | Pair all words for palindrome |
+| 5   | Longest Palindromic Substring | 🟡 Medium  | Expand around center          |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Hai loại từ:** từ không đối xứng (cần reverse của nó) và từ tự đối xứng (`"aa"`)
@@ -39,9 +56,9 @@ Total = 8
 - 🇻🇳 **Tránh đếm 2 lần:** chỉ xét `"ab"` khi `a <= b` để không đếm cả `"ab"` lẫn `"ba"`
 - 🇬🇧 **Avoid double counting:** iterate asymmetric pairs once by checking `w[0] <= w[1]`
 
-## Solutions
+---
 
-### Solution 1: Frequency map with two categories
+## Solutions
 
 ```typescript
 /**
@@ -77,11 +94,7 @@ console.log(longestPalindrome(["ab", "ty", "yt", "lc", "cl", "ab"])); // 8
 console.log(longestPalindrome(["cc", "ll", "xx"])); // 2
 console.log(longestPalindrome(["aa", "aa"])); // 8
 console.log(longestPalindrome(["aa", "bb"])); // 2
-```
 
-### Solution 2: Array-based frequency (faster)
-
-```typescript
 /**
  * Same logic using a 26x26 frequency array for O(1) lookup.
  * Time: O(n) | Space: O(26*26) = O(1)
@@ -115,11 +128,7 @@ function longestPalindrome2(words: string[]): number {
 console.log(longestPalindrome2(["lc", "cl", "gg"])); // 6
 console.log(longestPalindrome2(["ab", "ty", "yt", "lc", "cl", "ab"])); // 8
 console.log(longestPalindrome2(["cc", "ll", "xx"])); // 2
-```
 
-### Solution 3: Greedy simulation
-
-```typescript
 /**
  * Greedily consume pairs: remove matched pairs from freq map.
  * Time: O(n) | Space: O(n)
@@ -146,6 +155,8 @@ function longestPalindrome3(words: string[]): number {
 console.log(longestPalindrome3(["lc", "cl", "gg"])); // 6
 console.log(longestPalindrome3(["aa", "aa"])); // 8
 ```
+
+---
 
 ## 🔗 Related Problems
 

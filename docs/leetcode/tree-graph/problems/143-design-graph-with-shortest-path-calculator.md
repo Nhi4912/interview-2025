@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/design-graph-with-shortest-path-cal
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dijkstra per Query
 
-## 🧠 Intuition
+---
 
-**VI**: Đây là bài thiết kế đồ thị có trọng số có hướng với khả năng thêm cạnh động. Vì không có cách nào tốt hơn để handle "dynamic graph + shortest path" mà không precompute lại, ta dùng Dijkstra mỗi lần query. Adjacency list lưu cạnh, MinHeap (ưu tiên khoảng cách nhỏ) để Dijkstra chuẩn.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Đây là bài thiết kế đồ thị có trọng số có hướng với khả năng thêm cạnh động. Vì không có cách nào tốt hơn để handle "dynamic graph + shortest path" mà không precompute lại, ta dùng Dijkstra mỗi lần query. Adjacency list lưu cạnh, MinHeap (ưu tiên khoảng cách nhỏ) để Dijkstra chuẩn.
 
 **EN**: Dynamic directed weighted graph — can add edges at any time. No precomputation can stay valid after `addEdge`. Run Dijkstra from scratch on each `shortestPath` query. Use adjacency list + min-heap (simulated with sorted array in interview).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Design Graph With Shortest Path Calculator example:**
 
 ```
 Graph: n=4, edges=[[0,2,5],[0,1,2],[1,2,1],[3,0,3]]
@@ -26,6 +33,19 @@ Query shortestPath(3,2):
 addEdge([1,3,4]) → shortestPath(0,3): 0→1→3 = 2+4=6
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                           | Difficulty | Pattern                 |
+| ---- | ------------------------------- | ---------- | ----------------------- |
+| 743  | Network Delay Time              | 🟡 Medium  | Dijkstra                |
+| 787  | Cheapest Flights Within K Stops | 🟡 Medium  | Bellman-Ford / Dijkstra |
+| 1514 | Path with Maximum Probability   | 🟡 Medium  | Dijkstra                |
+| 1631 | Path With Minimum Effort        | 🟡 Medium  | Dijkstra                |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Dijkstra mỗi query là O((V+E) log V) — với n≤100 và query≤100 là hoàn toàn OK.
@@ -34,6 +54,8 @@ addEdge([1,3,4]) → shortestPath(0,3): 0→1→3 = 2+4=6
 - 🇬🇧 Adjacency list for O(1) edge insertion; Dijkstra reads it per query.
 - 🇻🇳 Handle trường hợp không có đường đi: trả về -1 nếu `dist[dst] === Infinity`.
 - 🇬🇧 Return -1 if `dist[dst]` remains Infinity after Dijkstra finishes.
+
+---
 
 ## Solutions
 
@@ -185,6 +207,8 @@ console.log(g2.shortestPath(3, 2)); // 6
 g2.addEdge([1, 3, 4]);
 console.log(g2.shortestPath(0, 3)); // 6
 ```
+
+---
 
 ## 🔗 Related Problems
 

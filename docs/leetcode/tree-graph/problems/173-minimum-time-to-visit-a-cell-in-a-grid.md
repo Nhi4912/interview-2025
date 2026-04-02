@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-to-visit-a-cell-in-a-g
 
 # Minimum Time to Visit a Cell In a Grid / Thời Gian Tối Thiểu Thăm Ô Lưới
 
-🔴 Hard | Modified Dijkstra with Parity Wait | [LeetCode 2577](https://leetcode.com/problems/minimum-time-to-visit-a-cell-in-a-grid)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Bài toán như người giao hàng phải chờ cửa mở mới vào được. Nếu đến ô (r,c) quá sớm (time < grid[r][c]), ta phải đi qua lại giữa ô hiện tại và ô hàng xóm để "chờ thời gian". Kỹ thuật: nếu cần chờ, cộng thêm 1 hoặc 2 bước tuỳ theo tính chẵn lẻ.
+**Analogy:** **Vietnamese:** Bài toán như người giao hàng phải chờ cửa mở mới vào được. Nếu đến ô (r,c) quá sớm (time < grid[r][c]), ta phải đi qua lại giữa ô hiện tại và ô hàng xóm để "chờ thời gian". Kỹ thuật: nếu cần chờ, cộng thêm 1 hoặc 2 bước tuỳ theo tính chẵn lẻ.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Time to Visit a Cell In a Grid example:**
 
 ```
 grid[r][c]=5, arrive at t=3 → too early, must wait
@@ -29,7 +32,20 @@ Key formula: if (grid[r][c] - t) % 2 == 1 → t = grid[r][c]
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                  | Difficulty | Key Idea                              |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------- |
+| [Swim in Rising Water 778](https://leetcode.com/problems/swim-in-rising-water)                                           | Hard       | Dijkstra on grid with time constraint |
+| [Min Cost to Make Path Valid 1368](https://leetcode.com/problems/minimum-cost-to-make-at-least-one-valid-path-in-a-grid) | Hard       | 0-1 BFS on grid                       |
+| [Path With Min Effort 1631](https://leetcode.com/problems/path-with-minimum-effort)                                      | Medium     | Dijkstra on grid                      |
+| [Network Delay Time 743](https://leetcode.com/problems/network-delay-time)                                               | Medium     | Classic Dijkstra                      |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Early exit: if grid[0][1] > 1 AND grid[1][0] > 1 → impossible (return -1) | **VI:** Nếu cả hai ô kề (0,0) đều không đến được lúc t=1 → trả -1
 - 🔑 **EN:** Use Dijkstra with dist[r][c] = minimum time to reach (r,c) | **VI:** Dijkstra với dist[r][c] = thời gian tối thiểu
@@ -40,7 +56,9 @@ Key formula: if (grid[r][c] - t) % 2 == 1 → t = grid[r][c]
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -116,9 +134,7 @@ console.log(
     [1, 0, 4],
   ]),
 ); // -1
-```
 
-```typescript
 /**
  * Dijkstra with proper binary heap (array-based)
  * Time: O(m*n * log(m*n))  Space: O(m*n)
@@ -186,7 +202,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                                                  | Difficulty | Key Idea                              |
 | ------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------- |

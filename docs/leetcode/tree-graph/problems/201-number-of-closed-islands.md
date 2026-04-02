@@ -7,15 +7,18 @@ tags: [Array, Depth-First Search, Breadth-First Search, Union Find, Matrix]
 leetcode_url: "https://leetcode.com/problems/number-of-closed-islands"
 ---
 
-## 1254. Number of Closed Islands
-
-### Số Đảo Đóng | 🟡 Medium
+# number of closed islands
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Đảo "đóng" là đảo không chạm biên. Trick hay: trước tiên nhấn chìm (flood-fill) tất cả đảo chạm biên. Sau đó đếm các vùng `0` còn lại — đó là đảo đóng.
+**Analogy:** > **Vietnamese analogy:** Đảo "đóng" là đảo không chạm biên. Trick hay: trước tiên nhấn chìm (flood-fill) tất cả đảo chạm biên. Sau đó đếm các vùng `0` còn lại — đó là đảo đóng.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Grid (0=land, 1=water):
@@ -30,7 +33,9 @@ Answer: 1
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given a binary matrix `grid` where `0` = land and `1` = water, return the number of **closed islands** — islands (connected `0`s) completely surrounded by `1`s, **not** touching any border cell.
 
@@ -40,6 +45,8 @@ Given a binary matrix `grid` where `0` = land and `1` = water, return the number
 - Output: `2`
 
 **Constraints:** `1 <= m, n <= 100`
+
+---
 
 ---
 
@@ -54,9 +61,9 @@ Given a binary matrix `grid` where `0` = land and `1` = water, return the number
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Two-Pass Flood Fill
+## Solutions
 
 ```typescript
 function closedIsland(grid: number[][]): number {
@@ -95,11 +102,7 @@ function closedIsland(grid: number[][]): number {
 
   return count;
 }
-```
 
-### Solution 2: Single-Pass DFS (Border Detection)
-
-```typescript
 function closedIslandSinglePass(grid: number[][]): number {
   const m = grid.length,
     n = grid[0].length;
@@ -128,11 +131,7 @@ function closedIslandSinglePass(grid: number[][]): number {
 
   return count;
 }
-```
 
-### Solution 3: Union-Find
-
-```typescript
 function closedIslandUF(grid: number[][]): number {
   const m = grid.length,
     n = grid[0].length;

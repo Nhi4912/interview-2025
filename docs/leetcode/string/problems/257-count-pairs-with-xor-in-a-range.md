@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/count-pairs-with-xor-in-a-range"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng kho mật mã gồm nhiều két sắt, mỗi két có mã số nhị phân 15 bit. Hai két "tương thích" nếu XOR mã số của chúng nằm trong khoảng [low, high]. Thay vì thử từng cặp két (O(n²)), ta dùng cây Trie nhị phân lưu các mã đã xét. Kỹ thuật chìa khóa: `countPairs(low, high) = countBelow(high+1) - countBelow(low)` — biến khoảng thành hiệu của hai truy vấn "nhỏ hơn". Khi duyệt Trie từng bit MSB→LSB, nếu bit giới hạn là 1 thì đếm nguyên nhánh XOR=0 rồi rẽ sang nhánh XOR=1 để tiếp tục.
+**Analogy:** Hãy tưởng tượng kho mật mã gồm nhiều két sắt, mỗi két có mã số nhị phân 15 bit. Hai két "tương thích" nếu XOR mã số của chúng nằm trong khoảng [low, high]. Thay vì thử từng cặp két (O(n²)), ta dùng cây Trie nhị phân lưu các mã đã xét. Kỹ thuật chìa khóa: `countPairs(low, high) = countBelow(high+1) - countBelow(low)` — biến khoảng thành hiệu của hai truy vấn "nhỏ hơn". Khi duyệt Trie từng bit MSB→LSB, nếu bit giới hạn là 1 thì đếm nguyên nhánh XOR=0 rồi rẽ sang nhánh XOR=1 để tiếp tục.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Pairs with XOR in a Range example:**
 
 ```
 nums = [1, 4, 2, 7], low = 2, high = 6  →  Answer = 6
@@ -36,7 +39,9 @@ All valid pairs:
   4^2=6 ✓  4^7=3 ✓  2^7=5 ✓  →  Total = 6
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given integer array `nums` and integers `low`, `high`, return the number of **nice pairs** `(i, j)` where `i < j` and `low ≤ nums[i] XOR nums[j] ≤ high`.
 
@@ -46,7 +51,9 @@ Given integer array `nums` and integers `low`, `high`, return the number of **ni
 
 **Constraints:** `1 ≤ nums.length ≤ 2×10⁴`, `1 ≤ nums[i] ≤ 2×10⁴`, `0 ≤ low ≤ high ≤ 2×10⁴`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Range decomposition** / Phân tích khoảng: `count[low,high] = countBelow(high+1) - countBelow(low)` — biến 1 bài toán khoảng thành 2 bài toán "nhỏ hơn giới hạn" đơn giản hơn
 - **Trie lưu lịch sử** / Trie stores history: Insert `nums[j]` sau khi query → tự động chỉ đếm cặp `j < i`, tránh đếm trùng
@@ -55,7 +62,9 @@ Given integer array `nums` and integers `low`, `high`, return the number of **ni
 - **MAX_BIT = 14** / 15 bits đủ: `nums[i] ≤ 2×10⁴ < 2^15`, dùng bit index 14..0
 - **Brute O(n²) không đủ** / Brute TLEs: n=2×10⁴ → 4×10⁸ operations vượt giới hạn; Trie đưa về O(n·15)
 
-## Solution 1 - Brute Force O(n²)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -71,11 +80,7 @@ function countPairsBrute(nums: number[], low: number, high: number): number {
     }
   return count;
 }
-```
 
-## Solution 2 - Binary Trie O(n · 15)
-
-```typescript
 /**
  * @complexity Time: O(n·15) | Space: O(n·15)
  * For each num: query countBelow(high+1) - countBelow(low), then insert into trie.
@@ -128,11 +133,8 @@ function countPairs(nums: number[], low: number, high: number): number {
   }
   return count;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(countPairsBrute([1, 4, 2, 7], 2, 6)); // → 6
 console.log(countPairs([1, 4, 2, 7], 2, 6)); // → 6
 console.log(countPairs([9, 8, 4, 2, 1], 5, 14)); // → 8
@@ -141,7 +143,9 @@ console.log(countPairs([5], 0, 100)); // → 0 (single element)
 console.log(countPairs([1, 2, 4, 8], 0, 0)); // → 0 (no zero XOR pairs)
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                              | Difficulty | Link                                                                                          |
 | ---------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------- |

@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/check-if-binary-string-has-at-most-
 
 # Check if Binary String Has at Most One Segment of Ones / Kiểm Tra Chuỗi Nhị Phân Có Nhiều Nhất Một Đoạn 1
 
-🟢 Easy | 🏷️ String
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Nếu chuỗi có **nhiều hơn một đoạn 1**, nghĩa là có ít nhất một '0' xuất hiện **sau** một '1'. Khi đó sẽ tồn tại mẫu `"10"` trong chuỗi — nghĩa là sau đoạn 1 đầu tiên có '0', và sau đó lại có '1'. Điều kiện đủ và cần: không chứa `"01"` (sau khi đã có đoạn 1 rồi gặp 0, rồi lại gặp 1).
+**Analogy:** **VI:** Nếu chuỗi có **nhiều hơn một đoạn 1**, nghĩa là có ít nhất một '0' xuất hiện **sau** một '1'. Khi đó sẽ tồn tại mẫu `"10"` trong chuỗi — nghĩa là sau đoạn 1 đầu tiên có '0', và sau đó lại có '1'. Điều kiện đủ và cần: không chứa `"01"` (sau khi đã có đoạn 1 rồi gặp 0, rồi lại gặp 1).
 
 **EN:** The string starts with '1' (guaranteed). A second segment of ones exists iff there's a '0' followed later by a '1' — i.e., the pattern `"01"` exists.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Check if Binary String Has at Most One Segment of Ones example:**
 
 ```
 "1101"  → contains "01" → TWO segments → false
@@ -27,6 +32,18 @@ leetcode_url: "https://leetcode.com/problems/check-if-binary-string-has-at-most-
 "10101" → "01" at index 1 → false
 ```
 
+---
+
+## Problem Description
+
+| #    | Problem                                                | Difficulty | Key Idea                |
+| ---- | ------------------------------------------------------ | ---------- | ----------------------- |
+| 1784 | Check if Binary String Has at Most One Segment of Ones | 🟢 Easy    | This problem            |
+| 1869 | Longer Contiguous Segments of Ones                     | 🟢 Easy    | Compare segment lengths |
+| 926  | Flip String to Monotone Increasing                     | 🟡 Medium  | Segment transitions DP  |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Trick ngắn gọn:** `!s.includes("01")` — đủ để giải quyết toàn bộ bài toán
@@ -36,9 +53,9 @@ leetcode_url: "https://leetcode.com/problems/check-if-binary-string-has-at-most-
 - 🇻🇳 **Cách khác:** đếm số đoạn `1` bằng cách đếm transitions `0→1`
 - 🇬🇧 **Alternative:** count `0→1` transitions; at most one means answer is true
 
-## Solutions
+---
 
-### Solution 1: Check for "01" substring
+## Solutions
 
 ```typescript
 /**
@@ -54,11 +71,7 @@ console.log(checkOnesSegment("110")); // true  — no "01"
 console.log(checkOnesSegment("1")); // true
 console.log(checkOnesSegment("10101")); // false
 console.log(checkOnesSegment("11100")); // true
-```
 
-### Solution 2: Count 0→1 transitions
-
-```typescript
 /**
  * Count the number of times we go from '0' to '1'.
  * At most one such transition means at most one segment.
@@ -77,11 +90,7 @@ function checkOnesSegment2(s: string): boolean {
 console.log(checkOnesSegment2("1001")); // false (one 0→1 at index 3)
 console.log(checkOnesSegment2("110")); // true  (no 0→1)
 console.log(checkOnesSegment2("10101")); // false (two 0→1 transitions)
-```
 
-### Solution 3: Regex segment count
-
-```typescript
 /**
  * Split by '0+' and count non-empty '1' segments.
  * Time: O(n) | Space: O(n)
@@ -95,6 +104,8 @@ console.log(checkOnesSegment3("1001")); // false (2 segments)
 console.log(checkOnesSegment3("1110000")); // true  (1 segment)
 console.log(checkOnesSegment3("0")); // true  (0 segments)
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/count-the-number-of-consistent-stri
 
 # Count the Number of Consistent Strings / Đếm Số Chuỗi Nhất Quán
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Chuỗi được gọi là **nhất quán** nếu mọi ký tự trong nó đều xuất hiện trong chuỗi `allowed`. Cho `allowed` và mảng `words`, đếm số chuỗi nhất quán trong `words`.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Chuỗi được gọi là **nhất quán** nếu mọi ký tự trong nó đều xuất hiện trong chuỗi `allowed`. Cho `allowed` và mảng `words`, đếm số chuỗi nhất quán trong `words`.
 
 **Ví dụ:** `allowed = "ab"`, `words = ["ad","bd","aaab","baa","badab"]` → `"aaab"` ✓, `"baa"` ✓ → kết quả `2`.
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như kiểm tra danh sách thực phẩm được phép: chỉ được dùng các nguyên liệu trong danh sách `allowed`. Món nào dùng nguyên liệu ngoài danh sách thì loại bỏ.
-
-## Minh họa ASCII
+**Visual — Count the Number of Consistent Strings example:**
 
 ```
 allowed = "ab"
@@ -40,13 +41,17 @@ allowed "ab" → bit 0 (a) | bit 1 (b) = 0b11 = 3
 "ad":   bits = 0b1001, (9 & ~3) = 8 ≠ 0 → not consistent
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - Trả về số chuỗi trong `words` mà mọi ký tự đều thuộc `allowed`.
 
 **Constraints:** `1 <= words.length <= 10^4`, `1 <= allowed.length <= 26`, chỉ chứa chữ thường.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **Set cho O(1) lookup** — tạo Set từ `allowed`.
 2. **Bitmask** — encode `allowed` thành 26-bit number, so sánh nhanh.
@@ -55,9 +60,9 @@ allowed "ab" → bit 0 (a) | bit 1 (b) = 0b11 = 3
 5. **Bitmask trick** — nếu `(wordBits & ~allowedBits) === 0` → consistent.
 6. **Độ phức tạp** — O(n·m) với n = tổng độ dài words, m = |allowed|.
 
-## Giải pháp
+---
 
-### Giải pháp 1: Set + every (Ngắn gọn)
+## Solutions
 
 ```typescript
 function countConsistentStrings(allowed: string, words: string[]): number {
@@ -70,11 +75,7 @@ function countConsistentStrings(allowed: string, words: string[]): number {
 console.log(countConsistentStrings("ab", ["ad", "bd", "aaab", "baa", "badab"])); // 2
 console.log(countConsistentStrings("abc", ["a", "b", "c", "ab", "ac", "bc", "abc"])); // 7
 console.log(countConsistentStrings("cad", ["cc", "acd", "b", "ba", "bac", "bad", "ac", "d"])); // 4
-```
 
-### Giải pháp 2: Bitmask (Tốc độ cao nhất)
-
-```typescript
 function countConsistentStringsBitmask(allowed: string, words: string[]): number {
   // Build bitmask for allowed characters
   let allowedMask = 0;
@@ -100,11 +101,7 @@ console.log(countConsistentStringsBitmask("abc", ["a", "b", "c", "ab", "ac", "bc
 console.log(
   countConsistentStringsBitmask("cad", ["cc", "acd", "b", "ba", "bac", "bad", "ac", "d"]),
 ); // 4
-```
 
-### Giải pháp 3: For Loop với break
-
-```typescript
 function countConsistentStringsLoop(allowed: string, words: string[]): number {
   const allowedSet = new Set(allowed);
   let count = 0;
@@ -137,7 +134,9 @@ countConsistentStringsBitmask("abcde", bigWords);
 console.timeEnd("bitmask");
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp   | Thời gian | Không gian | Ghi chú             |
 | ----------- | --------- | ---------- | ------------------- |
@@ -146,11 +145,3 @@ console.timeEnd("bitmask");
 | For Loop    | O(n·m)    | O(k)       | Early exit tốt nhất |
 
 k = |allowed|, n = |words|, m = avg word length
-
-## Bài liên quan
-
-| #    | Tên                              | Độ khó | Tags       |
-| ---- | -------------------------------- | ------ | ---------- |
-| 1832 | Check if the Sentence Is Pangram | Easy   | Hash Table |
-| 2351 | First Letter to Appear Twice     | Easy   | Hash Table |
-| 2506 | Count Pairs Of Similar Strings   | Easy   | Hash Table |

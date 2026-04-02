@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/toss-strange-coins"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn có `n` đồng xu ma thuật — đồng xu thứ `i` có xác suất `prob[i]` ra mặt ngửa. Tung tất cả đồng xu, xác suất để đúng `target` đồng ra mặt ngửa là bao nhiêu? Giống như `n` học sinh thi đậu với tỉ lệ khác nhau — xác suất đúng `k` người đậu? DP theo từng học sinh: `dp[j]` = xác suất đúng `j` người đậu sau khi xét `i` người đầu.
+**Analogy:** Bạn có `n` đồng xu ma thuật — đồng xu thứ `i` có xác suất `prob[i]` ra mặt ngửa. Tung tất cả đồng xu, xác suất để đúng `target` đồng ra mặt ngửa là bao nhiêu? Giống như `n` học sinh thi đậu với tỉ lệ khác nhau — xác suất đúng `k` người đậu? DP theo từng học sinh: `dp[j]` = xác suất đúng `j` người đậu sau khi xét `i` người đầu.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Toss Strange Coins example:**
 
 ```
 prob = [0.4, 0.5, 0.6], target = 2
@@ -44,7 +47,9 @@ After coin 2 (p=0.6):
 Answer: dp[2] = 0.38 ✓ (wait: 0.4*0.5*0.4 + 0.4*0.5*0.6 + 0.6*0.5*0.6 = exact same)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 You have `n` coins with probabilities `prob[i]` of landing heads. Toss all coins simultaneously. Return the **probability** that exactly `target` coins show heads.
 
@@ -56,7 +61,9 @@ You have `n` coins with probabilities `prob[i]` of landing heads. Toss all coins
 
 **Constraints:** `1 ≤ prob.length ≤ 1000`, `0 ≤ prob[i] ≤ 1`, `0 ≤ target ≤ prob.length`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **dp[j] = P(exactly j heads)** / Ý nghĩa: Sau khi xét `i` đồng xu, xác suất đúng `j` mặt ngửa
 - **Reverse iteration** / Duyệt ngược: Duyệt `j` từ `i` xuống 1 để tránh dùng coin mới nhiều lần
@@ -65,7 +72,9 @@ You have `n` coins with probabilities `prob[i]` of landing heads. Toss all coins
 - **Base case** / Cơ sở: `dp[0] = 1.0` (0 đồng xu, 0 mặt ngửa — chắc chắn)
 - **Space O(target)** / Không gian: Chỉ cần mảng 1D — duyệt ngược tránh ghi đè
 
-## Solution 1 - Naive Recursion with Memo
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -88,11 +97,7 @@ function probabilityOfHeadsMemo(prob: number[], target: number): number {
 
   return dp(n, target);
 }
-```
 
-## Solution 2 - 1D DP (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(n·target) | Space: O(target)
  * Rolling 1D DP: iterate coins, update dp in reverse
@@ -132,11 +137,8 @@ function probabilityOfHeadsClean(prob: number[], target: number): number {
 
   return dp[target];
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(probabilityOfHeadsClean([0.4], 1)); // → 0.4
 console.log(probabilityOfHeadsClean([0.5, 0.5, 0.5, 0.5, 0.5], 0)); // → 0.03125
 console.log(probabilityOfHeadsClean([0.4, 0.5, 0.6], 2)); // → ~0.38
@@ -144,7 +146,9 @@ console.log(probabilityOfHeadsMemo([0.4, 0.5, 0.6], 2)); // → ~0.38
 console.log(probabilityOfHeadsClean([1.0, 1.0, 1.0], 3)); // → 1.0
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem              | Difficulty | Link                                                          |
 | -------------------- | ---------- | ------------------------------------------------------------- |

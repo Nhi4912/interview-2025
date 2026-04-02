@@ -7,15 +7,18 @@ tags: [Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/champagne-tower"
 ---
 
-## 🥂 799. Champagne Tower / Tháp Rượu Sâm Panh
-
-**Difficulty:** 🟡 Medium
+# champagne tower
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Hình dung một tháp ly rượu hình tam giác (hàng 0 có 1 ly, hàng 1 có 2 ly, ...). Đổ `poured` ly vào ly đầu tiên. Khi ly đầy (>1), phần dư tràn đều sang 2 ly bên dưới. Hỏi ly ở vị trí `(query_row, query_glass)` chứa bao nhiêu? (tối đa 1.0)
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 poured=2, query_row=1, query_glass=1
@@ -35,13 +38,17 @@ Simulation:
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Glasses in a champagne tower: row 0 has 1 glass, row `i` has `i+1`. Pour `poured` units into `(0,0)`. Full glass overflows equally to two below. Return how full glass `(query_row, query_glass)` is (0.0 to 1.0).
 
 - Example: `poured=1, query_row=1, query_glass=1` → **0.0**
 - Example: `poured=2, query_row=1, query_glass=1` → **0.5**
 - Example: `poured=100000009, query_row=33, query_glass=17` → **1.0**
+
+---
 
 ---
 
@@ -56,9 +63,9 @@ Glasses in a champagne tower: row 0 has 1 glass, row `i` has `i+1`. Pour `poured
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Row-by-Row Simulation (Space Optimized)
+## Solutions
 
 ```typescript
 function champagneTower(poured: number, query_row: number, query_glass: number): number {
@@ -79,11 +86,7 @@ function champagneTower(poured: number, query_row: number, query_glass: number):
 
   return Math.min(1.0, current[query_glass]);
 }
-```
 
-### Solution 2: 2D DP Grid (explicit, easier to understand)
-
-```typescript
 function champagneTower2D(poured: number, query_row: number, query_glass: number): number {
   // tower[r][c] = amount poured into glass (r, c)
   const R = query_row + 1;
@@ -102,11 +105,7 @@ function champagneTower2D(poured: number, query_row: number, query_glass: number
 
   return Math.min(1.0, tower[query_row][query_glass]);
 }
-```
 
-### Solution 3: In-Place Row Simulation
-
-```typescript
 function champagneTowerInPlace(poured: number, query_row: number, query_glass: number): number {
   // Build tower up to query_row
   const rows: number[][] = [[poured]];

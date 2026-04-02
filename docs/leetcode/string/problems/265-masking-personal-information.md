@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/masking-personal-information"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hệ thống ngân hàng luôn hiển thị thông tin ẩn danh: email `"John_Smith@example.com"` thành `"j*****h@example.com"`, số điện thoại `"+1-212-555-0100"` thành `"+*-***-***-0100"`. Như cảnh vệ che bảng tên — chỉ để lộ ký tự đầu/cuối email, và 4 số cuối điện thoại. Điểm khó là xử lý đúng hai loại đầu vào (email vs phone), bóc tách phần quan trọng, và định dạng mã quốc gia nếu có. Quy tắc đơn giản: email nhận dạng bởi `@`, phone nhận dạng bởi chỉ còn chữ số sau khi xóa `-()+ `.
+**Analogy:** Hệ thống ngân hàng luôn hiển thị thông tin ẩn danh: email `"John_Smith@example.com"` thành `"j*****h@example.com"`, số điện thoại `"+1-212-555-0100"` thành `"+*-***-***-0100"`. Như cảnh vệ che bảng tên — chỉ để lộ ký tự đầu/cuối email, và 4 số cuối điện thoại. Điểm khó là xử lý đúng hai loại đầu vào (email vs phone), bóc tách phần quan trọng, và định dạng mã quốc gia nếu có. Quy tắc đơn giản: email nhận dạng bởi `@`, phone nhận dạng bởi chỉ còn chữ số sau khi xóa `-()+ `.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Masking Personal Information example:**
 
 ```
 Email: "LeetCode@LeetCode.com"
@@ -39,7 +42,9 @@ Phone: "1(234)567-8901 x12"  → digits = "123456789012" (12 digits)
   → "+**-***-***-8901" (2 country code digits)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given a personal information string (email or phone), return its masked version:
 
@@ -52,7 +57,9 @@ Given a personal information string (email or phone), return its masked version:
 
 **Constraints:** `s` is a valid email or phone number per the problem definition
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Email vs Phone detection** / Phân biệt loại: `s.includes('@')` → email; otherwise → phone
 - **Email: lowercase first** / Email cần lowercase: Cả local lẫn domain đều cần `toLowerCase()` trước khi xử lý
@@ -61,7 +68,9 @@ Given a personal information string (email or phone), return its masked version:
 - **Local mask always 5 stars** / Luôn 5 dấu sao: Email luôn dùng `*****` bất kể độ dài local thực tế
 - **Split at first @** / Tách tại @ đầu tiên: Dùng `s.indexOf('@')` thay vì `split('@')` để tránh trường hợp @ trong domain (không hợp lệ nhưng phòng ngừa)
 
-## Solution 1 - Conditional Branches O(n)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -85,11 +94,7 @@ function maskPII(s: string): string {
     return "+" + "*".repeat(extra) + "-" + local;
   }
 }
-```
 
-## Solution 2 - Regex-Based Masking O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(n)
  * Use regex for cleaner digit extraction and email parsing
@@ -108,11 +113,7 @@ function maskPIIRegex(s: string): string {
   const masked = `***-***-${tail.slice(-4)}`;
   return country.length ? `+${"*".repeat(country.length)}-${masked}` : masked;
 }
-```
 
-## Solution 3 - Table-Driven Phone Prefix O(n)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Pre-define phone prefix strings for common lengths (10-13 digits)
@@ -132,11 +133,8 @@ function maskPIITableDriven(s: string): string {
   const prefix = PREFIX[digits.length] ?? `+${"*".repeat(digits.length - 10)}-`;
   return `${prefix}***-***-${digits.slice(-4)}`;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(maskPII("LeetCode@LeetCode.com")); // → "l*****e@leetcode.com"
 console.log(maskPII("AB@qq.com")); // → "a*****b@qq.com"
 console.log(maskPII("1(234)567-8901")); // → "+*-***-***-8901"
@@ -145,7 +143,9 @@ console.log(maskPIIRegex("1(555)555-5555")); // → "+*-***-***-5555"
 console.log(maskPIITableDriven("(234) 567-8901")); // → "***-***-8901"
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                 | Difficulty | Link                                                            |
 | ----------------------- | ---------- | --------------------------------------------------------------- |

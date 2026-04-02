@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/sum-of-left-leaves"
 
 # Sum of Left Leaves / Tổng Các Lá Bên Trái
 
-## Analogy / Tương Tự
+---
 
-> Trong một gia phả, "lá bên trái" là người **con trưởng không có con** (là con trái và không có con cái). Hãy tính tổng "số điểm" của tất cả những người như vậy.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Trong một gia phả, "lá bên trái" là người **con trưởng không có con** (là con trái và không có con cái). Hãy tính tổng "số điểm" của tất cả những người như vậy.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Sum of Left Leaves example:**
 
 ```
         3
@@ -29,11 +34,15 @@ Sum = 9 + 15 = 24
 Note: 7 is a RIGHT leaf → NOT counted
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given the `root` of a binary tree, return the **sum of all left leaves**. A left leaf is a leaf node that is the left child of its parent.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Track direction** — pass a boolean `isLeft` to know if current node is a left child
 2. **Leaf check** — a leaf has no left AND no right child
@@ -42,9 +51,9 @@ Given the `root` of a binary tree, return the **sum of all left leaves**. A left
 5. **Base cases** — null node returns 0; leaf returns val only if isLeft=true
 6. **Edge case** — single node tree: root is not a left leaf, return 0
 
-## Solutions
+---
 
-### Solution 1: DFS Recursive
+## Solutions
 
 ```typescript
 class TreeNode {
@@ -72,11 +81,7 @@ function sumOfLeftLeaves(root: TreeNode | null): number {
 const root1 = new TreeNode(3, new TreeNode(9), new TreeNode(20, new TreeNode(15), new TreeNode(7)));
 console.log(sumOfLeftLeaves(root1)); // 24
 console.log(sumOfLeftLeaves(new TreeNode(1))); // 0
-```
 
-### Solution 2: BFS Iterative
-
-```typescript
 function sumOfLeftLeavesBFS(root: TreeNode | null): number {
   if (!root) return 0;
   let sum = 0;
@@ -96,11 +101,7 @@ function sumOfLeftLeavesBFS(root: TreeNode | null): number {
 }
 
 console.log(sumOfLeftLeavesBFS(root1)); // 24
-```
 
-### Solution 3: Iterative DFS with Stack
-
-```typescript
 function sumOfLeftLeavesStack(root: TreeNode | null): number {
   if (!root) return 0;
   let sum = 0;
@@ -122,7 +123,9 @@ const root2 = new TreeNode(1, new TreeNode(2, new TreeNode(4), new TreeNode(5)),
 console.log(sumOfLeftLeavesStack(root2)); // 4 (only node 4 is a left leaf)
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                            | Difficulty | Tags      |
 | ---- | ---------------------------------- | ---------- | --------- |

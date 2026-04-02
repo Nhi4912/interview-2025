@@ -9,15 +9,20 @@ leetcode_url: "https://leetcode.com/problems/number-of-ways-to-paint-n-3-grid"
 
 # Number of Ways to Paint N × 3 Grid / Số Cách Tô Màu Lưới N×3
 
-🔴 Hard | State-machine DP with 12 valid column patterns
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Mỗi hàng của lưới 3 ô chỉ có 12 mẫu hợp lệ (không có 2 ô kề cùng màu với 3 màu).
+**Analogy:** **VI:** Mỗi hàng của lưới 3 ô chỉ có 12 mẫu hợp lệ (không có 2 ô kề cùng màu với 3 màu).
 Đếm số mẫu hàng kế tiếp tương thích với hàng hiện tại → DP chuyển trạng thái.
 
 **EN:** A 3-cell row with 3 colours has exactly 12 valid patterns (no adjacent cells same).
 Count how many next-row patterns are compatible (no vertical adjacency conflicts).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Ways to Paint N × 3 Grid example:**
 
 ```
 3 colours: R G B
@@ -27,6 +32,19 @@ Row patterns (12 total):
 
 Transition: row[i] compatible with row[i+1] iff no column j has same colour
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                                   | Difficulty | Key Idea             |
+| --------------------------------------------------------------------------------------------------------- | ---------- | -------------------- |
+| [256. Paint House](https://leetcode.com/problems/paint-house/)                                            | 🟡 Medium  | Row-by-row colour DP |
+| [265. Paint House II](https://leetcode.com/problems/paint-house-ii/)                                      | 🔴 Hard    | k colours DP         |
+| [1411. Number of Ways to Paint N×3 Grid](https://leetcode.com/problems/number-of-ways-to-paint-n-3-grid/) | 🔴 Hard    | This problem         |
+| [790. Domino and Tromino Tiling](https://leetcode.com/problems/domino-and-tromino-tiling/)                | 🟡 Medium  | Tiling state DP      |
+
+---
 
 ## 📝 Interview Tips
 
@@ -44,9 +62,9 @@ Transition: row[i] compatible with row[i+1] iff no column j has same colour
 - 🔑 **EN:** MOD = 10^9+7; apply at every addition.
   **VI:** MOD = 10^9+7; áp dụng tại mọi phép cộng.
 
-## Solutions
+---
 
-### Solution 1: State-Machine DP (enumerate 12 patterns)
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +101,7 @@ console.log(numOfWays(1)); // 12
 console.log(numOfWays(2)); // 54
 console.log(numOfWays(3)); // 246
 console.log(numOfWays(7000)); // large number mod 1e9+7
-```
 
-### Solution 2: O(1)-per-row Formula (count 3-colour vs 2-colour)
-
-```typescript
 /**
  * Mathematical observation:
  *   a3 = ways with 3 distinct colours in last row
@@ -112,6 +126,8 @@ console.log(numOfWays2(1)); // 12
 console.log(numOfWays2(2)); // 54
 console.log(numOfWays2(5000)); // large number
 ```
+
+---
 
 ## 🔗 Related Problems
 

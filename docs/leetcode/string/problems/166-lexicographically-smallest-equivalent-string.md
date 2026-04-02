@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/lexicographically-smallest-equivale
 
 # Lexicographically Smallest Equivalent String / Chuỗi Tương Đương Nhỏ Nhất Theo Thứ Tự Từ Điển
 
-🟡 Medium | 🏷️ String, Union Find
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** `s1[i]` và `s2[i]` là "tương đương nhau". Quan hệ tương đương là bắc cầu — nếu `a~b` và `b~c` thì `a~c`. Dùng **Union-Find** để gom nhóm các ký tự tương đương. Khi tìm representative của một nhóm, luôn chọn ký tự **nhỏ nhất** (thay vì random). Áp dụng cho `baseStr`.
+**Analogy:** **VI:** `s1[i]` và `s2[i]` là "tương đương nhau". Quan hệ tương đương là bắc cầu — nếu `a~b` và `b~c` thì `a~c`. Dùng **Union-Find** để gom nhóm các ký tự tương đương. Khi tìm representative của một nhóm, luôn chọn ký tự **nhỏ nhất** (thay vì random). Áp dụng cho `baseStr`.
 
 **EN:** Equivalences from `s1[i]↔s2[i]` are transitive. Use Union-Find where each group's representative is the smallest character. Then map each char in `baseStr` to its group's minimum.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Lexicographically Smallest Equivalent String example:**
 
 ```
 s1="parker", s2="morris"
@@ -28,6 +33,18 @@ p→m, a→a, r→k, s→k, e→e, r→k
 Result: "makkek"
 ```
 
+---
+
+## Problem Description
+
+| #   | Problem                              | Difficulty | Key Idea                        |
+| --- | ------------------------------------ | ---------- | ------------------------------- |
+| 990 | Satisfiability of Equality Equations | 🟡 Medium  | Union-Find on chars             |
+| 721 | Accounts Merge                       | 🟡 Medium  | Union-Find with grouping        |
+| 547 | Number of Provinces                  | 🟡 Medium  | Union-Find connected components |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Union-Find với min:** khi `union(a,b)`, root phải là ký tự nhỏ hơn
@@ -37,9 +54,9 @@ Result: "makkek"
 - 🇻🇳 **Áp dụng cho baseStr:** với mỗi ký tự, tìm `find(c)` để lấy representative
 - 🇬🇧 **Result building:** `Array.from(baseStr).map(c => String.fromCharCode(find(code) + 97))`
 
-## Solutions
+---
 
-### Solution 1: Union-Find with min-root
+## Solutions
 
 ```typescript
 /**
@@ -75,11 +92,7 @@ function smallestEquivalentString(s1: string, s2: string, baseStr: string): stri
 console.log(smallestEquivalentString("parker", "morris", "parser")); // "makkek"
 console.log(smallestEquivalentString("hello", "world", "hold")); // "hdld"
 console.log(smallestEquivalentString("leetcode", "programs", "sourcecode")); // "aauaaaaada"
-```
 
-### Solution 2: DFS/BFS with adjacency list
-
-```typescript
 /**
  * Build adjacency list of equivalences, then BFS to find min in each component.
  * Time: O(n + 26^2) | Space: O(26^2)
@@ -135,6 +148,8 @@ function smallestEquivalentString2(s1: string, s2: string, baseStr: string): str
 
 console.log(smallestEquivalentString2("parker", "morris", "parser")); // "makkek"
 ```
+
+---
 
 ## 🔗 Related Problems
 

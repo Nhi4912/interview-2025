@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/largest-plus-sign"
 
 # Largest Plus Sign / Dấu Cộng Lớn Nhất
 
-🟡 Medium | Dynamic Programming · Matrix
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** For each cell, the arm length of a plus sign is limited by the shortest arm in any of the 4 directions. Precompute consecutive 1s in each direction: `up[i][j]`, `down[i][j]`, `left[i][j]`, `right[i][j]`. The order of the plus at `(i,j)` = `min(up, down, left, right)`.
+**Analogy:** **EN:** For each cell, the arm length of a plus sign is limited by the shortest arm in any of the 4 directions. Precompute consecutive 1s in each direction: `up[i][j]`, `down[i][j]`, `left[i][j]`, `right[i][j]`. The order of the plus at `(i,j)` = `min(up, down, left, right)`.
 
 **VI:** Với mỗi ô, cánh tay của dấu cộng bị giới hạn bởi cánh tay ngắn nhất trong 4 hướng. Tính trước số ô liên tiếp bằng 1 theo mỗi hướng: `up`, `down`, `left`, `right`. Bậc dấu cộng tại (i,j) = `min(up, down, left, right)`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Largest Plus Sign example:**
 
 ```
 n=5, mines={(4,2)}
@@ -37,6 +40,18 @@ order(i,j) = min(left,right,up,down) → max order = 2
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                           | Difficulty | Pattern      |
+| ------------------------------------------------------------------------------------------------- | ---------- | ------------ |
+| [Maximal Square](https://leetcode.com/problems/maximal-square/)                                   | 🟡 Medium  | Grid DP      |
+| [Count Submatrices With All Ones](https://leetcode.com/problems/count-submatrices-with-all-ones/) | 🟡 Medium  | Grid DP      |
+| [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle/)                             | 🔴 Hard    | Stack + Grid |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** 4-pass DP: compute consecutive 1s in left, right, up, down directions separately. **VI:** DP 4 lần: tính số ô liên tiếp bằng 1 theo hướng trái, phải, trên, xuống riêng biệt.
@@ -48,7 +63,9 @@ order(i,j) = min(left,right,up,down) → max order = 2
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

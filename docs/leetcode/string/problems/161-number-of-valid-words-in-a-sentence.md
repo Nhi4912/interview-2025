@@ -9,13 +9,18 @@ leetcode_url: "https://leetcode.com/problems/number-of-valid-words-in-a-sentence
 
 # Number of Valid Words in a Sentence / Số Từ Hợp Lệ Trong Câu
 
-🟢 Easy | 🏷️ String
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Câu có các "token" phân cách bởi khoảng trắng. Một token hợp lệ nếu: chỉ gồm chữ thường/dấu gạch ngang/dấu câu, tối đa một dấu gạch ngang (kẹp giữa 2 chữ cái), tối đa một dấu câu (phải ở cuối). Không được có số!
+**Analogy:** **VI:** Câu có các "token" phân cách bởi khoảng trắng. Một token hợp lệ nếu: chỉ gồm chữ thường/dấu gạch ngang/dấu câu, tối đa một dấu gạch ngang (kẹp giữa 2 chữ cái), tối đa một dấu câu (phải ở cuối). Không được có số!
 
 **EN:** Split by whitespace, then validate each token against three rules using regex or manual scanning.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Valid Words in a Sentence example:**
 
 ```
 "cat and  in-2"
@@ -26,6 +31,18 @@ Valid token rules:
  No digits anywhere!
 ```
 
+---
+
+## Problem Description
+
+| #    | Problem                                  | Difficulty | Key Idea                 |
+| ---- | ---------------------------------------- | ---------- | ------------------------ |
+| 58   | Length of Last Word                      | 🟢 Easy    | String split/trim        |
+| 520  | Detect Capital                           | 🟢 Easy    | Character classification |
+| 1805 | Number of Different Integers in a String | 🟢 Easy    | Token extraction         |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 **Tách token:** `sentence.split(' ')` — có thể có nhiều khoảng trắng, lọc token rỗng
@@ -35,9 +52,9 @@ Valid token rules:
 - 🇻🇳 **Dấu câu** `! . ,` chỉ được xuất hiện ở vị trí cuối cùng của token
 - 🇬🇧 **Regex approach:** `/^[a-z]*([a-z]-[a-z])?[a-z]*[!.,]?$/` cleanly captures all rules
 
-## Solutions
+---
 
-### Solution 1: Regex validation
+## Solutions
 
 ```typescript
 /**
@@ -54,11 +71,7 @@ function countValidWords(sentence: string): number {
 console.log(countValidWords("cat and  in-2")); // 2
 console.log(countValidWords("!this  1-s b!d")); // 0
 console.log(countValidWords("alice and  bob are playing stone-game10")); // 5
-```
 
-### Solution 2: Manual character scanning
-
-```typescript
 /**
  * Manually validate each token — no regex, explicit state machine.
  * Time: O(n) | Space: O(1) extra per token
@@ -85,11 +98,7 @@ function countValidWords2(sentence: string): number {
 
 console.log(countValidWords2("cat and  in-2")); // 2
 console.log(countValidWords2("he bought 2 pencils, 3 erasers, and 1  pencil-sharpener.")); // 6
-```
 
-### Solution 3: Split with regex whitespace
-
-```typescript
 /**
  * Use \s+ split to avoid empty token filtering.
  * Time: O(n) | Space: O(n)
@@ -103,6 +112,8 @@ function countValidWords3(sentence: string): number {
 console.log(countValidWords3("  leading spaces  ")); // 0
 console.log(countValidWords3("a-b. ok! no2")); // 2
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/missing-number-in-arithmetic-progre
 
 # Missing Number In Arithmetic Progression / Tìm Số Bị Thiếu Trong Cấp Số Cộng
 
-**Difficulty:** Easy | **Category:** Array, Math | **LeetCode:** [1228](https://leetcode.com/problems/missing-number-in-arithmetic-progression)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Phép so sánh tiếng Việt:** Giống như bạn có một dãy bậc thang đều nhau, nhưng có một bậc bị thiếu. Nếu biết bậc đầu, bậc cuối, và tổng số bậc, bạn có thể tính ngay bậc nào bị thiếu mà không cần kiểm tra từng bậc một.
+**Analogy:** **Phép so sánh tiếng Việt:** Giống như bạn có một dãy bậc thang đều nhau, nhưng có một bậc bị thiếu. Nếu biết bậc đầu, bậc cuối, và tổng số bậc, bạn có thể tính ngay bậc nào bị thiếu mà không cần kiểm tra từng bậc một.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Missing Number In Arithmetic Progression example:**
 
 ```
 arr = [5, 7, 11, 13]   (missing: 9)
@@ -28,7 +33,13 @@ Hoặc: duyệt từng cặp, tìm khoảng cách != d:
   7-5=2 ✓, 11-7=4 ≠ 2 → missing = 7 + 2 = 9 ✓
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **d = (last - first) / n**: Công sai phải là phân số này. Lưu ý n là độ dài mảng đã bỏ đi 1 phần tử, nên `n = arr.length` (vì mảng cho thiếu 1).
 2. **Sum trick**: Tổng cấp số cộng đầy đủ (n+1 phần tử) = `(n+1) * (first+last) / 2`. Missing = expected_sum - actual_sum.
@@ -37,7 +48,9 @@ Hoặc: duyệt từng cặp, tìm khoảng cách != d:
 5. **Binary search**: Sau khi biết d, tìm vị trí i đầu tiên mà `arr[i] != arr[0] + i*d` → missing = arr[0] + i\*d. O(log n).
 6. **Luôn có đúng 1 phần tử bị thiếu**: Bài đảm bảo điều này, không cần xử lý "không có thiếu".
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -67,9 +80,7 @@ console.log(missingNumber([15, 13, 12])); // 14
 console.log(missingNumber([0, 5, 10, 15])); // đây không phải AP đúng, nhưng...
 console.log(missingNumber([1, 2, 3, 4])); // 5 (missing at end? d=1, n=4 → sum=15 expect 5*2.5=12.5 ← cần check)
 console.log(missingNumber([1, 3, 5, 9])); // 7
-```
 
-```typescript
 /**
  * Approach 2: Linear Scan — tìm khoảng hở != d
  * Time: O(n)  Space: O(1)
@@ -104,9 +115,7 @@ console.log(missingNumberScan([15, 13, 12])); // 14
 console.log(missingNumberScan([0, 5, 10, 15])); // 20 (missing at end)
 console.log(missingNumberScan([1, 3, 5, 9])); // 7
 console.log(missingNumberScan([1, 1, 1])); // 1
-```
 
-```typescript
 /**
  * Approach 3: Binary Search — O(log n)
  * Time: O(log n)  Space: O(1)
@@ -149,7 +158,9 @@ console.log(missingNumberBinary([1, 2, 4])); // 3
 console.log(missingNumberBinary([3, 5, 7])); // d=(7-3)/2=2, all OK → 3+2*2=7+2=9? Cần verify
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                            | Difficulty | Pattern     |
 | ------------------------------------------------------------------------------------------------------------------ | ---------- | ----------- |

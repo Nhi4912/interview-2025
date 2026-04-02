@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/count-the-number-of-powerful-intege
 
 # Count the Number of Powerful Integers / Đếm Số Nguyên Mạnh
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Đếm các số trong khoảng [start, finish] mà mỗi chữ số ≤ limit VÀ kết thúc bằng hậu tố s.  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Đếm các số trong khoảng [start, finish] mà mỗi chữ số ≤ limit VÀ kết thúc bằng hậu tố s.  
 > Giống đếm biển số xe hợp lệ trong một khoảng — dùng kỹ thuật "đếm tới n" rồi trừ đi.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count the Number of Powerful Integers example:**
 
 ```
 count(finish) - count(start - 1)
@@ -27,14 +32,18 @@ Prefix part: each digit ≤ limit(=9)
               ← free digits →   1
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given `start`, `finish`, `limit`, and `suffix` string `s`:  
 Count integers in `[start, finish]` where every digit is ≤ `limit` AND the number ends with `s`.
 
 **Constraints:** `1 <= start <= finish <= 10^15`, `1 <= limit <= 9`, `1 <= s.length <= floor(log10(finish)) + 1`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Digit DP pattern** — count(n) = "how many valid numbers ≤ n?" then answer = count(finish) - count(start-1).
 2. **Suffix constraint** — a valid number must end with `s`; its length must be `>= s.length`.
@@ -43,9 +52,9 @@ Count integers in `[start, finish]` where every digit is ≤ `limit` AND the num
 5. **Base case** — if `s` alone (as a number) > `n`, return 0. If `s.length == totalLen`, check suffix directly.
 6. **BigInt safe** — finish can be up to 10^15; use BigInt or careful number arithmetic.
 
-## Solutions
+---
 
-### Solution 1: Digit DP — count(n) helper — O(log n)
+## Solutions
 
 ```typescript
 function numberOfPowerfulInt(start: number, finish: number, limit: number, s: string): number {
@@ -137,11 +146,7 @@ function numberOfPowerfulInt(start: number, finish: number, limit: number, s: st
 console.log(numberOfPowerfulInt(1, 6000, 4, "124")); // 5
 console.log(numberOfPowerfulInt(15, 215, 6, "10")); // 2
 console.log(numberOfPowerfulInt(1000, 2000, 4, "3")); // 2
-```
 
-### Solution 2: Cleaner Digit DP with string comparison
-
-```typescript
 function numberOfPowerfulIntV2(start: number, finish: number, limit: number, s: string): number {
   function count(n: string): number {
     if (n.length < s.length) return 0;
@@ -193,7 +198,9 @@ console.log(numberOfPowerfulIntV2(1, 6000, 4, "124")); // 5
 console.log(numberOfPowerfulIntV2(15, 215, 6, "10")); // 2
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                                         | Difficulty | Key Concept |
 | ------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- |

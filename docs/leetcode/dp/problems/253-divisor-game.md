@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/divisor-game"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hai người chơi trò chơi với số `n`. Người đến lượt chọn một ước số `x` của `n` (0 < x < n), rồi `n` trở thành `n - x`. Ai không thể chọn được thì thua. Alice đi trước — cô ấy có thể thắng không? Mẹo thú vị: nếu `n` chẵn, Alice luôn chọn `x = 1` (ước số chẵn - ước số lẻ = lẻ), đẩy Bob vào tình thế số lẻ. Bob buộc phải trả số chẵn cho Alice, và cứ thế Alice luôn kiểm soát. Đáp án: Alice thắng khi và chỉ khi `n` chẵn!
+**Analogy:** Hai người chơi trò chơi với số `n`. Người đến lượt chọn một ước số `x` của `n` (0 < x < n), rồi `n` trở thành `n - x`. Ai không thể chọn được thì thua. Alice đi trước — cô ấy có thể thắng không? Mẹo thú vị: nếu `n` chẵn, Alice luôn chọn `x = 1` (ước số chẵn - ước số lẻ = lẻ), đẩy Bob vào tình thế số lẻ. Bob buộc phải trả số chẵn cho Alice, và cứ thế Alice luôn kiểm soát. Đáp án: Alice thắng khi và chỉ khi `n` chẵn!
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Divisor Game example:**
 
 ```
 n=1: Alice cần ước < 1 → không có → thua (false)
@@ -38,7 +41,9 @@ dp[1]=F, dp[2]=T, dp[3]=F, dp[4]=T, dp[5]=F, dp[6]=T...
 For n: dp[n] = OR of (!dp[n-x]) for all divisors x of n
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Alice and Bob take turns. Alice goes first. On each turn, the current player picks `x` where `0 < x < n` and `x` divides `n`, then replaces `n` with `n - x`. The player who can't make a move loses. Return `true` if Alice wins (both play optimally).
 
@@ -50,7 +55,9 @@ Alice and Bob take turns. Alice goes first. On each turn, the current player pic
 
 **Constraints:** `1 ≤ n ≤ 1000`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Math insight** / Nhận xét toán học: `n % 2 === 0` → Alice wins; `n % 2 === 1` → Alice loses
 - **Why** / Tại sao: Số lẻ chỉ có ước lẻ (ngoại trừ chính nó) → `odd - odd = even` → chỉ có thể tạo số chẵn
@@ -59,7 +66,9 @@ Alice and Bob take turns. Alice goes first. On each turn, the current player pic
 - **O(1) solution** / O(1): `return n % 2 === 0` — không cần DP!
 - **Interview pitfall** / Bẫy phỏng vấn: Hỏi DP nhưng toán học đơn giản hơn nhiều — nhận ra là điểm cộng
 
-## Solution 1 - Brute Force Recursion
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -86,11 +95,7 @@ function divisorGameBrute(n: number): boolean {
 
   return canWin(n);
 }
-```
 
-## Solution 2 - DP Bottom-Up
-
-```typescript
 /**
  * @complexity Time: O(n²) | Space: O(n)
  * dp[i] = true if current player wins with number i
@@ -111,11 +116,7 @@ function divisorGameDP(n: number): boolean {
 
   return dp[n];
 }
-```
 
-## Solution 3 - Mathematical O(1)
-
-```typescript
 /**
  * @complexity Time: O(1) | Space: O(1)
  * Key insight: Alice wins iff n is even.
@@ -127,11 +128,8 @@ function divisorGameDP(n: number): boolean {
 function divisorGame(n: number): boolean {
   return n % 2 === 0;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(divisorGame(1)); // → false
 console.log(divisorGame(2)); // → true
 console.log(divisorGame(3)); // → false
@@ -141,7 +139,9 @@ console.log(divisorGameDP(6)); // → true
 console.log(divisorGameBrute(7)); // → false
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem       | Difficulty | Link                                                  |
 | ------------- | ---------- | ----------------------------------------------------- |

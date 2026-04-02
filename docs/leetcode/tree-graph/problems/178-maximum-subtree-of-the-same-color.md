@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-subtree-of-the-same-color"
 
 # Maximum Subtree of the Same Color / Cây Con Tối Đa Cùng Màu
 
-🟡 Medium | Post-order DFS: Color Uniformity Check | [LeetCode 2440](https://leetcode.com/problems/maximum-subtree-of-the-same-color)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Duyệt cây theo thứ tự hậu (post-order DFS). Với mỗi nút, kiểm tra xem tất cả các nút trong cây con của nó có cùng màu không. Một cây con "hợp lệ" khi: màu nút hiện tại = màu tất cả con, VÀ tất cả cây con của con cũng hợp lệ. Trả về kích thước lớn nhất.
+**Analogy:** **Vietnamese:** Duyệt cây theo thứ tự hậu (post-order DFS). Với mỗi nút, kiểm tra xem tất cả các nút trong cây con của nó có cùng màu không. Một cây con "hợp lệ" khi: màu nút hiện tại = màu tất cả con, VÀ tất cả cây con của con cũng hợp lệ. Trả về kích thước lớn nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Subtree of the Same Color example:**
 
 ```
 colors=[1,1,2,1,3,2]  edges=[[0,1],[0,2],[1,3],[1,4],[2,5]]
@@ -37,7 +40,20 @@ ans = max valid subtree size
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                      | Difficulty | Key Idea                |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [Subtree of Another Tree 572](https://leetcode.com/problems/subtree-of-another-tree)                                         | Easy       | Tree matching via DFS   |
+| [Count Good Nodes in Binary Tree 1448](https://leetcode.com/problems/count-good-nodes-in-binary-tree)                        | Medium     | Post-order DFS counting |
+| [Binary Tree Cameras 968](https://leetcode.com/problems/binary-tree-cameras)                                                 | Hard       | Post-order greedy DP    |
+| [Max Points After Collecting Coins 2930](https://leetcode.com/problems/maximum-points-after-collecting-coins-from-all-nodes) | Hard       | Tree DP                 |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Post-order DFS: children first, then decide validity for current node | **VI:** Xử lý con trước, rồi quyết định nút hiện tại
 - 🔑 **EN:** Track two values per node: subtree_size and is_uniform (all same color) | **VI:** Mỗi nút lưu: kích thước cây con và có đồng màu không
@@ -48,7 +64,9 @@ ans = max valid subtree size
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -111,9 +129,7 @@ console.log(
   ),
 ); // 6
 console.log(maximumSubtreeSize([[0, 1]], [1, 2])); // 1
-```
 
-```typescript
 /**
  * Iterative post-order DFS using explicit stack
  * Time: O(n)  Space: O(n) — avoids call stack overflow
@@ -191,7 +207,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                                                      | Difficulty | Key Idea                |
 | ---------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------- |

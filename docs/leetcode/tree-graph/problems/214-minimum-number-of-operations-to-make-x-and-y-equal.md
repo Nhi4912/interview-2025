@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-operations-to-mak
 
 # Minimum Number of Operations to Make X and Y Equal / Số Thao Tác Tối Thiểu Để X Bằng Y
 
-## Analogy / Tương Tự
+---
 
-> Bạn có một số x, muốn biến thành y. Bạn có 4 thao tác: +1, -1, ÷11 (nếu chia hết), ÷5 (nếu chia hết). Giống như đồng hồ số, bạn có thể điều chỉnh từng bước hoặc nhảy vọt khi gặp bội số. Tìm cách nhanh nhất!
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Bạn có một số x, muốn biến thành y. Bạn có 4 thao tác: +1, -1, ÷11 (nếu chia hết), ÷5 (nếu chia hết). Giống như đồng hồ số, bạn có thể điều chỉnh từng bước hoặc nhảy vọt khi gặp bội số. Tìm cách nhanh nhất!
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Operations to Make X and Y Equal example:**
 
 ```
 x=26, y=1:
@@ -24,7 +29,9 @@ x=26, y=1:
 BFS explores all paths simultaneously, picks shortest.
 ```
 
-## Problem
+---
+
+## Problem Description
 
 You are given two positive integers `x` and `y`. In one operation you can do one of:
 
@@ -35,7 +42,9 @@ You are given two positive integers `x` and `y`. In one operation you can do one
 
 Return the **minimum** number of operations to make `x == y`.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **BFS is natural** — each operation is one level; BFS guarantees minimum
 2. **Work backwards** — from y to x can also work, but x→y is fine with BFS
@@ -44,9 +53,9 @@ Return the **minimum** number of operations to make `x == y`.
 5. **Key insight** — for division: first adjust x to nearest multiple (cost of adjustment), then divide
 6. **Upper bound** — worst case is just `|x - y|` incrementing/decrementing
 
-## Solutions
+---
 
-### Solution 1: BFS
+## Solutions
 
 ```typescript
 function minimumOperationsToMakeEqual(x: number, y: number): number {
@@ -77,11 +86,7 @@ function minimumOperationsToMakeEqual(x: number, y: number): number {
 console.log(minimumOperationsToMakeEqual(26, 1)); // 3
 console.log(minimumOperationsToMakeEqual(54, 2)); // 4
 console.log(minimumOperationsToMakeEqual(25, 5)); // 1
-```
 
-### Solution 2: Memoization / Top-Down DP
-
-```typescript
 function minimumOperationsDP(x: number, y: number): number {
   const memo = new Map<number, number>();
 
@@ -120,7 +125,9 @@ console.log(minimumOperationsDP(54, 2)); // 4
 console.log(minimumOperationsDP(100, 1)); // 3 (100/5=20, 20/5=4, 4-1=3, 3-1=2, 2-1=1)
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                  | Difficulty | Tags    |
 | ---- | ---------------------------------------- | ---------- | ------- |

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/missing-element-in-sorted-array"
 
 # Missing Element in Sorted Array / Phần Tử Bị Thiếu Trong Mảng Đã Sắp Xếp
 
-🟡 Medium | 🏷️ Array, Binary Search | [LeetCode](https://leetcode.com/problems/missing-element-in-sorted-array)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Số phần tử bị thiếu trước hoặc tại index i = `nums[i] - nums[0] - i`. Nếu không có số nào thiếu, `nums[i] - nums[0]` sẽ bằng i. Binary search trên index để tìm điểm mà số lượng missing ≥ k.
+**Analogy:** **Vietnamese:** Số phần tử bị thiếu trước hoặc tại index i = `nums[i] - nums[0] - i`. Nếu không có số nào thiếu, `nums[i] - nums[0]` sẽ bằng i. Binary search trên index để tìm điểm mà số lượng missing ≥ k.
 
 **Analogy:** Sổ điểm danh có lỗ — đếm số người vắng tính đến trang giữa. Nếu ≥ k người vắng, tìm bên trái; nếu < k người vắng, tìm bên phải.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Missing Element in Sorted Array example:**
 
 ```
 nums = [4, 7, 9, 10]  k=1
@@ -35,6 +38,18 @@ k=1: find smallest i where missing(i) >= 1 → i=1
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                                               | Difficulty | Connection                         |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------------------- |
+| [Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number)                                                  | 🟡 Medium  | Gap analysis in sorted-like arrays |
+| [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)                                                              | 🟡 Medium  | Binary search on answer            |
+| [Find First and Last Position in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) | 🟡 Medium  | Binary search boundary             |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** `missing(i) = nums[i] - nums[0] - i` counts gaps before index i / **VI:** `missing(i)` đếm số bị thiếu tính đến (không kể) nums[i]
@@ -46,9 +61,9 @@ k=1: find smallest i where missing(i) >= 1 → i=1
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Binary Search on Missing Count
+## Solutions
 
 ```typescript
 /**
@@ -82,11 +97,7 @@ console.log(missingElement([4, 7, 9, 10], 1)); // 5
 console.log(missingElement([4, 7, 9, 10], 3)); // 8
 console.log(missingElement([1, 2, 4], 3)); // 6
 console.log(missingElement([1, 2, 4], 1)); // 3
-```
 
-### Solution 2: Linear Scan (simpler, O(n))
-
-```typescript
 /**
  * Linear scan: maintain count of missing numbers seen so far.
  * Time: O(n)  Space: O(1)
@@ -112,11 +123,7 @@ console.log(missingElement2([4, 7, 9, 10], 1)); // 5
 console.log(missingElement2([4, 7, 9, 10], 3)); // 8
 console.log(missingElement2([1, 2, 4], 3)); // 6
 console.log(missingElement2([1, 2, 4], 1)); // 3
-```
 
-### Solution 3: Binary Search with Missing Count Formula (alternate form)
-
-```typescript
 /**
  * Alternative BS formulation: search for value directly.
  * Time: O(log n)  Space: O(1)

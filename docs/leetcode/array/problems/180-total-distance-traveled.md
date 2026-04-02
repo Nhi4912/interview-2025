@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/total-distance-traveled"
 
 # Total Distance Traveled / Tổng Quãng Đường Di Chuyển
 
-🟢 Easy | Tags: Math, Simulation
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Mỗi khi dùng hết 5 lít từ bình chính, bình phụ cấp thêm 1 lít vào bình chính. 1 lít chạy được 10 km. Mô phỏng từng bước tiêu thụ 5 lít cho đến khi bình chính < 5.
+**Analogy:** **VN:** Mỗi khi dùng hết 5 lít từ bình chính, bình phụ cấp thêm 1 lít vào bình chính. 1 lít chạy được 10 km. Mô phỏng từng bước tiêu thụ 5 lít cho đến khi bình chính < 5.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Total Distance Traveled example:**
 
 ```
 mainTank=5, additionalTank=1
@@ -23,6 +26,18 @@ Step 1: dùng 5L → 50km, nhận 1L từ phụ → main=1, add=0
 Step 2: main<5 → dùng 1L → 10km
 Total = 60km ✓
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                             | Difficulty | Pattern    |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| [Water Bottles](https://leetcode.com/problems/water-bottles/)                                                                       | 🟢 Easy    | Simulation |
+| [Find the Punishment Number of an Integer](https://leetcode.com/problems/find-the-punishment-number-of-an-integer/)                 | 🟡 Medium  | Math       |
+| [Minimum Number of Operations to Make Array Empty](https://leetcode.com/problems/minimum-number-of-operations-to-make-array-empty/) | 🟡 Medium  | Math       |
 
 ---
 
@@ -37,9 +52,9 @@ Total = 60km ✓
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Direct Simulation
+## Solutions
 
 ```typescript
 /**
@@ -69,11 +84,7 @@ function distanceTraveled(mainTank: number, additionalTank: number): number {
 console.log(distanceTraveled(5, 10)); // 60
 console.log(distanceTraveled(1, 2)); // 10
 console.log(distanceTraveled(9, 3)); // 110
-```
 
-### Solution 2: Math Formula (No Loop)
-
-```typescript
 /**
  * Total liters = mainTank + liters_from_additional.
  * Each 5L from main gives 1 from additional, but those added liters
@@ -99,11 +110,7 @@ function distanceTraveled2(mainTank: number, additionalTank: number): number {
 console.log(distanceTraveled2(5, 10)); // 60
 console.log(distanceTraveled2(1, 2)); // 10
 console.log(distanceTraveled2(9, 3)); // 110
-```
 
-### Solution 3: One-Liner Math
-
-```typescript
 /**
  * Closed-form: refuels = min(additionalTank, floor(mainTank/5))
  * Only valid when refueled liters themselves < 5 each iteration.

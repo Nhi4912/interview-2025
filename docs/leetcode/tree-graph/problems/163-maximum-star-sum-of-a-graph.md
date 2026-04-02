@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/maximum-star-sum-of-a-graph"
 
 # Maximum Star Sum of a Graph / Tổng sao cực đại của đồ thị
 
-🟡 Medium | Graph | Greedy | Sorting
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Một "ngôi sao" là một đỉnh trung tâm và tối đa k hàng xóm của nó. Để tối đa hóa tổng, với mỗi đỉnh: chỉ lấy k hàng xóm có giá trị **dương lớn nhất** (hàng xóm âm không nên chọn).
+**Analogy:** **Vietnamese:** Một "ngôi sao" là một đỉnh trung tâm và tối đa k hàng xóm của nó. Để tối đa hóa tổng, với mỗi đỉnh: chỉ lấy k hàng xóm có giá trị **dương lớn nhất** (hàng xóm âm không nên chọn).
 
 **English:** A star graph has a center node and up to k neighbors. For each center, greedily pick the top-k **positive** neighbor values. The answer is the maximum over all possible centers.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Star Sum of a Graph example:**
 
 ```
 vals=[1,2,3,4,10,-10,-20], edges=[[0,1],[1,2],[1,3],[3,4],[3,5],[3,6]], k=2
@@ -26,6 +29,18 @@ Center 3 (val=4):
   neighbors: 1(val=2), 4(val=10), 5(val=-10), 6(val=-20)
   top-2 positive: 10, 2  → star sum = 4 + 10 + 2 = 16  ✅
 ```
+
+---
+
+---
+
+## Problem Description
+
+| #    | Problem                         | Difficulty | Pattern            |
+| ---- | ------------------------------- | ---------- | ------------------ |
+| 2497 | Maximum Star Sum (this)         | Medium     | Greedy + Sort      |
+| 1962 | Remove Stones to Minimize Total | Medium     | Heap               |
+| 215  | Kth Largest Element in Array    | Medium     | Heap / Quickselect |
 
 ---
 
@@ -40,9 +55,9 @@ Center 3 (val=4):
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Sort Neighbors, Greedy Pick (Optimal)
+## Solutions
 
 ```typescript
 /**
@@ -100,11 +115,7 @@ console.log(
     1,
   ),
 ); // 20
-```
 
-### Solution 2 — Inline Reduce (Functional Style)
-
-```typescript
 /**
  * Same logic expressed with reduce.
  *

@@ -9,15 +9,20 @@ leetcode_url: "https://leetcode.com/problems/filling-bookcase-shelves"
 
 # Filling Bookcase Shelves / Xếp Sách Lên Kệ
 
-🟡 Medium | DP on prefix, greedy shelf packing
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Như xếp sách lên kệ thật — với mỗi cuốn sách mới, thử bắt đầu kệ mới hoặc
+**Analogy:** **VI:** Như xếp sách lên kệ thật — với mỗi cuốn sách mới, thử bắt đầu kệ mới hoặc
 gộp vào kệ hiện tại nếu vừa chiều rộng. Chiều cao của kệ = cuốn sách cao nhất.
 
 **EN:** For each book, decide: start a new shelf, or squeeze onto the current shelf.
 `dp[i]` = minimum total height using the first `i` books.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Filling Bookcase Shelves example:**
 
 ```
 books = [[1,1],[2,3],[2,3],[1,1],[1,1],[1,1],[1,2]], shelfWidth=4
@@ -28,6 +33,19 @@ Book2 w=2 h=3: new shelf → dp[2]=1+3=4; join book1? w=3≤4 h=3 → 0+3=3 ✓
 Book3 w=2 h=3: new shelf → 3+3=6; join book2? w=4≤4 h=3 → 1+3=4 ✓
 ...
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                             | Difficulty | Key Idea           |
+| --------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [322. Coin Change](https://leetcode.com/problems/coin-change/)                                      | 🟡 Medium  | Prefix DP minimise |
+| [1043. Partition Array for Max Sum](https://leetcode.com/problems/partition-array-for-maximum-sum/) | 🟡 Medium  | Partition DP       |
+| [1105. Filling Bookcase Shelves](https://leetcode.com/problems/filling-bookcase-shelves/)           | 🟡 Medium  | This problem       |
+| [813. Largest Sum of Averages](https://leetcode.com/problems/largest-sum-of-averages/)              | 🟡 Medium  | Group partition DP |
+
+---
 
 ## 📝 Interview Tips
 
@@ -44,9 +62,9 @@ Book3 w=2 h=3: new shelf → 3+3=6; join book2? w=4≤4 h=3 → 1+3=4 ✓
 - 🔑 **EN:** Answer is `dp[n]`, initialized with Infinity except `dp[0]=0`.
   **VI:** Kết quả là `dp[n]`, khởi tạo Infinity trừ `dp[0]=0`.
 
-## Solutions
+---
 
-### Solution 1: Bottom-Up DP
+## Solutions
 
 ```typescript
 /**
@@ -101,11 +119,7 @@ console.log(
     6,
   ),
 ); // 4
-```
 
-### Solution 2: Space-Optimised with Early Break
-
-```typescript
 /**
  * Same DP — explicit early-exit when accumulated width overflows
  * Time: O(n^2)  Space: O(n)
@@ -154,6 +168,8 @@ console.log(
   ),
 ); // 4
 ```
+
+---
 
 ## 🔗 Related Problems
 

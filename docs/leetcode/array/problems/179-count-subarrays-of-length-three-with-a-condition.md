@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/count-subarrays-of-length-three-wit
 
 # Count Subarrays of Length Three With a Condition / Đếm Mảng Con Độ Dài Ba Với Điều Kiện
 
-🟢 Easy | Tags: Array
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Với mỗi bộ ba liên tiếp `[a, b, c]`, kiểm tra `a + c == b / 2`, tức là `2*(a + c) == b`. Nhân với 2 để tránh số thực dấu phẩy động.
+**Analogy:** **VN:** Với mỗi bộ ba liên tiếp `[a, b, c]`, kiểm tra `a + c == b / 2`, tức là `2*(a + c) == b`. Nhân với 2 để tránh số thực dấu phẩy động.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Subarrays of Length Three With a Condition example:**
 
 ```
 nums = [1, 2, 1, 4, 1]
@@ -26,6 +29,18 @@ nums = [1, 2, 1, 4, 1]
         1  4  1 → 2*(1+1)=4 == 4 → YES ✓
 count = 1
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                   | Difficulty | Pattern |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------- | ------- |
+| [Number of Good Pairs](https://leetcode.com/problems/number-of-good-pairs/)                                               | 🟢 Easy    | Array   |
+| [Count Equal and Divisible Pairs in an Array](https://leetcode.com/problems/count-equal-and-divisible-pairs-in-an-array/) | 🟢 Easy    | Array   |
+| [Find the K-th Character in String Game I](https://leetcode.com/problems/find-the-k-th-character-in-string-game-i/)       | 🟢 Easy    | Array   |
 
 ---
 
@@ -40,9 +55,9 @@ count = 1
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Linear Scan
+## Solutions
 
 ```typescript
 /**
@@ -65,11 +80,7 @@ console.log(countSubarrays([1, 2, 1, 4, 1])); // 1
 console.log(countSubarrays([1, 1, 1])); // 0
 console.log(countSubarrays([2, 4, 2, 8, 4])); // 2
 console.log(countSubarrays([0, 0, 0])); // 1
-```
 
-### Solution 2: Destructured Sliding Window (Readable)
-
-```typescript
 /**
  * Use explicit variable names for the triple.
  * Time: O(n) | Space: O(1)
@@ -88,11 +99,7 @@ function countSubarrays2(nums: number[]): number {
 console.log(countSubarrays2([1, 2, 1, 4, 1])); // 1
 console.log(countSubarrays2([1, 1, 1])); // 0
 console.log(countSubarrays2([2, 4, 2, 8, 4])); // 2
-```
 
-### Solution 3: Functional (filter + map)
-
-```typescript
 /**
  * Functional style: build index array and filter.
  * Time: O(n) | Space: O(n) for index array

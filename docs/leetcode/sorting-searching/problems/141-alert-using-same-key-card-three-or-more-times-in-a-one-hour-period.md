@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/alert-using-same-key-card-three-or-
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map + Sort + Sliding Window
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Mỗi nhân viên có danh sách giờ quẹt thẻ. Sắp xếp theo thời gian. Với mỗi nhân viên, dùng cửa sổ trượt kích thước 3: nếu `times[i] - times[i-2] <= 60` thì họ đã dùng thẻ 3 lần trong 1 giờ → cảnh báo.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Mỗi nhân viên có danh sách giờ quẹt thẻ. Sắp xếp theo thời gian. Với mỗi nhân viên, dùng cửa sổ trượt kích thước 3: nếu `times[i] - times[i-2] <= 60` thì họ đã dùng thẻ 3 lần trong 1 giờ → cảnh báo.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Alert Using Same Key-Card Three or More Times in a One Hour Period example:**
 
 ```
 keyName = ["a","b","a","b","b","a"]
@@ -30,7 +37,20 @@ Group by name:
 result: ["a"]
 ```
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                                | Pattern        |
+| ---- | ------------------------------------------------------ | -------------- |
+| 1604 | Alert Using Same Key-Card Three or More Times          | This problem   |
+| 220  | Contains Duplicate III                                 | Sliding Window |
+| 1759 | Count Number of Homogenous Substrings                  | Sliding Window |
+| 395  | Longest Substring with At Least K Repeating Characters | Sliding Window |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **Convert to minutes** / Chuyển "HH:MM" sang số phút để so sánh dễ hơn
 - 🔑 **Group by name** / Gom tất cả lần quẹt thẻ theo tên nhân viên
@@ -38,6 +58,8 @@ result: ["a"]
 - 🔑 **Sliding window size 3** / So sánh `times[i]` và `times[i-2]`: nếu ≤ 60 phút → alert
 - 🔑 **Sort names** / Đề yêu cầu kết quả theo thứ tự alphabet
 - 🔑 **Edge** / Nhân viên chỉ quẹt < 3 lần không thể bị alert
+
+---
 
 ## Solutions
 
@@ -122,7 +144,9 @@ console.log(
 ); // ["a"]
 ```
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                                | Pattern        |
 | ---- | ------------------------------------------------------ | -------------- |

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/can-convert-string-in-k-moves"
 
 # Can Convert String in K Moves / Có Thể Chuyển Chuỗi Trong K Bước
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống đặt lịch hẹn — mỗi "bước dịch chuyển" cần một slot thời gian riêng. Nếu hai ký tự đều cần dịch 3 bước, chúng phải dùng các lượt khác nhau: lượt 3 và lượt 29 (3 + 26), ...
+**Analogy:** > **Phép so sánh:** Giống đặt lịch hẹn — mỗi "bước dịch chuyển" cần một slot thời gian riêng. Nếu hai ký tự đều cần dịch 3 bước, chúng phải dùng các lượt khác nhau: lượt 3 và lượt 29 (3 + 26), ...
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Can Convert String in K Moves example:**
 
 ```
 s="input", t="ouput", k=9
@@ -29,6 +34,8 @@ Slot used by i-th occurrence = d + 26*(i-1)
 Must have slot <= k
 ```
 
+---
+
 ## Problem Description
 
 Given strings `s` and `t` (same length) and integer `k`, determine if you can convert `s` to `t` in **at most k moves**. In move `i` (1-indexed) you can choose one character and shift it forward by `i` positions (mod 26). Each move is used at most once.
@@ -39,6 +46,8 @@ Given strings `s` and `t` (same length) and integer `k`, determine if you can co
 
 **Constraints:** `1 <= s.length <= 10^5`, `0 <= k <= 10^9`
 
+---
+
 ## 📝 Interview Tips
 
 - **No-op shifts:** If `s[i] == t[i]`, skip — no move needed
@@ -48,9 +57,9 @@ Given strings `s` and `t` (same length) and integer `k`, determine if you can co
 - **Count array:** Track how many times each diff value (1..25) has appeared so far
 - **Complexity:** O(n) time, O(26) = O(1) space
 
-## Solutions
+---
 
-### Solution 1: Count array + slot formula — O(n) time, O(1) space
+## Solutions
 
 ```typescript
 function canConvertString(s: string, t: string, k: number): boolean {
@@ -72,11 +81,7 @@ function canConvertString(s: string, t: string, k: number): boolean {
 
   return true;
 }
-```
 
-### Solution 2: Hash map approach (equivalent) — O(n) time, O(26) space
-
-```typescript
 function canConvertString(s: string, t: string, k: number): boolean {
   if (s.length !== t.length) return false;
 
@@ -95,11 +100,7 @@ function canConvertString(s: string, t: string, k: number): boolean {
 
   return true;
 }
-```
 
-### Solution 3: Sorted slot assignment — O(n log n) time, O(n) space
-
-```typescript
 function canConvertString(s: string, t: string, k: number): boolean {
   if (s.length !== t.length) return false;
 
@@ -123,6 +124,8 @@ function canConvertString(s: string, t: string, k: number): boolean {
   return true;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

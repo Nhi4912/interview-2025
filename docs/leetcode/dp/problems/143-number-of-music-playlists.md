@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/number-of-music-playlists"
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: 2D Combinatorial DP
 
-## 🧠 Intuition
+---
 
-**VI:** `dp[i][j]` = số playlist dài `i` bài dùng đúng `j` bài khác nhau. Thêm bài thứ `i+1` theo 2 cách: (1) bài mới hoàn toàn → nhân với `(n-j)` lựa chọn; (2) bài đã dùng nhưng đủ khoảng cách `k` → nhân với `max(j-k, 0)` lựa chọn.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** `dp[i][j]` = số playlist dài `i` bài dùng đúng `j` bài khác nhau. Thêm bài thứ `i+1` theo 2 cách: (1) bài mới hoàn toàn → nhân với `(n-j)` lựa chọn; (2) bài đã dùng nhưng đủ khoảng cách `k` → nhân với `max(j-k, 0)` lựa chọn.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Music Playlists example:**
 
 ```
 n=3 songs, goal=3, k=1
@@ -31,6 +38,19 @@ i=3     0    0    0    6    (choose new song: 3→1 way;   repeat: max(2-1,0)=1 
 Answer: dp[goal][n] = 6
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                       | Difficulty | Connection                                   |
+| ---- | ------------------------------------------- | ---------- | -------------------------------------------- |
+| 920  | Number of Music Playlists                   | 🔴 Hard    | This problem                                 |
+| 552  | Student Attendance Record II                | 🔴 Hard    | Count sequences with forbidden substrings    |
+| 629  | K Inverse Pairs Array                       | 🔴 Hard    | Combinatorial DP with structured transitions |
+| 1359 | Count All Valid Pickup and Delivery Options | 🔴 Hard    | Combinatorics with ordering constraints      |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** State `dp[i][j]` = playlists of length `i` with exactly `j` unique songs | **VI:** Cẩn thận "exactly j" — không phải "at most j"
@@ -39,6 +59,8 @@ Answer: dp[goal][n] = 6
 - 🔑 **EN:** Answer is `dp[goal][n]` — exactly `n` unique songs used | **VI:** Đáp án là `dp[goal][n]` — phải dùng đủ tất cả `n` bài
 - 🔑 **EN:** Always reduce modulo `1e9+7` to prevent overflow | **VI:** Nhớ mod sau mỗi bước — số cách rất lớn
 - 🔑 **EN:** Space can be reduced to O(n) by only keeping previous row | **VI:** Tối ưu không gian: chỉ cần hàng trước — nhưng cần cẩn thận thứ tự cập nhật
+
+---
 
 ## Solutions
 
@@ -94,6 +116,8 @@ console.log(numMusicPlaylists(2, 2, 1)); // 2
 console.log(numMusicPlaylists2D(3, 3, 1)); // 6
 console.log(numMusicPlaylists(6, 3, 1)); // 6 * ... (larger case)
 ```
+
+---
 
 ## 🔗 Related Problems
 

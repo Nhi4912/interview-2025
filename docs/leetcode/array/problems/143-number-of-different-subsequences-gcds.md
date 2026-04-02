@@ -13,11 +13,16 @@ leetcode_url: "https://leetcode.com/problems/number-of-different-subsequences-gc
 
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VI:** Thay vì liệt kê tất cả dãy con (2^n), ta dùng tính chất số học: GCD của một dãy con bằng `g` khi và chỉ khi GCD của tất cả bội số của `g` có trong mảng bằng đúng `g`. Với mỗi ứng viên `g` từ 1 đến max(nums), tính GCD tích lũy của các phần tử trong nums là bội của `g`. Nếu kết quả bằng `g` thì `g` là một GCD hợp lệ.
+**Analogy:** **VI:** Thay vì liệt kê tất cả dãy con (2^n), ta dùng tính chất số học: GCD của một dãy con bằng `g` khi và chỉ khi GCD của tất cả bội số của `g` có trong mảng bằng đúng `g`. Với mỗi ứng viên `g` từ 1 đến max(nums), tính GCD tích lũy của các phần tử trong nums là bội của `g`. Nếu kết quả bằng `g` thì `g` là một GCD hợp lệ.
 
 **EN:** Instead of enumerating all 2^n subsequences, use number theory: GCD `g` is achievable iff the GCD of all multiples of `g` present in the array equals exactly `g`. For each candidate `g` (1 to max), accumulate GCD of all array elements divisible by g. If result == g, count it.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Different Subsequences GCDs example:**
 
 ```
 nums = [6, 10, 3]
@@ -34,7 +39,19 @@ Answer = 5 (g=1,2,3,6,10)
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                               | Difficulty | Pattern             |
+| ---- | ------------------------------------- | ---------- | ------------------- |
+| 2183 | Count Array Pairs Divisible by K      | 🔴 Hard    | GCD / Number Theory |
+| 1979 | Find Greatest Common Divisor of Array | 🟢 Easy    | GCD                 |
+| 858  | Mirror Reflection                     | 🟡 Medium  | Number Theory / LCM |
+
+---
+
+## 📝 Interview Tips
 
 - 🔴 **EN:** Key insight: don't enumerate subsequences. Instead enumerate possible GCD values.
   **VI:** Thấu hiểu then chốt: không liệt kê dãy con, mà liệt kê các giá trị GCD có thể.
@@ -51,9 +68,9 @@ Answer = 5 (g=1,2,3,6,10)
 
 ---
 
-## Solutions / Giải Pháp
+---
 
-### Solution 1: GCD Enumeration — O(maxVal \* log maxVal) ✅ Optimal
+## Solutions
 
 ```typescript
 function countDifferentSubsequenceGCDs(nums: number[]): number {
@@ -92,11 +109,7 @@ console.log(countDifferentSubsequenceGCDs([6, 10, 3])); // Expected: 5
 console.log(countDifferentSubsequenceGCDs([5, 15, 40, 5, 6])); // Expected: 7
 console.log(countDifferentSubsequenceGCDs([1])); // Expected: 1
 console.log(countDifferentSubsequenceGCDs([2, 4])); // Expected: 2 (gcd=2, gcd=4)
-```
 
-### Solution 2: Same Approach, Cleaner GCD Helper — O(maxVal \* log maxVal)
-
-```typescript
 function countDifferentSubsequenceGCDs_v2(nums: number[]): number {
   const MAX = Math.max(...nums);
   const inNums = new Set(nums);
@@ -120,7 +133,7 @@ console.log(countDifferentSubsequenceGCDs_v2([5, 15, 40, 5, 6])); // 7
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #    | Problem                               | Difficulty | Pattern             |
 | ---- | ------------------------------------- | ---------- | ------------------- |

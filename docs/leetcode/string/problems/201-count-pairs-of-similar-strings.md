@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/count-pairs-of-similar-strings"
 
 # Count Pairs Of Similar Strings / Đếm Cặp Chuỗi Tương Tự
 
-🟢 Easy
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống nhận dạng khuôn mặt — hai người có cùng bộ tính năng (feature set) thì là một cặp. Mỗi chuỗi "tương tự" nếu có cùng tập ký tự (không kể thứ tự/số lần).
+**Analogy:** > **Phép so sánh:** Giống nhận dạng khuôn mặt — hai người có cùng bộ tính năng (feature set) thì là một cặp. Mỗi chuỗi "tương tự" nếu có cùng tập ký tự (không kể thứ tự/số lần).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Pairs Of Similar Strings example:**
 
 ```
 words = ["aba","aabb","abcd","bac","bbe"]
@@ -27,6 +32,8 @@ Signatures:
 Count: sig=3 appears 2 times → C(2,2)=1 pair → answer=1
 ```
 
+---
+
 ## Problem Description
 
 Given an array `words`, two strings are **similar** if they have the same set of characters (regardless of order or frequency). Return the number of pairs `(i, j)` where `i < j` and `words[i]` is similar to `words[j]`.
@@ -37,6 +44,8 @@ Given an array `words`, two strings are **similar** if they have the same set of
 
 **Constraints:** `1 <= words.length <= 100`, `1 <= words[i].length <= 100`
 
+---
+
 ## 📝 Interview Tips
 
 - **Signature approach:** Encode each word as a canonical form (sorted unique chars or bitmask)
@@ -46,9 +55,9 @@ Given an array `words`, two strings are **similar** if they have the same set of
 - **Complexity:** O(n·m) time where m = word length, O(n) space for hash map
 - **Interview insight:** Bitmask eliminates sorting cost — constant time signature computation
 
-## Solutions
+---
 
-### Solution 1: Bitmask + Hash Map — O(n·m) time, O(n) space
+## Solutions
 
 ```typescript
 function similarPairs(words: string[]): number {
@@ -67,11 +76,7 @@ function similarPairs(words: string[]): number {
 
   return pairs;
 }
-```
 
-### Solution 2: Sorted unique chars as key — O(n·m·log m) time, O(n) space
-
-```typescript
 function similarPairs(words: string[]): number {
   const sigCount = new Map<string, number>();
   let pairs = 0;
@@ -85,11 +90,7 @@ function similarPairs(words: string[]): number {
 
   return pairs;
 }
-```
 
-### Solution 3: Brute force O(n²·m) — for small n
-
-```typescript
 function similarPairs(words: string[]): number {
   function getSet(w: string): Set<string> {
     return new Set(w.split(""));
@@ -109,6 +110,8 @@ function similarPairs(words: string[]): number {
   return count;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

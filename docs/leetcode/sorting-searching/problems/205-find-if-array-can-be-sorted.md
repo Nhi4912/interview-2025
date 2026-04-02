@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/find-if-array-can-be-sorted"
 
 # Find if Array Can Be Sorted / Kiểm Tra Xem Mảng Có Thể Được Sắp Xếp Không
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Chỉ được hoán đổi hai phần tử **kề nhau** nếu chúng có cùng số bit 1 trong biểu diễn nhị phân. Điều này chia mảng thành các **"nhóm"** — trong mỗi nhóm, mọi phần tử đều hoán đổi được tự do. Bài toán trở thành: các nhóm có thể sắp xếp thành chuỗi tăng dần không?
+**Analogy:** > **Hình ảnh:** Chỉ được hoán đổi hai phần tử **kề nhau** nếu chúng có cùng số bit 1 trong biểu diễn nhị phân. Điều này chia mảng thành các **"nhóm"** — trong mỗi nhóm, mọi phần tử đều hoán đổi được tự do. Bài toán trở thành: các nhóm có thể sắp xếp thành chuỗi tăng dần không?
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find if Array Can Be Sorted example:**
 
 ```
 nums = [8, 4, 2, 30, 15]
@@ -33,7 +38,9 @@ max(group1) > min(group2): 3 > 2 → CANNOT sort ✗
 
 **Chiến lược:** Group consecutive elements with same popcount. Each group can be internally sorted. Check that `max(group[i]) < min(group[i+1])` for all i.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given an array `nums`. In one operation, swap two **adjacent** elements if they have the **same number of set bits** in binary. Return `true` if the array can be sorted in non-decreasing order, `false` otherwise.
 
@@ -42,6 +49,8 @@ Given an array `nums`. In one operation, swap two **adjacent** elements if they 
 **Example 3:** `nums=[3,16,8,4,2]` → `false`
 
 **Constraints:** `1 ≤ n ≤ 50`, `1 ≤ nums[i] ≤ 2^8`
+
+---
 
 ## 📝 Interview Tips
 
@@ -52,9 +61,9 @@ Given an array `nums`. In one operation, swap two **adjacent** elements if they 
 - **popcount in JS:** `val.toString(2).split('0').join('').length` or bit manipulation loop
 - **Simpler approach:** Just run bubble sort mentally — two adjacent swaps possible only if same popcount
 
-## 💡 Solutions
+---
 
-### Solution 1: Group Max/Min Check — O(n)
+## Solutions
 
 ```typescript
 function canSortArray(nums: number[]): boolean {
@@ -98,11 +107,7 @@ function canSortArray(nums: number[]): boolean {
   }
   return true;
 }
-```
 
-### Solution 2: Segment-Based with Prev Max Tracking — O(n)
-
-```typescript
 function canSortArrayClean(nums: number[]): boolean {
   const popcount = (n: number) => n.toString(2).replace(/0/g, "").length;
 
@@ -130,11 +135,7 @@ function canSortArrayClean(nums: number[]): boolean {
   // Final check: last group must start after previous group's max
   return prevGroupMax <= curGroupMin;
 }
-```
 
-### Solution 3: Simulate Bubble Sort — O(n²) brute force
-
-```typescript
 function canSortArrayBubble(nums: number[]): boolean {
   const popcount = (n: number) => {
     let c = 0;
@@ -163,6 +164,8 @@ function canSortArrayBubble(nums: number[]): boolean {
   return true;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

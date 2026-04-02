@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-operations-to-mak
 
 # Minimum Number of Operations to Make Array XOR Equal to K / Số Phép Toán Tối Thiểu Để XOR Mảng Bằng K
 
-**Difficulty:** Medium | **Category:** Array, Bit Manipulation | **LeetCode:** [2997](https://leetcode.com/problems/minimum-number-of-operations-to-make-array-xor-equal-to-k)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép XOR giống bảng điện với các công tắc nhị phân.**
+**Analogy:** > **Phép XOR giống bảng điện với các công tắc nhị phân.**
 > XOR toàn mảng cho trạng thái hiện tại. So với K, đếm số bít khác nhau — mỗi bít khác cần đúng 1 phép toán để lật.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Operations to Make Array XOR Equal to K example:**
 
 ```
 nums = [2, 3, 4]   XOR total = 2^3^4 = 5  →  101
@@ -25,7 +30,13 @@ popcount(011) = 2   →  2 operations
 
 Mỗi phép toán flip 1 bít của bất kỳ phần tử → tối thiểu `popcount(total ^ k)` bước.
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **XOR toàn bộ mảng** trước — do XOR associative, thứ tự không quan trọng.
 2. **`total ^ k`** cho biết bít nào đang sai (bít 1 = cần thay đổi).
@@ -34,7 +45,9 @@ Mỗi phép toán flip 1 bít của bất kỳ phần tử → tối thiểu `po
 5. **Brian Kernighan's trick:** `n &= n - 1` xoá bít thấp nhất trong O(1).
 6. **String trick:** `.toString(2).split("").filter(b => b==="1").length` ngắn gọn hơn.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -61,9 +74,7 @@ console.log(minOperations([2, 3, 4], 6)); // 2  (5^6=3, bits: 011 → 2)
 console.log(minOperations([2, 3, 4], 5)); // 0  (XOR=5=k, no change)
 console.log(minOperations([0], 7)); // 3  (0^7=7=111 → 3 bits)
 console.log(minOperations([1, 1, 1], 1)); // 0  (1^1^1=1=k)
-```
 
-```typescript
 /**
  * Approach 2: Reduce + string popcount (concise)
  * Time: O(n) | Space: O(log k) for string
@@ -79,9 +90,7 @@ function minOperations2(nums: number[], k: number): number {
 console.log(minOperations2([2, 3, 4], 6)); // 2
 console.log(minOperations2([0, 0, 0], 0)); // 0
 console.log(minOperations2([1], 0)); // 1  (1^0=1)
-```
 
-```typescript
 /**
  * Approach 3: Bit-shift loop (explicit, interview-friendly)
  * Time: O(n + 32) | Space: O(1)
@@ -101,7 +110,9 @@ console.log(minOperations3([7], 7)); // 0
 console.log(minOperations3([3, 5], 6)); // 1  (3^5=6, 6^6=0 → 0... wait 3^5=6=k → 0)
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                         | Difficulty | Connection               |
 | --------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------ |

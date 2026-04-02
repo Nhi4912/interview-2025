@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/hexspeak"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hexspeak là "ngôn ngữ bí mật của lập trình viên" — dùng các ký tự hex trông giống chữ cái. Số `1` trông như chữ `I`, số `0` trông như chữ `O`, còn `A`→`F` vốn đã là chữ rồi. Bài toán giống như dịch một tờ tiền giả: chuyển số thập phân sang hex, rồi thay `0→O`, `1→I`. Nếu kết quả còn chứa chữ số `2–9` (không thể "ngụy trang" thành chữ cái), trả về `"ERROR"`. Thử với `257` → `101` hex → `IOI` ✓; với `3` → `3` hex → `"ERROR"` vì `3` không hóa trang được.
+**Analogy:** Hexspeak là "ngôn ngữ bí mật của lập trình viên" — dùng các ký tự hex trông giống chữ cái. Số `1` trông như chữ `I`, số `0` trông như chữ `O`, còn `A`→`F` vốn đã là chữ rồi. Bài toán giống như dịch một tờ tiền giả: chuyển số thập phân sang hex, rồi thay `0→O`, `1→I`. Nếu kết quả còn chứa chữ số `2–9` (không thể "ngụy trang" thành chữ cái), trả về `"ERROR"`. Thử với `257` → `101` hex → `IOI` ✓; với `3` → `3` hex → `"ERROR"` vì `3` không hóa trang được.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Hexspeak example:**
 
 ```
 num = "257"
@@ -43,7 +46,9 @@ num = "188"
   All chars in {A-F} → "BC"  ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given a decimal number `num` as a string, convert it to hexadecimal then replace `0→O` and `1→I`. If the result only contains letters from `{A, B, C, D, E, F, I, O}`, return it; otherwise return `"ERROR"`.
 
@@ -53,7 +58,9 @@ Given a decimal number `num` as a string, convert it to hexadecimal then replace
 
 **Constraints:** `1 ≤ num.length ≤ 12`, `num` represents a non-negative integer, no leading zeros (except `"0"` itself), `0 ≤ num < 2^31`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Parse as integer first** / Chuyển về số nguyên trước: Dùng `parseInt(num)` hoặc `BigInt(num)` để xử lý số lớn gần `2^31`
 - **toUpperCase trước khi kiểm tra** / Uppercase first: `toString(16).toUpperCase()` → tránh case-sensitive bug với a-f vs A-F
@@ -62,7 +69,9 @@ Given a decimal number `num` as a string, convert it to hexadecimal then replace
 - **BigInt cho số lớn** / BigInt for safety: `num` có thể gần `2^31-1` (~2 tỷ), vừa với `number` nhưng dùng `BigInt` an toàn hơn
 - **Edge: num="0"** / Edge case zero: `0` → hex `"0"` → replace `0→O` → `"O"` ✓ hợp lệ
 
-## Solution 1 - Character-by-Character Check
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -80,11 +89,7 @@ function toHexspeak(num: string): string {
   }
   return result;
 }
-```
 
-## Solution 2 - Regex Validation (Clean & Concise)
-
-```typescript
 /**
  * @complexity Time: O(log n) | Space: O(log n)
  * Do all replacements first, then validate with single regex
@@ -94,11 +99,7 @@ function toHexspeakRegex(num: string): string {
 
   return /^[A-FIO]+$/.test(hex) ? hex : "ERROR";
 }
-```
 
-## Solution 3 - BigInt Safe Version
-
-```typescript
 /**
  * @complexity Time: O(log n) | Space: O(log n)
  * Uses BigInt to safely handle numbers near 2^31
@@ -115,11 +116,8 @@ function toHexspeakBigInt(num: string): string {
   }
   return result;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(toHexspeak("257")); // → "IOI"
 console.log(toHexspeak("3")); // → "ERROR"
 console.log(toHexspeak("188")); // → "BC"
@@ -130,7 +128,9 @@ console.log(toHexspeakBigInt("747")); // → "ERROR"
 console.log(toHexspeakBigInt("16")); // → "IO"  (0x10 → "10" → "IO")
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                   | Difficulty | Link                                                              |
 | ------------------------- | ---------- | ----------------------------------------------------------------- |

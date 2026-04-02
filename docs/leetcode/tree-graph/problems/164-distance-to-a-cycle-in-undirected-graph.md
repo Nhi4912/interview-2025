@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/distance-to-a-cycle-in-undirected-g
 
 # Distance to a Cycle in Undirected Graph / Khoảng cách đến chu trình trong đồ thị vô hướng
 
-🔴 Hard | Graph | Topological Trim | BFS
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Đồ thị liên thông n đỉnh n cạnh có đúng 1 chu trình. Loại bỏ các "cây con" lá bằng cách liên tục xóa đỉnh bậc 1 (như topological sort) — các đỉnh còn lại tạo thành chu trình. Sau đó BFS từ tất cả các đỉnh chu trình.
+**Analogy:** **Vietnamese:** Đồ thị liên thông n đỉnh n cạnh có đúng 1 chu trình. Loại bỏ các "cây con" lá bằng cách liên tục xóa đỉnh bậc 1 (như topological sort) — các đỉnh còn lại tạo thành chu trình. Sau đó BFS từ tất cả các đỉnh chu trình.
 
 **English:** A connected graph with n nodes and n edges has exactly one cycle. Repeatedly trim degree-1 leaves (like topological peeling) until remaining nodes form the cycle. Then multi-source BFS from all cycle nodes assigns distances.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Distance to a Cycle in Undirected Graph example:**
 
 ```
 Graph: 0-1-2-3-4-2   (cycle: 2-3-4)
@@ -26,6 +29,18 @@ Graph: 0-1-2-3-4-2   (cycle: 2-3-4)
 Trim: remove 0 (deg 1), then 1 (deg 1) → cycle = {2,3,4}
 BFS: dist[2]=0, dist[3]=0, dist[4]=0, dist[1]=1, dist[0]=2
 ```
+
+---
+
+---
+
+## Problem Description
+
+| #    | Problem                  | Difficulty | Pattern          |
+| ---- | ------------------------ | ---------- | ---------------- |
+| 310  | Minimum Height Trees     | Medium     | Topological Peel |
+| 207  | Course Schedule          | Medium     | Topological Sort |
+| 2204 | Distance to Cycle (this) | Hard       | Peel + BFS       |
 
 ---
 
@@ -40,9 +55,9 @@ BFS: dist[2]=0, dist[3]=0, dist[4]=0, dist[1]=1, dist[0]=2
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Degree-Peel + Multi-source BFS
+## Solutions
 
 ```typescript
 /**

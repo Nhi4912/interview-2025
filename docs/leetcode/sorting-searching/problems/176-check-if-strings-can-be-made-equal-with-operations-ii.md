@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/check-if-strings-can-be-made-equal-
 
 # Check if Strings Can be Made Equal With Operations II / Kiểm Tra Chuỗi Bằng Hoán Đổi Vị Trí II
 
-🟡 Medium | String, Sorting | [LeetCode 2840](https://leetcode.com/problems/check-if-strings-can-be-made-equal-with-operations-ii)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** You can swap `s[i]` and `s[j]` when `j - i` is even, meaning even-index characters can only swap with other even-index characters, and odd-index with odd-index. So: sort characters at even positions separately and odd positions separately for both strings. If they match → strings can be made equal.
+**Analogy:** **EN:** You can swap `s[i]` and `s[j]` when `j - i` is even, meaning even-index characters can only swap with other even-index characters, and odd-index with odd-index. So: sort characters at even positions separately and odd positions separately for both strings. If they match → strings can be made equal.
 
 **VI:** Bạn chỉ có thể hoán đổi `s[i]` và `s[j]` khi `j - i` chẵn, nghĩa là ký tự ở vị trí chẵn chỉ hoán đổi được với vị trí chẵn khác, vị trí lẻ với vị trí lẻ. Sắp xếp ký tự ở vị trí chẵn/lẻ của hai chuỗi và so sánh.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Check if Strings Can be Made Equal With Operations II example:**
 
 ```
 s1 = "cdab"  s2 = "abcd"
@@ -38,7 +41,19 @@ Result: true
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                                   | Difficulty | Pattern             |
+| --- | ----------------------------------------- | ---------- | ------------------- |
+| 1   | Check if Two String Arrays are Equivalent | 🟢 Easy    | string comparison   |
+| 2   | Determine if Two Strings Are Close        | 🟡 Medium  | frequency invariant |
+| 3   | Minimum Swaps to Make Strings Equal       | 🟡 Medium  | parity + swap       |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Key insight: swapping at positions with same parity is transitive — you can reach any permutation within same-parity positions. **VI:** Hoán đổi cùng chẵn/lẻ là bắc cầu — bạn có thể hoán vị tùy ý trong nhóm cùng parity.
 - 📊 **EN:** This reduces to: sorted(even_chars_s1) == sorted(even_chars_s2) AND sorted(odd_chars_s1) == sorted(odd_chars_s2). **VI:** Bài toán đơn giản thành: so sánh tập ký tự đã sắp xếp ở từng nhóm vị trí.
@@ -49,9 +64,9 @@ Result: true
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Split by Parity, Sort, Compare
+## Solutions
 
 ```typescript
 /**
@@ -87,11 +102,7 @@ console.log(checkStrings("cdab", "abcd")); // true
 console.log(checkStrings("abcd", "cbad")); // true
 console.log(checkStrings("abcd", "adcb")); // false  (even: ac vs ad)
 console.log(checkStrings("a", "a")); // true
-```
 
-### Solution 2 — Frequency Count (O(n) time)
-
-```typescript
 /**
  * Use char frequency arrays for even/odd groups — avoids sorting
  * Time: O(n)  Space: O(1) — only 26 possible chars
@@ -118,11 +129,7 @@ function checkStrings2(s1: string, s2: string): boolean {
 console.log(checkStrings2("cdab", "abcd")); // true
 console.log(checkStrings2("abcd", "cbad")); // true
 console.log(checkStrings2("abcd", "adcb")); // false
-```
 
-### Solution 3 — Generic Helper for Both Parts
-
-```typescript
 /**
  * Extract parity groups as sorted strings, encapsulated helper
  * Time: O(n log n)  Space: O(n)
@@ -142,7 +149,7 @@ console.log(checkStrings3("cdab", "abcd")); // true
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                                   | Difficulty | Pattern             |
 | --- | ----------------------------------------- | ---------- | ------------------- |

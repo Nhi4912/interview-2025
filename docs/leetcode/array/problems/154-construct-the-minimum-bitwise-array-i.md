@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/construct-the-minimum-bitwise-array
 
 # Construct the Minimum Bitwise Array I / Xây Dựng Mảng Bitwise Nhỏ Nhất I
 
-**Difficulty:** Easy | **Category:** Array, Bit Manipulation | **LeetCode:** [3314](https://leetcode.com/problems/construct-the-minimum-bitwise-array-i)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Phép so sánh tiếng Việt:** Bài này giống như bạn muốn "pha màu" — bạn có màu kết quả `prime[i]` và muốn tìm hai màu `ans` và `ans+1` sao khi trộn OR lại cho ra đúng màu đó, nhưng `ans` phải nhỏ nhất có thể.
+**Analogy:** **Phép so sánh tiếng Việt:** Bài này giống như bạn muốn "pha màu" — bạn có màu kết quả `prime[i]` và muốn tìm hai màu `ans` và `ans+1` sao khi trộn OR lại cho ra đúng màu đó, nhưng `ans` phải nhỏ nhất có thể.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Construct the Minimum Bitwise Array I example:**
 
 ```
 prime[i] = 7  (0111)
@@ -29,7 +34,13 @@ ans+1 = 5      (101)
 
 Với prime = 2: không tồn tại ans vì `ans | (ans+1) = 2` → trả về -1.
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Chỉ số 2 là đặc biệt**: 2 là số nguyên tố duy nhất chẵn. `ans | (ans+1) >= 3` nên không bao giờ ra 2 → trả `-1`.
 2. **Thử từ 0 đến prime[i]-1**: Vì `ans < prime[i]` (để OR có thể ra prime), duyệt brute force là đủ với constraints nhỏ.
@@ -38,7 +49,9 @@ Với prime = 2: không tồn tại ans vì `ans | (ans+1) = 2` → trả về -
 5. **`ans | (ans+1)` chỉ thêm bit**: Phép OR chỉ bật thêm bit, không tắt. Vì thế `ans | (ans+1) >= prime[i]` hoặc `>`.
 6. **Sự khác biệt với bài II**: Bài I dùng brute force đơn giản do constraints nhỏ; bài II phải dùng bit manipulation trực tiếp.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -72,9 +85,7 @@ function minBitwiseArrayI(nums: number[]): number[] {
 console.log(minBitwiseArrayI([2, 3, 5, 7])); // [-1, 1, 4, 3]
 console.log(minBitwiseArrayI([11, 13, 31])); // [9, 12, 15]
 console.log(minBitwiseArrayI([2])); // [-1]
-```
 
-```typescript
 /**
  * Approach 2: Bit Trick — tắt bit thấp nhất của prime
  * Time: O(n * 30)  Space: O(n)
@@ -119,9 +130,7 @@ function minBitwiseArrayIBit(nums: number[]): number[] {
 console.log(minBitwiseArrayIBit([2, 3, 5, 7])); // [-1, 1, 4, 3]
 console.log(minBitwiseArrayIBit([11, 13, 31])); // [9, 12, 15]
 console.log(minBitwiseArrayIBit([17, 19, 23])); // [16, 18, 21]
-```
 
-```typescript
 /**
  * Approach 3: Direct Formula cho số nguyên tố lẻ
  * Time: O(n)  Space: O(n)
@@ -146,7 +155,9 @@ console.log(minBitwiseArrayIDirect([11, 13, 31])); // [10, 12, 30]
 // Verify: 2|3=3✓, 4|5=5✓, 6|7=7✓, 10|11=11✓, 12|13=13✓, 30|31=31✓
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                        | Difficulty | Pattern                        |
 | -------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------------ |

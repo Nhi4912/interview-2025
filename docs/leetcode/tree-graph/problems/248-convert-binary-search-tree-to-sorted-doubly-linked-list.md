@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/convert-binary-search-tree-to-sorte
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy nghĩ đến một dàn học sinh được xếp hàng theo cây gia phả (BST). Khi giáo viên yêu cầu xếp hàng theo chiều cao (in-order), học sinh tự kết nối tay: người trước chỉ sang phải người sau, người sau chỉ sang trái người trước — tạo thành chuỗi vòng tròn. Đây chính là chuyển đổi BST in-order thành circular doubly linked list: duyệt trái-giữa-phải, mỗi node kết nối với node liền kề, cuối cùng nối đầu và đuôi lại.
+**Analogy:** Hãy nghĩ đến một dàn học sinh được xếp hàng theo cây gia phả (BST). Khi giáo viên yêu cầu xếp hàng theo chiều cao (in-order), học sinh tự kết nối tay: người trước chỉ sang phải người sau, người sau chỉ sang trái người trước — tạo thành chuỗi vòng tròn. Đây chính là chuyển đổi BST in-order thành circular doubly linked list: duyệt trái-giữa-phải, mỗi node kết nối với node liền kề, cuối cùng nối đầu và đuôi lại.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Convert BST to Sorted Doubly Linked List example:**
 
 ```
 BST:        4
@@ -41,7 +44,9 @@ Circular: 5.right = head(1), head(1).left = 5
 Result: 1⇆2⇆3⇆4⇆5⇆(back to 1)
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Convert a **BST** to a **sorted circular doubly linked list** in-place. Use the `left` pointer as `prev` and `right` pointer as `next`. The list must be **circular** — tail's right points to head, head's left points to tail. Return the smallest node (head).
 
@@ -51,7 +56,9 @@ Convert a **BST** to a **sorted circular doubly linked list** in-place. Use the 
 
 **Constraints:** `0 ≤ number of nodes ≤ 2000`, `-1000 ≤ Node.val ≤ 1000`, all values unique
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **In-order gives sorted** / In-order cho thứ tự sắp xếp: BST in-order luôn cho giá trị tăng dần — đây là chìa khóa
 - **Track head and prev** / Theo dõi head và prev: `head` lưu node nhỏ nhất (node đầu tiên), `prev` lưu node vừa xử lý để link
@@ -60,7 +67,9 @@ Convert a **BST** to a **sorted circular doubly linked list** in-place. Use the 
 - **Iterative to avoid stack overflow** / Dùng vòng lặp tránh tràn stack: n có thể đến 2000, iterative an toàn hơn
 - **Edge case single node** / Node đơn: `head.left = head.right = head` — tự trỏ về mình
 
-## Solution 1 - Recursive In-Order
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -100,11 +109,7 @@ function treeToDoublyList(root: Node | null): Node | null {
   head!.left = prev!;
   return head;
 }
-```
 
-## Solution 2 - Iterative In-Order (No Recursion)
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(h) stack space
  * Morris traversal alternative or explicit stack; avoids call stack limit
@@ -137,11 +142,8 @@ function treeToDoublyListIterative(root: Node | null): Node | null {
   head!.left = prev!;
   return head;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 // Build BST: 4,2,5,1,3
 const n1 = new Node(1),
   n2 = new Node(2),
@@ -168,7 +170,9 @@ console.log(treeToDoublyList(null)); // → null
 console.log(treeToDoublyList(new Node(1))?.val); // → 1
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                            | Difficulty | Link                                                                              |
 | ---------------------------------- | ---------- | --------------------------------------------------------------------------------- |

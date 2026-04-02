@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-time-to-break-locks-i"
 
 # Minimum Time to Break Locks I / Thời Gian Tối Thiểu Để Phá Khóa I
 
-## Analogy / Tương Tự
+---
 
-> Bạn có nhiều ổ khóa cần phá. Bạn có một chiếc búa với **năng lượng ban đầu** (strength=0). Khi phá khóa `i`, năng lượng tăng thêm `strength[i]`. Phá khóa i sau khi sức mạnh hiện tại ≥ `strength[i]`. Thứ tự phá có thể tùy ý — tìm thứ tự để **tổng thời gian chờ nhỏ nhất**.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Bạn có nhiều ổ khóa cần phá. Bạn có một chiếc búa với **năng lượng ban đầu** (strength=0). Khi phá khóa `i`, năng lượng tăng thêm `strength[i]`. Phá khóa i sau khi sức mạnh hiện tại ≥ `strength[i]`. Thứ tự phá có thể tùy ý — tìm thứ tự để **tổng thời gian chờ nhỏ nhất**.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Time to Break Locks I example:**
 
 ```
 locks = [3, 4, 1, 2, 6], k = 2 (strength grows by k each turn)
@@ -24,13 +29,17 @@ Order: 1→2→3→4→6
 Bitmask DP: dp[mask] = min time to break all locks in mask
 ```
 
-## Problem
+---
+
+## Problem Description
 
 You have `n` locks with strengths. Your initial strength is 0. To break lock `i`, your strength must be ≥ `strength[i]`. After each broken lock, your strength increases by `k`. You need exactly `(i+1) * k` strength to break the i-th lock in sequence, where you can choose the order. Return minimum total time.
 
 **Note:** Time to break lock `j` when current strength is `s`: `max(0, ceil((strength[j] - s) / k))`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Bitmask DP** — with n ≤ 8 locks, 2^n states are feasible
 2. **State** — `dp[mask]` = min time to break locks in `mask`
@@ -39,9 +48,9 @@ You have `n` locks with strengths. Your initial strength is 0. To break lock `i`
 5. **Wait time** — `max(0, Math.ceil((strength[i] - currStrength) / k))`
 6. **Time complexity** — O(2^n × n) which is fine for n ≤ 8
 
-## Solutions
+---
 
-### Solution 1: Bitmask DP
+## Solutions
 
 ```typescript
 function findMinimumTime(strength: number[], k: number): number {
@@ -75,11 +84,7 @@ function findMinimumTime(strength: number[], k: number): number {
 console.log(findMinimumTime([3, 4, 1, 2, 6], 1)); // 4
 console.log(findMinimumTime([1, 2, 3], 2)); // 3
 console.log(findMinimumTime([8], 1)); // 8
-```
 
-### Solution 2: DFS with Pruning (Backtracking)
-
-```typescript
 function findMinimumTimeDFS(strength: number[], k: number): number {
   const n = strength.length;
   let minTime = Infinity;
@@ -104,11 +109,7 @@ function findMinimumTimeDFS(strength: number[], k: number): number {
 
 console.log(findMinimumTimeDFS([3, 4, 1, 2, 6], 1)); // 4
 console.log(findMinimumTimeDFS([1, 2, 3], 2)); // 3
-```
 
-### Solution 3: Bitmask DP (Flat Array, Optimized)
-
-```typescript
 function findMinimumTimeOpt(strength: number[], k: number): number {
   const n = strength.length;
   const total = 1 << n;
@@ -137,7 +138,9 @@ console.log(findMinimumTimeOpt([3, 4, 1, 2, 6], 1)); // 4
 console.log(findMinimumTimeOpt([1, 2, 3], 2)); // 3
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                          | Difficulty | Tags              |
 | ---- | -------------------------------- | ---------- | ----------------- |

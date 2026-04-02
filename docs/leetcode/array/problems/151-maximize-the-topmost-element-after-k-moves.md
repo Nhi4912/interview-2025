@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/maximize-the-topmost-element-after-
 
 # Maximize the Topmost Element After K Moves / Tối Đa Phần Tử Đỉnh Sau K Bước
 
-**Difficulty:** Medium | **Category:** Array, Greedy | **LeetCode:** [2202](https://leetcode.com/problems/maximize-the-topmost-element-after-k-moves)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Như cây bài úp — mỗi bước hoặc lấy đỉnh ra hoặc đặt lại vào.**
+**Analogy:** > **Như cây bài úp — mỗi bước hoặc lấy đỉnh ra hoặc đặt lại vào.**
 > Sau K bước, phần tử nào có thể ngồi trên cùng? Chỉ những phần tử trong tầm với.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximize the Topmost Element After K Moves example:**
 
 ```
 nums = [5, 2, 2, 4, 0, 6],  k = 4
@@ -32,7 +37,13 @@ Thực ra: max(nums[0..k-1 ngoại trừ chỉ nums[k-1]? Không!)
 - nums[k] nếu k < n (remove đúng k lần)
 ```
 
-## 📝 Tips
+---
+
+## Problem Description
+
+---
+
+## 📝 Interview Tips
 
 1. **Edge case n=1:** nếu k lẻ → stack rỗng → trả -1; k chẵn → nums[0] không đổi.
 2. **Edge case k=0:** không làm gì → trả nums[0].
@@ -45,7 +56,9 @@ Thực ra: max(nums[0..k-1 ngoại trừ chỉ nums[k-1]? Không!)
 5. **Công thức đơn giản:** `max(nums[0..k-2])` union `nums[k]` nếu tồn tại.
 6. Với k >= n: chỉ xét max(nums[0..n-1]) nhưng k phải đủ chẵn lẻ để kết thúc với phần tử trên đỉnh.
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -85,9 +98,7 @@ console.log(maximumTop([2], 1)); // -1  (only element, k odd)
 console.log(maximumTop([2], 2)); // 2   (remove then push back)
 console.log(maximumTop([1, 2, 3], 0)); // 1   (no moves)
 console.log(maximumTop([1], 4)); // 1   (k even, net zero)
-```
 
-```typescript
 /**
  * Approach 2: Clean formula — max of first min(k,n) excluding nums[k-1] + nums[k]
  * Time: O(min(k,n)) | Space: O(1)
@@ -119,7 +130,9 @@ console.log(maximumTop2([10, 20], 2)); // 10  (remove 2 → stack empty, push 10
 console.log(maximumTop2([3, 5, 1], 3)); // 5
 ```
 
-## 🔗 Related
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                                               | Difficulty | Connection                  |
 | --------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------- |

@@ -7,15 +7,18 @@ tags: [Hash Table, String, Dynamic Programming, Counting]
 leetcode_url: "https://leetcode.com/problems/minimum-substring-partition-of-equal-character-frequency"
 ---
 
-## ✂️ 3144. Minimum Substring Partition of Equal Character Frequency / Số Phân Vùng Tối Thiểu Có Tần Suất Ký Tự Bằng Nhau
-
-**Difficulty:** 🟡 Medium
+# minimum substring partition of equal character frequency
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Tưởng tượng bạn phải cắt một sợi dây thành nhiều đoạn nhỏ nhất có thể, sao cho **mỗi đoạn** chứa tất cả các ký tự xuất hiện đúng **cùng số lần**. Giống như chia kẹo: mỗi túi kẹo phải có số lượng bằng nhau cho mỗi loại kẹo trong túi đó.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 s = "fabccddg"
@@ -31,12 +34,16 @@ s = "fabccddg"
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given string `s`, partition it into minimum number of substrings such that in each substring, **every character appears the same number of times**.
 
 - Example: `s = "fabccddg"` → **3** (`"fab"`, `"cc"`, `"ddg"`)
 - Example: `s = "abababaccddb"` → **2** (`"abab"`, `"abaccddb"`)
+
+---
 
 ---
 
@@ -51,9 +58,9 @@ Given string `s`, partition it into minimum number of substrings such that in ea
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: DP + Incremental Frequency Check
+## Solutions
 
 ```typescript
 function minimumSubstringPartition(s: string): number {
@@ -84,11 +91,7 @@ function minimumSubstringPartition(s: string): number {
 
   return dp[n];
 }
-```
 
-### Solution 2: DP with Set-based Balanced Check
-
-```typescript
 function minimumSubstringPartition2(s: string): number {
   const n = s.length;
   const dp = new Array(n + 1).fill(n + 1);
@@ -114,11 +117,7 @@ function minimumSubstringPartition2(s: string): number {
 
   return dp[n];
 }
-```
 
-### Solution 3: Optimized with minFreq tracking
-
-```typescript
 function minimumSubstringPartitionOpt(s: string): number {
   const n = s.length;
   const dp = new Array(n + 1).fill(Infinity);

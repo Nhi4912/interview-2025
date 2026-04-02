@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/string-compression-ii"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn có một cuộn băng ghi âm với các đoạn ký tự lặp lại. Bạn muốn cắt bỏ tối đa `k` đoạn nhỏ để băng còn lại được nén ngắn nhất. Ví dụ `"aaabccdd"` nén thành `"a3bcc2d2"` dài 7, nhưng nếu xóa 2 ký tự `d` thì còn `"a3bcc2"` dài 6. Mỗi quyết định "có xóa ký tự này không" ảnh hưởng đến độ dài run-length encoding — đây là bài toán tối ưu DP 2 chiều: vị trí và số ký tự đã xóa.
+**Analogy:** Bạn có một cuộn băng ghi âm với các đoạn ký tự lặp lại. Bạn muốn cắt bỏ tối đa `k` đoạn nhỏ để băng còn lại được nén ngắn nhất. Ví dụ `"aaabccdd"` nén thành `"a3bcc2d2"` dài 7, nhưng nếu xóa 2 ký tự `d` thì còn `"a3bcc2"` dài 6. Mỗi quyết định "có xóa ký tự này không" ảnh hưởng đến độ dài run-length encoding — đây là bài toán tối ưu DP 2 chiều: vị trí và số ký tự đã xóa.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — String Compression II example:**
 
 ```
 s = "aaabccdd", k = 2
@@ -38,7 +41,9 @@ s[i]: 'a'  keep streak of 'a's, delete others in between
       → dp[i][j] = encLen(count) + dp[next][j - deleted]
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Run-length encoding of string `s` is compressed by replacing consecutive identical chars with char + count (omit `1`). You can **delete at most `k` characters**. Return the **minimum length** of the run-length encoded version of `s` after deleting at most `k` chars.
 
@@ -50,7 +55,9 @@ Run-length encoding of string `s` is compressed by replacing consecutive identic
 
 **Constraints:** `1 ≤ s.length ≤ 100`, `0 ≤ k ≤ s.length`, `s` contains only lowercase English letters
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **State definition** / Định nghĩa state: `dp[i][j]` = min encoded length of `s[i..]` với `j` lần xóa còn lại
 - **Greedy won't work** / Greedy sai: Xóa ký tự ảnh hưởng đến các run liền kề — cần DP đầy đủ
@@ -59,7 +66,9 @@ Run-length encoding of string `s` is compressed by replacing consecutive identic
 - **Memo top-down** / Top-down memo: `dp[i][k]` tối đa 100×100 = 10,000 states — đủ nhỏ
 - **Time complexity** / Độ phức tạp: O(n²k) với n=100, k=100 → 10^6 — chấp nhận được
 
-## Solution 1 - Brute Force Recursion (No Memo)
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -85,11 +94,7 @@ function getLengthOfOptimalCompressionBrute(s: string, k: number): number {
   }
   return rec(0, "", 0, k);
 }
-```
 
-## Solution 2 - DP with Memoization (Optimal)
-
-```typescript
 /**
  * @complexity Time: O(n²·k) | Space: O(n·k)
  * dp[i][j] = min encoded length starting at index i with j deletions left
@@ -129,11 +134,8 @@ function getLengthOfOptimalCompression(s: string, k: number): number {
 
   return dp(0, k);
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(getLengthOfOptimalCompression("aaabccdd", 2)); // → 4
 console.log(getLengthOfOptimalCompression("aabbaa", 2)); // → 2
 console.log(getLengthOfOptimalCompression("z", 0)); // → 1
@@ -141,7 +143,9 @@ console.log(getLengthOfOptimalCompression("abcdef", 3)); // → 3
 console.log(getLengthOfOptimalCompressionBrute("aabbaa", 2)); // → 2
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem            | Difficulty | Link                                                       |
 | ------------------ | ---------- | ---------------------------------------------------------- |

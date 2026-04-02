@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-cost-to-convert-string-i"
 
 # Minimum Cost to Convert String I / Chi phí tối thiểu để chuyển đổi chuỗi I
 
-🟡 Medium | Graph | Floyd-Warshall | All-Pairs Shortest Path
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mỗi chữ cái là 1 nút trong đồ thị 26 nút. Mỗi phép biến đổi `original[i] → changed[i]` với chi phí `cost[i]` là 1 cạnh có trọng số. Dùng Floyd-Warshall để tính khoảng cách ngắn nhất giữa tất cả cặp chữ cái. Sau đó với mỗi vị trí trong `source`, tra bảng để tính tổng chi phí.
+**Analogy:** **Vietnamese:** Mỗi chữ cái là 1 nút trong đồ thị 26 nút. Mỗi phép biến đổi `original[i] → changed[i]` với chi phí `cost[i]` là 1 cạnh có trọng số. Dùng Floyd-Warshall để tính khoảng cách ngắn nhất giữa tất cả cặp chữ cái. Sau đó với mỗi vị trí trong `source`, tra bảng để tính tổng chi phí.
 
 **English:** Model 26 letters as nodes in a weighted directed graph. Run **Floyd-Warshall** to precompute all-pairs shortest paths. Then for each position, look up `cost[source[i]][target[i]]` — if unreachable, return -1.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Cost to Convert String I example:**
 
 ```
 original=['a','b','c'], changed=['b','c','a'], cost=[1,2,5]
@@ -27,6 +30,18 @@ Floyd: dist[a][c] = dist[a][b]+dist[b][c] = 1+2 = 3  (cheaper than c→a which g
 source="abcd", target="bcda"
   a→b: 1, b→c: 2, c→d: INF → return -1 (no path c→d)
 ```
+
+---
+
+---
+
+## Problem Description
+
+| #    | Problem                          | Difficulty | Pattern        |
+| ---- | -------------------------------- | ---------- | -------------- |
+| 2976 | Min Cost Convert String I (this) | Medium     | Floyd-Warshall |
+| 2977 | Min Cost Convert String II       | Hard       | Trie + DP      |
+| 743  | Network Delay Time               | Medium     | Dijkstra       |
 
 ---
 
@@ -41,9 +56,9 @@ source="abcd", target="bcda"
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Floyd-Warshall All-Pairs Shortest Path
+## Solutions
 
 ```typescript
 /**

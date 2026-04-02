@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/count-array-pairs-divisible-by-k"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Hãy tưởng tượng bạn cần ghép cặp học sinh từ hai lớp sao cho tích số học sinh hai lớp chia hết cho k. Thay vì thử mọi cặp (O(n²)), ta nhận ra: chỉ cần biết "phần nào của k" mỗi học sinh "đóng góp" — tức `gcd(học sinh, k)`. Hai học sinh ghép được khi hai đóng góp nhân lại chia hết cho k. Ta gom theo GCD, rồi đếm cặp hợp lệ — giảm từ O(n²) xuống O(n·d(k)) với d(k) là số ước của k.
+**Analogy:** Hãy tưởng tượng bạn cần ghép cặp học sinh từ hai lớp sao cho tích số học sinh hai lớp chia hết cho k. Thay vì thử mọi cặp (O(n²)), ta nhận ra: chỉ cần biết "phần nào của k" mỗi học sinh "đóng góp" — tức `gcd(học sinh, k)`. Hai học sinh ghép được khi hai đóng góp nhân lại chia hết cho k. Ta gom theo GCD, rồi đếm cặp hợp lệ — giảm từ O(n²) xuống O(n·d(k)) với d(k) là số ước của k.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Array Pairs Divisible by K example:**
 
 ```
 nums = [1,2,3,4,5,6], k = 6
@@ -39,7 +42,9 @@ For pair (g1,g2): valid if k | g1*g2 ↔ 6 | g1*g2
   → Total = 4 ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 Given an integer array `nums` and an integer `k`, return the **number of pairs** `(i, j)` where `0 ≤ i < j ≤ n-1` and `nums[i] * nums[j]` is divisible by `k`.
 
@@ -48,7 +53,9 @@ Given an integer array `nums` and an integer `k`, return the **number of pairs**
 
 **Constraints:** `1 ≤ nums.length ≤ 10^5`, `1 ≤ nums[i], k ≤ 10^5`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Key theorem** / Định lý chính: `k | a*b ⟺ k | gcd(a,k)*gcd(b,k)` — proven via prime factorization
 - **Group by gcd(num, k)** / Gom theo GCD: Chỉ d(k) nhóm tối đa, d(k)≤128 với k≤10^5
@@ -57,7 +64,9 @@ Given an integer array `nums` and an integer `k`, return the **number of pairs**
 - **Brute O(n²)** / Brute force: n≤10^5 nên O(n²) = 10^10 → TLE; phải dùng GCD grouping
 - **Overflow risk** / Tràn số: `g1 * g2` có thể tràn số nguyên → dùng `number` (đủ với k≤10^5)
 
-## Solution 1 - Brute Force (O(n²))
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -70,11 +79,7 @@ function countPairsBrute(nums: number[], k: number): number {
     for (let j = i + 1; j < nums.length; j++) if ((nums[i] * nums[j]) % k === 0) count++;
   return count;
 }
-```
 
-## Solution 2 - GCD Grouping (Optimal O(n·d(k) + d(k)²))
-
-```typescript
 /**
  * @complexity Time: O(n·log k + d(k)²) | Space: O(d(k))
  * Group by gcd(num,k); for each pair of gcd-groups check if product % k === 0
@@ -106,11 +111,7 @@ function countPairs(nums: number[], k: number): number {
   }
   return count;
 }
-```
 
-## Solution 3 - Suffix Scan (O(n · d(k)))
-
-```typescript
 /**
  * @complexity Time: O(n·log k) | Space: O(d(k))
  * Process right-to-left; for each element count valid partners to its right
@@ -131,11 +132,8 @@ function countPairsSuffix(nums: number[], k: number): number {
   }
   return count;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(countPairs([1, 2, 3, 4, 5, 6], 6)); // → 4
 console.log(countPairs([1, 2, 3, 4], 5)); // → 0
 console.log(countPairs([1, 2], 2)); // → 1
@@ -143,7 +141,9 @@ console.log(countPairsBrute([1, 2, 3, 4, 5, 6], 6)); // → 4
 console.log(countPairsSuffix([1, 2, 3, 4, 5, 6], 6)); // → 4
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                         | Difficulty | Link                                                                     |
 | ------------------------------- | ---------- | ------------------------------------------------------------------------ |

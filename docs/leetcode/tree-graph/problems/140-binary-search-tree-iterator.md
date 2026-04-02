@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/binary-search-tree-iterator"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Controlled Recursion with Stack
 
-## 🧠 Intuition
+---
 
-**VI**: In-order traversal BST cho dãy tăng dần — nhưng ta cần "lazy" (từng phần tử một, không duyệt hết rồi lưu). Dùng stack để mô phỏng đệ quy: luôn đẩy tất cả nút bên trái xuống stack. Khi `next()` được gọi, pop đỉnh stack, rồi đẩy toàn bộ cây con bên phải vào.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: In-order traversal BST cho dãy tăng dần — nhưng ta cần "lazy" (từng phần tử một, không duyệt hết rồi lưu). Dùng stack để mô phỏng đệ quy: luôn đẩy tất cả nút bên trái xuống stack. Khi `next()` được gọi, pop đỉnh stack, rồi đẩy toàn bộ cây con bên phải vào.
 
 **EN**: Simulate in-order with explicit stack. Push all left nodes first. On `next()`: pop top → push all lefts of `top.right`. This gives O(1) amortized `next()` and O(h) space.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Binary Search Tree Iterator example:**
 
 ```
 BST:      Stack state:
@@ -28,6 +35,19 @@ BST:      Stack state:
           ...
 ```
 
+---
+
+## Problem Description
+
+| #   | Title                          | Difficulty | Pattern                |
+| --- | ------------------------------ | ---------- | ---------------------- |
+| 94  | Binary Tree Inorder Traversal  | 🟢 Easy    | Stack / Recursion      |
+| 173 | Binary Search Tree Iterator II | 🟡 Medium  | Bidirectional Iterator |
+| 281 | Zigzag Iterator                | 🟡 Medium  | Design Iterator        |
+| 284 | Peeking Iterator               | 🟡 Medium  | Iterator Pattern       |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Không nên duyệt hết và lưu mảng — tốn O(n) space ngay từ đầu, không "lazy".
@@ -36,6 +56,8 @@ BST:      Stack state:
 - 🇬🇧 `pushLeft(node)`: push node and all its left descendants — called after every pop.
 - 🇻🇳 `hasNext()` chỉ cần kiểm tra `stack.length > 0` — O(1).
 - 🇬🇧 `hasNext()` is simply `stack.length > 0` — O(1) guaranteed.
+
+---
 
 ## Solutions
 
@@ -164,6 +186,8 @@ const r2: number[] = [];
 while (iter2.hasNext()) r2.push(iter2.next());
 console.log(r2); // [1, 3, 5, 7, 15, 20]
 ```
+
+---
 
 ## 🔗 Related Problems
 

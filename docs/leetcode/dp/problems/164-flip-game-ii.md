@@ -9,15 +9,20 @@ leetcode_url: "https://leetcode.com/problems/flip-game-ii"
 
 # Flip Game II / Trò Chơi Lật Dấu II
 
-🟡 Medium | Game theory with memoization (Sprague-Grundy)
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**VI:** Trò chơi công bằng: người hiện tại thắng nếu tồn tại ít nhất một nước đi
+**Analogy:** **VI:** Trò chơi công bằng: người hiện tại thắng nếu tồn tại ít nhất một nước đi
 khiến đối thủ thua. Dùng memoisation để tránh tính lại trạng thái đã gặp.
 
 **EN:** Current player wins if there exists at least one move that puts the opponent in a
 losing state. Memoize by string state to avoid recomputation.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Flip Game II example:**
 
 ```
 currentState = "+++++"
@@ -25,6 +30,19 @@ Try flipping each "++" → "+--++", "++--+", "+++--"
 canWin("+--++") → opponent can flip → canWin recursive
 If ANY resulting state makes opponent lose → return true
 ```
+
+---
+
+## Problem Description
+
+| Problem                                                                                                | Difficulty | Key Idea                 |
+| ------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [292. Nim Game](https://leetcode.com/problems/nim-game/)                                               | 🟢 Easy    | Mathematical game theory |
+| [294. Flip Game II](https://leetcode.com/problems/flip-game-ii/)                                       | 🟡 Medium  | This problem             |
+| [375. Guess Number Higher or Lower II](https://leetcode.com/problems/guess-number-higher-or-lower-ii/) | 🟡 Medium  | Minimax DP               |
+| [486. Predict the Winner](https://leetcode.com/problems/predict-the-winner/)                           | 🟡 Medium  | Minimax game DP          |
+
+---
 
 ## 📝 Interview Tips
 
@@ -41,9 +59,9 @@ If ANY resulting state makes opponent lose → return true
 - 🔑 **EN:** Each move converts "++" to "--"; game ends when no "++" remains.
   **VI:** Mỗi nước chuyển "++" thành "--"; trò chơi kết thúc khi không còn "++".
 
-## Solutions
+---
 
-### Solution 1: Memoised Backtracking
+## Solutions
 
 ```typescript
 /**
@@ -75,11 +93,7 @@ function canWin(currentState: string): boolean {
 console.log(canWin("++++")); // true
 console.log(canWin("+")); // false
 console.log(canWin("++--++")); // true
-```
 
-### Solution 2: Sprague-Grundy (O(n))
-
-```typescript
 /**
  * Sprague-Grundy theorem:
  * Split string by '-', each contiguous run of '+' of length L
@@ -109,6 +123,8 @@ console.log(canWinGrundy("+")); // false
 console.log(canWinGrundy("++--++")); // true
 console.log(canWinGrundy("++")); // true
 ```
+
+---
 
 ## 🔗 Related Problems
 

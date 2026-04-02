@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/greatest-sum-divisible-by-three"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Remainder DP (3-state)
 
-## 🧠 Intuition
+---
 
-**VI:** Thay vì thử mọi tập con, theo dõi tổng tốt nhất cho từng phần dư (0, 1, 2) khi chia cho 3. Khi thêm số mới, cập nhật ba trạng thái cùng lúc.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Thay vì thử mọi tập con, theo dõi tổng tốt nhất cho từng phần dư (0, 1, 2) khi chia cho 3. Khi thêm số mới, cập nhật ba trạng thái cùng lúc.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Greatest Sum Divisible by Three example:**
 
 ```
 nums = [3, 6, 5, 1, 8]
@@ -47,6 +54,19 @@ Add 8 (8%3=2):
 Answer: dp[0] = 18  wait... let me recalculate → 18
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                           | Difficulty | Connection             |
+| ---- | ------------------------------- | ---------- | ---------------------- |
+| 1262 | Greatest Sum Divisible by Three | 🟡 Medium  | This problem           |
+| 1395 | Count Number of Teams           | 🟡 Medium  | State-indexed DP       |
+| 983  | Minimum Cost For Tickets        | 🟡 Medium  | Remainder / modular DP |
+| 416  | Partition Equal Subset Sum      | 🟡 Medium  | 0/1 subset-sum DP      |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Track `dp[0], dp[1], dp[2]` = best sums with remainder 0, 1, 2 | **VI:** 3 trạng thái: tổng tốt nhất có phần dư 0, 1, 2
@@ -55,6 +75,8 @@ Answer: dp[0] = 18  wait... let me recalculate → 18
 - 🔑 **EN:** Must copy `dp` before updating to avoid using new values in same iteration | **VI:** Tạo bản sao trước khi cập nhật — tránh dùng giá trị mới trong cùng vòng lặp
 - 🔑 **EN:** Greedy alternative: subtract smallest 1-remainder element or two 2-remainder elements | **VI:** Greedy: tổng tất cả, rồi bỏ đi nhỏ nhất để phần dư = 0
 - 🔑 **EN:** Answer is `dp[0]` after processing all elements | **VI:** Đáp án là `dp[0]` — tổng chia hết cho 3 lớn nhất
+
+---
 
 ## Solutions
 
@@ -134,6 +156,8 @@ console.log(maxSumDivThree([1, 2, 3, 4, 4])); // 12
 console.log(maxSumDivThreeGreedy([3, 6, 5, 1, 8])); // 18
 console.log(maxSumDivisibleByThree([3, 6, 5, 1, 8])); // 18
 ```
+
+---
 
 ## 🔗 Related Problems
 

@@ -11,11 +11,18 @@ leetcode_url: "https://leetcode.com/problems/reverse-odd-levels-of-binary-tree"
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS Level-order
 
-## 🧠 Intuition
+---
 
-**VI**: Cây là cây nhị phân hoàn hảo (perfect binary tree). Duyệt BFS theo từng tầng, thu thập tất cả nút ở tầng lẻ (level 1, 3, 5...), đảo ngược mảng giá trị, rồi gán lại. Không cần đảo cấu trúc cây — chỉ hoán đổi giá trị!
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI**: Cây là cây nhị phân hoàn hảo (perfect binary tree). Duyệt BFS theo từng tầng, thu thập tất cả nút ở tầng lẻ (level 1, 3, 5...), đảo ngược mảng giá trị, rồi gán lại. Không cần đảo cấu trúc cây — chỉ hoán đổi giá trị!
 
 **EN**: Perfect binary tree → BFS level by level. At odd levels collect nodes, reverse their `.val` array and reassign. Swap values only, not structure.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Reverse Odd Levels of Binary Tree example:**
 
 ```
 Before:              After:
@@ -29,6 +36,19 @@ Level 1 (odd):  [3, 5]   → swap → [5, 3]
 Level 2 (even): [8,13,21,34] → no change
 ```
 
+---
+
+## Problem Description
+
+| #   | Title                                       | Difficulty | Pattern         |
+| --- | ------------------------------------------- | ---------- | --------------- |
+| 226 | Invert Binary Tree                          | 🟢 Easy    | DFS/BFS         |
+| 116 | Populating Next Right Pointers in Each Node | 🟡 Medium  | BFS             |
+| 199 | Binary Tree Right Side View                 | 🟡 Medium  | BFS Level-order |
+| 102 | Binary Tree Level Order Traversal           | 🟡 Medium  | BFS             |
+
+---
+
 ## 📝 Interview Tips
 
 - 🇻🇳 Cây hoàn hảo (perfect binary tree) đảm bảo tầng chẵn có 2^level nút — luôn cặp đối xứng.
@@ -37,6 +57,8 @@ Level 2 (even): [8,13,21,34] → no change
 - 🇬🇧 Swap `.val` only — no pointer manipulation needed.
 - 🇻🇳 Giải pháp DFS đệ quy: duyệt đồng thời hai nút đối xứng, hoán đổi giá trị tại tầng lẻ.
 - 🇬🇧 DFS approach: traverse symmetric pairs simultaneously, swap at odd levels.
+
+---
 
 ## Solutions
 
@@ -151,6 +173,8 @@ const t2 = makeTree([7, 13, 11]);
 reverseOddLevels2(t2);
 console.log(treeToArray(t2)); // [7,11,13]
 ```
+
+---
 
 ## 🔗 Related Problems
 

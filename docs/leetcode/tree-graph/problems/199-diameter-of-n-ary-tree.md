@@ -7,15 +7,18 @@ tags: [Tree, Depth-First Search]
 leetcode_url: "https://leetcode.com/problems/diameter-of-n-ary-tree"
 ---
 
-## 1522. Diameter of N-Ary Tree
-
-### Đường Kính Cây N-nhánh | 🟡 Medium
+# diameter of n ary tree
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Đường kính cây = con đường dài nhất giữa 2 lá. Tại mỗi node, đường dài nhất qua node đó = 2 nhánh sâu nhất cộng lại. Track max trong suốt quá trình DFS.
+**Analogy:** > **Vietnamese analogy:** Đường kính cây = con đường dài nhất giữa 2 lá. Tại mỗi node, đường dài nhất qua node đó = 2 nhánh sâu nhất cộng lại. Track max trong suốt quá trình DFS.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
         1
@@ -33,7 +36,9 @@ Deepest paths at node 1:
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given the `root` of an N-ary tree, return the **diameter** — the length of the longest path between any two nodes. The path does **not** need to pass through the root.
 
@@ -49,6 +54,8 @@ Given the `root` of an N-ary tree, return the **diameter** — the length of the
 
 ---
 
+---
+
 ## 📝 Interview Tips
 
 - 🔑 Diameter at any node = sum of **top-2 longest child depths**
@@ -60,9 +67,9 @@ Given the `root` of an N-ary tree, return the **diameter** — the length of the
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: DFS — Track Top-2 Child Heights
+## Solutions
 
 ```typescript
 class Node {
@@ -103,11 +110,7 @@ function diameter(root: Node | null): number {
   dfs(root);
   return maxDiameter;
 }
-```
 
-### Solution 2: DFS Collecting All Child Heights
-
-```typescript
 function diameterV2(root: Node | null): number {
   let ans = 0;
 
@@ -127,11 +130,7 @@ function diameterV2(root: Node | null): number {
   height(root);
   return ans;
 }
-```
 
-### Solution 3: Iterative Post-Order with Stack
-
-```typescript
 function diameterIterative(root: Node | null): number {
   if (!root) return 0;
 

@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-operations-to-sor
 
 # Minimum Number of Operations to Sort a Binary Tree by Level / Số Thao Tác Tối Thiểu Để Sắp Xếp Cây Nhị Phân Theo Cấp
 
-## Analogy / Tương Tự
+---
 
-> Mỗi tầng của tòa nhà (level của cây) có các căn phòng đánh số lộn xộn. Bạn muốn sắp xếp số phòng tăng dần từ trái sang phải. Mỗi thao tác là **hoán vị 2 phòng bất kỳ** trong cùng tầng. Tìm số hoán vị tối thiểu.
+## 🧠 Intuition / Tư Duy
 
-## ASCII Visual
+**Analogy:** > Mỗi tầng của tòa nhà (level của cây) có các căn phòng đánh số lộn xộn. Bạn muốn sắp xếp số phòng tăng dần từ trái sang phải. Mỗi thao tác là **hoán vị 2 phòng bất kỳ** trong cùng tầng. Tìm số hoán vị tối thiểu.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Operations to Sort a Binary Tree by Level example:**
 
 ```
 Level 1:  [1]          (sorted, 0 swaps)
@@ -23,11 +28,15 @@ Level 3:  [7, 6, 5, 4] → [4, 5, 6, 7]: 2 swaps
 Total = 0 + 1 + 2 = 3 swaps
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given the `root` of a binary tree with **unique** values. In one operation, you can swap any two children of the same parent. Return the minimum number of operations needed to make values at each level sorted in strictly increasing order from left to right.
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **BFS for levels** — collect each level's values, compute swaps independently
 2. **Minimum swaps to sort** — classic problem: find cycles in permutation, answer = n - numCycles
@@ -36,9 +45,9 @@ Given the `root` of a binary tree with **unique** values. In one operation, you 
 5. **Unique values** — guaranteed, so no duplicates to handle
 6. **Total ops** — sum minimum swaps across all levels
 
-## Solutions
+---
 
-### Solution 1: BFS + Cycle-Based Minimum Swaps
+## Solutions
 
 ```typescript
 class TreeNode {
@@ -108,11 +117,7 @@ const root1 = new TreeNode(
   new TreeNode(3, new TreeNode(8), new TreeNode(5)),
 );
 console.log(minimumOperations(root1)); // 3
-```
 
-### Solution 2: BFS + Index-Based Swap Count
-
-```typescript
 function minimumOperationsV2(root: TreeNode | null): number {
   if (!root) return 0;
 
@@ -155,7 +160,9 @@ const root2 = new TreeNode(1, new TreeNode(3, new TreeNode(7), new TreeNode(6)),
 console.log(minimumOperationsV2(root2)); // 3
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                     | Difficulty | Tags         |
 | ---- | ------------------------------------------- | ---------- | ------------ |

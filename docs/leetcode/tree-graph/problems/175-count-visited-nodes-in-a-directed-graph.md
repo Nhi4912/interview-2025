@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/count-visited-nodes-in-a-directed-g
 
 # Count Visited Nodes in a Directed Graph / Đếm Nút Được Thăm Trong Đồ Thị Có Hướng
 
-🔴 Hard | Functional Graph: Cycle Detection + DFS Count | [LeetCode 2876](https://leetcode.com/problems/count-visited-nodes-in-a-directed-graph)
-
 ---
 
-## 🧠 Intuition / Trực giác
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Đây là "functional graph" — mỗi nút có đúng một cạnh ra. Từ bất kỳ nút nào, đi theo mũi tên cuối cùng sẽ vào một vòng lặp (cycle). Nút nằm trong cycle thì visited = độ dài cycle. Nút ngoài cycle thì visited = khoảng cách đến cycle + kích thước cycle.
+**Analogy:** **Vietnamese:** Đây là "functional graph" — mỗi nút có đúng một cạnh ra. Từ bất kỳ nút nào, đi theo mũi tên cuối cùng sẽ vào một vòng lặp (cycle). Nút nằm trong cycle thì visited = độ dài cycle. Nút ngoài cycle thì visited = khoảng cách đến cycle + kích thước cycle.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Count Visited Nodes in a Directed Graph example:**
 
 ```
 edges: [1, 2, 0, 3]  (node i → edges[i])
@@ -28,7 +31,20 @@ edges: [1,2,3,4,0]
 
 ---
 
-## 📝 Interview Tips / Gợi ý phỏng vấn
+---
+
+## Problem Description
+
+| Problem                                                                                           | Difficulty | Key Idea                            |
+| ------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------- |
+| [Find Eventual Safe States 802](https://leetcode.com/problems/find-eventual-safe-states)          | Medium     | Cycle detection in functional graph |
+| [Longest Cycle in a Graph 2360](https://leetcode.com/problems/longest-cycle-in-a-graph)           | Hard       | Find max cycle length               |
+| [Course Schedule 207](https://leetcode.com/problems/course-schedule)                              | Medium     | Cycle detection with DFS            |
+| [Largest Color Value 1857](https://leetcode.com/problems/largest-color-value-in-a-directed-graph) | Hard       | DP on DAG / cycle detection         |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN:** Functional graph: every node has out-degree 1 → always forms rho (ρ) shaped paths | **VI:** Mỗi nút chỉ có 1 cạnh ra → tạo dạng chữ ρ
 - 🔑 **EN:** Step 1: detect cycles using visited array with 3 states: unvisited/in-path/done | **VI:** Phát hiện cycle với 3 trạng thái: chưa thăm / đang thăm / xong
@@ -39,7 +55,9 @@ edges: [1,2,3,4,0]
 
 ---
 
-## 💡 Solutions / Giải pháp
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -99,9 +117,7 @@ function countVisitedNodes(edges: number[]): number[] {
 console.log(countVisitedNodes([1, 2, 0, 0])); // [3,3,3,4]
 console.log(countVisitedNodes([1, 2, 3, 4, 0])); // [5,5,5,5,5]
 console.log(countVisitedNodes([1, 2, 3, 4, 0, 5, 6])); // cycle 0-4 len=5; 5→5(self), 6→6(self)
-```
 
-```typescript
 /**
  * Iterative approach using explicit stack for cycle finding
  * Time: O(n)  Space: O(n)
@@ -167,7 +183,7 @@ console.log(countVisitedNodesV2([1, 2, 3, 4, 0])); // [5,5,5,5,5]
 
 ---
 
-## 🔗 Related Problems / Bài liên quan
+## 🔗 Related Problems
 
 | Problem                                                                                           | Difficulty | Key Idea                            |
 | ------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------- |

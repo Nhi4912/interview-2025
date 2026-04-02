@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/find-the-number-of-subsequences-wit
 
 # Find the Number of Subsequences With Equal GCD / Đếm Cặp Dãy Con Có GCD Bằng Nhau
 
-🔴 Hard | Dynamic Programming · Number Theory
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** Count pairs of non-empty disjoint subsequences (S1, S2) where `gcd(S1) == gcd(S2)`. Use DP: `dp[g1][g2]` = number of ways to partition the prefix into two sets where S1 has running GCD `g1` and S2 has running GCD `g2`. For each element, either add to S1, add to S2, or skip.
+**Analogy:** **EN:** Count pairs of non-empty disjoint subsequences (S1, S2) where `gcd(S1) == gcd(S2)`. Use DP: `dp[g1][g2]` = number of ways to partition the prefix into two sets where S1 has running GCD `g1` and S2 has running GCD `g2`. For each element, either add to S1, add to S2, or skip.
 
 **VI:** Đếm cặp dãy con rỗng (S1, S2) không giao nhau với `gcd(S1) == gcd(S2)`. DP: `dp[g1][g2]` = số cách phân chia tiền tố thành hai tập sao cho GCD của S1 là g1, GCD của S2 là g2. Với mỗi phần tử: thêm vào S1, thêm vào S2, hoặc bỏ qua.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find the Number of Subsequences With Equal GCD example:**
 
 ```
 dp[g1][g2] = # ways with gcd(S1)=g1, gcd(S2)=g2
@@ -35,6 +38,18 @@ Answer: Σ dp[g][g] for g >= 1   (equal GCDs)
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                   | Difficulty | Pattern          |
+| --------------------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Maximize Score After N Operations](https://leetcode.com/problems/maximize-score-after-n-operations/)     | 🔴 Hard    | Bitmask DP + GCD |
+| [Check If It Is a Good Array](https://leetcode.com/problems/check-if-it-is-a-good-array/)                 | 🔴 Hard    | Number Theory    |
+| [Count Subarrays With GCD Equal to K](https://leetcode.com/problems/count-subarrays-with-gcd-equal-to-k/) | 🟡 Medium  | GCD DP           |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** `dp[g1][g2]`: g1=running GCD of S1 (0 means empty), g2=running GCD of S2. **VI:** dp[g1][g2]: g1=GCD hiện tại của S1 (0=rỗng), g2=GCD của S2.
@@ -46,7 +61,9 @@ Answer: Σ dp[g][g] for g >= 1   (equal GCDs)
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

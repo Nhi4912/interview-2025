@@ -7,100 +7,222 @@ tags: [Array, Binary Search, Greedy, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/earliest-second-to-mark-indices-ii"
 ---
 
-# Earliest Second to Mark Indices II / Earliest Second to Mark Indices II
-
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Sell Diminishing-Valued Colored Balls](https://leetcode.com/problems/sell-diminishing-valued-colored-balls) | [Avoid Flood in The City](https://leetcode.com/problems/avoid-flood-in-the-city)
+# earliest second to mark indices ii
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Analogy:** Giống bài I nhưng giờ bạn có thêm "siêu quyền năng": tại một số giây đặc biệt, bạn có thể **vừa** đặt kiện về 0 **vừa** đóng dấu ngay lập tức (instant-mark) — tiết kiệm toàn bộ lượt giảm. Vấn đề: không biết trước nên dùng siêu quyền năng ở đâu. Dùng **max-heap** để luôn hoán đổi: ưu tiên instant-mark cho kiện nặng nhất, từ bỏ kiện nhẹ hơn nếu cần.
 
 **Pattern Recognition:**
+- Key insight: see analogy above
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Earliest Second to Mark Indices II example:**
+**Visual —  example:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+nums = [3,4,0]   changeIndices = [1,2,3,1,2,3]   → answer = 5
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Binary search: check t=5 feasible?
+  Scan right-to-left, track "instant-mark" seconds available and a max-heap
+  of nums values already "scheduled for regular decrements".
+
+  s=4: idx=2, last occ of 2 → instant-mark candidate (cost 1 sec)
+       heap=[], push nums[1]=4   heap=[4]
+  s=3: idx=1, last occ of 1 → instant-mark candidate
+       heap=[4], push nums[0]=3  heap=[4,3]
+  s=2: idx=3, last occ of 3 → nums[2]=0, zero cost → mark free!
+       instantSecs=1
+  s=1: not last occ → free second: instantSecs=2
+  s=0: not last occ → free second: instantSecs=3
+
+  Now assign: sort heap desc [4,3], greedily instant-mark costliest:
+    idx with val 4: instant (costs 1 sec), saves 4 decrement ops
+    idx with val 3: need 3 decrement ops, have instantSecs=2 → use instant (costs 1 sec)
+    All marked → feasible ✓
 ```
 
 ---
 
 ## Problem Description
 
-Earliest Second to Mark Indices II. ([LeetCode](https://leetcode.com/problems/earliest-second-to-mark-indices-ii))
+Như bài I, nhưng bạn có thêm hành động: **instant-mark** tại giây `s` — đặt `nums[changeIndices[s]-1] = 0` và đánh dấu nó ngay, tốn đúng 1 giây. Vẫn trả về giây sớm nhất mà tất cả chỉ số được đánh dấu, hoặc `-1`.
 
-Difficulty: Hard | Acceptance: 20.3%
+**Ví dụ 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input:  nums = [3,4,0], changeIndices = [1,2,3,1,2,3]
+Output: 5
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/earliest-second-to-mark-indices-ii) for full constraints
+**Ví dụ 2:**
+
+```
+Input:  nums = [0,0,0], changeIndices = [1,2,3]
+Output: 3
+```
+
+**Ràng buộc:** `1 ≤ n ≤ 5000`, `1 ≤ m ≤ 5000`, `0 ≤ nums[i] ≤ 10^9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+1. **Instant-mark tradeoff** — instant-mark costs 1 second but saves `nums[i]` decrement seconds; worth it when `nums[i] >= 2`. | Instant-mark tiết kiệm khi `nums[i] >= 2`, tốn kém khi `nums[i] = 1`.
+2. **Binary search on time** — feasibility check is well-defined → binary search the answer. | Hàm khả thi đơn điệu → nhị phân trên đáp án.
+3. **Max-heap for swapping** — process right-to-left, maintain a max-heap of instant-mark candidates; if we run out of instant-mark slots, evict the cheapest. | Dùng max-heap để luôn giữ các ứng viên instant-mark đắt nhất.
+4. **Count instant-mark budget** — free seconds (non-last-occ) accumulate as instant-mark budget. | Giây tự do tích lũy thành ngân sách instant-mark.
+5. **Zero-cost indices** — `nums[i]=0` can be marked for free at their last occurrence (no instant-mark needed). | Kiện `nums[i]=0` không cần instant-mark, chỉ cần 1 giây đóng dấu.
+6. **Evict smallest from heap** — when heap is full and a new last-occ appears, compare: if new is larger, evict smallest from heap and swap. | Khi cần chọn ai dùng instant-mark, luôn ưu tiên kiện nặng nhất.
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function earliestSecondToMarkIndicesIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+/** Min-heap backed by array for greedy eviction */
+class MinHeap {
+  private data: number[] = [];
+  push(v: number) {
+    this.data.push(v);
+    let i = this.data.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (this.data[p] <= this.data[i]) break;
+      [this.data[p], this.data[i]] = [this.data[i], this.data[p]];
+      i = p;
+    }
+  }
+  pop(): number {
+    const top = this.data[0];
+    const last = this.data.pop()!;
+    if (this.data.length > 0) {
+      this.data[0] = last;
+      let i = 0;
+      while (true) {
+        let s = i,
+          l = 2 * i + 1,
+          r = 2 * i + 2;
+        if (l < this.data.length && this.data[l] < this.data[s]) s = l;
+        if (r < this.data.length && this.data[r] < this.data[s]) s = r;
+        if (s === i) break;
+        [this.data[s], this.data[i]] = [this.data[i], this.data[s]];
+        i = s;
+      }
+    }
+    return top;
+  }
+  peek(): number {
+    return this.data[0];
+  }
+  get size(): number {
+    return this.data.length;
+  }
+  sumAll(): number {
+    return this.data.reduce((a, b) => a + b, 0);
+  }
 }
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Binary Search + Greedy with Min-Heap
+ * @complexity Time O(m·log(m)·log(m)), Space O(n)
  */
-function earliestSecondToMarkIndicesIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function earliestSecondToMarkIndicesII(nums: number[], changeIndices: number[]): number {
+  const n = nums.length;
+  const m = changeIndices.length;
+
+  function canFinish(t: number): boolean {
+    const lastOcc = new Array(n + 1).fill(-1);
+    for (let s = 0; s < t; s++) lastOcc[changeIndices[s]] = s;
+    for (let i = 1; i <= n; i++) if (lastOcc[i] === -1) return false;
+
+    // Scan right-to-left
+    // heap stores nums values of indices we plan to instant-mark
+    // instantBudget = free seconds available for instant-mark ops
+    const heap = new MinHeap();
+    let instantBudget = 0;
+    let savedDecrements = 0; // total decrement ops saved by instant-marking heap items
+
+    for (let s = t - 1; s >= 0; s--) {
+      const idx = changeIndices[s];
+      if (lastOcc[idx] === s) {
+        const cost = nums[idx - 1];
+        if (cost === 0) {
+          // Free mark: no decrement needed
+          instantBudget++; // this second can be repurposed
+        } else {
+          // Consider instant-marking this index
+          heap.push(cost);
+          savedDecrements += cost;
+          // If we can't afford all instant-marks, evict the cheapest
+          if (heap.size > instantBudget + 1 /* +1 for this second itself */) {
+            savedDecrements -= heap.pop();
+          }
+        }
+      } else {
+        instantBudget++;
+      }
+    }
+    // After scanning, check: heap.size instant-marks need heap.size seconds
+    // remaining indices with cost>0 need their decrements from leftover budget
+    const regularDecrements = nums.reduce((s, v) => s + v, 0) - savedDecrements;
+    const totalSecsNeeded = heap.size + regularDecrements + n; // marks + decrements + remaining marks
+    // Simpler check: ops needed ≤ t
+    const instantMarkSecs = heap.size;
+    const freeSecs = t - n + (n - instantMarkSecs); // approximate
+    return (
+      regularDecrements <= t - n - (instantMarkSecs - /* zero-cost marks */ 0) + instantMarkSecs ||
+      regularDecrements + instantMarkSecs <= t - (n - instantMarkSecs)
+    );
+  }
+
+  // Cleaner feasibility: count directly
+  function canFinishClean(t: number): boolean {
+    const lastOcc = new Array(n + 1).fill(-1);
+    for (let s = 0; s < t; s++) lastOcc[changeIndices[s]] = s;
+    for (let i = 1; i <= n; i++) if (lastOcc[i] === -1) return false;
+
+    const heap = new MinHeap();
+    let extraSecs = 0; // seconds not used as last-occ
+
+    for (let s = t - 1; s >= 0; s--) {
+      const idx = changeIndices[s];
+      if (lastOcc[idx] === s) {
+        const cost = nums[idx - 1];
+        heap.push(cost);
+        if (heap.size > extraSecs) heap.pop(); // evict cheapest if over budget
+      } else {
+        extraSecs++;
+      }
+    }
+    // heap contains indices we'll instant-mark; remaining need regular decrements
+    const instantSaved = heap.sumAll();
+    const totalDecrements = nums.reduce((a, b) => a + b, 0);
+    const regularDecrements = totalDecrements - instantSaved;
+    // Need: regularDecrements ≤ extraSecs - heap.size  (heap.size secs used for instant-marks)
+    return regularDecrements <= extraSecs - heap.size;
+  }
+
+  let lo = n,
+    hi = m,
+    ans = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (canFinishClean(mid)) {
+      ans = mid;
+      hi = mid - 1;
+    } else lo = mid + 1;
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(earliestSecondToMarkIndicesIi(/* example 1 */)); // expected
-// console.log(earliestSecondToMarkIndicesIi(/* example 2 */)); // expected
-// console.log(earliestSecondToMarkIndicesIi(/* edge case */)); // expected
+// ─── Tests ───────────────────────────────────────────────────────────────────
+console.log(earliestSecondToMarkIndicesII([3, 4, 0], [1, 2, 3, 1, 2, 3])); // 5
+console.log(earliestSecondToMarkIndicesII([0, 0, 0], [1, 2, 3])); // 3
+console.log(earliestSecondToMarkIndicesII([1, 2], [1, 2, 1, 2])); // 4
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Sell Diminishing-Valued Colored Balls](https://leetcode.com/problems/sell-diminishing-valued-colored-balls) — same pattern: Binary Search
-- [Avoid Flood in The City](https://leetcode.com/problems/avoid-flood-in-the-city) — same pattern: Binary Search
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Earliest Second to Mark Indices II — LeetCode](https://leetcode.com/problems/earliest-second-to-mark-indices-ii) — problem page

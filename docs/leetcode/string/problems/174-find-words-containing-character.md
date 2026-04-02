@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/find-words-containing-character"
 
 # Find Words Containing Character / Tìm Từ Chứa Ký Tự
 
-**Difficulty:** 🟢 Easy | **Tags:** Array, String
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Bài toán đơn giản như **lọc danh sách**: giữ lại những từ có chứa ký tự `x`.
+**Analogy:** Bài toán đơn giản như **lọc danh sách**: giữ lại những từ có chứa ký tự `x`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find Words Containing Character example:**
 
 ```
 words = ["leet","code","leetcode"]   x = 'e'
@@ -35,7 +38,19 @@ All words → no 'z' found     Output: []
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                                                 | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/) | 🟢 Easy    | String search      |
+| [Check if the Sentence Is Pangram](https://leetcode.com/problems/check-if-the-sentence-is-pangram/)                                     | 🟢 Easy    | Character presence |
+| [Counting Words With a Given Prefix](https://leetcode.com/problems/counting-words-with-a-given-prefix/)                                 | 🟢 Easy    | startsWith filter  |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Trả về index, không phải từ**: đề hỏi indices, đừng nhầm trả về words
 - 🇺🇸 **Return indices, not words**: the question asks for position numbers
@@ -52,9 +67,9 @@ All words → no 'z' found     Output: []
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Filter + indexOf (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -72,11 +87,7 @@ function findWordsContaining(words: string[], x: string): number[] {
 console.log(findWordsContaining(["leet", "code", "leetcode"], "e")); // [0, 1, 2]
 console.log(findWordsContaining(["abc", "bcd", "aaaa", "cbc"], "z")); // []
 console.log(findWordsContaining(["abc", "bcd", "aaaa", "cbc"], "a")); // [0, 2]
-```
 
-### Solution 2 — Functional reduce
-
-```typescript
 /**
  * Accumulate matching indices with reduce.
  * Time: O(n × L)  Space: O(k)
@@ -89,11 +100,7 @@ function findWordsContaining2(words: string[], x: string): number[] {
 }
 
 console.log(findWordsContaining2(["leet", "code", "leetcode"], "e")); // [0, 1, 2]
-```
 
-### Solution 3 — flatMap one-liner
-
-```typescript
 /**
  * flatMap trick: return [i] or [] per element.
  * Time: O(n × L)  Space: O(k)

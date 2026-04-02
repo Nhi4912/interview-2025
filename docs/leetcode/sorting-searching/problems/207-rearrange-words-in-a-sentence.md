@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/rearrange-words-in-a-sentence"
 
 # Rearrange Words in a Sentence / Sắp Xếp Lại Các Từ Trong Câu
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Bạn có một câu tiếng Anh. Muốn sắp xếp các từ theo **độ dài tăng dần** (từ ngắn trước, dài sau). Chữ đầu câu được viết hoa. Cần giữ **thứ tự ổn định** (stable sort) cho các từ cùng độ dài.
+**Analogy:** > **Hình ảnh:** Bạn có một câu tiếng Anh. Muốn sắp xếp các từ theo **độ dài tăng dần** (từ ngắn trước, dài sau). Chữ đầu câu được viết hoa. Cần giữ **thứ tự ổn định** (stable sort) cho các từ cùng độ dài.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Rearrange Words in a Sentence example:**
 
 ```
 text = "Leetcode is cool"
@@ -29,7 +34,9 @@ Capitalize first word → "Is cool leetcode"
 
 **Chiến lược:** Lowercase all → split → stable sort by word length → capitalize first word → join.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given sentence `text` (first word capitalized). Rearrange words in non-decreasing order of their lengths. Maintain original relative order for words of equal length. Return the rearranged sentence with first word capitalized.
 
@@ -38,6 +45,8 @@ Given sentence `text` (first word capitalized). Rearrange words in non-decreasin
 **Example 3:** `text="To be or not to be"` → `"To be or be to not"`
 
 **Constraints:** `1 ≤ text.length ≤ 10^5`, `text` contains only letters and spaces, exactly one space between words, `text[0]` is capital letter
+
+---
 
 ## 📝 Interview Tips
 
@@ -48,9 +57,9 @@ Given sentence `text` (first word capitalized). Rearrange words in non-decreasin
 - **Edge cases:** Single word → return as-is (capitalize); all same length → original order preserved
 - **Follow-up:** What if you need to sort descending? Reverse the comparator
 
-## 💡 Solutions
+---
 
-### Solution 1: Lowercase + Stable Sort + Capitalize — O(n log n)
+## Solutions
 
 ```typescript
 function arrangeWords(text: string): string {
@@ -65,11 +74,7 @@ function arrangeWords(text: string): string {
 
   return words.join(" ");
 }
-```
 
-### Solution 2: Explicit Stable Sort with Index — O(n log n)
-
-```typescript
 function arrangeWordsStable(text: string): string {
   // Lowercase and split
   const words = text.toLowerCase().split(" ");
@@ -86,11 +91,7 @@ function arrangeWordsStable(text: string): string {
 
   return sorted.join(" ");
 }
-```
 
-### Solution 3: Functional Pipeline — O(n log n)
-
-```typescript
 function arrangeWordsFunctional(text: string): string {
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -102,6 +103,8 @@ function arrangeWordsFunctional(text: string): string {
   return [capitalize(first), ...rest].join(" ");
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

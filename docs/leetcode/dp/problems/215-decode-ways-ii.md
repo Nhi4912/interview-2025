@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/decode-ways-ii"
 
 # Decode Ways II / Giải Mã Thông Điệp II
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Dãy số được mã hóa thành chữ cái (1→A ... 26→Z). Ký tự `*` có thể là bất kỳ chữ số 1-9.  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Dãy số được mã hóa thành chữ cái (1→A ... 26→Z). Ký tự `*` có thể là bất kỳ chữ số 1-9.  
 > Giống giải mã điện tín bị mờ: mỗi dấu `*` tạo nhiều nhánh giải mã khác nhau.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Decode Ways II example:**
 
 ```
 s = "1*"
@@ -31,14 +36,18 @@ s = "*"
   dp[1] = 9
 ```
 
-## Problem
+---
+
+## Problem Description
 
 A message is encoded: `'A'→1, 'B'→2, ..., 'Z'→26`. The string may contain `'*'` which can represent
 any digit `'1'` to `'9'`. Return the **number of ways** to decode string `s`, modulo `10^9 + 7`.
 
 **Constraints:** `1 <= s.length <= 10^5`, `s[i]` is `'0'-'9'` or `'*'`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Build on Decode Ways I** — same DP, but `'*'` multiplies options.
 2. **Single char** — `'*'` → 9 ways, `'1'-'9'` → 1 way, `'0'` → 0 ways.
@@ -47,9 +56,9 @@ any digit `'1'` to `'9'`. Return the **number of ways** to decode string `s`, mo
 5. **Space optimize** — only need `dp[i-1]` and `dp[i-2]` at each step.
 6. **Modular arithmetic** — use BigInt or keep numbers in safe range with % MOD after each op.
 
-## Solutions
+---
 
-### Solution 1: Space-optimized DP — O(n) time, O(1) space
+## Solutions
 
 ```typescript
 function numDecodings(s: string): number {
@@ -113,11 +122,7 @@ console.log(numDecodings("**")); // 96
 console.log(numDecodings("*0")); // 2
 console.log(numDecodings("0")); // 0
 console.log(numDecodings("1")); // 1
-```
 
-### Solution 2: Full DP Array — O(n) time, O(n) space (easier to trace)
-
-```typescript
 function numDecodingsDP(s: string): number {
   const MOD = 1_000_000_007;
   const n = s.length;
@@ -159,7 +164,9 @@ console.log(numDecodingsDP("**")); // 96
 console.log(numDecodingsDP("*0")); // 2
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                             | Difficulty | Key Concept         |
 | ------------------------------------------------------------------- | ---------- | ------------------- |

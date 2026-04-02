@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/reduce-array-size-to-the-half"
 
 # Reduce Array Size to The Half / Giảm Kích Thước Mảng Xuống Một Nửa
 
-🟡 Medium | 🏷️ Array, Hash Table, Greedy, Sorting | [LeetCode](https://leetcode.com/problems/reduce-array-size-to-the-half)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Mục tiêu xóa ít nhất ⌈n/2⌉ phần tử. Greedy: luôn xóa những giá trị xuất hiện nhiều nhất trước — mỗi giá trị duy nhất xóa được càng nhiều phần tử cùng lúc, số loại giá trị cần xóa càng ít.
+**Analogy:** **Vietnamese:** Mục tiêu xóa ít nhất ⌈n/2⌉ phần tử. Greedy: luôn xóa những giá trị xuất hiện nhiều nhất trước — mỗi giá trị duy nhất xóa được càng nhiều phần tử cùng lúc, số loại giá trị cần xóa càng ít.
 
 **Analogy:** Dọn kho lạc hậu — thùng hàng nào nhiều nhất thì vứt trước, ít lần vứt nhất mà giải phóng được nhiều chỗ nhất.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Reduce Array Size to The Half example:**
 
 ```
 arr = [3,3,3,3,5,5,5,2,2,7]  n=10, target=5
@@ -27,6 +30,18 @@ sort desc: [4, 3, 2, 1]
 Pick 3 (count=4): removed=4 ≥ 5? No
 Pick 5 (count=3): removed=7 ≥ 5? Yes → answer = 2 sets
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                          | Difficulty | Connection             |
+| -------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements) | 🟡 Medium  | Frequency sort greedy  |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)                   | 🟡 Medium  | Frequency-based greedy |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string)             | 🟡 Medium  | Most frequent first    |
 
 ---
 
@@ -41,9 +56,9 @@ Pick 5 (count=3): removed=7 ≥ 5? Yes → answer = 2 sets
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Frequency Sort Greedy
+## Solutions
 
 ```typescript
 /**
@@ -73,11 +88,7 @@ console.log(minSetSize([3, 3, 3, 3, 5, 5, 5, 2, 2, 7])); // 2
 console.log(minSetSize([7, 7, 7, 7, 7, 7])); // 1
 console.log(minSetSize([1, 9])); // 1
 console.log(minSetSize([1000, 1000, 3, 7])); // 1
-```
 
-### Solution 2: Bucket Sort for O(n) frequency counting
-
-```typescript
 /**
  * Use bucket sort on frequencies (max freq ≤ n) → O(n) time.
  * Time: O(n)  Space: O(n)

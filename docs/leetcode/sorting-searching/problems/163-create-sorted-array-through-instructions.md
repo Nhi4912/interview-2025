@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/create-sorted-array-through-instruc
 
 # Create Sorted Array through Instructions / Tạo Mảng Đã Sắp Xếp Qua Từng Lệnh
 
-🔴 Hard | 🏷️ Array, Binary Search, Binary Indexed Tree | [LeetCode](https://leetcode.com/problems/create-sorted-array-through-instructions)
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Khi chèn `instructions[i]` vào mảng đã sắp xếp, chi phí = min(số phần tử nhỏ hơn, số phần tử lớn hơn). Dùng Binary Indexed Tree (BIT/Fenwick Tree) để đếm số phần tử đã chèn nhỏ hơn x trong O(log n), từ đó tính số lớn hơn.
+**Analogy:** **Vietnamese:** Khi chèn `instructions[i]` vào mảng đã sắp xếp, chi phí = min(số phần tử nhỏ hơn, số phần tử lớn hơn). Dùng Binary Indexed Tree (BIT/Fenwick Tree) để đếm số phần tử đã chèn nhỏ hơn x trong O(log n), từ đó tính số lớn hơn.
 
 **Analogy:** Như điểm danh trong lớp: mỗi học sinh mới vào, đếm bao nhiêu người đã điểm danh thấp hơn và cao hơn mình. BIT là sổ điểm danh thần kỳ truy vấn nhanh.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Create Sorted Array through Instructions example:**
 
 ```
 instructions = [1, 5, 6, 2]
@@ -32,6 +35,18 @@ Total cost = 0+1+2+1 = 4  (mod 1e9+7)
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                                  | Difficulty | Connection                  |
+| -------------------------------------------------------------------------------------------------------- | ---------- | --------------------------- |
+| [Count of Smaller Numbers After Self](https://leetcode.com/problems/count-of-smaller-numbers-after-self) | 🔴 Hard    | BIT / merge sort count      |
+| [Count of Range Sum](https://leetcode.com/problems/count-of-range-sum)                                   | 🔴 Hard    | Merge sort divide & conquer |
+| [Count Good Triplets in an Array](https://leetcode.com/problems/count-good-triplets-in-an-array)         | 🔴 Hard    | BIT count pattern           |
+
+---
+
 ## 📝 Interview Tips
 
 - **EN:** Cost = min(count of existing elements < x, count > x) / **VI:** Chi phí = min(số phần tử đã có nhỏ hơn x, số lớn hơn x)
@@ -43,9 +58,9 @@ Total cost = 0+1+2+1 = 4  (mod 1e9+7)
 
 ---
 
-## Solutions
+---
 
-### Solution 1: Binary Indexed Tree (Fenwick Tree)
+## Solutions
 
 ```typescript
 /**
@@ -81,11 +96,7 @@ function createSortedArray(instructions: number[]): number {
 console.log(createSortedArray([1, 5, 6, 2])); // 1
 console.log(createSortedArray([1, 2, 3, 6, 5, 4])); // 3
 console.log(createSortedArray([1, 3, 3, 3, 2, 4, 2, 1, 2])); // 4
-```
 
-### Solution 2: Merge Sort (Count Inversions style)
-
-```typescript
 /**
  * Merge sort: count elements less/greater during merge step.
  * Time: O(n log n)  Space: O(n)

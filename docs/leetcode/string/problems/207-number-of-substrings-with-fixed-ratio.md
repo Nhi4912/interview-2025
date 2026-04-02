@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/number-of-substrings-with-fixed-rat
 
 # Number of Substrings With Fixed Ratio / Số Xâu Con Với Tỷ Lệ Cố Định
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Phép so sánh:** Giống đếm số cặp học sinh trong hàng có cùng điểm trung bình — bài toán quy về "tìm số cặp (i, j) với prefix[j] - prefix[i] = constant" — dùng hash map đếm.
+**Analogy:** > **Phép so sánh:** Giống đếm số cặp học sinh trong hàng có cùng điểm trung bình — bài toán quy về "tìm số cặp (i, j) với prefix[j] - prefix[i] = constant" — dùng hash map đếm.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Number of Substrings With Fixed Ratio example:**
 
 ```
 s="0110011", num1=1, num2=2
@@ -30,6 +35,8 @@ ps: 0  2  1  0  2  4  3  2  (prefix sums)
 For each ps[j], count how many times ps[i]==ps[j] appeared before → add to answer
 ```
 
+---
+
 ## Problem Description
 
 Given binary string `s` and integers `num1`, `num2`, return the number of **non-empty** substrings where `count('0') / count('1') == num1 / num2`.
@@ -40,6 +47,8 @@ Given binary string `s` and integers `num1`, `num2`, return the number of **non-
 
 **Constraints:** `1 <= s.length <= 10^4`, `1 <= num1, num2 <= 10^5`
 
+---
+
 ## 📝 Interview Tips
 
 - **Transform to prefix sum:** `count('0')/count('1') = num1/num2` ⟺ `count('0')*num2 - count('1')*num1 = 0`
@@ -49,9 +58,9 @@ Given binary string `s` and integers `num1`, `num2`, return the number of **non-
 - **Complexity:** O(n) time, O(n) space
 - **Interview insight:** This is the classic "subarray sum equals k" pattern dressed in ratio clothing
 
-## Solutions
+---
 
-### Solution 1: Prefix sum + hash map — O(n) time, O(n) space
+## Solutions
 
 ```typescript
 function fixedRatio(s: string, num1: number, num2: number): number {
@@ -73,11 +82,7 @@ function fixedRatio(s: string, num1: number, num2: number): number {
 
   return result;
 }
-```
 
-### Solution 2: Brute force O(n²) — for reference/fallback
-
-```typescript
 function fixedRatio(s: string, num1: number, num2: number): number {
   const n = s.length;
   let count = 0;
@@ -95,11 +100,7 @@ function fixedRatio(s: string, num1: number, num2: number): number {
 
   return count;
 }
-```
 
-### Solution 3: GCD-reduced ratio — O(n) time, O(n) space
-
-```typescript
 function fixedRatio(s: string, num1: number, num2: number): number {
   function gcd(a: number, b: number): number {
     return b === 0 ? a : gcd(b, a % b);
@@ -121,6 +122,8 @@ function fixedRatio(s: string, num1: number, num2: number): number {
   return ans;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

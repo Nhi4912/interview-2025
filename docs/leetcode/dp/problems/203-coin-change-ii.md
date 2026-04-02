@@ -7,15 +7,18 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/coin-change-ii"
 ---
 
-## 🪙 518. Coin Change II / Đổi Tiền II — Đếm Số Cách
-
-**Difficulty:** 🟡 Medium
+# coin change ii
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
 **Analogy (Vietnamese):** Bạn có vô hạn xu mỗi loại. Hỏi có bao nhiêu **cách** (tổ hợp, không tính thứ tự) để đổi đúng số tiền `amount`? Khác với Coin Change I (tìm ít xu nhất), bài này **đếm số tổ hợp**.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 coins = [1,2,5], amount = 5
@@ -33,13 +36,17 @@ Answer: dp[5] = 4
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given integer `amount` and array `coins`, return number of **combinations** (order doesn't matter, unlimited supply of each coin) that sum to `amount`. Return 0 if impossible.
 
 - Example: `coins=[1,2,5]`, `amount=5` → **4**
 - Example: `coins=[2]`, `amount=3` → **0**
 - Example: `coins=[10]`, `amount=10` → **1**
+
+---
 
 ---
 
@@ -54,9 +61,9 @@ Given integer `amount` and array `coins`, return number of **combinations** (ord
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: 1D DP — Unbounded Knapsack (Optimal)
+## Solutions
 
 ```typescript
 function change(amount: number, coins: number[]): number {
@@ -74,11 +81,7 @@ function change(amount: number, coins: number[]): number {
 
   return dp[amount];
 }
-```
 
-### Solution 2: 2D DP (explicit, easier to reason about)
-
-```typescript
 function change2D(amount: number, coins: number[]): number {
   const n = coins.length;
   // dp[i][j] = ways to make j using first i coins
@@ -95,11 +98,7 @@ function change2D(amount: number, coins: number[]): number {
 
   return dp[n][amount];
 }
-```
 
-### Solution 3: Top-Down Memoization
-
-```typescript
 function changeMemo(amount: number, coins: number[]): number {
   const memo = new Map<string, number>();
 

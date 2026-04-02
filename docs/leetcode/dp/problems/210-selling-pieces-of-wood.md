@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/selling-pieces-of-wood"
 
 # Selling Pieces of Wood / Bán Gỗ Theo Mảnh
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Bạn có tấm gỗ m×n. Khách mua các miếng nhỏ với giá cố định. Bạn có thể cắt dọc hoặc ngang bao nhiêu lần tùy ý.  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Bạn có tấm gỗ m×n. Khách mua các miếng nhỏ với giá cố định. Bạn có thể cắt dọc hoặc ngang bao nhiêu lần tùy ý.  
 > Giống cắt pizza: mỗi lần cắt tạo 2 phần, tối ưu hóa doanh thu từng phần.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Selling Pieces of Wood example:**
 
 ```
 m=3, n=5, prices=[[1,4,2],[2,2,7],[2,1,3]]
@@ -31,14 +36,18 @@ dp[3][5]:
   Best = 19
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given an `m × n` board and `prices[i] = [hi, wi, pricei]`, you can make horizontal/vertical cuts to
 split the board into pieces and sell each piece. Return the **maximum** total money you can earn.
 
 **Constraints:** `1 <= m, n <= 200`, `1 <= prices.length <= 10000`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **DP state** — `dp[h][w]` = max profit for a `h × w` piece; transition tries all cuts.
 2. **Base case** — initialize `dp[h][w]` from price list directly.
@@ -47,9 +56,9 @@ split the board into pieces and sell each piece. Return the **maximum** total mo
 5. **Order matters** — build dp from small pieces to large (bottom-up).
 6. **Complexity** — O(m*n*(m+n)) which is O(200*200*400) ≈ 16M ops — fast enough.
 
-## Solutions
+---
 
-### Solution 1: Bottom-up 2D DP — O(m·n·(m+n))
+## Solutions
 
 ```typescript
 function sellingWood(m: number, n: number, prices: number[][]): number {
@@ -93,11 +102,7 @@ console.log(
   ]),
 ); // 32
 console.log(sellingWood(1, 1, [[1, 1, 5]])); // 5
-```
 
-### Solution 2: Top-down Memoization — O(m·n·(m+n))
-
-```typescript
 function sellingWoodMemo(m: number, n: number, prices: number[][]): number {
   const priceMap = new Map<string, number>();
   for (const [h, w, price] of prices) {
@@ -143,11 +148,7 @@ console.log(
     [4, 1, 3],
   ]),
 ); // 32
-```
 
-### Solution 3: Optimized — Only half cuts (symmetry)
-
-```typescript
 function sellingWoodOpt(m: number, n: number, prices: number[][]): number {
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (const [h, w, price] of prices) dp[h][w] = Math.max(dp[h][w], price);
@@ -186,7 +187,9 @@ console.log(
 ); // 19
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                   | Difficulty | Key Concept |
 | ----------------------------------------------------------------------------------------- | ---------- | ----------- |

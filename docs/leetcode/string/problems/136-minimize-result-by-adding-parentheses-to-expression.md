@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/minimize-result-by-adding-parenthes
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: String Enumeration
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Bạn có phép tính `"12+34"`. Chèn `(` và `)` bao quanh dấu `+` sao cho kết quả nhỏ nhất. Phần ngoài ngoặc sẽ **nhân** với phần bên trong — duyệt mọi vị trí chia là đủ.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Bạn có phép tính `"12+34"`. Chèn `(` và `)` bao quanh dấu `+` sao cho kết quả nhỏ nhất. Phần ngoài ngoặc sẽ **nhân** với phần bên trong — duyệt mọi vị trí chia là đủ.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimize Result by Adding Parentheses to Expression example:**
 
 ```
 "247+38"   num1="247"  num2="38"
@@ -27,7 +34,20 @@ leetcode_url: "https://leetcode.com/problems/minimize-result-by-adding-parenthes
 
 **Key insight**: `result = leftVal × (mid1 + mid2) × rightVal`. Empty outside part → multiplier = 1.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                              | Difficulty | Pattern          |
+| ---- | ---------------------------------------------------- | ---------- | ---------------- |
+| 678  | Valid Parenthesis String                             | 🟡 Medium  | Greedy           |
+| 241  | Different Ways to Add Parentheses                    | 🟡 Medium  | Divide & Conquer |
+| 856  | Score of Parentheses                                 | 🟡 Medium  | Stack            |
+| 1896 | Minimum Cost to Change the Final Value of Expression | 🔴 Hard    | DP               |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: Find `+` index first to split `expression` into `num1` and `num2`
   **VI**: Tìm vị trí `+` để tách biểu thức thành `num1` và `num2`
@@ -116,7 +136,14 @@ console.log(minimizeResult2("100+200")); // "(100+200)"
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                              | Difficulty | Pattern          |
 | ---- | ---------------------------------------------------- | ---------- | ---------------- |

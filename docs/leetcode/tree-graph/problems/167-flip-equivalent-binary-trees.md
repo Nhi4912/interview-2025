@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/flip-equivalent-binary-trees"
 
 # Flip Equivalent Binary Trees / Cây nhị phân tương đương khi lật
 
-🟡 Medium | Binary Tree | DFS | Recursion
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Hai cây "tương đương khi lật" nếu bạn có thể lật (hoán đổi trái-phải) bất kỳ số nút nào để chúng giống hệt nhau. Đệ quy: tại mỗi nút, thử cả hai khả năng — **không lật** (so sánh left↔left, right↔right) và **có lật** (so sánh left↔right, right↔left).
+**Analogy:** **Vietnamese:** Hai cây "tương đương khi lật" nếu bạn có thể lật (hoán đổi trái-phải) bất kỳ số nút nào để chúng giống hệt nhau. Đệ quy: tại mỗi nút, thử cả hai khả năng — **không lật** (so sánh left↔left, right↔right) và **có lật** (so sánh left↔right, right↔left).
 
 **English:** Two trees are flip-equivalent if you can flip (swap left/right children) at any nodes to make them identical. At each node recursively check: "no-flip" match (left↔left, right↔right) **OR** "flip" match (left↔right, right↔left).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Flip Equivalent Binary Trees example:**
 
 ```
 Tree1:     1          Tree2:     1
@@ -32,6 +35,18 @@ At node 2: flip → (null,4) ↔ (4,null) ✅  → flip equivalent = true
 
 ---
 
+---
+
+## Problem Description
+
+| #   | Problem                             | Difficulty | Pattern |
+| --- | ----------------------------------- | ---------- | ------- |
+| 100 | Same Tree                           | Easy       | DFS     |
+| 226 | Invert Binary Tree                  | Easy       | DFS     |
+| 951 | Flip Equivalent Binary Trees (this) | Medium     | DFS     |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Key insight / Nhận xét chính:** Both null → true; one null → false; values differ → false; then check 2 child arrangements.
@@ -43,9 +58,9 @@ At node 2: flip → (null,4) ↔ (4,null) ✅  → flip equivalent = true
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Recursive DFS (Clean)
+## Solutions
 
 ```typescript
 class TreeNode {
@@ -93,11 +108,7 @@ const t2 = new TreeNode(
 console.log(flipEquiv(t1, t2)); // true
 console.log(flipEquiv(null, null)); // true
 console.log(flipEquiv(new TreeNode(1), new TreeNode(2))); // false
-```
 
-### Solution 2 — Canonical Form Comparison
-
-```typescript
 /**
  * Normalize each tree by sorting children at every node by their smaller subtree value.
  * Two trees are flip-equivalent iff their canonical forms are identical.

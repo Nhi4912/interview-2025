@@ -9,13 +9,11 @@ leetcode_url: "https://leetcode.com/problems/inorder-successor-in-bst-ii"
 
 # Inorder Successor in BST II / Phần tử kế tiếp inorder trong BST II
 
-🟡 Medium | BST | Parent Pointer | Tree Traversal
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese:** Successor inorder trong BST là phần tử nhỏ nhất lớn hơn `node.val`. Có hai trường hợp:
+**Analogy:** **Vietnamese:** Successor inorder trong BST là phần tử nhỏ nhất lớn hơn `node.val`. Có hai trường hợp:
 
 1. **Có con phải:** Successor là nút nhỏ nhất trong cây con phải (đi phải rồi cứ đi trái).
 2. **Không có con phải:** Đi lên qua con trỏ `parent` cho đến khi ta đến từ nhánh trái — cha đó là successor.
@@ -24,6 +22,11 @@ leetcode_url: "https://leetcode.com/problems/inorder-successor-in-bst-ii"
 
 - If `node.right` exists: go right once, then keep going left → smallest in right subtree.
 - Else: climb via parent until you arrive as a **left** child — that parent is the successor.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Inorder Successor in BST II example:**
 
 ```
 BST:        5
@@ -40,6 +43,18 @@ Successor of 6: no right child, 6 is right of 5, no parent → null (largest)
 
 ---
 
+---
+
+## Problem Description
+
+| #   | Problem                            | Difficulty | Pattern           |
+| --- | ---------------------------------- | ---------- | ----------------- |
+| 285 | Inorder Successor in BST           | Medium     | BST Traversal     |
+| 510 | Inorder Successor in BST II (this) | Medium     | Parent Pointer    |
+| 173 | Binary Search Tree Iterator        | Medium     | Inorder Traversal |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **Key insight / Nhận xét chính:** Two distinct cases — right subtree exists vs. must climb via parent pointer.
@@ -51,9 +66,9 @@ Successor of 6: no right child, 6 is right of 5, no parent → null (largest)
 
 ---
 
-## Solutions
+---
 
-### Solution 1 — Parent Pointer Navigation
+## Solutions
 
 ```typescript
 class Node {

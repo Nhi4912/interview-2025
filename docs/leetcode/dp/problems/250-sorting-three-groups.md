@@ -15,11 +15,14 @@ leetcode_url: "https://leetcode.com/problems/sorting-three-groups"
 
 ---
 
-## Vietnamese Analogy (Ví dụ thực tế)
+## 🧠 Intuition / Tư Duy
 
-Bạn có một hàng học sinh được gán nhãn 1, 2, hoặc 3 (nhóm yếu, trung bình, giỏi). Bạn muốn hàng trở thành non-decreasing (không giảm) bằng cách thay đổi nhãn của ít học sinh nhất. Đây tương đương với: giữ lại dãy con dài nhất đã là non-decreasing — phần còn lại cần được "sửa". Số thay đổi = `n - LIS_length`.
+**Analogy:** Bạn có một hàng học sinh được gán nhãn 1, 2, hoặc 3 (nhóm yếu, trung bình, giỏi). Bạn muốn hàng trở thành non-decreasing (không giảm) bằng cách thay đổi nhãn của ít học sinh nhất. Đây tương đương với: giữ lại dãy con dài nhất đã là non-decreasing — phần còn lại cần được "sửa". Số thay đổi = `n - LIS_length`.
 
-## Visual (Minh họa trực quan)
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Sorting Three Groups example:**
 
 ```
 nums = [2, 1, 3, 2, 1, 3]
@@ -41,7 +44,9 @@ DP approach: dp[i] = length of longest non-decreasing subseq ending at i
   max=3, ans=6-3=3 ✓
 ```
 
-## Problem (Bài toán)
+---
+
+## Problem Description
 
 You have an array `nums` where each element is `1`, `2`, or `3`. In one operation, replace any element with any value in `{1,2,3}`. Return the **minimum number of operations** to make `nums` non-decreasing.
 
@@ -53,7 +58,9 @@ You have an array `nums` where each element is `1`, `2`, or `3`. In one operatio
 
 **Constraints:** `1 ≤ nums.length ≤ 100`, `nums[i] ∈ {1,2,3}`
 
-## Tips (Mẹo phỏng vấn)
+---
+
+## 📝 Interview Tips
 
 - **Key insight** / Ý tưởng chính: `min_ops = n - len(longest non-decreasing subsequence)`
 - **Non-decreasing LIS** / LIS không giảm: Cho phép bằng nhau — dùng `≤` thay vì `<`
@@ -62,7 +69,9 @@ You have an array `nums` where each element is `1`, `2`, or `3`. In one operatio
 - **O(n log n) LIS** / LIS nhị phân: Binary search trên patience sorting — dùng `upper_bound`
 - **Think complement** / Nghĩ phần bù: Giữ tối đa → thay đổi tối thiểu — cách tư duy quan trọng
 
-## Solution 1 - O(n²) LIS DP
+---
+
+## Solutions
 
 ```typescript
 /**
@@ -83,11 +92,7 @@ function minimumOperationsBrute(nums: number[]): number {
 
   return n - Math.max(...dp);
 }
-```
 
-## Solution 2 - O(n) DP (Optimal for values {1,2,3})
-
-```typescript
 /**
  * @complexity Time: O(n) | Space: O(1)
  * Since values are only 1,2,3, use three dp variables:
@@ -113,11 +118,7 @@ function minimumOperations(nums: number[]): number {
 
   return nums.length - Math.max(dp1, dp2, dp3);
 }
-```
 
-## Solution 3 - O(n log n) Patience Sorting LIS
-
-```typescript
 /**
  * @complexity Time: O(n log n) | Space: O(n)
  * Binary search patience sorting for non-decreasing LIS
@@ -140,11 +141,8 @@ function minimumOperationsNLogN(nums: number[]): number {
 
   return nums.length - tails.length;
 }
-```
 
-## Test Cases
-
-```typescript
+// === Test Cases ===
 console.log(minimumOperations([2, 1, 3, 2, 1, 3])); // → 3
 console.log(minimumOperations([1, 3, 2, 1, 3, 3])); // → 2
 console.log(minimumOperations([2, 2, 2])); // → 0
@@ -152,7 +150,9 @@ console.log(minimumOperationsBrute([2, 1, 3, 2, 1, 3])); // → 3
 console.log(minimumOperationsNLogN([1, 3, 2, 1, 3, 3])); // → 2
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                           | Difficulty | Link                                                                      |
 | --------------------------------- | ---------- | ------------------------------------------------------------------------- |

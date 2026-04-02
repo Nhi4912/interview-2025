@@ -9,16 +9,19 @@ leetcode_url: "https://leetcode.com/problems/minimum-moves-to-make-array-complem
 
 # Minimum Moves to Make Array Complementary / Số Bước Tối Thiểu Để Làm Mảng Bổ Sung
 
-🟡 Medium | Tags: Array, Hash Table, Prefix Sum
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Với mỗi cặp `(a, b)` (a ≤ b), số lần di chuyển cần thiết phụ thuộc vào tổng đích T:
+**Analogy:** **VN:** Với mỗi cặp `(a, b)` (a ≤ b), số lần di chuyển cần thiết phụ thuộc vào tổng đích T:
 
 - `[2, a]`: 2 moves; `[a+1, a+b]`: 1 move; `a+b`: 0 moves; `[a+b+1, b+limit]`: 1 move; `[b+limit+1, 2*limit]`: 2 moves.
   Dùng mảng hiệu (difference array) trên khoảng `[2, 2*limit]`.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Moves to Make Array Complementary example:**
 
 ```
 Ranges on T for pair (a=1, b=3), limit=4:
@@ -27,6 +30,18 @@ Ranges on T for pair (a=1, b=3), limit=4:
  [4]   → subtract 1 → 0 moves
 [5,7]  → still 1 move (add back 1 at position 5, add 1 at 8)
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                             | Difficulty | Pattern          |
+| ------------------------------------------------------------------- | ---------- | ---------------- |
+| [Range Addition](https://leetcode.com/problems/range-addition/)     | 🟡 Medium  | Difference Array |
+| [Car Pooling](https://leetcode.com/problems/car-pooling/)           | 🟡 Medium  | Difference Array |
+| [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) | 🟡 Medium  | Sweep Line       |
 
 ---
 
@@ -41,9 +56,9 @@ Ranges on T for pair (a=1, b=3), limit=4:
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Difference Array on Target Range
+## Solutions
 
 ```typescript
 /**
@@ -82,11 +97,7 @@ function minMoves(nums: number[], limit: number): number {
 console.log(minMoves([1, 2, 4, 3], 4)); // 1
 console.log(minMoves([1, 2, 2, 1], 2)); // 0
 console.log(minMoves([1, 2, 1, 2], 2)); // 0
-```
 
-### Solution 2: HashMap Approach (Explicit per-target counting)
-
-```typescript
 /**
  * For each pair record exact 0-move target and 1-move range in a map.
  * Slightly less elegant but shows the logic clearly.

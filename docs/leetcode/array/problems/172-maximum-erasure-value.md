@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-erasure-value"
 
 # Maximum Erasure Value / Giá Trị Xóa Tối Đa
 
-🟡 Medium | Tags: Array, Hash Table, Sliding Window
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**VN:** Cửa sổ trượt – giữ cửa sổ không có phần tử trùng. Khi gặp phần tử đã tồn tại, thu hẹp cửa sổ từ trái cho đến khi không còn trùng nữa. Lưu tổng lớn nhất tìm được.
+**Analogy:** **VN:** Cửa sổ trượt – giữ cửa sổ không có phần tử trùng. Khi gặp phần tử đã tồn tại, thu hẹp cửa sổ từ trái cho đến khi không còn trùng nữa. Lưu tổng lớn nhất tìm được.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Erasure Value example:**
 
 ```
 nums:  [4,  2,  4,  5,  6]
@@ -26,6 +29,18 @@ step3: gặp 4 → xóa trái → {2,4} sum=6
 step4: {2,4,5} sum=11
 step5: {2,4,5,6} sum=17  ← max
 ```
+
+---
+
+---
+
+## Problem Description
+
+| Problem                                                                                                                           | Difficulty | Pattern        |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/)   | 🟡 Medium  | Sliding Window |
+| [Maximum Sum of Distinct Subarrays With Length K](https://leetcode.com/problems/maximum-sum-of-distinct-subarrays-with-length-k/) | 🟡 Medium  | Sliding Window |
+| [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k/)                                       | 🟡 Medium  | Sliding Window |
 
 ---
 
@@ -40,9 +55,9 @@ step5: {2,4,5,6} sum=17  ← max
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Sliding Window + HashSet
+## Solutions
 
 ```typescript
 /**
@@ -72,11 +87,7 @@ function maximumUniqueSubarray(nums: number[]): number {
 console.log(maximumUniqueSubarray([4, 2, 4, 5, 6])); // 17
 console.log(maximumUniqueSubarray([5, 2, 1, 2, 5, 2, 1, 2, 5])); // 8
 console.log(maximumUniqueSubarray([1])); // 1
-```
 
-### Solution 2: Sliding Window with Last-Index Map (Skip Ahead)
-
-```typescript
 /**
  * Track last occurrence index to jump left directly instead of stepping.
  * Time: O(n) | Space: O(n)
@@ -104,11 +115,7 @@ function maximumUniqueSubarray2(nums: number[]): number {
 
 console.log(maximumUniqueSubarray2([4, 2, 4, 5, 6])); // 17
 console.log(maximumUniqueSubarray2([5, 2, 1, 2, 5, 2, 1, 2, 5])); // 8
-```
 
-### Solution 3: Sliding Window with Frequency Array (bounded values)
-
-```typescript
 /**
  * Use fixed-size array instead of Set when values are bounded (1..10^4).
  * Time: O(n) | Space: O(U) where U = unique value range

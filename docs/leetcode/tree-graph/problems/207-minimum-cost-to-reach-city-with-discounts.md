@@ -7,15 +7,18 @@ tags: [Graph, Heap (Priority Queue), Shortest Path]
 leetcode_url: "https://leetcode.com/problems/minimum-cost-to-reach-city-with-discounts"
 ---
 
-## 2093. Minimum Cost to Reach City With Discounts
-
-### Chi Phí Tối Thiểu Để Đến Thành Phố Với Giảm Giá | 🟡 Medium
+# minimum cost to reach city with discounts
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Đi từ thành phố 0 đến thành phố n-1 có tối đa `discounts` lần giảm 50% chi phí đường. Dùng Dijkstra nhưng mở rộng state: `(city, discountsUsed)` để theo dõi số lần đã giảm giá.
+**Analogy:** > **Vietnamese analogy:** Đi từ thành phố 0 đến thành phố n-1 có tối đa `discounts` lần giảm 50% chi phí đường. Dùng Dijkstra nhưng mở rộng state: `(city, discountsUsed)` để theo dõi số lần đã giảm giá.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 State: (cost, city, discountsLeft)
@@ -28,7 +31,9 @@ Dijkstra on this 2D state space.
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given `n` cities, `highways[i] = [city1, city2, toll]` (undirected), and `discounts` (number of half-price uses allowed), find minimum cost to travel from city `0` to city `n-1`. Return `-1` if impossible.
 
@@ -37,6 +42,8 @@ Given `n` cities, `highways[i] = [city1, city2, toll]` (undirected), and `discou
 - `2 <= n <= 1000`
 - `1 <= highways.length <= 1000`
 - `0 <= discounts <= 500`
+
+---
 
 ---
 
@@ -51,9 +58,9 @@ Given `n` cities, `highways[i] = [city1, city2, toll]` (undirected), and `discou
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: Dijkstra with Discount State
+## Solutions
 
 ```typescript
 function minimumCost(n: number, highways: number[][], discounts: number): number {
@@ -127,11 +134,7 @@ function minimumCost(n: number, highways: number[][], discounts: number): number
 
   return Math.min(...dist[n - 1]) === INF ? -1 : Math.min(...dist[n - 1]);
 }
-```
 
-### Solution 2: BFS/DP Layered Approach
-
-```typescript
 function minimumCostDP(n: number, highways: number[][], discounts: number): number {
   const adj: [number, number][][] = Array.from({ length: n }, () => []);
   for (const [u, v, w] of highways) {

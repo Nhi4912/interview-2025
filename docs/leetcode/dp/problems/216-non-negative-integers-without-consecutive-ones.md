@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/non-negative-integers-without-conse
 
 # Non-negative Integers without Consecutive Ones / Số Không Có Hai Bit 1 Liên Tiếp
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Đếm các số từ 0 đến n mà biểu diễn nhị phân không có hai bit 1 kề nhau.  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Đếm các số từ 0 đến n mà biểu diễn nhị phân không có hai bit 1 kề nhau.  
 > Giống đếm cách xếp người trên ghế dài: không ai ngồi cạnh nhau (bit 1 = người ngồi).
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Non-negative Integers without Consecutive Ones example:**
 
 ```
 n = 5 (binary = 101)
@@ -35,14 +40,18 @@ Process n=5 (binary "101") bit by bit:
   (0,1,2,4,5) = 5 numbers
 ```
 
-## Problem
+---
+
+## Problem Description
 
 Given a positive integer `n`, return the count of numbers in the range `[0, n]` whose binary
 representation does **not** contain consecutive ones.
 
 **Constraints:** `1 <= n <= 10^9`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **Fibonacci-based DP** — let `f[k]` = count of k-bit strings with no consecutive 1s: `f[k] = f[k-1] + f[k-2]` (Fibonacci!).
 2. **Digit DP approach** — scan bits from MSB to LSB; whenever we place a 1, add count of valid numbers below.
@@ -51,9 +60,9 @@ representation does **not** contain consecutive ones.
 5. **Check n itself** — after processing all bits, check if n itself is valid (no consecutive 1s).
 6. **Precompute Fibonacci** — `ones[i]` and `zeros[i]` for up to 32 bits, then use them in the loop.
 
-## Solutions
+---
 
-### Solution 1: Digit DP with Fibonacci — O(log n)
+## Solutions
 
 ```typescript
 function findIntegers(n: number): number {
@@ -101,11 +110,7 @@ console.log(findIntegers(1)); // 2: [0,1]
 console.log(findIntegers(2)); // 3: [0,1,2]
 console.log(findIntegers(3)); // 3: [0,1,2] (3=11 has consecutive 1s)
 console.log(findIntegers(6)); // 5: [0,1,2,4,5] (6=110, 7=111 invalid)
-```
 
-### Solution 2: Direct Fibonacci — O(log n)
-
-```typescript
 function findIntegersV2(n: number): number {
   // Fibonacci sequence: fib[i] = count of valid i-bit strings
   // fib[1]=2 (0 or 1), fib[2]=3 (00,01,10)
@@ -134,11 +139,7 @@ function findIntegersV2(n: number): number {
 console.log(findIntegersV2(5)); // 5
 console.log(findIntegersV2(1)); // 2
 console.log(findIntegersV2(3)); // 3
-```
 
-### Solution 3: Brute Force (verification for small n)
-
-```typescript
 function findIntegersBrute(n: number): number {
   let count = 0;
   for (let i = 0; i <= n; i++) {
@@ -157,7 +158,9 @@ for (let n = 1; n <= 20; n++) {
 console.log("All verified for n=1..20"); // All verified ✓
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                                                               | Difficulty | Key Concept |
 | ----------------------------------------------------------------------------------------------------- | ---------- | ----------- |

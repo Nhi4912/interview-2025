@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/find-the-sum-of-the-power-of-all-su
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Subset DP + Combinatorics
 
-## 🧠 Intuition
+---
 
-**VI:** "Power" của một subsequence = 2^(n - length). Ta cần tổng power của TẤT CẢ subsequence có tổng = k. Thay vì duyệt 2^n subsequences, đếm số subsequence có tổng k và độ dài j bằng DP, rồi nhân với 2^(n-j).
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** "Power" của một subsequence = 2^(n - length). Ta cần tổng power của TẤT CẢ subsequence có tổng = k. Thay vì duyệt 2^n subsequences, đếm số subsequence có tổng k và độ dài j bằng DP, rồi nhân với 2^(n-j).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Find the Sum of the Power of All Subsequences example:**
 
 ```
 nums = [1,2,3], k = 3
@@ -34,6 +41,19 @@ Total = dp[1][3] * 2^(3-1) + dp[2][3] * 2^(3-2)
       = 1 * 4 + 1 * 2 = 6
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                                       | Difficulty | Connection                            |
+| ---- | ----------------------------------------------------------- | ---------- | ------------------------------------- |
+| 416  | Partition Equal Subset Sum                                  | 🟡 Medium  | 0/1 knapsack counting subsets         |
+| 494  | Target Sum                                                  | 🟡 Medium  | Count subsequences hitting a target   |
+| 1498 | Number of Subsequences That Satisfy the Given Sum Condition | 🟡 Medium  | Power of 2 counting with two pointers |
+| 698  | Partition to K Equal Sum Subsets                            | 🟡 Medium  | Subset partition with DP              |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** `dp[j][s]` = count of length-j subsequences summing to `s` | **VI:** DP 2D: `dp[j][s]` = số lượng dãy con độ dài j có tổng s
@@ -42,6 +62,8 @@ Total = dp[1][3] * 2^(3-1) + dp[2][3] * 2^(3-2)
 - 🔑 **EN:** Alternatively: `dp[s]` = total power contributed by subsequences summing to s so far | **VI:** Cách khác: chỉ cần `dp[s]`, nhân đôi mỗi phần tử không dùng
 - 🔑 **EN:** MOD = 1e9+7; precompute powers of 2 up to n | **VI:** Tính sẵn mảng `pow2` để tra cứu O(1)
 - 🔑 **EN:** Time O(n·k), Space O(n·k) or O(k) with rolling | **VI:** O(n·k) — manageable cho n,k ≤ 100 (typical constraints)
+
+---
 
 ## Solutions
 
@@ -118,6 +140,8 @@ console.log(sumOfPower2D([2, 3, 3], 5)); // 4
 console.log(sumOfPower([1, 2, 3], 3)); // 6
 console.log(sumOfPower([2, 3, 3], 5)); // 4
 ```
+
+---
 
 ## 🔗 Related Problems
 

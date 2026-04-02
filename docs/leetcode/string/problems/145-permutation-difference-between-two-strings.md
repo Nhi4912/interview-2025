@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/permutation-difference-between-two-
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 
-## 🧠 Intuition / Trực Giác
+---
 
-**Vietnamese analogy**: Mỗi ký tự có vị trí trong `s` và vị trí trong `t`. Độ lệch = tổng `|pos_s(c) - pos_t(c)|` cho mọi ký tự. Xây bảng vị trí từ cả hai chuỗi, rồi cộng hiệu tuyệt đối.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **Vietnamese analogy**: Mỗi ký tự có vị trí trong `s` và vị trí trong `t`. Độ lệch = tổng `|pos_s(c) - pos_t(c)|` cho mọi ký tự. Xây bảng vị trí từ cả hai chuỗi, rồi cộng hiệu tuyệt đối.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Permutation Difference between Two Strings example:**
 
 ```
 s = "abc"   t = "bca"
@@ -25,7 +32,20 @@ s = "abc"   t = "bca"
 
 **Key insight**: Build two position maps (or arrays), then sum `|posS[c] - posT[c]|` for every distinct char.
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #    | Problem                                          | Difficulty | Pattern  |
+| ---- | ------------------------------------------------ | ---------- | -------- |
+| 242  | Valid Anagram                                    | 🟢 Easy    | Hash Map |
+| 387  | First Unique Character in a String               | 🟢 Easy    | Hash Map |
+| 1832 | Check if the Sentence Is Pangram                 | 🟢 Easy    | Hash Set |
+| 2006 | Count Number of Pairs With Absolute Difference K | 🟢 Easy    | Hash Map |
+
+---
+
+## 📝 Interview Tips
 
 - 🔑 **EN**: `s` and `t` contain the same set of distinct characters (guaranteed by problem)
   **VI**: `s` và `t` chứa cùng tập ký tự phân biệt (đề đảm bảo)
@@ -111,7 +131,14 @@ console.log(findPermutationDifference3("abcd", "dcba")); // 8
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+---
+
+## Solutions
+
+
+---
+
+## 🔗 Related Problems
 
 | #    | Problem                                          | Difficulty | Pattern  |
 | ---- | ------------------------------------------------ | ---------- | -------- |

@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/minimum-total-distance-traveled"
 
 # Minimum Total Distance Traveled / Tổng Khoảng Cách Di Chuyển Tối Thiểu
 
-🔴 Hard | Dynamic Programming · Sorting
-
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-**EN:** Sort robots and flatten factories by position. In any optimal assignment, robots go to factories in order (no crossing). `dp[i][j]` = min total distance to assign first `i` robots using first `j` flattened factory slots.
+**Analogy:** **EN:** Sort robots and flatten factories by position. In any optimal assignment, robots go to factories in order (no crossing). `dp[i][j]` = min total distance to assign first `i` robots using first `j` flattened factory slots.
 
 **VI:** Sắp xếp robot và trải phẳng nhà máy theo vị trí. Trong nghiệm tối ưu, phép gán không bao giờ chéo nhau (robot trái → nhà máy trái). `dp[i][j]` = khoảng cách tối thiểu gán `i` robot đầu dùng `j` vị trí nhà máy đầu.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Total Distance Traveled example:**
 
 ```
 Robots sorted: [-1, 0, 2]
@@ -34,6 +37,18 @@ Base: dp[0][j] = 0 (no robots)
 
 ---
 
+---
+
+## Problem Description
+
+| Problem                                                                                             | Difficulty | Pattern      |
+| --------------------------------------------------------------------------------------------------- | ---------- | ------------ |
+| [Two City Scheduling](https://leetcode.com/problems/two-city-scheduling/)                           | 🟡 Medium  | Sort + DP    |
+| [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling/) | 🔴 Hard    | DP + Sorting |
+| [Russian Doll Envelopes](https://leetcode.com/problems/russian-doll-envelopes/)                     | 🔴 Hard    | Sort + DP    |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** Flatten factories: `[pos, limit]` → `limit` copies of `pos`. Sort both arrays ascending. **VI:** Trải phẳng: [pos, limit] → limit bản sao của pos. Sắp xếp cả hai tăng dần.
@@ -45,7 +60,9 @@ Base: dp[0][j] = 0 (no robots)
 
 ---
 
-## 💡 Solutions
+---
+
+## Solutions
 
 ```typescript
 /**

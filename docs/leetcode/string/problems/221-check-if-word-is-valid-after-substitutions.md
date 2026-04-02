@@ -9,17 +9,18 @@ leetcode_url: "https://leetcode.com/problems/check-if-word-is-valid-after-substi
 
 # Check If Word Is Valid After Substitutions / Kiểm Tra Từ Hợp Lệ Sau Các Thay Thế
 
-## Tóm tắt bằng tiếng Việt
+---
 
-Một từ hợp lệ được tạo ra từ chuỗi rỗng bằng cách liên tục chèn "abc" vào bất kỳ vị trí nào. Kiểm tra xem chuỗi `s` có phải là từ hợp lệ không.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Một từ hợp lệ được tạo ra từ chuỗi rỗng bằng cách liên tục chèn "abc" vào bất kỳ vị trí nào. Kiểm tra xem chuỗi `s` có phải là từ hợp lệ không.
 
 **Ví dụ:** "aabcbc" → hợp lệ vì "" → "abc" → "aabcbc" (chèn "abc" vào giữa "a" và "bc").
 
-## Tương tự thực tế
+**Pattern Recognition:**
+- Key insight: see analogy above
 
-> Như xếp bánh sandwich 3 lớp: bao giờ cũng phải có đủ bộ (bánh-nhân-bánh) theo thứ tự. Mỗi khi gặp lớp cuối "c", phải có "b" rồi "a" ngay bên dưới trong stack!
-
-## Minh họa ASCII
+**Visual — Check If Word Is Valid After Substitutions example:**
 
 ```
 s = "aabcbc"
@@ -36,14 +37,18 @@ s = "abccba"
 'a'→[a] 'b'→[a,b] 'c'→pop→[] 'c'→need b,a but empty → INVALID ✗
 ```
 
-## Mô tả bài toán
+---
+
+## Problem Description
 
 - Từ hợp lệ được tạo bằng cách bắt đầu từ `""` và chèn `"abc"` vào bất kỳ vị trí nào bất kỳ số lần.
 - Cho chuỗi `s`, trả về `true` nếu `s` là từ hợp lệ.
 
 **Constraints:** `1 <= s.length <= 3 * 10^4`, chỉ chứa `'a'`, `'b'`, `'c'`.
 
-## Tips phỏng vấn
+---
+
+## 📝 Interview Tips
 
 1. **Stack là chìa khóa** — khi gặp `'c'` phải tìm `'b'` rồi `'a'` ngay bên dưới.
 2. **Greedy pop** — gặp `'c'`, ngay lập tức kiểm tra 2 phần tử trên cùng stack.
@@ -52,9 +57,9 @@ s = "abccba"
 5. **Chỉ `'c'` mới trigger pop** — `'a'` và `'b'` luôn push vào stack.
 6. **Stack cuối phải rỗng** — nếu còn phần tử, tức là chưa hoàn chỉnh.
 
-## Giải pháp
+---
 
-### Giải pháp 1: Stack (Tối ưu)
+## Solutions
 
 ```typescript
 function isValid(s: string): boolean {
@@ -86,11 +91,7 @@ console.log(isValid("aabccbc")); // false
 console.log(isValid("cababc")); // false
 console.log(isValid("abc")); // true
 console.log(isValid("")); // true (empty is valid base)
-```
 
-### Giải pháp 2: Đệ quy thay thế (Trực quan, kém hiệu quả hơn)
-
-```typescript
 function isValidRecursive(s: string): boolean {
   // Repeatedly remove "abc" until no more found or stuck
   let prev = s;
@@ -103,11 +104,7 @@ function isValidRecursive(s: string): boolean {
 console.log(isValidRecursive("aabcbc")); // true
 console.log(isValidRecursive("abcabcababcc")); // true
 console.log(isValidRecursive("aabccbc")); // false
-```
 
-### Giải pháp 3: Stack với kiểm tra ký tự hợp lệ
-
-```typescript
 function isValidStrict(s: string): boolean {
   if (s.length % 3 !== 0) return false;
 
@@ -140,18 +137,12 @@ console.log(isValidStrict("aabcbc")); // true
 console.log(isValidStrict("cababc")); // false
 ```
 
-## Bảng so sánh
+---
+
+## 🔗 Related Problems
 
 | Giải pháp     | Thời gian | Không gian | Ghi chú                   |
 | ------------- | --------- | ---------- | ------------------------- |
 | Stack         | O(n)      | O(n)       | Tối ưu, 1 lần duyệt       |
 | Regex replace | O(n²)     | O(n)       | Trực quan nhưng chậm      |
 | Stack strict  | O(n)      | O(n)       | Kiểm tra thêm 'b' sau 'a' |
-
-## Bài liên quan
-
-| #    | Tên                            | Độ khó | Tags  |
-| ---- | ------------------------------ | ------ | ----- |
-| 20   | Valid Parentheses              | Easy   | Stack |
-| 856  | Score of Parentheses           | Medium | Stack |
-| 1047 | Remove All Adjacent Duplicates | Easy   | Stack |

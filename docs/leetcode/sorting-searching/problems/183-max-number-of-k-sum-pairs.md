@@ -9,15 +9,18 @@ leetcode_url: "https://leetcode.com/problems/max-number-of-k-sum-pairs"
 
 # Max Number of K-Sum Pairs / Số Cặp Tổng K Tối Đa
 
-🟡 Medium | Two Pointers / HashMap | [LeetCode 1679](https://leetcode.com/problems/max-number-of-k-sum-pairs)
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-**EN:** Find the maximum number of pairs (i, j) where nums[i] + nums[j] = k and each element used at most once. **Two approaches:** Sort + two pointers (O(n log n)) or HashMap complement counting (O(n)).
+**Analogy:** **EN:** Find the maximum number of pairs (i, j) where nums[i] + nums[j] = k and each element used at most once. **Two approaches:** Sort + two pointers (O(n log n)) or HashMap complement counting (O(n)).
 
 **VI:** Tìm số cặp (i, j) tối đa sao cho nums[i] + nums[j] = k, mỗi phần tử dùng tối đa một lần. **Hai cách:** Sắp xếp + hai con trỏ O(n log n) hoặc HashMap đếm bổ sung O(n).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Max Number of K-Sum Pairs example:**
 
 ```
 nums = [1, 2, 3, 4]  k = 5
@@ -39,7 +42,19 @@ HashMap approach:
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| #   | Problem                                          | Difficulty | Pattern               |
+| --- | ------------------------------------------------ | ---------- | --------------------- |
+| 1   | Two Sum                                          | 🟢 Easy    | hashmap complement    |
+| 2   | 3Sum                                             | 🟡 Medium  | two-pointer extension |
+| 3   | Count Number of Pairs With Absolute Difference K | 🟢 Easy    | frequency counting    |
+
+---
+
+## 📝 Interview Tips
 
 - 🔍 **EN:** Two-pointer approach: sort first, then lo pointer from left, hi from right. Sum > k → hi--; Sum < k → lo++; Sum = k → count++, move both. **VI:** Two-pointer: sắp xếp, lo từ trái, hi từ phải. Tổng > k → hi--; tổng < k → lo++; tổng = k → đếm, di chuyển cả hai.
 - 🗺️ **EN:** HashMap approach: for each number, check if complement (k - num) exists in map. If yes, decrement and count. If no, add to map. **VI:** HashMap: với mỗi số, kiểm tra bổ sung (k-num) trong map. Nếu có → giảm đếm và tăng count. Nếu không → thêm vào map.
@@ -50,9 +65,9 @@ HashMap approach:
 
 ---
 
-## 💡 Solutions / Giải Pháp
+---
 
-### Solution 1 — Sort + Two Pointers
+## Solutions
 
 ```typescript
 /**
@@ -85,11 +100,7 @@ console.log(maxOperations([1, 2, 3, 4], 5)); // 2
 console.log(maxOperations([3, 1, 3, 4, 3], 6)); // 1
 console.log(maxOperations([1, 1, 1, 1], 2)); // 2  (two pairs of 1+1)
 console.log(maxOperations([2, 5, 4, 4, 1, 3, 4, 4, 1, 4, 4, 1, 2], 3)); // 3
-```
 
-### Solution 2 — HashMap (One-Pass, O(n))
-
-```typescript
 /**
  * For each element, check if complement (k - num) is in frequency map.
  * Time: O(n)  Space: O(n)
@@ -117,11 +128,7 @@ function maxOperations2(nums: number[], k: number): number {
 console.log(maxOperations2([1, 2, 3, 4], 5)); // 2
 console.log(maxOperations2([3, 1, 3, 4, 3], 6)); // 1
 console.log(maxOperations2([1, 1, 1, 1], 2)); // 2
-```
 
-### Solution 3 — Frequency Map with floor Division
-
-```typescript
 /**
  * Count all frequencies first, then compute pairs per value.
  * Time: O(n)  Space: O(n)
@@ -165,7 +172,7 @@ console.log(
 
 ---
 
-## 🔗 Related Problems / Bài Liên Quan
+## 🔗 Related Problems
 
 | #   | Problem                                          | Difficulty | Pattern               |
 | --- | ------------------------------------------------ | ---------- | --------------------- |

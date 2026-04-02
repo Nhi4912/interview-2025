@@ -9,12 +9,17 @@ leetcode_url: "https://leetcode.com/problems/minimum-sideway-jumps"
 
 # Minimum Sideway Jumps / Số Lần Nhảy Ngang Tối Thiểu
 
-## Tương tự thực tế (Vietnamese Analogy)
+---
 
-> Ếch đi trên đường có 3 làn, gặp chướng ngại vật phải nhảy sang làn khác (tốn 1 lần nhảy ngang).  
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** > Ếch đi trên đường có 3 làn, gặp chướng ngại vật phải nhảy sang làn khác (tốn 1 lần nhảy ngang).  
 > Giống đổi làn trên cao tốc: đổi làn ít nhất để đến đích, tránh các điểm chắn đường.
 
-## ASCII Visualization
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Sideway Jumps example:**
 
 ```
 obstacles = [0, 1, 2, 3, 0]  (frog starts lane 2, point 0)
@@ -31,7 +36,9 @@ After point 3 (obs lane 3): dp=[1,2,Inf]
 At point 4: min=1, answer=1
 ```
 
-## Problem
+---
+
+## Problem Description
 
 A frog starts at lane 2, point 0. Road has `n` points (0 to n), 3 lanes.
 `obstacles[i]` = blocked lane at point `i` (0 = none).
@@ -40,7 +47,9 @@ Return the **minimum** number of sideway jumps to reach any lane at point `n`.
 
 **Constraints:** `2 <= obstacles.length <= 5 * 10^5`, `0 <= obstacles[i] <= 3`
 
-## Interview Tips
+---
+
+## 📝 Interview Tips
 
 1. **DP state** — `dp[lane]` = min jumps to reach current point in that lane (1-indexed lanes).
 2. **At each point** — block the obstacle lane (set to INF), then propagate min (jumping costs 1).
@@ -49,9 +58,9 @@ Return the **minimum** number of sideway jumps to reach any lane at point `n`.
 5. **Initialization** — `dp = [1, 0, 1]` (lane 1: 1 jump, lane 2: 0 jumps, lane 3: 1 jump) since frog is at lane 2.
 6. **Answer** — `min(dp[0..2])` after processing all points.
 
-## Solutions
+---
 
-### Solution 1: Greedy DP — O(n) time, O(1) space
+## Solutions
 
 ```typescript
 function minSideJumps(obstacles: number[]): number {
@@ -81,11 +90,7 @@ console.log(minSideJumps([0, 1, 2, 3, 0])); // 2
 console.log(minSideJumps([0, 1, 1, 3, 3, 0])); // 1
 console.log(minSideJumps([0, 2, 1, 0, 3, 0])); // 0
 console.log(minSideJumps([0, 0])); // 0 (no obstacles)
-```
 
-### Solution 2: Step-by-step explicit — O(n)
-
-```typescript
 function minSideJumpsV2(obstacles: number[]): number {
   // dp[i] = min jumps to be in lane i+1 at current point
   let dp = [1, 0, 1];
@@ -116,11 +121,7 @@ function minSideJumpsV2(obstacles: number[]): number {
 console.log(minSideJumpsV2([0, 1, 2, 3, 0])); // 2
 console.log(minSideJumpsV2([0, 1, 1, 3, 3, 0])); // 1
 console.log(minSideJumpsV2([0, 2, 1, 0, 3, 0])); // 0
-```
 
-### Solution 3: BFS/Dijkstra (conceptual verification)
-
-```typescript
 function minSideJumpsBFS(obstacles: number[]): number {
   // Validate using BFS on state (point, lane)
   const n = obstacles.length - 1;
@@ -156,7 +157,9 @@ console.log(minSideJumpsBFS([0, 1, 1, 3, 3, 0])); // 1
 console.log(minSideJumpsBFS([0, 2, 1, 0, 3, 0])); // 0
 ```
 
-## Related Problems
+---
+
+## 🔗 Related Problems
 
 | Problem                                                     | Difficulty | Key Concept  |
 | ----------------------------------------------------------- | ---------- | ------------ |

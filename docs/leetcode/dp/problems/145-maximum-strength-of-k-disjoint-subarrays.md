@@ -11,9 +11,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-strength-of-k-disjoint-suba
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: DP with Alternating Sign Weights
 
-## 🧠 Intuition
+---
 
-**VI:** Chọn k mảng con không chồng nhau. Mảng con thứ `j` (1-indexed) được nhân với `j` nếu j lẻ và `-(j)` nếu j chẵn. Đây là bài DP 2D: `dp[i][j]` = giá trị tốt nhất dùng i phần tử đầu, đã chọn j mảng con.
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** **VI:** Chọn k mảng con không chồng nhau. Mảng con thứ `j` (1-indexed) được nhân với `j` nếu j lẻ và `-(j)` nếu j chẵn. Đây là bài DP 2D: `dp[i][j]` = giá trị tốt nhất dùng i phần tử đầu, đã chọn j mảng con.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Strength of K Disjoint Subarrays example:**
 
 ```
 nums = [1, 2, 3, -1, 2], k = 3
@@ -26,6 +33,19 @@ Best: [1,2,3], [-1], [2]
       (1+2+3)*1 + (-1)*(-2) + (2)*(3) = 6 + 2 + 6 = 14
 ```
 
+---
+
+## Problem Description
+
+| #    | Title                                      | Difficulty | Connection                         |
+| ---- | ------------------------------------------ | ---------- | ---------------------------------- |
+| 53   | Maximum Subarray                           | 🟡 Medium  | Single subarray Kadane's algorithm |
+| 689  | Maximum Sum of 3 Non-Overlapping Subarrays | 🔴 Hard    | Fixed-size k=3 version             |
+| 1235 | Maximum Profit in Job Scheduling           | 🔴 Hard    | Non-overlapping intervals DP       |
+| 410  | Split Array Largest Sum                    | 🔴 Hard    | Partition into k groups DP         |
+
+---
+
 ## 📝 Interview Tips
 
 - 🔑 **EN:** DP state: `dp[i][j][0/1]` = best using first `i` elements, `j` subarrays chosen, 0=not in subarray, 1=in subarray | **VI:** 3 chiều DP: vị trí, số mảng, đang trong mảng hay không
@@ -34,6 +54,8 @@ Best: [1,2,3], [-1], [2]
 - 🔑 **EN:** All k subarrays must be non-empty (size ≥ 1) | **VI:** Mỗi mảng con phải có ít nhất 1 phần tử
 - 🔑 **EN:** Use `-Infinity` as sentinel for invalid states | **VI:** Dùng `-Infinity` để đánh dấu trạng thái không hợp lệ
 - 🔑 **EN:** Answer is `dp[n][k][0]` — after all elements, k subarrays closed | **VI:** Đáp án tại `dp[n][k][0]` — k mảng đã đóng hoàn toàn
+
+---
 
 ## Solutions
 
@@ -118,6 +140,8 @@ console.log(maximumStrength([2, -1, 3], 1)); // 5  ([2,-1,3]*1=4... wait)
 console.log(maximumStrength([-1, -2, -3], 1)); // -1
 console.log(maximumStrengthDP([1, 2, 3, -1, 2], 3)); // 22
 ```
+
+---
 
 ## 🔗 Related Problems
 

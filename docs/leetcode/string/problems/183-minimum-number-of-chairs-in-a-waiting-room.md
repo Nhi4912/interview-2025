@@ -9,13 +9,16 @@ leetcode_url: "https://leetcode.com/problems/minimum-number-of-chairs-in-a-waiti
 
 # Minimum Number of Chairs in a Waiting Room / Số Ghế Tối Thiểu Trong Phòng Chờ
 
-**Difficulty:** 🟢 Easy | **Tags:** String, Simulation
-
 ---
 
-## 🧠 Intuition / Trực Giác
+## 🧠 Intuition / Tư Duy
 
-Bài toán giống **đếm người trong phòng**: mỗi 'E' thêm một người, mỗi 'L' bớt một người.
+**Analogy:** Bài toán giống **đếm người trong phòng**: mỗi 'E' thêm một người, mỗi 'L' bớt một người.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Minimum Number of Chairs in a Waiting Room example:**
 
 ```
 s = "EEEEEEE"
@@ -42,7 +45,19 @@ s = "EELLEE"
 
 ---
 
-## 📝 Interview Tips / Mẹo Phỏng Vấn
+---
+
+## Problem Description
+
+| Problem                                                                                                         | Difficulty | Pattern            |
+| --------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/)                                             | 🟡 Medium  | Min chairs / rooms |
+| [Car Fleet](https://leetcode.com/problems/car-fleet/)                                                           | 🟡 Medium  | Stack simulation   |
+| [Number of Students Unable to Eat Lunch](https://leetcode.com/problems/number-of-students-unable-to-eat-lunch/) | 🟢 Easy    | Simulation         |
+
+---
+
+## 📝 Interview Tips
 
 - 🇻🇳 **Số ghế = đỉnh số người đồng thời**: không cần nhớ thứ tự, chỉ cần đỉnh
 - 🇺🇸 **Chairs = peak occupancy**: no history needed, just track running max
@@ -59,9 +74,9 @@ s = "EELLEE"
 
 ---
 
-## 💻 Solutions
+---
 
-### Solution 1 — Running Counter + Max (Recommended)
+## Solutions
 
 ```typescript
 /**
@@ -89,11 +104,7 @@ console.log(minimumChairs("ELELEEL")); // 2
 console.log(minimumChairs("EELLEE")); // 2
 console.log(minimumChairs("E")); // 1
 console.log(minimumChairs("EL")); // 1
-```
 
-### Solution 2 — Math.max on every step
-
-```typescript
 /**
  * Update max on every iteration (slightly simpler, same complexity).
  * Time: O(n)  Space: O(1)
@@ -112,11 +123,7 @@ function minimumChairs2(s: string): number {
 
 console.log(minimumChairs2("EEEEEEE")); // 7
 console.log(minimumChairs2("ELELEEL")); // 2
-```
 
-### Solution 3 — Functional reduce
-
-```typescript
 /**
  * Reduce over characters; accumulate [current, peak].
  * Time: O(n)  Space: O(1)

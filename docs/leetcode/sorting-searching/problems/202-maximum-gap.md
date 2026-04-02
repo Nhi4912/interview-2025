@@ -9,11 +9,16 @@ leetcode_url: "https://leetcode.com/problems/maximum-gap"
 
 # Maximum Gap / Khoảng Cách Tối Đa
 
-🟡 Medium
+---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Hình ảnh:** Bạn cần tìm khoảng cách lớn nhất giữa hai phần tử **liên tiếp nhau** sau khi sort. Nếu dùng sort thông thường O(n log n) thì dễ — nhưng bài yêu cầu O(n) time và O(n) space. Đây là lúc **Pigeonhole Principle** phát huy.
+**Analogy:** > **Hình ảnh:** Bạn cần tìm khoảng cách lớn nhất giữa hai phần tử **liên tiếp nhau** sau khi sort. Nếu dùng sort thông thường O(n log n) thì dễ — nhưng bài yêu cầu O(n) time và O(n) space. Đây là lúc **Pigeonhole Principle** phát huy.
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual — Maximum Gap example:**
 
 ```
 nums = [3, 6, 9, 1], n=4
@@ -32,7 +37,9 @@ Pigeonhole: n numbers in n-1 gaps → at least one gap ≥ ceil(range/(n-1))
 
 **Chiến lược:** n numbers → n-1 buckets of size `ceil((max-min)/(n-1))`. Max gap must span bucket boundaries.
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given unsorted integer array `nums`, return the **maximum difference** between successive elements in its sorted form. Return `0` if fewer than 2 elements. Must run in O(n) time and O(n) space.
 
@@ -40,6 +47,8 @@ Given unsorted integer array `nums`, return the **maximum difference** between s
 **Example 2:** `nums=[10]` → `0`
 
 **Constraints:** `1 ≤ n ≤ 10^5`, `0 ≤ nums[i] ≤ 10^9`
+
+---
 
 ## 📝 Interview Tips
 
@@ -50,9 +59,9 @@ Given unsorted integer array `nums`, return the **maximum difference** between s
 - **Alternative O(n):** Radix sort on 32-bit integers with base 2^8 (4 passes)
 - **Edge cases:** n < 2 → return 0; all elements equal → return 0
 
-## 💡 Solutions
+---
 
-### Solution 1: Bucket Sort (Pigeonhole) — O(n) time, O(n) space
+## Solutions
 
 ```typescript
 function maximumGap(nums: number[]): number {
@@ -89,11 +98,7 @@ function maximumGap(nums: number[]): number {
 
   return ans;
 }
-```
 
-### Solution 2: Radix Sort — O(n) time, O(n) space
-
-```typescript
 function maximumGapRadix(nums: number[]): number {
   const n = nums.length;
   if (n < 2) return 0;
@@ -119,11 +124,7 @@ function maximumGapRadix(nums: number[]): number {
   }
   return maxGap;
 }
-```
 
-### Solution 3: Regular Sort (O(n log n) — readable baseline)
-
-```typescript
 function maximumGapSort(nums: number[]): number {
   if (nums.length < 2) return 0;
   nums.sort((a, b) => a - b);
@@ -134,6 +135,8 @@ function maximumGapSort(nums: number[]): number {
   return maxGap;
 }
 ```
+
+---
 
 ## 🔗 Related Problems
 

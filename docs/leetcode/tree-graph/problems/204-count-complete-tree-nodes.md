@@ -7,15 +7,18 @@ tags: [Binary Search, Bit Manipulation, Tree, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/count-complete-tree-nodes"
 ---
 
-## 222. Count Complete Tree Nodes
-
-### Đếm Số Nút Cây Nhị Phân Đầy Đủ | 🟢 Easy
+# count complete tree nodes
 
 ---
 
-## 🧠 Intuition
+## 🧠 Intuition / Tư Duy
 
-> **Vietnamese analogy:** Cây nhị phân đầy đủ (complete) có tính chất đặc biệt: nếu chiều cao trái = chiều cao phải, thì cây đó là "perfect" và có `2^h - 1` nút. Dùng tính chất này để tính O(log²n) thay vì O(n).
+**Analogy:** > **Vietnamese analogy:** Cây nhị phân đầy đủ (complete) có tính chất đặc biệt: nếu chiều cao trái = chiều cao phải, thì cây đó là "perfect" và có `2^h - 1` nút. Dùng tính chất này để tính O(log²n) thay vì O(n).
+
+**Pattern Recognition:**
+- Key insight: see analogy above
+
+**Visual —  example:**
 
 ```
 Height h=3 (perfect tree):
@@ -37,7 +40,9 @@ Left height=3, Right height=2 → recurse
 
 ---
 
-## 📋 Problem Description
+---
+
+## Problem Description
 
 Given the `root` of a **complete binary tree**, return the number of nodes. Design an algorithm that runs in **O(log²n)** time.
 
@@ -46,6 +51,8 @@ Given the `root` of a **complete binary tree**, return the number of nodes. Desi
 - `0 <= Number of nodes <= 5 * 10^4`
 - `-10^5 <= Node.val <= 10^5`
 - Tree is **complete** binary tree
+
+---
 
 ---
 
@@ -60,9 +67,9 @@ Given the `root` of a **complete binary tree**, return the number of nodes. Desi
 
 ---
 
-## 💡 Solutions
+---
 
-### Solution 1: O(log²n) — Perfect Subtree Detection
+## Solutions
 
 ```typescript
 class TreeNode {
@@ -108,20 +115,12 @@ function countNodes(root: TreeNode | null): number {
   // Not perfect: recurse on both subtrees
   return 1 + countNodes(root.left) + countNodes(root.right);
 }
-```
 
-### Solution 2: O(n) — Simple DFS
-
-```typescript
 function countNodesDFS(root: TreeNode | null): number {
   if (!root) return 0;
   return 1 + countNodesDFS(root.left) + countNodesDFS(root.right);
 }
-```
 
-### Solution 3: Binary Search on Last Level
-
-```typescript
 function countNodesBinarySearch(root: TreeNode | null): number {
   if (!root) return 0;
 
