@@ -31,15 +31,18 @@ I — Impact:    Giai thich tac dong cua hanh vi do (len team, product, user)
 ```
 
 **Vi du tot (code review):**
+
 - S: "Trong PR #342 hom qua cho checkout flow..."
 - B: "Em dat ten bien `d` cho variable chua date range, va khong co comment giai thich business logic cua discount calculation..."
 - I: "Khi nguoi khac doc code nay, ho se mat 15-20 phut de hieu. Neu co bug trong discount logic, nguoi fix se khong biet intent ban dau la gi."
 
 **Vi du xau:**
+
 - "Code em viet do qua." (phan xet ca nhan, khong actionable)
 - "Em can viet code tot hon." (khong cu the)
 
 **Ung dung trong 1:1:**
+
 - **Positive SBI** (quan trong khong kem negative): "Trong sprint planning thu 3 (S), em chu dong de xuat chia epic thanh 3 story nho hon va identify dependency voi backend team (B). Nho vay team khong bi block va ship dung deadline (I)."
 - **Corrective SBI**: "Trong standup 3 ngay lien (S), em chi noi 'dang lam' ma khong share blocker (B). Anh va team khong biet em stuck, nen khong ho tro duoc som (I). Em co the share chi tiet hon khong?"
 
@@ -47,15 +50,16 @@ I — Impact:    Giai thich tac dong cua hanh vi do (len team, product, user)
 
 Ba phuong phap khac nhau, dung cho cac tinh huong khac nhau:
 
-| Aspect | Mentoring | Coaching | Sponsoring |
-|--------|-----------|----------|------------|
-| **Dinh nghia** | Chia se kinh nghiem va kien thuc | Dat cau hoi de nguoi khac tu tim cau tra loi | Dung influence cua ban de tao co hoi cho nguoi khac |
-| **Khi nao dung** | Junior chua co mental model, can direction | Mid-level co kien thuc nhung chua tu tin hoac chua thay goc nhin | Nguoi co nang luc nhung thieu visibility hoac co hoi |
-| **Vi du** | "Day la cach anh approach system design: buoc 1..." | "Em nghi approach nao tot nhat? Tai sao?" | "Anh de xuat em present technical decision nay cho VP Engineering" |
-| **Ket qua** | Nguoi hoc duoc kinh nghiem nhanh | Nguoi hoc phat trien tu duy doc lap | Nguoi hoc duoc recognized va co co hoi moi |
-| **Rui ro** | Tao dependency — luon can mentor | Mat thoi gian neu nguoi chua co base knowledge | Mat uy tin neu nguoi duoc sponsor chua san sang |
+| Aspect           | Mentoring                                           | Coaching                                                         | Sponsoring                                                         |
+| ---------------- | --------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Dinh nghia**   | Chia se kinh nghiem va kien thuc                    | Dat cau hoi de nguoi khac tu tim cau tra loi                     | Dung influence cua ban de tao co hoi cho nguoi khac                |
+| **Khi nao dung** | Junior chua co mental model, can direction          | Mid-level co kien thuc nhung chua tu tin hoac chua thay goc nhin | Nguoi co nang luc nhung thieu visibility hoac co hoi               |
+| **Vi du**        | "Day la cach anh approach system design: buoc 1..." | "Em nghi approach nao tot nhat? Tai sao?"                        | "Anh de xuat em present technical decision nay cho VP Engineering" |
+| **Ket qua**      | Nguoi hoc duoc kinh nghiem nhanh                    | Nguoi hoc phat trien tu duy doc lap                              | Nguoi hoc duoc recognized va co co hoi moi                         |
+| **Rui ro**       | Tao dependency — luon can mentor                    | Mat thoi gian neu nguoi chua co base knowledge                   | Mat uy tin neu nguoi duoc sponsor chua san sang                    |
 
 **Quy tac ngon tay cai:**
+
 - Junior (0-2 nam): 70% mentoring, 20% coaching, 10% sponsoring
 - Mid (2-4 nam): 20% mentoring, 60% coaching, 20% sponsoring
 - Senior (4+ nam): 10% mentoring, 30% coaching, 60% sponsoring
@@ -138,6 +142,7 @@ Day 61-90: OWN
 **Task**: Giup 2 junior productive trong 3 thang ma khong sacrifice sprint commitments.
 
 **Action**:
+
 1. Tao structured onboarding: 30-60-90 day plan voi milestones ro rang
 2. Pair programming 2 gio/tuan voi moi junior — khong lam ho, ma hoi "em tiep can bai nay the nao?" (coaching, khong chi mentoring)
 3. Code review framework: viet checklist 15 items cho PR, junior tu check truoc khi request review
@@ -154,6 +159,7 @@ Day 61-90: OWN
 **Task**: Giup team ship nhanh hon.
 
 **Action**:
+
 1. Khi junior hoi, tra loi: "De anh fix cho, nhanh hon"
 2. Lam them gio de compensate cho junior velocity thap
 3. Khong co onboarding plan — "doc code se hieu"
@@ -170,6 +176,7 @@ Day 61-90: OWN
 **Task**: Thay doi van hoa team de moi nguoi dam len tieng va ship nhanh hon.
 
 **Action**:
+
 1. Bat dau tu ban than: Khi deploy bug, viet postmortem cong khai. "Anh miss edge case nay vi khong co integration test. Day la action item."
 2. Doi code review culture: Chuyen tu "Tai sao em lam the nay?" sang "Anh tu hoi lieu approach nay co handle case X khong?"
 3. Tao "Blameless Postmortem" template: Focus vao process failure, khong phai people failure
@@ -181,15 +188,15 @@ Day 61-90: OWN
 
 ## Anti-patterns / Sai Lam Thuong Gap
 
-| Anti-pattern | Tai sao that bai | Cach lam tot hon |
-|-------------|-----------------|-----------------|
-| "De anh lam cho nhanh" | Junior khong hoc, bus factor = 1, senior burn out | Pair programming: lam cung, khong lam thay |
-| Feedback sandwich (khen-che-khen) | Nguoi nhan confuse, khong biet dau la feedback that | Dung SBI — feedback truc tiep, cu the, khong phan xet |
-| Chi mentor nguoi giong minh | Tao homogeneous team, miss diverse perspectives | Y thuc mentor nguoi co background khac ban |
-| Skip 1:1 khi ban | 1:1 la co hoi duy nhat de hieu blocker va career goal | 1:1 la sacred — khong cancel, chi reschedule |
-| Micromanage thay vi trust | Team mat motivation, khong phat trien autonomy | Define outcome, khong define cach lam. Review result, khong review process |
-| Chi cho negative feedback | Team so sai, khong dam thu cai moi | Positive SBI it nhat gap doi negative SBI |
-| "Open door policy" ma khong hoi | Nguoi noi xin khong bao gio tu den | Chu dong hoi trong 1:1: "Em dang stuck cho nao?" |
+| Anti-pattern                      | Tai sao that bai                                      | Cach lam tot hon                                                           |
+| --------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- |
+| "De anh lam cho nhanh"            | Junior khong hoc, bus factor = 1, senior burn out     | Pair programming: lam cung, khong lam thay                                 |
+| Feedback sandwich (khen-che-khen) | Nguoi nhan confuse, khong biet dau la feedback that   | Dung SBI — feedback truc tiep, cu the, khong phan xet                      |
+| Chi mentor nguoi giong minh       | Tao homogeneous team, miss diverse perspectives       | Y thuc mentor nguoi co background khac ban                                 |
+| Skip 1:1 khi ban                  | 1:1 la co hoi duy nhat de hieu blocker va career goal | 1:1 la sacred — khong cancel, chi reschedule                               |
+| Micromanage thay vi trust         | Team mat motivation, khong phat trien autonomy        | Define outcome, khong define cach lam. Review result, khong review process |
+| Chi cho negative feedback         | Team so sai, khong dam thu cai moi                    | Positive SBI it nhat gap doi negative SBI                                  |
+| "Open door policy" ma khong hoi   | Nguoi noi xin khong bao gio tu den                    | Chu dong hoi trong 1:1: "Em dang stuck cho nao?"                           |
 
 ---
 
@@ -202,6 +209,7 @@ Day 61-90: OWN
 "Leadership khong phai la co title hay direct report. La khi ban roi khoi team, team co tot hon truoc khong? Neu ban code gioi nhung khong ai hoc duoc gi tu ban, ban la strong IC nhung chua phai leader. L5 can ca hai."
 
 **Interview Signal:**
+
 - ✅ Strong: Gives specific examples of growing others, distinguishes IC leadership from management
 - ❌ Weak: "Leadership means telling people what to do" or confuses leadership with seniority
 
@@ -214,6 +222,7 @@ Day 61-90: OWN
 Example: "In a recent project (S), I noticed a teammate was consistently submitting PRs without tests and with minimal documentation (B). This caused our review cycle to double because reviewers had to manually verify behavior and ask for context (I). In our 1:1, I shared this observation using SBI, then asked open-ended questions: 'What's making it hard to add tests?' Turned out they were unfamiliar with our testing framework. We paired for 2 hours, and their next 5 PRs all had tests."
 
 Key principles:
+
 1. **Private, not public** — Never give corrective feedback in a group setting
 2. **Timely** — Within 48 hours of the behavior, not 2 months later in performance review
 3. **Actionable** — End with a clear ask or collaborative plan
@@ -222,6 +231,7 @@ Key principles:
 "Feedback kho nhat khong phai negative feedback — ma la feedback cho nguoi ban than thiet. SBI giup ban tach cam xuc ra khoi observation. Ban khong phan xet con nguoi — ban mo ta hanh vi va tac dong."
 
 **Interview Signal:**
+
 - ✅ Strong: Has a framework, gives specific example, shows empathy and follow-through
 - ❌ Weak: "I just tell them directly" (no structure), or "I avoid conflict" (no leadership)
 
@@ -238,12 +248,14 @@ Start with yourself. Publicly acknowledge your own mistakes in standups and retr
 When someone makes a mistake, respond with curiosity: "What happened?" instead of "Why did you do that?" Replace "Who caused this?" with "What process failed?" In code reviews, use language like "I wonder if..." and "Have you considered..." instead of "This is wrong."
 
 **Phase 3 — Create explicit rituals (Week 4-12):**
+
 - Blameless postmortem template that focuses on systems, not individuals
 - "New hire review" — ask new members to document confusing processes (they see gaps veterans don't)
 - Retro prompt: "What's one thing we're not talking about that we should?"
 - Celebrate learning from failure, not just success
 
 **Phase 4 — Sustain and measure (Ongoing):**
+
 - Track proxy metrics: time to first PR comment, retro participation rate, number of questions in planning
 - If someone shares a mistake and gets supported, highlight it: "Cam on em da share early — nho vay minh catch bug truoc khi len production"
 - If you see blame behavior, address it privately with SBI
@@ -251,10 +263,12 @@ When someone makes a mistake, respond with curiosity: "What happened?" instead o
 "Psychological safety khong phai 'moi nguoi nice voi nhau.' La moi nguoi dam noi that — dam noi 'approach nay co van de', dam noi 'em khong hieu', dam noi 'em sai roi.' Team co psychological safety ship nhanh hon vi khong ai giau bug, khong ai so hoi cau hoi."
 
 **Interview Signal:**
+
 - ✅ Strong: Has phased approach, mentions specific rituals, connects to team performance, shares concrete example
 - ❌ Weak: "I just tell everyone to be nice" or has no framework
 
 🔗 **Follow-up Chain:**
+
 1. → "How do you measure whether psychological safety is improving? What leading indicators would you track?"
 2. → "What do you do when a senior engineer on the team actively undermines psychological safety — for example, dismissing junior ideas in meetings?"
 3. → "How do you balance psychological safety with accountability? How do you ensure 'safe to fail' doesn't become 'no consequences'?"
@@ -267,6 +281,19 @@ When someone makes a mistake, respond with curiosity: "What happened?" instead o
 - **"SBI = Screenshot"**: SBI giong nhu chup screenshot cua tinh huong — Situation la context, Behavior la gi xay ra trong hinh, Impact la caption.
 - **"Teach to Fish"**: Mentoring = cho ca. Coaching = day cau ca. Sponsoring = gioi thieu cho ca ho. L5 biet khi nao dung cai nao.
 - **"Oxygen Mask Rule"**: Tren may bay, deo mask cho minh truoc khi giup nguoi khac. L5 van phai deliver, nhung invest 20% effort vao growing others.
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "How do you mentor junior engineers while maintaining your own delivery? — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. Mentoring means intentionally investing a portion of your capacity to grow others' skills while protecting your core delivery commitments.
+2. At L5, you apply the 80/20 rule — 80% delivery, 20% growing others — switching between mentoring, coaching, and sponsoring based on the engineer's need.
+3. For example: I hold 30-min weekly 1:1s, use the SBI model for feedback, and pair-program only on the highest-leverage learning areas.
+4. In the interview, name a junior you've grown, the specific technique used (SBI/coaching/sponsoring), and how you measured their progress.
 
 ---
 

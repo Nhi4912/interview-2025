@@ -1,4 +1,4 @@
-# Common Behavioral Questions - 50+ Questions with Frameworks
+# Common Behavioral Questions / Câu Hỏi Hành Vi Thường Gặp - 50+ Questions with Frameworks
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 Question Categories
+## 🎯 Question Categories / Danh Mục Câu Hỏi
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -31,9 +31,9 @@
 
 ---
 
-## 👑 Leadership & Influence
+## 👑 Leadership & Influence / Lãnh Đạo & Ảnh Hưởng
 
-### Questions
+### Questions / Câu Hỏi
 
 ```
 1. Tell me about a time you led a project or initiative.
@@ -63,7 +63,7 @@
     with your decisions?
 ```
 
-### Sample Answer Framework
+### Sample Answer Framework / Khung Câu Trả Lời Mẫu
 
 ```
 QUESTION: "Tell me about a time you led a project."
@@ -94,7 +94,7 @@ RESULT: Leadership impact
 • What you learned as a leader
 ```
 
-### Sample Answer: "Tell me about a project you led"
+### Sample Answer: "Tell me about a project you led" / Câu Trả Lời Mẫu
 
 **Situation:** At Teko Vietnam — a 60-person e-commerce technology company — our internal admin dashboard ran on a 4-year-old jQuery codebase. Every new feature took 2–3× longer than estimated, and onboarding new frontend developers averaged 4 weeks. I was one of 5 frontend developers on the team.
 
@@ -119,7 +119,7 @@ RESULT: Leadership impact
 
 ---
 
-### Sample Answer: "Tell me about a time you had to make a decision with incomplete information"
+### Sample Answer: "Tell me about a time you had to make a decision with incomplete information" / Câu Trả Lời Mẫu
 
 **Situation:** At a Series B SaaS startup in Ho Chi Minh City, I was mid-sprint on a new client onboarding flow when our product manager resigned unexpectedly. I had partial wireframes, a rough user story, and a client demo scheduled in 3 weeks. No replacement PM had been assigned.
 
@@ -144,9 +144,9 @@ RESULT: Leadership impact
 
 ---
 
-## 🔧 Problem Solving
+## 🔧 Problem Solving / Giải Quyết Vấn Đề
 
-### Questions
+### Questions / Câu Hỏi
 
 ```
 1. Tell me about a difficult bug or technical problem you solved.
@@ -175,7 +175,7 @@ RESULT: Leadership impact
 10. How do you validate that your solution actually works?
 ```
 
-### Sample Answer Framework
+### Sample Answer Framework / Khung Câu Trả Lời Mẫu
 
 ```
 QUESTION: "Tell me about a difficult bug you solved."
@@ -209,7 +209,7 @@ RESULT: Resolution and learning
 • What would you do differently?
 ```
 
-### Sample Answer: "Tell me about your biggest technical challenge"
+### Sample Answer: "Tell me about your biggest technical challenge" / Câu Trả Lời Mẫu
 
 **Situation:** At a Southeast Asian super-app with 3 million monthly active users in Vietnam, I was the frontend lead for the mobile web checkout experience. Performance monitoring showed our checkout page took 11–14 seconds to become interactive on budget Android devices (Redmi, Vsmart) over 3G — the network profile of roughly 40% of our users in Tier 2–3 cities. Mobile web cart abandonment was 52%.
 
@@ -234,9 +234,9 @@ RESULT: Resolution and learning
 
 ---
 
-## 🤝 Teamwork & Collaboration
+## 🤝 Teamwork & Collaboration / Làm Việc Nhóm & Cộng Tác
 
-### Questions
+### Questions / Câu Hỏi
 
 ```
 1. Tell me about a successful team collaboration.
@@ -263,7 +263,7 @@ RESULT: Resolution and learning
     team to achieve a goal.
 ```
 
-### Sample Answer Framework
+### Sample Answer Framework / Khung Câu Trả Lời Mẫu
 
 ```
 QUESTION: "Tell me about a time you worked with someone difficult."
@@ -298,9 +298,9 @@ IMPORTANT: Never blame, always show empathy and growth
 
 ---
 
-## 💥 Failure & Learning
+## 💥 Failure & Learning / Thất Bại & Học Hỏi
 
-### Questions
+### Questions / Câu Hỏi
 
 ```
 1. Tell me about a time you failed.
@@ -324,7 +324,7 @@ IMPORTANT: Never blame, always show empathy and growth
 10. How do you handle imposter syndrome or self-doubt?
 ```
 
-### Sample Answer Framework
+### Sample Answer Framework / Khung Câu Trả Lời Mẫu
 
 ```
 QUESTION: "Tell me about a time you failed."
@@ -360,7 +360,7 @@ KEY POINTS:
 • Show you've applied the learning
 ```
 
-### Sample Answer: "Tell me about a time you failed"
+### Sample Answer: "Tell me about a time you failed" / Câu Trả Lời Mẫu
 
 **Situation:** At a Vietnamese e-commerce platform, I was the sole frontend developer responsible for a new promotional banner carousel for our annual 11/11 sale — the biggest revenue day of the year. I had 2 weeks to build, test, and coordinate the production deployment. The stakes were high: banners drove the highest traffic-to-purchase conversion of the year.
 
@@ -384,9 +384,9 @@ I owned this fully in the post-mortem. Three concrete changes I made immediately
 
 ---
 
-## 🏆 Achievements
+## 🏆 Achievements / Thành Tích
 
-### Questions
+### Questions / Câu Hỏi
 
 ```
 1. What's your proudest professional accomplishment?
@@ -411,7 +411,7 @@ I owned this fully in the post-mortem. Three concrete changes I made immediately
 10. What's the biggest risk you took that paid off?
 ```
 
-### Sample Answer Framework
+### Sample Answer Framework / Khung Câu Trả Lời Mẫu
 
 ```
 QUESTION: "What's your proudest accomplishment?"
@@ -448,9 +448,9 @@ END WITH: Why this matters to you
 
 ---
 
-## ⚔️ Conflict Resolution
+## ⚔️ Conflict Resolution / Giải Quyết Xung Đột
 
-### Questions
+### Questions / Câu Hỏi
 
 ```
 1. Tell me about a time you had a conflict with a colleague.
@@ -475,7 +475,7 @@ END WITH: Why this matters to you
 10. Tell me about a time you changed someone's mind.
 ```
 
-### Sample Answer Framework
+### Sample Answer Framework / Khung Câu Trả Lời Mẫu
 
 ```
 QUESTION: "Tell me about a conflict with a colleague."
@@ -508,7 +508,7 @@ RESULT: Resolution and relationship
 KEY: Show you can disagree without being disagreeable
 ```
 
-### Sample Answer: "Tell me about a time you disagreed with your team"
+### Sample Answer: "Tell me about a time you disagreed with your team" / Câu Trả Lời Mẫu
 
 **Situation:** At a B2B SaaS company in Hanoi, our team of 6 (2 frontend, 2 backend, 1 designer, 1 PM) was planning a major analytics dashboard redesign. The backend team lead — a well-respected senior engineer — strongly advocated for server-side rendering with minimal JavaScript, citing simpler deployment and easier production debugging. I believed the product required a React SPA with a REST API to support the real-time filtering features our 3 largest enterprise clients had explicitly requested for 6 months.
 
@@ -533,9 +533,9 @@ KEY: Show you can disagree without being disagreeable
 
 ---
 
-## 🎤 Self-Awareness & Motivation
+## 🎤 Self-Awareness & Motivation / Tự Nhận Thức & Động Lực
 
-### Questions
+### Questions / Câu Hỏi
 
 ```
 1. Why do you want to work here?
@@ -559,7 +559,7 @@ KEY: Show you can disagree without being disagreeable
 10. What are you looking for in your next role?
 ```
 
-### Sample Answers
+### Sample Answers / Câu Trả Lời Mẫu
 
 ```
 WEAKNESS:
@@ -591,7 +591,7 @@ AVOID: Generic answers that could apply anywhere
 
 ---
 
-## ✅ Question Preparation Checklist
+## ✅ Question Preparation Checklist / Danh Sách Chuẩn Bị Câu Hỏi
 
 ```
 For each question category, ensure you have:
@@ -629,7 +629,7 @@ For each question category, ensure you have:
 
 ---
 
-## 📚 Active Recall
+## 📚 Active Recall / Nhớ Lại Chủ Động
 
 1. [ ] List 3 questions from each category
 2. [ ] What's the key point for failure story answers?

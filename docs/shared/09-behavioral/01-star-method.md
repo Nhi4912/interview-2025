@@ -1,4 +1,4 @@
-# STAR Method - Framework Trả Lời Behavioral Questions
+# STAR Method / Phương Pháp STAR - Framework Trả Lời Behavioral Questions
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 Overview
+## 🎯 Overview / Tổng Quan
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -40,9 +40,9 @@
 
 ---
 
-## 📖 S - Situation
+## 📖 S - Situation / Tình Huống
 
-### What to Include
+### What to Include / Nội Dung Cần Có
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -75,7 +75,7 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Situation Templates
+### Situation Templates / Mẫu Tình Huống
 
 ```
 Template 1 - Project Context:
@@ -94,9 +94,9 @@ This was significant because [impact on business/team]."
 
 ---
 
-## 📋 T - Task
+## 📋 T - Task / Nhiệm Vụ
 
-### What to Include
+### What to Include / Nội Dung Cần Có
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -130,9 +130,9 @@ This was significant because [impact on business/team]."
 
 ---
 
-## ⚡ A - Action (MOST IMPORTANT)
+## ⚡ A - Action (MOST IMPORTANT) / Hành Động
 
-### How to Structure Actions
+### How to Structure Actions / Cách Cấu Trúc Hành Động
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -165,7 +165,7 @@ This was significant because [impact on business/team]."
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Action Example (Detailed)
+### Action Example (Detailed) / Ví Dụ Hành Động
 
 ```
 "First, I analyzed the existing payment flow and identified
@@ -187,7 +187,7 @@ wrote documentation as we built, and set up automated tests
 to prevent regressions."
 ```
 
-### Common Mistakes in Actions
+### Common Mistakes in Actions / Sai Lầm Thường Gặp
 
 ```
 ❌ BAD: "We worked hard and figured it out"
@@ -212,9 +212,9 @@ to prevent regressions."
 
 ---
 
-## 🏆 R - Result
+## 🏆 R - Result / Kết Quả
 
-### What to Include
+### What to Include / Nội Dung Cần Có
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -243,7 +243,7 @@ to prevent regressions."
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Result Examples
+### Result Examples / Ví Dụ Kết Quả
 
 ```
 STRONG RESULT:
@@ -264,9 +264,9 @@ I applied these lessons and delivered early."
 
 ---
 
-## 📝 Complete STAR Examples
+## 📝 Complete STAR Examples / Ví Dụ STAR Hoàn Chỉnh
 
-### Example 1: Technical Challenge
+### Example 1: Technical Challenge / Ví Dụ 1
 
 **Question:** "Tell me about a difficult technical problem you solved."
 
@@ -310,7 +310,7 @@ budget system I implemented caught 12 regressions in the
 following quarter before they reached production."
 ```
 
-### Example 2: Conflict Resolution
+### Example 2: Conflict Resolution / Ví Dụ 2
 
 **Question:** "Tell me about a time you had a conflict with a teammate."
 
@@ -351,7 +351,7 @@ design discussions, and we've collaborated successfully on
 three more projects."
 ```
 
-### Example 3: Failure Story
+### Example 3: Failure Story / Ví Dụ 3
 
 **Question:** "Tell me about a time you failed."
 
@@ -394,7 +394,7 @@ smoothly with no last-minute surprises."
 
 ---
 
-## ✅ STAR Checklist
+## ✅ STAR Checklist / Danh Sách Kiểm Tra STAR
 
 ```
 Before telling any story, verify:
@@ -427,11 +427,11 @@ OVERALL:
 
 ---
 
-## 🔄 Handling Follow-Up Questions
+## 🔄 Handling Follow-Up Questions / Xử Lý Câu Hỏi Theo Dõi
 
 > Sau khi bạn trả lời STAR, interviewer gần như _luôn luôn_ hỏi thêm. Đây là nơi nhiều ứng viên bị "trip up" nhất — chuẩn bị kỹ phần này có thể tạo ra sự khác biệt lớn.
 
-### Common Follow-Up Patterns
+### Common Follow-Up Patterns / Mẫu Câu Hỏi Theo Dõi
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -487,7 +487,7 @@ OVERALL:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Tips for Handling Unexpected Follow-Ups
+### Tips for Handling Unexpected Follow-Ups / Mẹo Xử Lý
 
 ```
 WHEN YOU'RE CAUGHT OFF GUARD:
@@ -528,7 +528,7 @@ COMMON UNEXPECTED QUESTIONS TO PREPARE FOR:
    • "How did the rest of the team feel about your approach?"
 ```
 
-### How to Handle "Tell Me More About..." Probes
+### How to Handle "Tell Me More About..." Probes / Cách Xử Lý "Kể Thêm"
 
 ```
 "Tell me more about..." is a GOOD sign — the interviewer is
@@ -567,7 +567,7 @@ UNIVERSAL RESPONSE TEMPLATE:
 
 ---
 
-## 📚 Active Recall
+## 📚 Active Recall / Nhớ Lại Chủ Động
 
 1. [ ] What percentage of your answer should each STAR component be?
 2. [ ] What power verbs can you use in the Action section?

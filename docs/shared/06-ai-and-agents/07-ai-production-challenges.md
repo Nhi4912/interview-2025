@@ -1914,6 +1914,19 @@ Tools: LlamaGuard, NeMo Guardrails, Azure Content Safety
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "What are the main RAG failure modes in production — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. RAG có 3 failure modes chính: retrieval failure (wrong/irrelevant chunks fetched), generation failure (LLM hallucinate despite good context), và pipeline drift (embedding model hoặc index bị stale).
+2. Cơ chế: retrieval fails khi query embedding không match chunk embedding (semantic gap); generation fails do "lost-in-the-middle" — LLM ignore relevant context ở giữa prompt.
+3. Ví dụ: e-commerce RAG — product description updated nhưng embedding index chưa refresh → retrieval trả về stale price → customer thấy wrong price.
+4. Monitor: track context relevance score, faithfulness score, và index freshness timestamp riêng để isolate từng failure mode nhanh.
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 | #   | Loại           | Câu hỏi                                                                                                                                 |
@@ -1925,6 +1938,18 @@ Tools: LlamaGuard, NeMo Guardrails, Azure Content Safety
 | 5   | 🎓 Teach       | Can I explain to a junior developer why AI safety guardrails must be layered — and why a single system prompt is insufficient?          |
 
 💬 **Feynman Prompt:** Giải thích tại sao "model performance in staging ≠ model performance in production" — 3 factors causing this gap và how to minimize each.
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                        |
+| ------ | -------- | -------------------------------------------- |
+| Day 1  | Today    | Full read + highlight Memory Hooks           |
+| Day 3  | +3 days  | Cold Call + Self-Check only                  |
+| Day 7  | +7 days  | Q&A bank (cover answers, recall from memory) |
+| Day 14 | +14 days | Teach someone / Feynman technique            |
+| Day 30 | +30 days | Mock interview practice                      |
 
 ## Connections / Liên Kết
 

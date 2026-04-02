@@ -1616,6 +1616,19 @@ Cost monitoring:
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Design a production RAG chatbot architecture — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. RAG chatbot production gồm 2 pipelines: offline ingestion (chunk → embed → index vào vector DB) và online query (rewrite → retrieve → rerank → generate → validate).
+2. Cơ chế: query được rewrite để expand intent → hybrid search (dense + sparse) → reranker chọn top-k chunks → LLM với token budget → output guardrails.
+3. Ví dụ: banking FAQ bot — "lãi suất gửi tiết kiệm?" → retrieve 3 chunks từ Pinecone → GPT-4o sinh answer có cite nguồn → faithfulness check trước khi respond.
+4. Trade-off: semantic cache giảm 40-60% LLM calls cho repeated queries; cần balance retrieval quality vs latency tùy SLA.
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 | #   | Loại           | Câu hỏi                                                                                                                                                            |
@@ -1627,6 +1640,18 @@ Cost monitoring:
 | 5   | 🎓 Teach       | Can I explain model routing architecture and routing criteria to a junior engineer so they understand _when NOT to call GPT-4_ — and why that matters for cost?    |
 
 💬 **Feynman Prompt:** Giải thích tại sao "establish quality bar first, optimize cost later" là đúng — và ví dụ khi cost optimization trước dẫn đến technical debt.
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                        |
+| ------ | -------- | -------------------------------------------- |
+| Day 1  | Today    | Full read + highlight Memory Hooks           |
+| Day 3  | +3 days  | Cold Call + Self-Check only                  |
+| Day 7  | +7 days  | Q&A bank (cover answers, recall from memory) |
+| Day 14 | +14 days | Teach someone / Feynman technique            |
+| Day 30 | +30 days | Mock interview practice                      |
 
 ## Connections / Liên Kết
 

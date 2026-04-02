@@ -1,4 +1,4 @@
-# Leadership Principles - Company Values & Interview Focus
+# Leadership Principles / Nguyên Tắc Lãnh Đạo - Company Values & Interview Focus
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 Overview
+## 🎯 Overview / Tổng Quan
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -41,9 +41,9 @@
 
 ---
 
-## 🟠 Amazon Leadership Principles (16 LPs)
+## 🟠 Amazon Leadership Principles (16 LPs) / Nguyên Tắc Lãnh Đạo Amazon
 
-### Most Important LPs for Frontend Roles
+### Most Important LPs for Frontend Roles / LP Quan Trọng Nhất cho Frontend
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -77,9 +77,10 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Detailed LP Breakdown
+### Detailed LP Breakdown / Phân Tích Chi Tiết LP
 
-#### Customer Obsession
+#### Customer Obsession / Tập Trung Vào Khách Hàng
+
 ```
 DEFINITION:
 "Leaders start with the customer and work backwards. They work
@@ -111,7 +112,8 @@ resistance from the business team who wanted to show it later.
 After implementing early cost display, abandonment dropped 20%."
 ```
 
-#### Ownership
+#### Ownership / Quyền Sở Hữu
+
 ```
 DEFINITION:
 "Leaders are owners. They think long term and don't sacrifice
@@ -144,7 +146,8 @@ other teams. It's now used across 5 teams and reduced support
 tickets by 30%."
 ```
 
-#### Dive Deep
+#### Dive Deep / Đào Sâu
+
 ```
 DEFINITION:
 "Leaders operate at all levels, stay connected to the details,
@@ -176,7 +179,8 @@ loaded 500KB of unused code. Fixed it by switching to their
 lite version. Score improved 25 points."
 ```
 
-#### Deliver Results
+#### Deliver Results / Đạt Kết Quả
+
 ```
 DEFINITION:
 "Leaders focus on the key inputs for their business and deliver
@@ -207,7 +211,8 @@ complex flows. Implemented core features in 6 weeks, leaving
 at the conference, and raised our seed round."
 ```
 
-#### Earn Trust
+#### Earn Trust / Xây Dựng Niềm Tin
+
 ```
 DEFINITION:
 "Leaders listen attentively, speak candidly, and treat others
@@ -243,7 +248,7 @@ improved significantly after that."
 
 ## 🔵 Google - Googleyness
 
-### What Google Looks For
+### What Google Looks For / Google Tìm Kiếm Điều Gì
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -283,7 +288,7 @@ improved significantly after that."
 
 ## 🔵 Meta/Facebook
 
-### Core Values
+### Core Values / Giá Trị Cốt Lõi
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -322,7 +327,7 @@ improved significantly after that."
 
 ## 🟢 Microsoft - Growth Mindset
 
-### Core Attributes
+### Core Attributes / Thuộc Tính Cốt Lõi
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -363,7 +368,7 @@ improved significantly after that."
 
 ## ⚪ Apple - Attention to Detail
 
-### What Apple Looks For
+### What Apple Looks For / Apple Tìm Kiếm Điều Gì
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -399,7 +404,7 @@ improved significantly after that."
 
 ## 🔴 Netflix - Freedom & Responsibility
 
-### Culture Principles
+### Culture Principles / Nguyên Tắc Văn Hóa
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -458,7 +463,7 @@ improved significantly after that."
 
 ---
 
-## 📝 Story Mapping Template
+## 📝 Story Mapping Template / Mẫu Ánh Xạ Câu Chuyện
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -499,7 +504,7 @@ improved significantly after that."
 
 ---
 
-## 📚 Active Recall
+## 📚 Active Recall / Nhớ Lại Chủ Động
 
 1. [ ] List Amazon's top 5 LPs for frontend roles
 2. [ ] What is "Googleyness"? Name 3 traits

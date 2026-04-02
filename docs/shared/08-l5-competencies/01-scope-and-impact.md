@@ -59,13 +59,13 @@ Step 4: EXECUTE — Drive to completion
 
 ### 3. Scope Sizing Matrix
 
-| Scope Level | Description | L5 Signal |
-|-------------|------------|-----------|
-| Task | Fix bug, implement small ticket | ❌ L3 scope |
-| Feature | Build a complete feature within existing architecture | ⚠️ L4 scope |
-| Flow | Own an entire user flow (e.g., checkout, onboarding) | ✅ L5 minimum |
-| Surface | Own a technical surface (e.g., design system, performance infra) | ✅ Strong L5 |
-| Initiative | Drive a cross-team initiative (e.g., migration, new architecture) | ✅ L5→L6 |
+| Scope Level | Description                                                       | L5 Signal     |
+| ----------- | ----------------------------------------------------------------- | ------------- |
+| Task        | Fix bug, implement small ticket                                   | ❌ L3 scope   |
+| Feature     | Build a complete feature within existing architecture             | ⚠️ L4 scope   |
+| Flow        | Own an entire user flow (e.g., checkout, onboarding)              | ✅ L5 minimum |
+| Surface     | Own a technical surface (e.g., design system, performance infra)  | ✅ Strong L5  |
+| Initiative  | Drive a cross-team initiative (e.g., migration, new architecture) | ✅ L5→L6      |
 
 ---
 
@@ -78,6 +78,7 @@ Step 4: EXECUTE — Drive to completion
 **Task**: Own the entire checkout flow improvement as Senior FE engineer.
 
 **Action**:
+
 - Analyzed funnel data → identified 3 drop-off points (address form, payment, confirmation)
 - Proposed 3 approaches to PM: quick fixes (2 weeks), redesign form flow (4 weeks), full checkout rebuild with persistent cart (8 weeks)
 - Recommended option 2 with data: "Address form accounts for 60% of drops. Redesigning it covers the biggest win with reasonable effort."
@@ -100,6 +101,7 @@ Step 4: EXECUTE — Drive to completion
 **Task**: Propose and drive adoption of a unified design system.
 
 **Action**:
+
 - Audited all 8 MFEs → documented 47 duplicate components
 - Built business case: "Team spends ~20% time on UI inconsistency fixes. Unified system saves ~2 dev-months/quarter."
 - Created RFC with migration strategy: codemods for common patterns, bridge library for gradual adoption, team-by-team rollout
@@ -128,14 +130,14 @@ Step 4: EXECUTE — Drive to completion
 
 ## Anti-patterns / Sai Lầm Thường Gặp
 
-| Anti-pattern | Why it fails | Better approach |
-|-------------|-------------|----------------|
-| "The team decided..." | Shows no individual ownership | Use "I proposed...", "I drove...", "I decided..." |
-| Only talking about code | Interviewer wants scope + impact, not implementation details | Lead with problem → approach → result, code is supporting evidence |
-| No metrics | "It was better" is not a signal | Quantify: "reduced load time by 40%", "affected 2M users", "saved 3 dev-weeks" |
-| Scope inflation | Claiming credit for team work without specifics | Be precise: "I designed the architecture and mentored 2 juniors who implemented the components" |
-| All solo work | L5 scope inherently involves coordination | Include cross-team collaboration, stakeholder management |
-| No ambiguity | If the task was perfectly defined, it's not L5 scope | Choose stories where requirements were unclear and YOU clarified them |
+| Anti-pattern            | Why it fails                                                 | Better approach                                                                                 |
+| ----------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| "The team decided..."   | Shows no individual ownership                                | Use "I proposed...", "I drove...", "I decided..."                                               |
+| Only talking about code | Interviewer wants scope + impact, not implementation details | Lead with problem → approach → result, code is supporting evidence                              |
+| No metrics              | "It was better" is not a signal                              | Quantify: "reduced load time by 40%", "affected 2M users", "saved 3 dev-weeks"                  |
+| Scope inflation         | Claiming credit for team work without specifics              | Be precise: "I designed the architecture and mentored 2 juniors who implemented the components" |
+| All solo work           | L5 scope inherently involves coordination                    | Include cross-team collaboration, stakeholder management                                        |
+| No ambiguity            | If the task was perfectly defined, it's not L5 scope         | Choose stories where requirements were unclear and YOU clarified them                           |
 
 ---
 
@@ -148,6 +150,7 @@ Step 4: EXECUTE — Drive to completion
 Đừng bắt đầu bằng "PM assigned me a ticket." Bắt đầu bằng: "I identified an opportunity to improve X, proposed an approach, and drove it end-to-end."
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Describes ambiguity → decomposition → coordination → measurable result
 - ❌ Weak: Describes a well-defined task they implemented correctly
 
@@ -160,6 +163,7 @@ Step 4: EXECUTE — Drive to completion
 "Khi PM nói 'make it better,' tôi không hỏi 'better how?' — tôi hỏi 'what problem are users having?' rồi đề xuất 2-3 options với data."
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Has a structured approach, proposes options proactively, documents decisions
 - ❌ Weak: "I ask PM for more details" or "I just start building something"
 
@@ -172,13 +176,28 @@ Step 4: EXECUTE — Drive to completion
 "We had 4 weeks before launch. I proposed cutting feature X (affected 5% of users) to ensure feature Y (affected 80%) was rock-solid. I presented the data to PM, got alignment, and documented the decision in an ADR. We shipped feature X in v2 three weeks later."
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Quantified trade-offs, explicit about what was cut and why, documented decision
 - ❌ Weak: "We just did whatever PM said" or "We tried to do everything and it was stressful"
 
 🔗 **Follow-up Chain:**
+
 1. → "How did you communicate this scope change to stakeholders who wanted feature X?"
 2. → "What data would have changed your decision? What was your fallback plan?"
 3. → "If you had 2 more engineers, would you have made a different scope decision? How would you have structured the work?"
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "What scope of impact is expected at L5? — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. L5 scope means independently owning cross-team or org-level initiatives that measurably move business metrics.
+2. At L5, you drive projects impacting 2+ teams over 6–12 month timelines, with clear before/after metrics you own.
+3. For example: I led a platform migration affecting 3 teams, reducing deploy time by 40% — I scoped, staffed, and delivered it end-to-end.
+4. In the interview, name the teams impacted, the metric moved, and explicitly who made the scope decisions.
 
 ---
 

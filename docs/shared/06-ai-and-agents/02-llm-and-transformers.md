@@ -1599,6 +1599,19 @@ Output ← [Factuality check] ← [Toxicity filter] ← [Format validation]
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Explain how the attention mechanism works in transformers — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. Attention mechanism cho phép mỗi token "attend" đến tất cả các token khác trong sequence để capture context theo cách động.
+2. Cơ chế: mỗi token tạo Query, Key, Value vectors → dot product Q·Kᵀ → softmax → weighted sum of Values.
+3. Ví dụ: trong "The cat sat on the mat", khi process "sat", attention focus vào "cat" (subject) với trọng số cao nhất.
+4. Trade-off: self-attention là O(n²) theo sequence length — tốn memory với long contexts, nhưng fully parallelizable (nhanh hơn RNN).
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 | #   | Loại           | Câu hỏi                                                                                                                                    |
@@ -1610,6 +1623,18 @@ Output ← [Factuality check] ← [Toxicity filter] ← [Format validation]
 | 5   | 🎓 Teach       | Giải thích "lost-in-the-middle" problem cho junior developer chưa biết về LLM — và tại sao nó ảnh hưởng cách bạn thiết kế RAG chunk order. |
 
 💬 **Feynman Prompt:** Giải thích tại sao LLM không thể "just search the internet" to answer — và tại sao RAG là better architecture than training model on live data.
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                        |
+| ------ | -------- | -------------------------------------------- |
+| Day 1  | Today    | Full read + highlight Memory Hooks           |
+| Day 3  | +3 days  | Cold Call + Self-Check only                  |
+| Day 7  | +7 days  | Q&A bank (cover answers, recall from memory) |
+| Day 14 | +14 days | Teach someone / Feynman technique            |
+| Day 30 | +30 days | Mock interview practice                      |
 
 ## Connections / Liên Kết
 

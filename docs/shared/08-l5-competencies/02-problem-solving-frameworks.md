@@ -117,6 +117,7 @@ Step 5: Address highest-priority risks first in your design
 **U — Understand**: Given string `s` and pattern `p`, find all start indices of `p`'s anagrams in `s`.
 
 **N — Narrow**:
+
 - "Can s or p be empty?" → Yes, return empty array
 - "Only lowercase letters?" → Yes
 - "What's the max length?" → 10^4
@@ -144,6 +145,7 @@ Step 5: Address highest-priority risks first in your design
 ### Example 3: Risk-First — "Design a Real-Time Notification System"
 
 **Risks identified**:
+
 1. Message loss (blast radius: all users, likelihood: medium) → **Priority 1**
 2. Duplicate notifications (blast radius: individual users, likelihood: high) → **Priority 2**
 3. Delivery delay >5s (blast radius: UX degradation, likelihood: medium) → **Priority 3**
@@ -155,14 +157,14 @@ Step 5: Address highest-priority risks first in your design
 
 ## Anti-patterns / Sai Lầm Thường Gặp
 
-| Anti-pattern | Why it fails | Better approach |
-|-------------|-------------|----------------|
-| Code immediately | Misses constraints, picks wrong approach, has to restart | Spend 3-5 min on U-N-P-A before any code |
-| Silent thinking | Interviewer can't evaluate your process | Think out loud: "I'm considering two approaches..." |
-| Stuck = panic | Freezing signals poor problem-solving | Say "I'm stuck on X, let me try constraint relaxation" |
-| Only brute force | Shows you can code but not optimize | State brute force, THEN say "Let me optimize using [pattern]" |
-| Skip edge cases | Most bugs are at boundaries | Always test: empty input, single element, all same, very large |
-| Time blindness | Spending 30 min on approach, 5 min on code | Budget: 5 min understand, 5 min approach, 20 min code, 5 min test |
+| Anti-pattern     | Why it fails                                             | Better approach                                                   |
+| ---------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
+| Code immediately | Misses constraints, picks wrong approach, has to restart | Spend 3-5 min on U-N-P-A before any code                          |
+| Silent thinking  | Interviewer can't evaluate your process                  | Think out loud: "I'm considering two approaches..."               |
+| Stuck = panic    | Freezing signals poor problem-solving                    | Say "I'm stuck on X, let me try constraint relaxation"            |
+| Only brute force | Shows you can code but not optimize                      | State brute force, THEN say "Let me optimize using [pattern]"     |
+| Skip edge cases  | Most bugs are at boundaries                              | Always test: empty input, single element, all same, very large    |
+| Time blindness   | Spending 30 min on approach, 5 min on code               | Budget: 5 min understand, 5 min approach, 20 min code, 5 min test |
 
 ---
 
@@ -175,6 +177,7 @@ Step 5: Address highest-priority risks first in your design
 "Tôi không bao giờ code ngay. Tôi dành 3-5 phút đầu để hiểu đề, hỏi constraints, và nhận dạng pattern. Sau đó tôi nói approach cho interviewer trước khi viết code."
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Has structured approach, asks clarifying questions, identifies pattern before coding
 - ❌ Weak: "I just start coding and figure it out as I go"
 
@@ -187,6 +190,7 @@ Step 5: Address highest-priority risks first in your design
 If still stuck: communicate to interviewer. "I'm considering X approach but I'm blocked on Y. Can I get a hint on whether I'm heading in the right direction?"
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Has multiple de-sticking strategies, communicates struggle transparently
 - ❌ Weak: Sits silently, panics, or immediately asks for the answer
 
@@ -203,10 +207,12 @@ If still stuck: communicate to interviewer. "I'm considering X approach but I'm 
 "In my last project, I initially used O(n²) nested loops for matching. When profiling showed it was a bottleneck at 10K items, I switched to a hash-based approach — O(n) time but O(n) space. I chose NOT to optimize further to O(1) space because the data size was bounded and the code complexity wasn't worth it."
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Considers correctness → performance → complexity tradeoff, uses data to drive decisions
 - ❌ Weak: "I always go for the optimal solution" or "I just make it work"
 
 🔗 **Follow-up Chain:**
+
 1. → "What metrics would tell you this optimization was worth it in production?"
 2. → "If this ran on a device with 512MB RAM, how would your tradeoff analysis change?"
 3. → "Design a system to automatically detect and alert when this algorithm's performance degrades beyond threshold."
@@ -228,6 +234,19 @@ If still stuck: communicate to interviewer. "I'm considering X approach but I'm 
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Walk me through your problem-solving framework for ambiguous problems — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. My framework is UNPACK: Understand constraints, Note edge cases, Pick a pattern, Prototype, Apply, then Check and Communicate.
+2. At L5, you systematically pattern-match across known approaches, relax constraints when stuck, and narrate reasoning aloud throughout.
+3. For example: given an ambiguous design problem, I restate it in my own words, identify 2–3 candidate patterns, pick the best fit, then code.
+4. In the interview, walk through each UNPACK step explicitly before writing any code — the process is what L5 looks like.
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 > **Đóng file này lại trước khi làm.**
@@ -246,14 +265,14 @@ If still stuck: communicate to interviewer. "I'm considering X approach but I'm 
 
 ## Practice Problems / Bài Tập Thực Hành
 
-| Pattern to Practice | Problem | Difficulty |
-|-------------------|---------|-----------|
-| UNPACK full flow | [Two Sum](../../leetcode/array/problems/04-two-sum.md) | 🟢 Easy |
-| Constraint Relaxation | [3Sum](../../leetcode/array/problems/12-3sum.md) | 🟡 Medium |
-| Work Backwards | [LRU Cache](../../leetcode/design/problems/09-lru-cache.md) | 🟡 Medium |
-| Pattern Recognition | [Longest Substring Without Repeating](../../leetcode/string/problems/10-longest-substring-without-repeating-characters.md) | 🟡 Medium |
-| Risk-First (Design) | [Design Hit Counter](../../leetcode/design/problems/07-design-hit-counter.md) | 🟡 Medium |
-| Full process under pressure | [Trapping Rain Water](../../leetcode/array/problems/20-trapping-rain-water.md) | 🔴 Hard |
+| Pattern to Practice         | Problem                                                                                                                    | Difficulty |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| UNPACK full flow            | [Two Sum](../../leetcode/array/problems/04-two-sum.md)                                                                     | 🟢 Easy    |
+| Constraint Relaxation       | [3Sum](../../leetcode/array/problems/12-3sum.md)                                                                           | 🟡 Medium  |
+| Work Backwards              | [LRU Cache](../../leetcode/design/problems/09-lru-cache.md)                                                                | 🟡 Medium  |
+| Pattern Recognition         | [Longest Substring Without Repeating](../../leetcode/string/problems/10-longest-substring-without-repeating-characters.md) | 🟡 Medium  |
+| Risk-First (Design)         | [Design Hit Counter](../../leetcode/design/problems/07-design-hit-counter.md)                                              | 🟡 Medium  |
+| Full process under pressure | [Trapping Rain Water](../../leetcode/array/problems/20-trapping-rain-water.md)                                             | 🔴 Hard    |
 
 ---
 

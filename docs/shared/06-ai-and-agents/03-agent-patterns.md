@@ -1626,6 +1626,19 @@ Request → [Input validation] → [Agent + ReAct loop]
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Explain the ReAct pattern for AI agents — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. ReAct (Reasoning + Acting) là pattern cho AI agent xen kẽ giữa Thought (lý luận), Action (gọi tool), và Observation (xem kết quả trả về).
+2. Cơ chế: LLM sinh chain-of-thought reasoning trước mỗi action → agent tự kiểm tra logic trước khi execute, tránh blind actions.
+3. Ví dụ: agent check đơn hàng → Thought: "cần query order ID" → Action: call_tool(get_order) → Observation: result → Thought: "đã có data, trả lời user".
+4. Trade-off: minh bạch và dễ debug hơn direct action, nhưng chậm hơn và có thể loop vô hạn nếu thiếu stop condition.
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 | #   | Loại           | Câu hỏi                                                                                                                                                            |
@@ -1637,6 +1650,18 @@ Request → [Input validation] → [Agent + ReAct loop]
 | 5   | 🎓 Teach       | Giải thích cho junior engineer tại sao phải validate tool arguments TRƯỚC khi execute, dùng một ví dụ analogy từ cuộc sống hàng ngày.                              |
 
 💬 **Feynman Prompt:** Giải thích tại sao "infinite loop" là a common agent failure — và design một stop condition mechanism that catches both obvious loops and subtle ones.
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                        |
+| ------ | -------- | -------------------------------------------- |
+| Day 1  | Today    | Full read + highlight Memory Hooks           |
+| Day 3  | +3 days  | Cold Call + Self-Check only                  |
+| Day 7  | +7 days  | Q&A bank (cover answers, recall from memory) |
+| Day 14 | +14 days | Teach someone / Feynman technique            |
+| Day 30 | +30 days | Mock interview practice                      |
 
 ## Connections / Liên Kết
 

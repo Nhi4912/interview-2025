@@ -10,6 +10,7 @@
 ## Overview / Tổng Quan
 
 Behavioral interviews đánh giá:
+
 - Communication skills
 - Problem-solving approach
 - Teamwork và leadership
@@ -22,13 +23,13 @@ Behavioral interviews đánh giá:
 
 > **Note:** Behavioral content chung (STAR, Leadership, Common Questions, Storytelling) đã được chuyển sang `shared/09-behavioral/` để cả FE và BE track đều dùng được. Files dưới đây link đến shared.
 
-| File | Chủ Đề | Độ Quan Trọng |
-|------|--------|---------------|
-| [01-star-method.md](../../shared/09-behavioral/01-star-method.md) | STAR Framework | ⭐⭐⭐⭐⭐ |
-| [02-leadership-principles.md](../../shared/09-behavioral/02-leadership-principles.md) | Amazon LPs, etc. | ⭐⭐⭐⭐⭐ |
-| [03-common-questions.md](../../shared/09-behavioral/03-common-questions.md) | 50+ Common Questions | ⭐⭐⭐⭐⭐ |
-| [04-storytelling.md](../../shared/09-behavioral/04-storytelling.md) | How to Tell Stories | ⭐⭐⭐⭐ |
-| [mindmap-behavioral.md](./mindmap-behavioral.md) | Sơ Đồ Tổng Hợp (FE-specific) | Review |
+| File                                                                                  | Chủ Đề                       | Độ Quan Trọng |
+| ------------------------------------------------------------------------------------- | ---------------------------- | ------------- |
+| [01-star-method.md](../../shared/09-behavioral/01-star-method.md)                     | STAR Framework               | ⭐⭐⭐⭐⭐    |
+| [02-leadership-principles.md](../../shared/09-behavioral/02-leadership-principles.md) | Amazon LPs, etc.             | ⭐⭐⭐⭐⭐    |
+| [03-common-questions.md](../../shared/09-behavioral/03-common-questions.md)           | 50+ Common Questions         | ⭐⭐⭐⭐⭐    |
+| [04-storytelling.md](../../shared/09-behavioral/04-storytelling.md)                   | How to Tell Stories          | ⭐⭐⭐⭐      |
+| [mindmap-behavioral.md](./mindmap-behavioral.md)                                      | Sơ Đồ Tổng Hợp (FE-specific) | Review        |
 
 ---
 
@@ -91,58 +92,63 @@ cải thiện - chúng tôi collaborate tốt hơn trong các projects sau."
 
 ---
 
-## Common Question Categories
+## Common Question Categories / Danh Mục Câu Hỏi Thường Gặp
 
 ### 1. Leadership & Influence
+
 - Tell me about a time you led a project
 - Describe a situation where you had to influence without authority
 - How do you handle disagreements with your manager?
 
 ### 2. Problem Solving
+
 - Tell me about a difficult bug you solved
 - Describe a time you had to make a decision with incomplete information
 - How do you prioritize when everything is urgent?
 
 ### 3. Teamwork
+
 - Tell me about a successful collaboration
 - How do you handle a teammate who isn't pulling their weight?
 - Describe a time you helped someone grow
 
 ### 4. Failure & Learning
+
 - Tell me about a time you failed
 - Describe a mistake you made and what you learned
 - How do you handle negative feedback?
 
 ### 5. Achievement
+
 - What's your proudest accomplishment?
 - Tell me about a time you exceeded expectations
 - Describe your biggest impact at previous company
 
 ---
 
-## Amazon Leadership Principles
+## Amazon Leadership Principles / Nguyên Tắc Lãnh Đạo Amazon
 
 Amazon đặc biệt focus vào 16 Leadership Principles:
 
-| LP | Mô Tả | Story Cần Chuẩn Bị |
-|----|-------|-------------------|
-| Customer Obsession | Start with customer, work backwards | Customer impact story |
-| Ownership | Think long-term, act on behalf of company | Going beyond scope |
-| Invent & Simplify | Innovation và simplification | Creative solution |
-| Learn & Be Curious | Always learning | New skill/technology |
-| Hire & Develop | Raise the bar | Mentoring story |
-| Insist on Highest Standards | High quality bar | Quality improvement |
-| Think Big | Bold direction | Ambitious project |
-| Bias for Action | Speed matters | Quick decision |
-| Frugality | Do more with less | Resource optimization |
-| Earn Trust | Listen, speak candidly | Building trust |
-| Dive Deep | Stay connected to details | Deep investigation |
-| Have Backbone | Respectfully challenge | Disagreement story |
-| Deliver Results | Focus on outputs | Delivery success |
+| LP                          | Mô Tả                                     | Story Cần Chuẩn Bị    |
+| --------------------------- | ----------------------------------------- | --------------------- |
+| Customer Obsession          | Start with customer, work backwards       | Customer impact story |
+| Ownership                   | Think long-term, act on behalf of company | Going beyond scope    |
+| Invent & Simplify           | Innovation và simplification              | Creative solution     |
+| Learn & Be Curious          | Always learning                           | New skill/technology  |
+| Hire & Develop              | Raise the bar                             | Mentoring story       |
+| Insist on Highest Standards | High quality bar                          | Quality improvement   |
+| Think Big                   | Bold direction                            | Ambitious project     |
+| Bias for Action             | Speed matters                             | Quick decision        |
+| Frugality                   | Do more with less                         | Resource optimization |
+| Earn Trust                  | Listen, speak candidly                    | Building trust        |
+| Dive Deep                   | Stay connected to details                 | Deep investigation    |
+| Have Backbone               | Respectfully challenge                    | Disagreement story    |
+| Deliver Results             | Focus on outputs                          | Delivery success      |
 
 ---
 
-## Story Bank Template
+## Story Bank Template / Mẫu Ngân Hàng Câu Chuyện
 
 Chuẩn bị **3-5 stories** có thể adapt cho nhiều questions:
 
@@ -150,31 +156,38 @@ Chuẩn bị **3-5 stories** có thể adapt cho nhiều questions:
 ## Story 1: [Project Name]
 
 ### Brief
+
 One-liner summary
 
 ### Situation
+
 - Company/Team context
 - Timeline
 - Stakes/Impact potential
 
 ### Task
+
 - Your specific responsibility
 - Challenges faced
 
 ### Actions (Chi tiết)
+
 1. Action 1: What you did, why
 2. Action 2: What you did, why
 3. Action 3: What you did, why
 
 ### Results (Quantified)
+
 - Metric 1: X% improvement
 - Metric 2: $Y saved
 - Qualitative: Team growth, process improvement
 
 ### Learnings
+
 What would you do differently?
 
 ### Can Use For
+
 - [ ] Leadership
 - [ ] Conflict resolution
 - [ ] Problem solving
@@ -184,43 +197,46 @@ What would you do differently?
 
 ---
 
-## Tips for Success
+## Tips for Success / Mẹo Thành Công
 
-### DO
+### DO / NÊN LÀM
+
 - Use "I" not "we" - focus on YOUR contributions
 - Quantify results whenever possible
 - Be specific about actions
 - Show self-awareness
 - Prepare questions for interviewer
 
-### DON'T
+### DON'T / KHÔNG NÊN
+
 - Badmouth previous employers/colleagues
 - Give vague answers
 - Take credit for team work
 - Lie or exaggerate
 - Skip the result
 
-### Time Management
+### Time Management / Quản Lý Thời Gian
+
 - Keep answers 2-3 minutes
 - Practice with timer
 - Have short and long versions ready
 
 ---
 
-## Company-Specific Focus
+## Company-Specific Focus / Trọng Tâm Theo Công Ty
 
-| Company | Focus Areas |
-|---------|-------------|
-| Google | Problem solving, data-driven decisions, Googleyness |
-| Meta | Move fast, impact, collaboration |
-| Amazon | Leadership Principles (prepare ALL 16) |
-| Microsoft | Growth mindset, collaboration, customer focus |
-| Apple | Attention to detail, passion for products |
-| Netflix | Freedom & responsibility, context not control |
+| Company   | Focus Areas                                         |
+| --------- | --------------------------------------------------- |
+| Google    | Problem solving, data-driven decisions, Googleyness |
+| Meta      | Move fast, impact, collaboration                    |
+| Amazon    | Leadership Principles (prepare ALL 16)              |
+| Microsoft | Growth mindset, collaboration, customer focus       |
+| Apple     | Attention to detail, passion for products           |
+| Netflix   | Freedom & responsibility, context not control       |
 
 ---
 
-## Practice Checklist
+## Practice Checklist / Danh Sách Thực Hành
 
 - [ ] Prepare 5 stories covering different themes
 - [ ] Practice STAR format for each story
@@ -231,7 +247,7 @@ What would you do differently?
 
 ---
 
-## Resources
+## Resources / Tài Nguyên
 
 - [Amazon Leadership Principles](https://www.amazon.jobs/en/principles)
 - [Grokking the Behavioral Interview](https://www.educative.io/courses/grokking-the-behavioral-interview)

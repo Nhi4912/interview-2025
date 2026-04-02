@@ -670,6 +670,19 @@ Vietnamese: Regression test cho AI khác software test thông thường vì: (1)
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Explain LLM-as-judge for AI evaluation — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. LLM-as-judge dùng một LLM mạnh (GPT-4, Claude) để evaluate output của LLM khác theo structured rubric, thay thế human annotation tốn kém.
+2. Cơ chế: evaluator LLM nhận (question, answer, reference context) → score theo criteria (accuracy, relevance, safety) → return score + reasoning.
+3. Ví dụ: thay vì thuê annotator check 10,000 chatbot responses, dùng GPT-4 judge với structured rubric → ~85% agreement với human raters ở ~1/100 chi phí.
+4. Trade-off: scalable và rẻ, nhưng có position bias (favor đáp án đứng trước) và self-serving bias (GPT-4 favor GPT-4-style outputs).
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 | #   | Loại           | Câu hỏi                                                                                                                                                        |
@@ -681,6 +694,18 @@ Vietnamese: Regression test cho AI khác software test thông thường vì: (1)
 | 5   | 🎓 Teach       | Giải thích cho junior engineer tại sao "LLM-as-judge" có thể cost-effective hơn human evaluation, và khi nào nó fail (ít nhất 2 failure modes)?                |
 
 💬 **Feynman Prompt:** Giải thích tại sao factuality và faithfulness là different metrics in RAG evaluation — ví dụ khi answer là faithful but not factual (hay ngược lại).
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                        |
+| ------ | -------- | -------------------------------------------- |
+| Day 1  | Today    | Full read + highlight Memory Hooks           |
+| Day 3  | +3 days  | Cold Call + Self-Check only                  |
+| Day 7  | +7 days  | Q&A bank (cover answers, recall from memory) |
+| Day 14 | +14 days | Teach someone / Feynman technique            |
+| Day 30 | +30 days | Mock interview practice                      |
 
 ## Connections / Liên Kết
 

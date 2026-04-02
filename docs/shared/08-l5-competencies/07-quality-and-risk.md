@@ -55,13 +55,13 @@ Quality Bar Levels:
 
 **Thiết lập Quality Bar cho team:**
 
-| Component | What to Define | Example |
-|-----------|---------------|---------|
-| **Test coverage threshold** | Minimum % cho code mới | "New code must have ≥80% statement coverage" |
-| **Code review standards** | Checklist reviewers follow | "Every PR needs ≥1 approval, security-sensitive needs ≥2" |
-| **Performance budgets** | Measurable limits | "LCP ≤ 2.5s, bundle size ≤ 200KB for main chunk" |
-| **API contract** | Schema validation | "All APIs must have OpenAPI spec, breaking changes need RFC" |
-| **Error budget** | Acceptable failure rate | "99.9% uptime = 43 min downtime/month budget" |
+| Component                   | What to Define             | Example                                                      |
+| --------------------------- | -------------------------- | ------------------------------------------------------------ |
+| **Test coverage threshold** | Minimum % cho code mới     | "New code must have ≥80% statement coverage"                 |
+| **Code review standards**   | Checklist reviewers follow | "Every PR needs ≥1 approval, security-sensitive needs ≥2"    |
+| **Performance budgets**     | Measurable limits          | "LCP ≤ 2.5s, bundle size ≤ 200KB for main chunk"             |
+| **API contract**            | Schema validation          | "All APIs must have OpenAPI spec, breaking changes need RFC" |
+| **Error budget**            | Acceptable failure rate    | "99.9% uptime = 43 min downtime/month budget"                |
 
 Quan trọng: Quality bar phải **measurable** và **automated**. Nếu chỉ là guideline doc mà không enforce bằng CI/CD, sẽ bị ignore.
 
@@ -89,12 +89,12 @@ DORA (DevOps Research and Assessment) — 4 metrics đo software delivery perfor
 
 **Performance Tiers:**
 
-| Metric | Elite | High | Medium | Low |
-|--------|-------|------|--------|-----|
-| **Deployment Frequency** | On-demand (multiple/day) | Weekly–Monthly | Monthly–Quarterly | Quarterly+ |
-| **Lead Time for Changes** | < 1 hour | 1 day–1 week | 1 week–1 month | 1–6 months |
-| **Change Failure Rate** | 0–15% | 16–30% | 31–45% | 46–60% |
-| **MTTR** | < 1 hour | < 1 day | < 1 week | 1 week+ |
+| Metric                    | Elite                    | High           | Medium            | Low        |
+| ------------------------- | ------------------------ | -------------- | ----------------- | ---------- |
+| **Deployment Frequency**  | On-demand (multiple/day) | Weekly–Monthly | Monthly–Quarterly | Quarterly+ |
+| **Lead Time for Changes** | < 1 hour                 | 1 day–1 week   | 1 week–1 month    | 1–6 months |
+| **Change Failure Rate**   | 0–15%                    | 16–30%         | 31–45%            | 46–60%     |
+| **MTTR**                  | < 1 hour                 | < 1 day        | < 1 week          | 1 week+    |
 
 **Key insight**: Elite teams có CẢ speed VÀ stability cao. Đây không phải trade-off — quality practices (testing, CI/CD, monitoring) ENABLE tốc độ.
 
@@ -159,11 +159,11 @@ PROBABILITY│  Low   │ Medium  │  High  │ Critical │
 
 **Cách dùng trong practice:**
 
-| Risk | Probability | Impact | Score | Mitigation |
-|------|------------|--------|-------|------------|
-| DB migration corrupts user data | Low | Critical | High | Test on production clone, reversible migration, backup before run |
-| Third-party API rate limit hit | High | Medium | High | Circuit breaker, fallback cache, alert at 80% quota |
-| New feature causes layout shift | Medium | Low | Low | Visual regression tests, LCP/CLS monitoring |
+| Risk                            | Probability | Impact   | Score | Mitigation                                                        |
+| ------------------------------- | ----------- | -------- | ----- | ----------------------------------------------------------------- |
+| DB migration corrupts user data | Low         | Critical | High  | Test on production clone, reversible migration, backup before run |
+| Third-party API rate limit hit  | High        | Medium   | High  | Circuit breaker, fallback cache, alert at 80% quota               |
+| New feature causes layout shift | Medium      | Low      | Low   | Visual regression tests, LCP/CLS monitoring                       |
 
 **Presenting to stakeholders:** Đừng nói "có rủi ro". Nói: "Có 3 risks. Risk 1 (data corruption) là highest priority — mitigation plan là X, timeline là Y. Nếu approved, chúng ta sẽ deploy với rollback plan Z."
 
@@ -208,12 +208,12 @@ Blameless Postmortem Template:
 
 **Action items that actually get done:**
 
-| Pattern | Problem | Fix |
-|---------|---------|-----|
-| Vague action items | "Improve monitoring" → never done | "Add PagerDuty alert for error rate > 1% on /checkout — owner: @alice — deadline: Mar 15" |
-| No owner | Everyone's responsibility = nobody's responsibility | Every action item has exactly 1 owner |
-| No deadline | "We'll get to it" = never | Concrete date, tracked in sprint board |
-| No follow-up | Action items forgotten after meeting | Review status in next team sync |
+| Pattern            | Problem                                             | Fix                                                                                       |
+| ------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Vague action items | "Improve monitoring" → never done                   | "Add PagerDuty alert for error rate > 1% on /checkout — owner: @alice — deadline: Mar 15" |
+| No owner           | Everyone's responsibility = nobody's responsibility | Every action item has exactly 1 owner                                                     |
+| No deadline        | "We'll get to it" = never                           | Concrete date, tracked in sprint board                                                    |
+| No follow-up       | Action items forgotten after meeting                | Review status in next team sync                                                           |
 
 ---
 
@@ -226,6 +226,7 @@ Blameless Postmortem Template:
 **Task:** Giảm incidents và tăng deploy confidence mà không giảm velocity.
 
 **Action:**
+
 1. Week 1-2: Đo baseline — tính DORA metrics thủ công: CFR = 45%, MTTR = 6 hours, deploy frequency = biweekly
 2. Week 3-4: Thêm CI pipeline với unit tests cho critical paths (checkout, auth). Coverage target: critical paths 90%, rest 60%
 3. Month 2: Set up canary deployment (5% traffic → monitor 30 min → full rollout). Thêm error rate alerting
@@ -241,6 +242,7 @@ Blameless Postmortem Template:
 **Task:** Assess risk và propose safer rollout plan.
 
 **Action:**
+
 1. Wrote risk assessment document: 5 risks identified, highest = "payment processing regression" (probability: medium, impact: critical → score: critical)
 2. Proposed phased rollout: internal → 1% → 10% → 50% → 100% over 2 weeks
 3. Defined rollback criteria: if payment success rate drops >0.5% from baseline → auto-rollback
@@ -254,6 +256,7 @@ Blameless Postmortem Template:
 **Situation:** Senior dev prioritizes velocity over everything. "Tests slow us down. We can fix bugs in production — that's what monitoring is for."
 
 **Impact:**
+
 - No tests → regressions in every deploy → customer trust eroded
 - No postmortems → same bugs recur → team learns nothing
 - High MTTR → devs spend 30% time firefighting → actual velocity DECREASES
@@ -265,16 +268,16 @@ Blameless Postmortem Template:
 
 ## Anti-patterns / Sai Lầm Thường Gặp
 
-| Anti-pattern | Why It Fails | Better Approach |
-|-------------|-------------|-----------------|
-| "100% test coverage" goal | Chasing coverage number leads to useless tests (testing getters/setters) | Cover critical paths thoroughly; measure meaningful coverage (branch coverage on business logic) |
-| Testing in production only | Users become QA testers; trust erosion | Test pyramid: unit → integration → e2e. Production monitoring is LAST line of defense, not first |
-| Big-bang deploys | All-or-nothing = maximum blast radius | Progressive rollout: canary → staged → full with monitoring gates |
-| Blame-driven postmortems | People hide mistakes; root cause never found | Blameless culture: "What process allowed this to happen?" not "Who did this?" |
-| Postmortem action items with no owner | "Improve monitoring" sits in doc forever | Every action item: specific task + owner + deadline + tracked in sprint |
-| Ignoring DORA metrics | Can't improve what you don't measure | Dashboard visible to team; review trends monthly |
-| Feature flags never cleaned up | Code becomes unreadable spaghetti of flag checks | Max lifetime per flag (e.g., 30 days); track in backlog; alert on stale flags |
-| Gold-plating quality for non-critical paths | Spending 3 days testing a tooltip component | Risk-based testing: more investment on high-impact paths (checkout, auth, data mutation) |
+| Anti-pattern                                | Why It Fails                                                             | Better Approach                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| "100% test coverage" goal                   | Chasing coverage number leads to useless tests (testing getters/setters) | Cover critical paths thoroughly; measure meaningful coverage (branch coverage on business logic) |
+| Testing in production only                  | Users become QA testers; trust erosion                                   | Test pyramid: unit → integration → e2e. Production monitoring is LAST line of defense, not first |
+| Big-bang deploys                            | All-or-nothing = maximum blast radius                                    | Progressive rollout: canary → staged → full with monitoring gates                                |
+| Blame-driven postmortems                    | People hide mistakes; root cause never found                             | Blameless culture: "What process allowed this to happen?" not "Who did this?"                    |
+| Postmortem action items with no owner       | "Improve monitoring" sits in doc forever                                 | Every action item: specific task + owner + deadline + tracked in sprint                          |
+| Ignoring DORA metrics                       | Can't improve what you don't measure                                     | Dashboard visible to team; review trends monthly                                                 |
+| Feature flags never cleaned up              | Code becomes unreadable spaghetti of flag checks                         | Max lifetime per flag (e.g., 30 days); track in backlog; alert on stale flags                    |
+| Gold-plating quality for non-critical paths | Spending 3 days testing a tooltip component                              | Risk-based testing: more investment on high-impact paths (checkout, auth, data mutation)         |
 
 ---
 
@@ -291,6 +294,7 @@ Quan trọng: không phải mọi code cần test như nhau. Critical paths (che
 **Memory Hook:** Test Pyramid = "Nhiều nhỏ nhanh ở dưới, ít lớn chậm ở trên" — giống kim tự tháp thật: base rộng nhất, đỉnh nhỏ nhất.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains test pyramid with concrete examples, mentions risk-based prioritization
 - ❌ Weak: "Write tests for everything" or "I don't write tests, QA handles that"
 
@@ -301,6 +305,7 @@ Quan trọng: không phải mọi code cần test như nhau. Critical paths (che
 **A:** Use DORA metrics as the foundation: Deployment Frequency, Lead Time for Changes, Change Failure Rate, and Mean Time to Recovery. These four metrics together capture both speed and stability — elite teams score high on both, proving quality and velocity are not a trade-off.
 
 Cách triển khai thực tế:
+
 1. **Measure baseline** — Tính DORA metrics hiện tại (thậm chí bằng tay nếu chưa có tooling). Biết mình đang ở đâu trước khi cải thiện.
 2. **Set quality bar** — Define minimum standards cho test coverage, code review, performance budgets. Enforce bằng CI gates, không chỉ guidelines.
 3. **Visualize** — Dashboard hiển thị metrics cho cả team. Transparency tạo accountability tự nhiên.
@@ -309,6 +314,7 @@ Cách triển khai thực tế:
 Tránh vanity metrics (lines of code, number of PRs). DORA metrics đo OUTCOMES không phải OUTPUTS.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names specific metrics (DORA), explains measurement → improvement loop, has done this in practice
 - ❌ Weak: "We do code review" without discussing measurement or systematic improvement
 
@@ -319,16 +325,19 @@ Tránh vanity metrics (lines of code, number of PRs). DORA metrics đo OUTCOMES 
 **A:** High-risk deployments require a structured approach across three phases: before, during, and after.
 
 **Before deployment:**
+
 1. **Risk assessment** — Identify failure modes using probability x impact matrix. For a payment system change: data corruption (low probability, critical impact → high priority), latency regression (medium probability, medium impact → medium priority).
 2. **Rollback plan** — Define exactly how to revert: feature flag kill switch (seconds), code rollback (minutes), or data migration reversal (hours). Know which one applies BEFORE deploying.
 3. **Success criteria** — Define quantitative metrics: "Payment success rate stays within 0.5% of baseline. P99 latency stays under 500ms. No new error types in first 30 minutes."
 
 **During deployment (progressive rollout):**
+
 1. **Canary (1-5%)** — Deploy to small traffic slice. Monitor for 15-30 minutes. Compare canary metrics vs control group.
 2. **Staged expansion (10% → 25% → 50%)** — Increase traffic at each stage. Wait for metrics stabilization (≥30 min per stage). At each gate: check error rates, latency percentiles, business metrics.
 3. **Automated guardrails** — Auto-rollback triggered if: error rate exceeds baseline + 2 standard deviations, or key business metric drops beyond threshold.
 
 **After deployment:**
+
 1. **Bake period (24-48 hours)** — Monitor for slow-burn issues: memory leaks, data inconsistencies, edge cases hit by specific user segments.
 2. **Postmortem if needed** — Even for near-misses. "We caught the bug in canary" is still worth analyzing — why wasn't it caught in testing?
 3. **Update runbooks** — Document what was learned for future high-risk deployments.
@@ -336,10 +345,12 @@ Tránh vanity metrics (lines of code, number of PRs). DORA metrics đo OUTCOMES 
 "In my experience, the biggest risk isn't the code — it's deploying without a plan for what happens when things go wrong. I always ask: 'If this fails at 2 AM, what's the 3-step runbook to fix it?'"
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Structured approach with specific metrics and rollback criteria, demonstrates experience with progressive rollouts
 - ❌ Weak: "Deploy and monitor" without specifics, or "Run all tests and ship" without rollout strategy
 
 🔗 **Follow-up Chain:**
+
 1. → "How would you decide the canary percentage and bake time for this specific change?"
 2. → "What if the change involves a database migration that can't be easily rolled back?"
 3. → "How do you handle a situation where metrics look fine in canary but a critical bug appears after full rollout — affecting only a specific user cohort?"
@@ -354,6 +365,19 @@ Tránh vanity metrics (lines of code, number of PRs). DORA metrics đo OUTCOMES 
 - **Risk Matrix = "Probability x Impact"** — Giống bảng cửu chương: nhân hai chiều để ra priority.
 - **5 Whys = "Trẻ con hỏi tại sao"** — Cứ hỏi "tại sao?" 5 lần sẽ tìm ra gốc rễ. Root cause luôn là process, không phải con người.
 - **Quality Bar = "Chiều cao tối thiểu để lên tàu lượn"** — Code không đạt bar → không được deploy. Clear, measurable, automated.
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "How do you balance quality vs speed in production systems? — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. Quality vs speed is a trade-off managed by defining explicit quality bars and using progressive rollout to contain blast radius.
+2. At L5, you use DORA metrics to objectively measure this balance and build automated quality gates that make shipping fast and safe simultaneously.
+3. For example: we shipped features 2× faster after adding canary deploys with automated rollback — quality actually improved because risk was contained.
+4. In the interview, reference specific DORA metrics you've tracked and one concrete quality bar you've enforced (e.g., error rate SLA, test coverage threshold).
 
 ---
 

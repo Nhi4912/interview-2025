@@ -259,6 +259,31 @@ Pitfall phổ biến: app container kết nối DB bằng `localhost:5432` → f
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Describe how you'd containerize, deploy, and monitor a Go microservice in Kubernetes — explain in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. Write a multi-stage Dockerfile: `golang` builder stage → `distroless/static` final image — minimal attack surface, no shell.
+2. Push to container registry with immutable SHA tag; deploy via Kubernetes `Deployment` + `Service` with readiness/liveness probes for zero-downtime rolling update.
+3. CI/CD pipeline: test → lint → build → push → Helm upgrade `--atomic` (auto-rollback on failure); separate build and deploy permissions.
+4. Trade-off: immutable tags prevent silent drift but require tag strategy; rolling update gives zero-downtime but depends on correct probe configuration.
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                                                    |
+| ------ | -------- | ------------------------------------------------------------------------ |
+| Day 1  | Today    | Full read — Docker, K8s, CI/CD, Monitoring, IaC, Networking              |
+| Day 3  | +3 days  | Cold Call + all 6 Self-Check sections only                               |
+| Day 7  | +7 days  | Q&A bank (cover answers) — focus K8s probes + Helm lifecycle             |
+| Day 14 | +14 days | Teach someone: design a full CI/CD pipeline from scratch / Feynman       |
+| Day 30 | +30 days | Mock interview: "Set up observability for a new Go service from scratch" |
+
+---
+
 **✅ Self-Check — Docker Fundamentals:**
 
 | #   | Loại           | Câu hỏi                                                                                                |

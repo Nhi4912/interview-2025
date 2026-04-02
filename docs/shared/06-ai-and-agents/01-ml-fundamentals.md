@@ -1774,6 +1774,19 @@ SOTA:    Random Forest    XGBoost/LightGBM (Kaggle winner baseline)
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Explain the bias-variance tradeoff — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. Bias-variance tradeoff là sự đánh đổi giữa model quá đơn giản (high bias, underfitting) và quá phức tạp (high variance, overfitting).
+2. High bias → model không học đủ patterns; high variance → model memorize noise thay vì generalize.
+3. Ví dụ: linear regression trên data phi tuyến (high bias); decision tree không giới hạn depth (high variance).
+4. Giải pháp: regularization giảm variance, bagging (Random Forest) giảm variance, boosting (XGBoost) giảm bias.
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 | #   | Loại           | Câu hỏi                                                                                                                                                    |
@@ -1785,6 +1798,18 @@ SOTA:    Random Forest    XGBoost/LightGBM (Kaggle winner baseline)
 | 5   | 🎓 Teach       | Giải thích supervised vs unsupervised learning cho người không biết ML, dùng 1 analogy từ cuộc sống hàng ngày ở Việt Nam                                   |
 
 💬 **Feynman Prompt:** Giải thích tại sao model với 95% accuracy có thể vô dụng cho fraud detection — và metric nào phù hợp hơn (hint: class imbalance).
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                        |
+| ------ | -------- | -------------------------------------------- |
+| Day 1  | Today    | Full read + highlight Memory Hooks           |
+| Day 3  | +3 days  | Cold Call + Self-Check only                  |
+| Day 7  | +7 days  | Q&A bank (cover answers, recall from memory) |
+| Day 14 | +14 days | Teach someone / Feynman technique            |
+| Day 30 | +30 days | Mock interview practice                      |
 
 ## Connections / Liên Kết
 

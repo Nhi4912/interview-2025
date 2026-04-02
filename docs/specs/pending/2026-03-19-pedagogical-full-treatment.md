@@ -455,17 +455,19 @@ Only 1 Feynman layer found (should be 3 layers per concept for spiral depth).
 
 ### Files with Incorrect Status (corrected above)
 
-| File                                                             | Was | Now | Reason                                 |
-| ---------------------------------------------------------------- | --- | --- | -------------------------------------- |
-| `01-javascript/03-closures.md`                                   | 🔄  | ⚠️  | Has 12 Phase 2 markers                 |
-| `06-browser-performance/03-bundle-optimization.md`               | ❌  | ⚠️  | Has Cold Call, Study Cases, Self-Check |
-| `08-fe-system-design/03-caching.md`                              | ❌  | ⚠️  | Has 12+ Memory Hooks, most sections    |
-| `08-fe-system-design/04-microservices.md`                        | ❌  | ⚠️  | Has 22+ Memory Hooks, Self-Check       |
-| `08-fe-system-design/05-database-design.md`                      | ❌  | ⚠️  | Has 17+ Memory Hooks, most sections    |
-| `02-typescript/01-type-system-basics.md`                         | ✅  | ⚠️  | Missing A3-A5, C1                      |
-| `shared/04-security/01-security-fundamentals.md`                 | ✅  | 🚨  | 70 identical placeholder answers       |
-| `shared/05-software-engineering/01-solid-and-design-patterns.md` | ✅  | ⚠️  | Missing B1, C3                         |
-| `shared/06-ai-and-agents/01-ml-fundamentals.md`                  | ✅  | ⚠️  | Missing B1, C3                         |
+| File                                                             | Was | Now | Reason                                                         |
+| ---------------------------------------------------------------- | --- | --- | -------------------------------------------------------------- |
+| `01-javascript/03-closures.md`                                   | 🔄  | ⚠️  | Has 12 Phase 2 markers                                         |
+| `06-browser-performance/03-bundle-optimization.md`               | ❌  | ⚠️  | Has Cold Call, Study Cases, Self-Check                         |
+| `08-fe-system-design/03-caching.md`                              | ❌  | ⚠️  | Has 12+ Memory Hooks, most sections                            |
+| `08-fe-system-design/04-microservices.md`                        | ❌  | ⚠️  | Has 22+ Memory Hooks, Self-Check                               |
+| `08-fe-system-design/05-database-design.md`                      | ❌  | ⚠️  | Has 17+ Memory Hooks, most sections                            |
+| `02-typescript/01-type-system-basics.md`                         | ✅  | ⚠️  | Missing A3-A5, C1                                              |
+| `shared/04-security/01-security-fundamentals.md`                 | ✅  | ✅  | Fixed 2026-04-02: 70 placeholders → 20 unique bilingual drills |
+| `shared/05-software-engineering/01-solid-and-design-patterns.md` | ✅  | ⚠️  | Missing B1, C3                                                 |
+| `shared/06-ai-and-agents/01-ml-fundamentals.md`                  | ✅  | ⚠️  | C3 added 2026-04-02; still missing B1                          |
+| `shared/06-ai-and-agents/09-claude-and-anthropic-deep-dive.md`   | —   | ✅  | NEW 2026-04-02: 1706 lines, full compliance                    |
+| `shared/06-ai-and-agents/10-ai-era-engineer-skills.md`           | —   | ✅  | NEW 2026-04-02: 1622 lines, full compliance                    |
 
 ---
 
@@ -491,19 +493,33 @@ Only 1 Feynman layer found (should be 3 layers per concept for spiral depth).
 
 ### shared
 
-- Total shared theory files tracked: **37** (excl. 7 guide/index files)
-- Phase 2 done (✅): **34** (reduced from 37 — 3 files downgraded)
+- Total shared theory files tracked: **39** (excl. 7 guide/index files; +2 new AI files 2026-04-02)
+- Phase 2 done (✅): **37** (was 34; +1 security-fundamentals fixed, +2 new AI files)
 - Phase 2 partial (⚠️): **2** (solid-and-design-patterns, ml-fundamentals)
-- Phase 2 FAIL (🚨): **1** (security-fundamentals — placeholder violation)
-- **⚠️ Systemic B1 gap**: 31/37 files lack Interview Signal markers
-- Remaining for Phase 2: **0** (but 3 files need fixes)
+- Phase 2 FAIL (🚨): **0** (was 1; security-fundamentals fixed 2026-04-02)
+- **⚠️ Systemic B1 gap**: ~31 files lack Interview Signal markers
+- **✅ C3/C4/C6 gap closed**: All 10 AI files + 7 L5 files now have Cold Call, Self-Check, Spaced Rep
+- Remaining for Phase 2: **0**
 
 ### Overall
 
-- **Total files needing Phase 2**: ~142
-- **Phase 2 full ✅**: 101 (57 fe-track + 10 be-track + 34 shared)
+- **Total files needing Phase 2**: ~144 (was 142; +2 new AI files)
+- **Phase 2 full ✅**: 104 (57 fe-track + 10 be-track + 37 shared) — was 101
 - **Phase 2 partial ⚠️**: 26 (5 fe-track + 19 be-track + 2 shared)
-- **Phase 2 FAIL 🚨**: 1 (security-fundamentals)
+- **Phase 2 FAIL 🚨**: 0 (was 1)
 - **Not started ❌**: ~13 (fe-track only)
 - **Systemic B1 gap**: ~57 files across be-track + shared need Interview Signal markers
 - **Systemic C3/C4/C6 gap**: ~18 be-track files need Cold Call, Self-Check, Spaced Repetition
+
+### Session 2026-04-02 Changes
+
+| Change                              | Files Affected | Details                                                 |
+| ----------------------------------- | -------------- | ------------------------------------------------------- |
+| P0: Security placeholders replaced  | 1 file         | 70 identical drills → 20 unique bilingual (8🟢+7🟡+5🔴) |
+| P0: JS challenges rewritten         | 1 file         | 843→920 lines, 22/22 compliance checks                  |
+| P1: Behavioral bilingual fixes      | 5 files        | 105 headings translated (EN→EN/VI)                      |
+| P2: AI files Cold Call + Spaced Rep | 8 files        | Customized per topic                                    |
+| P2: L5 files Cold Call added        | 7 files        | L5-specific interview questions                         |
+| P2: BE-track devops Cold Call + SR  | 1 file         | Docker/K8s scenario                                     |
+| NEW: Claude & Anthropic Deep Dive   | 1 file         | 1706 lines, 6 concepts, 15 Q&A, 3 cases                 |
+| NEW: AI-Era Engineer Skills         | 1 file         | 1622 lines, 7 concepts, 18 Q&A, 3 cases                 |

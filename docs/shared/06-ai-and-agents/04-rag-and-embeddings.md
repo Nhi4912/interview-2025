@@ -1712,6 +1712,19 @@ Tools: RAGAS, TruLens, DeepEval
 
 ---
 
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "Explain how a RAG pipeline works — explain it in 30 seconds."
+
+**Ideal 30-second answer / Câu trả lời 30 giây:**
+
+1. RAG (Retrieval-Augmented Generation) kết hợp vector search với LLM — thay vì rely vào kiến thức trong model weights, nó retrieve thông tin từ external knowledge base.
+2. Cơ chế: embed query → cosine similarity search trong vector DB → lấy top-k chunks → inject vào prompt → LLM sinh answer có grounding.
+3. Ví dụ: chatbot sản phẩm Shopee — query "giá iPhone 15?" → retrieve product chunk từ DB → LLM trả lời dựa trên chunk thực tế, không hallucinate.
+4. Trade-off: giảm hallucination và dễ update knowledge mà không retrain, nhưng thêm retrieval latency và phụ thuộc vào retrieval quality.
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
 | #   | Loại           | Câu hỏi                                                                                                                          |
@@ -1723,6 +1736,18 @@ Tools: RAGAS, TruLens, DeepEval
 | 5   | 🎓 Teach       | Giải thích với người không biết kỹ thuật tại sao RAG giảm hallucination tốt hơn fine-tuning khi knowledge thay đổi thường xuyên. |
 
 - 💬 **Feynman Prompt:** Giải thích tại sao RAG giải quyết hallucination better than "just fine-tuning" — dùng ví dụ product price to show khi nào mỗi approach fails.
+
+---
+
+## 🔁 Spaced Repetition / Lịch Ôn Tập
+
+| Review | Date     | Focus                                        |
+| ------ | -------- | -------------------------------------------- |
+| Day 1  | Today    | Full read + highlight Memory Hooks           |
+| Day 3  | +3 days  | Cold Call + Self-Check only                  |
+| Day 7  | +7 days  | Q&A bank (cover answers, recall from memory) |
+| Day 14 | +14 days | Teach someone / Feynman technique            |
+| Day 30 | +30 days | Mock interview practice                      |
 
 ## Connections / Liên Kết
 

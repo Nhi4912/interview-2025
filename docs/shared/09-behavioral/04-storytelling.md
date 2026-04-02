@@ -1,4 +1,4 @@
-# Storytelling - How to Tell Compelling Stories
+# Storytelling / Kể Chuyện Hiệu Quả Trong Phỏng Vấn - How to Tell Compelling Stories
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
@@ -7,7 +7,7 @@
 
 ---
 
-## 🎯 Overview
+## 🎯 Overview / Tổng Quan
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -41,9 +41,9 @@
 
 ---
 
-## 📝 Story Structure
+## 📝 Story Structure / Cấu Trúc Câu Chuyện
 
-### The Story Arc
+### The Story Arc / Cung Câu Chuyện
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -83,7 +83,7 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Hook Techniques
+### Hook Techniques / Kỹ Thuật Mở Đầu
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -119,9 +119,9 @@
 
 ---
 
-## 🗣️ Delivery Techniques
+## 🗣️ Delivery Techniques / Kỹ Thuật Trình Bày
 
-### Pacing and Timing
+### Pacing and Timing / Nhịp Độ và Thời Gian
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -152,7 +152,7 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Voice and Body Language
+### Voice and Body Language / Giọng Nói và Ngôn Ngữ Cơ Thể
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -185,9 +185,9 @@
 
 ---
 
-## 🎭 Making Stories Memorable
+## 🎭 Making Stories Memorable / Tạo Câu Chuyện Đáng Nhớ
 
-### Specific Details
+### Specific Details / Chi Tiết Cụ Thể
 
 ```
 ❌ VAGUE:
@@ -213,7 +213,7 @@ authentication module, doing daily code reviews and
 creating documentation for our patterns."
 ```
 
-### Emotional Elements
+### Emotional Elements / Yếu Tố Cảm Xúc
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -249,9 +249,9 @@ creating documentation for our patterns."
 
 ---
 
-## 📚 Story Bank Creation
+## 📚 Story Bank Creation / Tạo Ngân Hàng Câu Chuyện
 
-### Story Template
+### Story Template / Mẫu Câu Chuyện
 
 ```markdown
 ## Story: [Short Name]
@@ -324,7 +324,7 @@ creating documentation for our patterns."
 - Things to improve:
 ```
 
-### Minimum Story Bank
+### Minimum Story Bank / Ngân Hàng Câu Chuyện Tối Thiểu
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -363,9 +363,9 @@ creating documentation for our patterns."
 
 ---
 
-## 🎯 Adapting Stories
+## 🎯 Adapting Stories / Điều Chỉnh Câu Chuyện
 
-### Same Story, Different Angles
+### Same Story, Different Angles / Cùng Một Câu Chuyện, Nhiều Góc Nhìn
 
 ```
 ORIGINAL STORY: Payment Feature Launch
@@ -397,7 +397,7 @@ a middle ground that addressed scalability while meeting
 our deadline."
 ```
 
-### Quick Adaptation Framework
+### Quick Adaptation Framework / Khung Điều Chỉnh Nhanh
 
 ```
 When you hear a question:
@@ -422,7 +422,7 @@ telling it from 3 different angles.
 
 ---
 
-## ⚠️ Common Mistakes
+## ⚠️ Common Mistakes / Sai Lầm Thường Gặp
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -460,9 +460,9 @@ telling it from 3 different angles.
 
 ---
 
-## 🏋️ Practice Methods
+## 🏋️ Practice Methods / Phương Pháp Thực Hành
 
-### Solo Practice
+### Solo Practice / Tự Luyện Tập
 
 ```
 1. RECORD YOURSELF
@@ -481,7 +481,7 @@ telling it from 3 different angles.
    - Refine until natural
 ```
 
-### Partner Practice
+### Partner Practice / Luyện Tập Với Đối Tác
 
 ```
 1. MOCK INTERVIEWS
@@ -502,11 +502,11 @@ telling it from 3 different angles.
 
 ---
 
-## 🌏 Cultural Considerations for International Interviews
+## 🌏 Cultural Considerations for International Interviews / Cân Nhắc Văn Hóa
 
 > Phần này đặc biệt quan trọng cho ứng viên Việt Nam phỏng vấn tại các công ty quốc tế như Grab, Sea Group, Google, Amazon, Meta. Sự khác biệt về văn hoá giao tiếp có thể là điểm trừ lớn nếu bạn không chuẩn bị.
 
-### Vietnamese vs. Western Communication Styles
+### Vietnamese vs. Western Communication Styles / Phong Cách Giao Tiếp Việt Nam vs Phương Tây
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -529,7 +529,7 @@ cultures. Your job in an international interview is to code-switch
 into the expected style while staying authentic.
 ```
 
-### How to Adapt for Different Companies
+### How to Adapt for Different Companies / Cách Điều Chỉnh Theo Từng Công Ty
 
 ```
 GRAB / SEA GROUP (Southeast Asian context):
@@ -571,7 +571,7 @@ META:
 • Show comfort with ambiguity and changing direction based on data
 ```
 
-### When to Use "I" vs. "We"
+### When to Use "I" vs. "We" / Khi Nào Dùng "I" vs "We"
 
 ```
 THE RULE:
@@ -607,7 +607,7 @@ PRACTICE: Record yourself telling a story. Count how many times
 you say "we" vs "I". If ratio > 2:1, rewrite the story.
 ```
 
-### Common Mistakes Vietnamese Candidates Make
+### Common Mistakes Vietnamese Candidates Make / Sai Lầm Thường Gặp của Ứng Viên Việt Nam
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -666,7 +666,7 @@ you say "we" vs "I". If ratio > 2:1, rewrite the story.
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Quick Calibration Checklist Before International Interviews
+### Quick Calibration Checklist Before International Interviews / Danh Sách Kiểm Tra Nhanh
 
 ```
 □ Have I practiced saying "I" instead of "we" for my key stories?
@@ -687,7 +687,7 @@ you say "we" vs "I". If ratio > 2:1, rewrite the story.
 
 ---
 
-## 📚 Active Recall
+## 📚 Active Recall / Nhớ Lại Chủ Động
 
 1. [ ] What are the 5 parts of a story arc?
 2. [ ] Name 3 types of opening hooks
