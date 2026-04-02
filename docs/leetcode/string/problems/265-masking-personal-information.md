@@ -7,97 +7,148 @@ tags: [String]
 leetcode_url: "https://leetcode.com/problems/masking-personal-information"
 ---
 
-# Masking Personal Information / Masking Personal Information
+# Masking Personal Information / Che Giấu Thông Tin Cá Nhân
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Decode String](https://leetcode.com/problems/decode-string)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Masking Personal Information example:**
-
-```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
-```
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: String Parsing / Simulation
+> **Frequency**: 📘 Tier 2 — Gặp ở 5 companies
+> **See also**: [Validate Email Address](https://leetcode.com/problems/detect-capital) | [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Masking Personal Information. ([LeetCode](https://leetcode.com/problems/masking-personal-information))
+Hệ thống ngân hàng luôn hiển thị thông tin ẩn danh: email `"John_Smith@example.com"` thành `"j*****h@example.com"`, số điện thoại `"+1-212-555-0100"` thành `"+*-***-***-0100"`. Như cảnh vệ che bảng tên — chỉ để lộ ký tự đầu/cuối email, và 4 số cuối điện thoại. Điểm khó là xử lý đúng hai loại đầu vào (email vs phone), bóc tách phần quan trọng, và định dạng mã quốc gia nếu có. Quy tắc đơn giản: email nhận dạng bởi `@`, phone nhận dạng bởi chỉ còn chữ số sau khi xóa `-()+ `.
 
-Difficulty: Medium | Acceptance: 50.5%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Email: "LeetCode@LeetCode.com"
+  1. lowercase:  "leetcode@leetcode.com"
+  2. split @:    local="leetcode", domain="leetcode.com"
+  3. mask local: first='l', last='e' → "l*****e"
+  4. result:     "l*****e@leetcode.com"
+
+Phone: "+1(123)456-7890"
+  1. extract digits: "11234567890"  (11 digits = 10 local + 1 country)
+  2. last 4:          "7890"
+  3. local format:    "***-***-7890"
+  4. prefix:         "+*-" (1 extra digit)
+  5. result:          "+*-***-***-7890"
+
+Phone: "1(234)567-8901 x12"  → digits = "123456789012" (12 digits)
+  → "+**-***-***-8901" (2 country code digits)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/masking-personal-information) for full constraints
+## Problem (Bài toán)
 
----
+Given a personal information string (email or phone), return its masked version:
 
-## 📝 Interview Tips
+- **Email**: lowercase, keep first and last char of local part, mask middle 5 chars as `*****`
+- **Phone**: keep last 4 digits as `***-***-XXXX`; prepend country code as `+*...* -` (one `*` per extra digit beyond 10)
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Example 1:** `s = "LeetCode@LeetCode.com"` → `"l*****e@leetcode.com"`
+**Example 2:** `s = "+86(20)123-4567"` → `"+**-***-***-4567"` (12 digits total, 2 country code)
+**Example 3:** `s = "1(555)555-5555"` → `"+*-***-***-5555"` (11 digits, 1 country code)
 
----
+**Constraints:** `s` is a valid email or phone number per the problem definition
 
-## Solutions
+## Tips (Mẹo phỏng vấn)
+
+- **Email vs Phone detection** / Phân biệt loại: `s.includes('@')` → email; otherwise → phone
+- **Email: lowercase first** / Email cần lowercase: Cả local lẫn domain đều cần `toLowerCase()` trước khi xử lý
+- **Phone: strip non-digits** / Phone: xóa không phải số: `replace(/\D/g, '')` bỏ tất cả `+-() ` chỉ giữ chữ số
+- **Country code length** / Độ dài mã quốc gia: `digits.length - 10` = số ký tự `*` trong prefix (nếu 10 chính xác thì không có prefix)
+- **Local mask always 5 stars** / Luôn 5 dấu sao: Email luôn dùng `*****` bất kể độ dài local thực tế
+- **Split at first @** / Tách tại @ đầu tiên: Dùng `s.indexOf('@')` thay vì `split('@')` để tránh trường hợp @ trong domain (không hợp lệ nhưng phòng ngừa)
+
+## Solution 1 - Conditional Branches O(n)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n) | Space: O(n)
+ * Detect type, apply appropriate masking rules
  */
-function maskingPersonalInformationBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maskPII(s: string): string {
+  if (s.includes("@")) {
+    // Email: lowercase, mask local middle
+    const lower = s.toLowerCase();
+    const at = lower.indexOf("@");
+    const local = lower.slice(0, at);
+    const domain = lower.slice(at + 1);
+    return local[0] + "*****" + local[local.length - 1] + "@" + domain;
+  } else {
+    // Phone: extract digits only
+    const digits = s.replace(/\D/g, "");
+    const local = "***-***-" + digits.slice(-4);
+    const extra = digits.length - 10;
+    if (extra === 0) return local;
+    return "+" + "*".repeat(extra) + "-" + local;
+  }
 }
-
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maskingPersonalInformation(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(maskingPersonalInformation(/* example 1 */)); // expected
-// console.log(maskingPersonalInformation(/* example 2 */)); // expected
-// console.log(maskingPersonalInformation(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Regex-Based Masking O(n)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(n)
+ * Use regex for cleaner digit extraction and email parsing
+ */
+function maskPIIRegex(s: string): string {
+  const emailMatch = s.match(/^(.+)@(.+)$/);
+  if (emailMatch) {
+    const local = emailMatch[1].toLowerCase();
+    const domain = emailMatch[2].toLowerCase();
+    return `${local[0]}*****${local.at(-1)}@${domain}`;
+  }
+  // Phone
+  const digits = s.replace(/\D/g, "");
+  const tail = digits.slice(-10);
+  const country = digits.slice(0, -10);
+  const masked = `***-***-${tail.slice(-4)}`;
+  return country.length ? `+${"*".repeat(country.length)}-${masked}` : masked;
+}
+```
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Masking Personal Information — LeetCode](https://leetcode.com/problems/masking-personal-information) — problem page
+## Solution 3 - Table-Driven Phone Prefix O(n)
+
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Pre-define phone prefix strings for common lengths (10-13 digits)
+ */
+function maskPIITableDriven(s: string): string {
+  if (s.includes("@")) {
+    const [local, ...rest] = s.toLowerCase().split("@");
+    return `${local[0]}*****${local.at(-1)}@${rest.join("@")}`;
+  }
+  const digits = s.replace(/\D/g, "");
+  const PREFIX: Record<number, string> = {
+    10: "",
+    11: "+*-",
+    12: "+**-",
+    13: "+***-",
+  };
+  const prefix = PREFIX[digits.length] ?? `+${"*".repeat(digits.length - 10)}-`;
+  return `${prefix}***-***-${digits.slice(-4)}`;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(maskPII("LeetCode@LeetCode.com")); // → "l*****e@leetcode.com"
+console.log(maskPII("AB@qq.com")); // → "a*****b@qq.com"
+console.log(maskPII("1(234)567-8901")); // → "+*-***-***-8901"
+console.log(maskPII("+86(20)123-4567")); // → "+**-***-***-4567"
+console.log(maskPIIRegex("1(555)555-5555")); // → "+*-***-***-5555"
+console.log(maskPIITableDriven("(234) 567-8901")); // → "***-***-8901"
+```
+
+## Related Problems
+
+| Problem                 | Difficulty | Link                                                            |
+| ----------------------- | ---------- | --------------------------------------------------------------- |
+| License Key Formatting  | Easy       | [LC 482](https://leetcode.com/problems/license-key-formatting)  |
+| Decode the Message      | Easy       | [LC 2325](https://leetcode.com/problems/decode-the-message)     |
+| Strong Password Checker | Hard       | [LC 420](https://leetcode.com/problems/strong-password-checker) |

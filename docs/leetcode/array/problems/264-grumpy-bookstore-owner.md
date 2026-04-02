@@ -7,100 +7,123 @@ tags: [Array, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/grumpy-bookstore-owner"
 ---
 
-# Grumpy Bookstore Owner / Grumpy Bookstore Owner
+# Grumpy Bookstore Owner / Chủ Hiệu Sách Cáu Kỉnh
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) | [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum)
+> **Frequency**: 📙 Tier 2 — Gặp ở 3+ companies
+> **See also**: [Maximum Sum of Almost Unique Subarray](https://leetcode.com/problems/maximum-sum-of-almost-unique-subarray) | [Maximum Average Subarray I](https://leetcode.com/problems/maximum-average-subarray-i)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## Vietnamese Analogy (Ví dụ thực tế)
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+Chủ hiệu sách có tính cáu kỉnh — khi ông ta khó chịu, khách hàng bỏ đi không mua. Ông ta có một bí kíp đặc biệt dùng được đúng `k` phút liên tiếp để kiềm chế bản thân. Bài toán: chọn khoảng thời gian `k` phút nào để ông dùng bí kíp sao cho tổng số khách hàng hài lòng là nhiều nhất. Khách đã hài lòng (lúc ông không cáu) vẫn đến bất kể bí kíp. Chỉ những phút ông đang cáu mới cần bí kíp!
 
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Grumpy Bookstore Owner example:**
+## Visual (Minh họa trực quan)
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+customers = [1,0,1,2,1,1,7,5], grumpy = [0,1,0,1,0,1,0,1], k = 3
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+Base (grumpy=0): idx 0,2,4,6 → 1+1+1+7 = 10
+
+Sliding window of size k=3 over grumpy=1 minutes:
+Window [0..2]: grumpy[1]=1 → gain=0      total=10+0=10
+Window [1..3]: grumpy[1,3]=1,1 → gain=0+2=2  total=12
+Window [2..4]: grumpy[3]=1 → gain=2      total=12
+Window [3..5]: grumpy[3,5]=1,1 → gain=2+1=3  total=13
+Window [4..6]: grumpy[5]=1 → gain=1      total=11
+Window [5..7]: grumpy[5,7]=1,1 → gain=1+5=6  total=16 ← MAX ✓
 ```
 
----
+## Problem (Bài toán)
 
-## Problem Description
+A bookstore owner has customers arriving each minute. `grumpy[i]=1` means the owner is grumpy that minute (customers lost). The owner can use a secret technique for `k` consecutive minutes to suppress grumpiness. Return the **maximum total satisfied customers**.
 
-Grumpy Bookstore Owner. ([LeetCode](https://leetcode.com/problems/grumpy-bookstore-owner))
+**Example 1:** `customers=[1,0,1,2,1,1,7,5]`, `grumpy=[0,1,0,1,0,1,0,1]`, `k=3` → `16`
+**Example 2:** `customers=[1]`, `grumpy=[0]`, `k=1` → `1`
 
-Difficulty: Medium | Acceptance: 64.1%
+**Constraints:** `1 ≤ customers.length ≤ 2×10^4`, `0 ≤ customers[i] ≤ 1000`, `grumpy[i] ∈ {0,1}`, `1 ≤ k ≤ customers.length`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+## Tips (Mẹo phỏng vấn)
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/grumpy-bookstore-owner) for full constraints
+- **Decompose the problem** / Phân tách: Base (lúc không cáu) + Extra (cáu nhưng dùng bí kíp trong window k)
+- **Fixed-size sliding window** / Cửa sổ trượt kích thước cố định: Tìm max extra trong window k
+- **Only count grumpy=1** / Chỉ đếm khi cáu: `extra += customers[i] * grumpy[i]` trong window
+- **Slide formula** / Công thức trượt: `extra += customers[r] * grumpy[r] - customers[r-k] * grumpy[r-k]`
+- **Why add base separately** / Tại sao tách base: Tránh đếm trùng khách đã hài lòng vào extra
+- **Brute O(n²)** / Brute force: Thử mọi window bắt đầu từ 0..n-k → vẫn chấp nhận được với n≤2×10^4
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
-
----
-
-## Solutions
+## Solution 1 - Brute Force (O(n·k))
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n·k) | Space: O(1)
+ * Try every k-window position and compute total satisfied customers
  */
-function grumpyBookstoreOwnerBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function maxSatisfiedBrute(customers: number[], grumpy: number[], k: number): number {
+  const n = customers.length;
+  const base = customers.reduce((s, c, i) => s + (grumpy[i] === 0 ? c : 0), 0);
+  let maxExtra = 0;
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function grumpyBookstoreOwner(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+  for (let start = 0; start <= n - k; start++) {
+    let extra = 0;
+    for (let j = start; j < start + k; j++) {
+      extra += customers[j] * grumpy[j];
+    }
+    maxExtra = Math.max(maxExtra, extra);
+  }
+  return base + maxExtra;
 }
-
-// === Test Cases ===
-// console.log(grumpyBookstoreOwner(/* example 1 */)); // expected
-// console.log(grumpyBookstoreOwner(/* example 2 */)); // expected
-// console.log(grumpyBookstoreOwner(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Sliding Window (Optimal O(n))
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Fixed-size sliding window over grumpy minutes to maximize extra gain
+ */
+function maxSatisfied(customers: number[], grumpy: number[], k: number): number {
+  const n = customers.length;
 
-- [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) — same pattern: Sliding Window
-- [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum) — same pattern: Sliding Window
-- [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii) — same pattern: Sliding Window
-- [Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit](https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit) — same pattern: Monotonic Queue
-- [Grumpy Bookstore Owner — LeetCode](https://leetcode.com/problems/grumpy-bookstore-owner) — problem page
+  // Base: customers satisfied when owner is NOT grumpy
+  let base = 0;
+  for (let i = 0; i < n; i++) {
+    if (grumpy[i] === 0) base += customers[i];
+  }
+
+  // Initial window [0..k-1]: extra customers we can save
+  let windowExtra = 0;
+  for (let i = 0; i < k; i++) {
+    windowExtra += customers[i] * grumpy[i];
+  }
+
+  let maxExtra = windowExtra;
+
+  // Slide window right
+  for (let r = k; r < n; r++) {
+    windowExtra += customers[r] * grumpy[r];
+    windowExtra -= customers[r - k] * grumpy[r - k];
+    maxExtra = Math.max(maxExtra, windowExtra);
+  }
+
+  return base + maxExtra;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(maxSatisfied([1, 0, 1, 2, 1, 1, 7, 5], [0, 1, 0, 1, 0, 1, 0, 1], 3)); // → 16
+console.log(maxSatisfied([1], [0], 1)); // → 1
+console.log(maxSatisfied([4, 10, 10], [1, 1, 0], 2)); // → 24
+console.log(maxSatisfiedBrute([1, 0, 1, 2, 1, 1, 7, 5], [0, 1, 0, 1, 0, 1, 0, 1], 3)); // → 16
+```
+
+## Related Problems
+
+| Problem                               | Difficulty | Link                                                                           |
+| ------------------------------------- | ---------- | ------------------------------------------------------------------------------ |
+| Maximum Average Subarray I            | Easy       | [LC 643](https://leetcode.com/problems/maximum-average-subarray-i)             |
+| Sliding Window Maximum                | Hard       | [LC 239](https://leetcode.com/problems/sliding-window-maximum)                 |
+| Maximum Sum of Almost Unique Subarray | Medium     | [LC 2841](https://leetcode.com/problems/maximum-sum-of-almost-unique-subarray) |

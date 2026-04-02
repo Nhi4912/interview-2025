@@ -2,105 +2,178 @@
 layout: page
 title: "Complete Binary Tree Inserter"
 difficulty: Medium
-category: Tree-Graph
+category: Tree & Graph
 tags: [Tree, Breadth-First Search, Design, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/complete-binary-tree-inserter"
 ---
 
-# Complete Binary Tree Inserter / Complete Binary Tree Inserter
+# Complete Binary Tree Inserter / Chèn Vào Cây Nhị Phân Đầy Đủ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) | [Same Tree](https://leetcode.com/problems/same-tree)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Complete Binary Tree Inserter example:**
-
-```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
-
-BFS: process level by level using queue
-```
+> **Track**: Tree & Graph | **Difficulty**: 🟡 Medium | **Pattern**: BFS Level-Order / Design
+> **Frequency**: 📗 Tier 2 — Gặp ở Google, Amazon
+> **See also**: [Count Complete Tree Nodes](https://leetcode.com/problems/count-complete-tree-nodes) | [Insert into a Binary Search Tree](https://leetcode.com/problems/insert-into-a-binary-search-tree)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Complete Binary Tree Inserter. ([LeetCode](https://leetcode.com/problems/complete-binary-tree-inserter))
+Hãy tưởng tượng một khán đài bóng đá hình cây: khán giả phải ngồi lấp đầy từng hàng trái qua phải trước khi chuyển sang hàng tiếp theo. Mỗi chỗ ngồi "chưa có đủ 2 con" chính là slot sẵn sàng cho khán giả tiếp theo. Khi quản lý thêm khán giả mới, anh ta luôn biết ngay ai sẽ là "cha" của ghế tiếp theo — chính là người đứng đầu hàng đợi những "chỗ chưa đầy". Đây là cấu trúc CBTInserter: dùng deque các node chưa đủ 2 con.
 
-Difficulty: Medium | Acceptance: 64.5%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Initial tree:    1
+                / \
+               2   3
+
+candidates (nodes with < 2 children): [3] (node 2 full, node 3 has no children)
+Wait: node 2 has no children shown → candidates = [2, 3]
+
+insert(4):
+  parent = candidates.front() = 2 (leftmost incomplete)
+  2.left = 4 → now 2 has 1 child
+  push 4 to candidates: [2, 3, 4]
+  return parent.val = 2
+
+insert(5):
+  parent = candidates.front() = 2
+  2.right = 5 → now 2 full → pop 2
+  push 5 to candidates: [3, 4, 5]
+  return 2
+
+Tree now:      1
+              / \
+             2   3
+            / \
+           4   5
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/complete-binary-tree-inserter) for full constraints
+## Problem (Bài toán)
 
----
+Design a class `CBTInserter` for a **complete binary tree**:
 
-## 📝 Interview Tips
+- `CBTInserter(root)`: Initialize with existing complete binary tree `root`
+- `insert(val)`: Insert new node with value `val`, maintain complete binary tree property, return the parent's value
+- `get_root()`: Return the root of the tree
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Example 1:**
 
----
+```
+CBTInserter([1,2,3]) → init
+insert(4) → 2  (4 becomes left child of 2)
+insert(5) → 2  (5 becomes right child of 2)
+get_root() → [1,2,3,4,5]
+```
 
-## Solutions
+**Constraints:** `1 ≤ Node.val ≤ 1000`, `1 ≤ n ≤ 1000` initially, `1 ≤ val ≤ 1000`, at most `10⁴` calls to `insert` and `get_root`
+
+## Tips (Mẹo phỏng vấn)
+
+- **Maintain candidate deque** / Duy trì hàng đợi ứng viên: Queue chứa các node có ít hơn 2 con — node đầu queue chính là parent tiếp theo
+- **BFS to init** / BFS để khởi tạo: Duyệt BFS cây ban đầu, thêm vào deque mọi node chưa đủ 2 con
+- **Dequeue when full** / Xóa khi đủ con: Sau khi thêm con thứ 2 vào một node → pop nó khỏi deque (nó đã "đầy")
+- **New node is also candidate** / Node mới cũng là ứng viên: Mỗi node mới thêm vào → push vào cuối deque (nó có thể có con sau)
+- **O(1) insert** / Chèn O(1): Sau khi khởi tạo O(n), mỗi lần insert chỉ O(1) — truy cập đầu deque
+- **Array-based alternative** / Thay thế dùng mảng: Lưu nodes[] theo BFS order, node i có parent tại `floor((i-1)/2)` — O(1) lookup
+
+## Solution 1 - Deque of Incomplete Nodes
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Init: O(n) | Insert: O(1) | get_root: O(1) | Space: O(n)
+ * Maintain queue of nodes with < 2 children; front is always next parent
  */
-function completeBinaryTreeInserterBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+class CBTInserter {
+  private root: TreeNode;
+  private candidates: TreeNode[];
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function completeBinaryTreeInserter(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
+  constructor(root: TreeNode) {
+    this.root = root;
+    this.candidates = [];
+    const queue: TreeNode[] = [root];
+    while (queue.length) {
+      const node = queue.shift()!;
+      if (!node.left || !node.right) this.candidates.push(node);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+  }
 
-// === Test Cases ===
-// console.log(completeBinaryTreeInserter(/* example 1 */)); // expected
-// console.log(completeBinaryTreeInserter(/* example 2 */)); // expected
-// console.log(completeBinaryTreeInserter(/* edge case */)); // expected
+  insert(val: number): number {
+    const newNode = new TreeNode(val);
+    this.candidates.push(newNode);
+    const parent = this.candidates[0];
+    if (!parent.left) parent.left = newNode;
+    else {
+      parent.right = newNode;
+      this.candidates.shift();
+    }
+    return parent.val;
+  }
+
+  get_root(): TreeNode {
+    return this.root;
+  }
+}
 ```
 
----
+## Solution 2 - Array-Based (Index Arithmetic)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Init: O(n) | Insert: O(1) | Space: O(n)
+ * Store all nodes in BFS-order array; parent of node[i] = node[floor((i-1)/2)]
+ */
+class CBTInserterArray {
+  private root: TreeNode;
+  private nodes: TreeNode[];
 
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Complete Binary Tree Inserter — LeetCode](https://leetcode.com/problems/complete-binary-tree-inserter) — problem page
+  constructor(root: TreeNode) {
+    this.root = root;
+    this.nodes = [];
+    const queue: TreeNode[] = [root];
+    while (queue.length) {
+      const node = queue.shift()!;
+      this.nodes.push(node);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+  }
+
+  insert(val: number): number {
+    const newNode = new TreeNode(val);
+    this.nodes.push(newNode);
+    const parentIdx = Math.floor((this.nodes.length - 2) / 2);
+    const parent = this.nodes[parentIdx];
+    if (!parent.left) parent.left = newNode;
+    else parent.right = newNode;
+    return parent.val;
+  }
+
+  get_root(): TreeNode {
+    return this.root;
+  }
+}
+```
+
+## Test Cases
+
+```typescript
+const root = new TreeNode(1, new TreeNode(2), new TreeNode(3));
+const ins = new CBTInserter(root);
+console.log(ins.insert(4)); // → 2
+console.log(ins.insert(5)); // → 2
+console.log(ins.get_root().val); // → 1
+
+const ins2 = new CBTInserterArray(new TreeNode(1));
+console.log(ins2.insert(2)); // → 1
+console.log(ins2.insert(3)); // → 1
+```
+
+## Related Problems
+
+| Problem                               | Difficulty | Link                                                                          |
+| ------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
+| Count Complete Tree Nodes             | Easy       | [LC 222](https://leetcode.com/problems/count-complete-tree-nodes)             |
+| Serialize and Deserialize Binary Tree | Hard       | [LC 297](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) |
+| Maximum Width of Binary Tree          | Medium     | [LC 662](https://leetcode.com/problems/maximum-width-of-binary-tree)          |

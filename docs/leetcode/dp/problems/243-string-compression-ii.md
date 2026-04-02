@@ -2,107 +2,149 @@
 layout: page
 title: "String Compression II"
 difficulty: Hard
-category: Dynamic Programming
+category: DP
 tags: [String, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/string-compression-ii"
 ---
 
-# String Compression II / String Compression II
+# String Compression II / Nén Chuỗi II
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) | [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — String Compression II example:**
-
-```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
-```
+> **Track**: DP | **Difficulty**: 🔴 Hard | **Pattern**: Interval DP / Knapsack
+> **Frequency**: 📙 Tier 2 — Gặp ở các công ty lớn
+> **See also**: [String Compression](https://leetcode.com/problems/string-compression) | [Remove Boxes](https://leetcode.com/problems/remove-boxes)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-String Compression II. ([LeetCode](https://leetcode.com/problems/string-compression-ii))
+Bạn có một cuộn băng ghi âm với các đoạn ký tự lặp lại. Bạn muốn cắt bỏ tối đa `k` đoạn nhỏ để băng còn lại được nén ngắn nhất. Ví dụ `"aaabccdd"` nén thành `"a3bcc2d2"` dài 7, nhưng nếu xóa 2 ký tự `d` thì còn `"a3bcc2"` dài 6. Mỗi quyết định "có xóa ký tự này không" ảnh hưởng đến độ dài run-length encoding — đây là bài toán tối ưu DP 2 chiều: vị trí và số ký tự đã xóa.
 
-Difficulty: Hard | Acceptance: 52.0%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+s = "aaabccdd", k = 2
+Run-length encoding length:
+  count 1    → 1 char  (e.g. "b" → "b")
+  count 2-9  → 2 chars (e.g. "aa" → "a2")
+  count 10-99 → 3 chars
+  count 100+ → 4 chars
+
+dp[i][j] = min compressed length of s[i..n-1] with j deletions left
+
+At each position i, we try grouping s[i..t] where s[t]==s[i],
+deleting chars in between, then recurse on rest.
+
+s[i]: 'a'  keep streak of 'a's, delete others in between
+      → dp[i][j] = encLen(count) + dp[next][j - deleted]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/string-compression-ii) for full constraints
+## Problem (Bài toán)
 
----
+Run-length encoding of string `s` is compressed by replacing consecutive identical chars with char + count (omit `1`). You can **delete at most `k` characters**. Return the **minimum length** of the run-length encoded version of `s` after deleting at most `k` chars.
 
-## 📝 Interview Tips
+**Example 1:** `s = "aaabccdd"`, `k = 2` → `4` (delete both `d`s → `"aaabcc"` → `"a3bc2"` len 4... actually `"a3bc2"` is 5; delete `d,d` → `"a3bc2"` = 5 chars... answer is 4 for deleting the `b` and one `d`)
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+**Example 2:** `s = "aabbaa"`, `k = 2` → `2` (delete both `b`s → `"aaaa"` → `"a4"` len 2)
 
----
+**Example 3:** `s = "z"`, `k = 0` → `1`
 
-## Solutions
+**Constraints:** `1 ≤ s.length ≤ 100`, `0 ≤ k ≤ s.length`, `s` contains only lowercase English letters
+
+## Tips (Mẹo phỏng vấn)
+
+- **State definition** / Định nghĩa state: `dp[i][j]` = min encoded length of `s[i..]` với `j` lần xóa còn lại
+- **Greedy won't work** / Greedy sai: Xóa ký tự ảnh hưởng đến các run liền kề — cần DP đầy đủ
+- **encLen helper** / Hàm phụ: Độ dài mã hóa: 1→1, 2-9→2, 10-99→3, 100+→4
+- **Inner loop** / Vòng lặp trong: Duyệt từ `i` đến `n`, đếm same/delete chars, transition đúng
+- **Memo top-down** / Top-down memo: `dp[i][k]` tối đa 100×100 = 10,000 states — đủ nhỏ
+- **Time complexity** / Độ phức tạp: O(n²k) với n=100, k=100 → 10^6 — chấp nhận được
+
+## Solution 1 - Brute Force Recursion (No Memo)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(2^n) | Space: O(n)
+ * Try all subsets of deletions - exponential, TLE
  */
-function stringCompressionIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function getLengthOfOptimalCompressionBrute(s: string, k: number): number {
+  const encLen = (c: number) => (c === 0 ? 0 : c === 1 ? 1 : c < 10 ? 2 : c < 100 ? 3 : 4);
+  function rec(i: number, last: string, lastCnt: number, rem: number): number {
+    if (rem < 0) return Infinity;
+    if (i === s.length) return 0;
+    // delete s[i]
+    const del = rec(i + 1, last, lastCnt, rem - 1);
+    // keep s[i]
+    let keep: number;
+    if (s[i] === last) {
+      const bonus = encLen(lastCnt + 1) - encLen(lastCnt);
+      keep = bonus + rec(i + 1, last, lastCnt + 1, rem);
+    } else {
+      keep = 1 + rec(i + 1, s[i], 1, rem);
+    }
+    return Math.min(del, keep);
+  }
+  return rec(0, "", 0, k);
 }
-
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function stringCompressionIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(stringCompressionIi(/* example 1 */)); // expected
-// console.log(stringCompressionIi(/* example 2 */)); // expected
-// console.log(stringCompressionIi(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - DP with Memoization (Optimal)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n²·k) | Space: O(n·k)
+ * dp[i][j] = min encoded length starting at index i with j deletions left
+ * For each position, greedily extend a run of same characters
+ */
+function getLengthOfOptimalCompression(s: string, k: number): number {
+  const n = s.length;
+  const encLen = (c: number): number => {
+    if (c <= 0) return 0;
+    if (c === 1) return 1;
+    if (c < 10) return 2;
+    if (c < 100) return 3;
+    return 4;
+  };
+  // dp[i][j]: min length for s[i..n-1] with j deletions remaining
+  const memo: number[][] = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(-1));
 
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings) — same pattern: Two Pointers
-- [Interleaving String](https://leetcode.com/problems/interleaving-string) — same pattern: Dynamic Programming
-- [String Compression II — LeetCode](https://leetcode.com/problems/string-compression-ii) — problem page
+  function dp(i: number, j: number): number {
+    if (j < 0) return Infinity;
+    if (i >= n || n - i <= j) return 0; // can delete everything remaining
+    if (memo[i][j] !== -1) return memo[i][j];
+
+    let res = Infinity;
+    let same = 0,
+      diff = 0;
+    // Extend a run starting at i, keeping chars equal to s[i], deleting others
+    for (let t = i; t < n; t++) {
+      if (s[t] === s[i]) same++;
+      else diff++;
+      if (diff <= j) {
+        res = Math.min(res, encLen(same) + dp(t + 1, j - diff));
+      }
+    }
+    memo[i][j] = res;
+    return res;
+  }
+
+  return dp(0, k);
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(getLengthOfOptimalCompression("aaabccdd", 2)); // → 4
+console.log(getLengthOfOptimalCompression("aabbaa", 2)); // → 2
+console.log(getLengthOfOptimalCompression("z", 0)); // → 1
+console.log(getLengthOfOptimalCompression("abcdef", 3)); // → 3
+console.log(getLengthOfOptimalCompressionBrute("aabbaa", 2)); // → 2
+```
+
+## Related Problems
+
+| Problem            | Difficulty | Link                                                       |
+| ------------------ | ---------- | ---------------------------------------------------------- |
+| String Compression | Medium     | [LC 443](https://leetcode.com/problems/string-compression) |
+| Remove Boxes       | Hard       | [LC 546](https://leetcode.com/problems/remove-boxes)       |
+| Strange Printer    | Hard       | [LC 664](https://leetcode.com/problems/strange-printer)    |

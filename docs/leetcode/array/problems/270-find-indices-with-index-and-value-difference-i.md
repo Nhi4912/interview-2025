@@ -7,100 +7,146 @@ tags: [Array, Two Pointers]
 leetcode_url: "https://leetcode.com/problems/find-indices-with-index-and-value-difference-i"
 ---
 
-# Find Indices With Index and Value Difference I / Find Indices With Index and Value Difference I
+# Find Indices With Index and Value Difference I / Tìm Hai Chỉ Số Thỏa Điều Kiện
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers / Sliding Min-Max
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Next Permutation](https://leetcode.com/problems/next-permutation) | [4Sum](https://leetcode.com/problems/4sum)
+> **See also**: [Find Indices With Index and Value Difference II](https://leetcode.com/problems/find-indices-with-index-and-value-difference-ii) | [Find Two Non-overlapping Sub-arrays Each With Target Sum](https://leetcode.com/problems/find-two-non-overlapping-sub-arrays-each-with-target-sum)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## Vietnamese Analogy (Ví dụ thực tế)
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+Hãy tưởng tượng bạn đang tìm hai ngày trong lịch (i và j) thỏa: hai ngày cách nhau ít nhất `indexDifference` ngày VÀ nhiệt độ chênh lệch ít nhất `valueDifference` độ. Brute force kiểm tra mọi cặp ngày là O(n²). Tối ưu hơn: với mỗi j, ta chỉ cần biết nhiệt độ thấp nhất và cao nhất trong các ngày [0..j-indexDifference] — duy trì hai biến này khi j tăng dần là đủ.
 
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find Indices With Index and Value Difference I example:**
+## Visual (Minh họa trực quan)
 
 ```
-arr = [... sorted ...]
- L                 R
+nums=[5,1,4,1], indexDifference=2, valueDifference=4
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Brute force — try all pairs (i,j) with |i-j|≥2:
+  (i=0,j=2): |0-2|=2≥2 ✓, |5-4|=1 ✗
+  (i=0,j=3): |0-3|=3≥2 ✓, |5-1|=4≥4 ✓ → [0,3]
+
+Optimal — for each j, keep min/max in [0..j-indexDifference]:
+  j=2: window=[0..0]={5}, min=5,max=5
+    |5-nums[2]|=|5-4|=1 < 4  and  |5-4|=1 < 4 → no
+  j=3: window=[0..1]={5,1}, min=1@1, max=5@0
+    |5-nums[3]|=|5-1|=4 ≥ 4 → [maxIdx=0, j=3] ✓
 ```
 
----
+## Problem (Bài toán)
 
-## Problem Description
+Given `nums`, `indexDifference`, `valueDifference`, find indices `i` and `j` such that `|i-j| >= indexDifference` AND `|nums[i]-nums[j]| >= valueDifference`. Return `[-1,-1]` if none exist.
 
-Find Indices With Index and Value Difference I. ([LeetCode](https://leetcode.com/problems/find-indices-with-index-and-value-difference-i))
+**Example 1:** `nums=[5,1,4,1]`, `indexDiff=2`, `valueDiff=4` → `[0,3]`
+**Example 2:** `nums=[2,1]`, `indexDiff=0`, `valueDiff=0` → `[0,0]`
+**Example 3:** `nums=[1,2,3]`, `indexDiff=2`, `valueDiff=4` → `[-1,-1]`
 
-Difficulty: Easy | Acceptance: 60.3%
+**Constraints:** `2 ≤ nums.length ≤ 100`, `0 ≤ indexDifference ≤ 50`, `0 ≤ valueDifference ≤ 50`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+## Tips (Mẹo phỏng vấn)
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-indices-with-index-and-value-difference-i) for full constraints
+- **Brute O(n²) is fine here** / Brute force chấp nhận: n≤100 → O(n²)=10000 phép — đủ nhanh
+- **Optimal O(n) with min/max tracking** / Tối ưu O(n): Với mỗi j, track min và max index trong `[0..j-indexDiff]`
+- **Check both min and max** / Kiểm tra cả min lẫn max: `|nums[j]-min|≥val` HOẶC `|nums[j]-max|≥val`
+- **j >= indexDifference to start** / j phải đủ lớn: Window bắt đầu tồn tại khi `j >= indexDifference`
+- **Part II follow-up** / Mở rộng: Find Indices II cùng bài nhưng n≤10^5 → bắt buộc O(n)
+- **Return any valid pair** / Trả bất kỳ cặp hợp lệ: Không cần tối ưu, chỉ cần tìm một cặp
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
-
-## Solutions
+## Solution 1 - Brute Force (O(n²))
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n²) | Space: O(1)
+ * Check all pairs with |i-j| >= indexDifference
  */
-function findIndicesWithIndexAndValueDifferenceIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findIndicesBrute(
+  nums: number[],
+  indexDifference: number,
+  valueDifference: number,
+): number[] {
+  const n = nums.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (Math.abs(i - j) >= indexDifference && Math.abs(nums[i] - nums[j]) >= valueDifference) {
+        return [i, j];
+      }
+    }
+  }
+  return [-1, -1];
 }
-
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findIndicesWithIndexAndValueDifferenceI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(findIndicesWithIndexAndValueDifferenceI(/* example 1 */)); // expected
-// console.log(findIndicesWithIndexAndValueDifferenceI(/* example 2 */)); // expected
-// console.log(findIndicesWithIndexAndValueDifferenceI(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Sliding Min/Max Tracking (Optimal O(n))
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * For each j, maintain min/max indices in [0..j-indexDiff]
+ * Check if nums[j] differs enough from either the min or max
+ */
+function findIndices(nums: number[], indexDifference: number, valueDifference: number): number[] {
+  let minIdx = 0,
+    maxIdx = 0;
 
-- [Next Permutation](https://leetcode.com/problems/next-permutation) — same pattern: Two Pointers
-- [4Sum](https://leetcode.com/problems/4sum) — same pattern: Two Pointers
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [3Sum Closest](https://leetcode.com/problems/3sum-closest) — same pattern: Two Pointers
-- [Find Indices With Index and Value Difference I — LeetCode](https://leetcode.com/problems/find-indices-with-index-and-value-difference-i) — problem page
+  for (let j = indexDifference; j < nums.length; j++) {
+    const i = j - indexDifference;
+    // Update min/max for window [0..i]
+    if (nums[i] < nums[minIdx]) minIdx = i;
+    if (nums[i] > nums[maxIdx]) maxIdx = i;
+
+    // Check if nums[j] differs enough from current min or max
+    if (Math.abs(nums[j] - nums[minIdx]) >= valueDifference) return [minIdx, j];
+    if (Math.abs(nums[j] - nums[maxIdx]) >= valueDifference) return [maxIdx, j];
+  }
+  return [-1, -1];
+}
+```
+
+## Solution 3 - Two-Pointer Forward Scan
+
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Scan j from indexDifference to n; look back at position j-indexDifference
+ */
+function findIndicesForward(
+  nums: number[],
+  indexDifference: number,
+  valueDifference: number,
+): number[] {
+  // Candidate i is always j - indexDifference (minimum distance)
+  // We track best i seen so far (max or min value)
+  let bestMinI = 0,
+    bestMaxI = 0;
+
+  for (let j = indexDifference; j < nums.length; j++) {
+    const candidateI = j - indexDifference;
+    if (nums[candidateI] <= nums[bestMinI]) bestMinI = candidateI;
+    if (nums[candidateI] >= nums[bestMaxI]) bestMaxI = candidateI;
+
+    if (nums[j] - nums[bestMinI] >= valueDifference) return [bestMinI, j];
+    if (nums[bestMaxI] - nums[j] >= valueDifference) return [bestMaxI, j];
+  }
+  return [-1, -1];
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(findIndices([5, 1, 4, 1], 2, 4)); // → [0,3]
+console.log(findIndices([2, 1], 0, 0)); // → [0,0]
+console.log(findIndices([1, 2, 3], 2, 4)); // → [-1,-1]
+console.log(findIndices([0, 2, 2, 0], 2, 0)); // → [0,2]
+console.log(findIndicesBrute([5, 1, 4, 1], 2, 4)); // → [0,3]
+```
+
+## Related Problems
+
+| Problem                                         | Difficulty | Link                                                                                     |
+| ----------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| Find Indices With Index and Value Difference II | Medium     | [LC 2905](https://leetcode.com/problems/find-indices-with-index-and-value-difference-ii) |
+| Two Sum Less Than K                             | Easy       | [LC 1099](https://leetcode.com/problems/two-sum-less-than-k)                             |
+| Minimum Absolute Difference                     | Easy       | [LC 1200](https://leetcode.com/problems/minimum-absolute-difference)                     |

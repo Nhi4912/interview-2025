@@ -2,105 +2,151 @@
 layout: page
 title: "Minimum Time to Collect All Apples in a Tree"
 difficulty: Medium
-category: Tree-Graph
-tags: [Hash Table, Tree, Depth-First Search, Breadth-First Search]
+category: Tree & Graph
+tags: [Tree, DFS, BFS, Hash Table]
 leetcode_url: "https://leetcode.com/problems/minimum-time-to-collect-all-apples-in-a-tree"
 ---
 
-# Minimum Time to Collect All Apples in a Tree / Minimum Time to Collect All Apples in a Tree
+# Minimum Time to Collect All Apples in a Tree / Thời Gian Tối Thiểu Hái Táo
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) | [Amount of Time for Binary Tree to Be Infected](https://leetcode.com/problems/amount-of-time-for-binary-tree-to-be-infected)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Time to Collect All Apples in a Tree example:**
-
-```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
-
-BFS: process level by level using queue
-```
+> **Track**: Tree & Graph | **Difficulty**: 🟡 Medium | **Pattern**: DFS Post-Order
+> **Frequency**: 📗 Tier 2 — Gặp ở nhiều vòng phỏng vấn
+> **See also**: [Sum of Distances in Tree](https://leetcode.com/problems/sum-of-distances-in-tree) | [Time Needed to Inform All Employees](https://leetcode.com/problems/time-needed-to-inform-all-employees)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Minimum Time to Collect All Apples in a Tree. ([LeetCode](https://leetcode.com/problems/minimum-time-to-collect-all-apples-in-a-tree))
+Hãy tưởng tượng bạn đang đi hái táo trong một khu vườn hình cây — mỗi nhánh cây là một con đường, mỗi điểm nối là một ngã rẽ. Bạn bắt đầu từ gốc cây (node 0) và muốn hái hết tất cả táo rồi quay về. Mỗi cạnh tốn 1 giây đi và 1 giây về. Bí quyết: chỉ cần đi vào một nhánh nếu nhánh đó có táo — hoặc cây con của nó có táo. Dùng DFS từ lá lên gốc, cộng thêm 2 giây cho mỗi cạnh dẫn đến cây con có táo.
 
-Difficulty: Medium | Acceptance: 63.0%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+n=7, edges=[[0,1],[0,2],[1,4],[1,5],[2,3],[2,6]]
+apples=[false,false,true,false,true,true,false]
+
+Tree:         DFS cost from leaves up:
+    0           node 4 has apple → cost 2
+   / \          node 5 has apple → cost 2
+  1   2         node 1: children cost = 4 > 0 → +2 = 6
+ /\ /\          node 3 no apple → cost 0
+4 5 3 6         node 6 no apple → cost 0
+                node 2: child cost = 0 → skip = 0
+                node 0: child 1 cost=6>0 → +2=8, child 2 cost=0 → skip
+Total = 8 ✓
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-time-to-collect-all-apples-in-a-tree) for full constraints
+## Problem (Bài toán)
 
----
+Given an undirected tree with `n` nodes (0-indexed), a list of `edges`, and boolean array `hasApple` where `hasApple[i]` indicates if node `i` has an apple. Starting and ending at node 0, find the **minimum time** (in seconds) to collect all apples. Each edge takes 1 second to traverse in each direction.
 
-## 📝 Interview Tips
+**Example 1:** `n=7, edges=[[0,1],[0,2],[1,4],[1,5],[2,3],[2,6]], hasApple=[false,false,true,false,true,true,false]` → `8`
+**Example 2:** `n=7, edges=[[0,1],[0,2],[1,4],[1,5],[2,3],[2,6]], hasApple=[false,false,true,false,false,true,false]` → `6`
+**Example 3:** `n=7, edges=[[0,1],[0,2],[1,4],[1,5],[2,3],[2,6]], hasApple=[false,false,false,false,false,false,false]` → `0`
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Constraints:** `1 ≤ n ≤ 10⁵`, `0 ≤ edges.length ≤ n-1`, `hasApple.length === n`
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **DFS post-order** / DFS hậu thứ tự: Tính cost từ lá lên gốc — con nào có cost > 0 hoặc có táo thì cha cộng thêm 2
+- **Build adjacency list** / Danh sách kề: Dùng `Map<number, number[]>` thay vì matrix để tiết kiệm bộ nhớ với n lớn
+- **Avoid parent revisit** / Tránh đi ngược: Truyền `parent` vào DFS để không quay lại node cha
+- **Return value meaning** / Ý nghĩa giá trị trả về: `dfs(node)` trả về tổng thời gian đi/về trong cây con của node đó
+- **Edge cost = 2** / Mỗi cạnh tốn 2: Đi xuống 1 giây + về 1 giây — chỉ tính khi cây con thực sự có táo
+- **Empty tree edge case** / Cây rỗng táo: Nếu không có táo nào → trả 0 ngay
+
+## Solution 1 - DFS Recursive (Clear)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n) | Space: O(n) recursion stack + adjacency list
+ * Build adjacency list then DFS from root; add 2 for each edge with apples below
  */
-function minimumTimeToCollectAllApplesInATreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function minTime(n: number, edges: number[][], hasApple: boolean[]): number {
+  const adj = new Map<number, number[]>();
+  for (let i = 0; i < n; i++) adj.set(i, []);
+  for (const [u, v] of edges) {
+    adj.get(u)!.push(v);
+    adj.get(v)!.push(u);
+  }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeToCollectAllApplesInATree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
+  function dfs(node: number, parent: number): number {
+    let totalCost = 0;
+    for (const child of adj.get(node)!) {
+      if (child === parent) continue;
+      const childCost = dfs(child, node);
+      if (childCost > 0 || hasApple[child]) {
+        totalCost += childCost + 2;
+      }
+    }
+    return totalCost;
+  }
 
-// === Test Cases ===
-// console.log(minimumTimeToCollectAllApplesInATree(/* example 1 */)); // expected
-// console.log(minimumTimeToCollectAllApplesInATree(/* example 2 */)); // expected
-// console.log(minimumTimeToCollectAllApplesInATree(/* edge case */)); // expected
+  return dfs(0, -1);
+}
 ```
 
----
+## Solution 2 - DFS Iterative with Stack (Optimal for large n)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(n)
+ * Iterative post-order DFS to avoid recursion stack overflow for n=10^5
+ */
+function minTimeIterative(n: number, edges: number[][], hasApple: boolean[]): number {
+  if (n === 1) return 0;
+  const adj: number[][] = Array.from({ length: n }, () => []);
+  for (const [u, v] of edges) {
+    adj[u].push(v);
+    adj[v].push(u);
+  }
 
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Amount of Time for Binary Tree to Be Infected](https://leetcode.com/problems/amount-of-time-for-binary-tree-to-be-infected) — same pattern: BFS
-- [Vertical Order Traversal of a Binary Tree](https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree) — same pattern: BFS
-- [Two Sum IV - Input is a BST](https://leetcode.com/problems/two-sum-iv-input-is-a-bst) — same pattern: Two Pointers
-- [Minimum Time to Collect All Apples in a Tree — LeetCode](https://leetcode.com/problems/minimum-time-to-collect-all-apples-in-a-tree) — problem page
+  const parent = new Int32Array(n).fill(-1);
+  const order: number[] = [];
+  const stack = [0];
+  const visited = new Uint8Array(n);
+  visited[0] = 1;
+
+  while (stack.length) {
+    const node = stack.pop()!;
+    order.push(node);
+    for (const nb of adj[node]) {
+      if (!visited[nb]) {
+        visited[nb] = 1;
+        parent[nb] = node;
+        stack.push(nb);
+      }
+    }
+  }
+
+  const cost = new Int32Array(n);
+  for (let i = order.length - 1; i >= 1; i--) {
+    const node = order[i];
+    const p = parent[node];
+    if (cost[node] > 0 || hasApple[node]) {
+      cost[p] += cost[node] + 2;
+    }
+  }
+
+  return cost[0];
+}
+```
+
+## Test Cases
+
+```typescript
+const e = [[0,1],[0,2],[1,4],[1,5],[2,3],[2,6]];
+console.log(minTime(7, e, [false,false,true,false,true,true,false]));  // → 8
+console.log(minTime(7, e, [false,false,true,false,false,true,false])); // → 6
+console.log(minTime(7, e, [false,false,false,false,false,false,false]))); // → 0
+console.log(minTimeIterative(7, e, [false,false,true,false,true,true,false])); // → 8
+console.log(minTime(1, [], [false])); // → 0
+```
+
+## Related Problems
+
+| Problem                             | Difficulty | Link                                                                         |
+| ----------------------------------- | ---------- | ---------------------------------------------------------------------------- |
+| Sum of Distances in Tree            | Hard       | [LC 834](https://leetcode.com/problems/sum-of-distances-in-tree)             |
+| Time Needed to Inform All Employees | Medium     | [LC 1376](https://leetcode.com/problems/time-needed-to-inform-all-employees) |
+| Distribute Coins in Binary Tree     | Medium     | [LC 979](https://leetcode.com/problems/distribute-coins-in-binary-tree)      |

@@ -2,107 +2,174 @@
 layout: page
 title: "Count Square Submatrices with All Ones"
 difficulty: Medium
-category: Dynamic Programming
+category: DP
 tags: [Array, Dynamic Programming, Matrix]
 leetcode_url: "https://leetcode.com/problems/count-square-submatrices-with-all-ones"
 ---
 
-# Count Square Submatrices with All Ones / Count Square Submatrices with All Ones
+# Count Square Submatrices with All Ones / Đếm Số Hình Vuông Con Toàn Số 1
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Maximal Square](https://leetcode.com/problems/maximal-square) | [Unique Paths II](https://leetcode.com/problems/unique-paths-ii)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count Square Submatrices with All Ones example:**
-
-```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
-```
+> **Track**: DP | **Difficulty**: 🟡 Medium | **Pattern**: 2D DP / Maximal Square
+> **Frequency**: 📗 Tier 2 — Gặp ở nhiều companies
+> **See also**: [Maximal Square](https://leetcode.com/problems/maximal-square) | [Count Submatrices With All Ones](https://leetcode.com/problems/count-submatrices-with-all-ones)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Count Square Submatrices with All Ones. ([LeetCode](https://leetcode.com/problems/count-square-submatrices-with-all-ones))
+Bạn đang lát gạch một căn phòng, mỗi ô là 1 nếu có gạch và 0 nếu trống. Câu hỏi: có bao nhiêu vùng hình vuông (1×1, 2×2, 3×3, …) được lát đầy đủ? Thay vì kiểm tra từng ô từng kích thước (O(n³)), ta tận dụng kết quả ô trước: nếu ô `(i,j)` có gạch, hình vuông lớn nhất kết thúc tại đây bằng `min(trên, trái, chéo-trái-trên) + 1`. Số hình vuông kết thúc tại `(i,j)` chính là giá trị đó — một viên gạch đóng góp cho TẤT CẢ các hình vuông chứa nó như góc dưới-phải.
 
-Difficulty: Medium | Acceptance: 78.7%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+matrix:           dp[i][j] = min(top, left, diag) + 1
+1 0 1             1 0 1   ← each cell = largest square ending here
+1 1 1    →        1 1 1
+1 1 1             1 2 2
+
+dp values: 1,0,1, 1,1,1, 1,2,2
+sum = 1+0+1+1+1+1+1+2+2 = 10
+
+dp[2][1]=2 → 2 squares ending there (1×1 and 2×2)
+dp[2][2]=2 → 2 squares ending there (1×1 and 2×2)
+Total = sum(dp) = 10 ✓
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-square-submatrices-with-all-ones) for full constraints
+## Problem (Bài toán)
 
----
+Given an `m × n` matrix of `0`s and `1`s, return the **number of square submatrices that have all ones**.
 
-## 📝 Interview Tips
+**Example 1:** `matrix = [[0,1,1,1],[1,1,1,1],[0,1,1,1]]` → `15`
+**Example 2:** `matrix = [[1,0,1],[1,1,0],[1,1,0]]` → `7`
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+**Constraints:** `1 ≤ m, n ≤ 300`, `matrix[i][j]` is `0` or `1`
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **dp[i][j] meaning** / Ý nghĩa: Kích thước hình vuông lớn nhất có góc dưới-phải tại `(i,j)`
+- **Reuse dp matrix** / Tái dụng: Có thể sửa tại chỗ trên `matrix` để tiết kiệm O(m×n) space
+- **Count = sum of dp** / Đếm = tổng dp: Mỗi ô đóng góp đúng bằng giá trị dp của nó vào tổng
+- **In-place possible** / Sửa tại chỗ: `matrix[i][j] = min(top,left,diag)+1` — không cần mảng mới
+- **First row/col** / Hàng/cột đầu: Giữ nguyên (0 hoặc 1) — không cần kiểm tra bound đặc biệt
+- **Same as Maximal Square** / Giống Maximal Square: Chỉ khác ở chỗ trả về tổng thay vì max
+
+## Solution 1 - Brute Force O(min(m,n)·m·n)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(min(m,n)·m·n) | Space: O(1)
+ * For each cell, try all square sizes and check if all-ones
  */
-function countSquareSubmatricesWithAllOnesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countSquaresBrute(matrix: number[][]): number {
+  const m = matrix.length,
+    n = matrix[0].length;
+  let count = 0;
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      for (let s = 1; s <= Math.min(m - i, n - j); s++) {
+        let valid = true;
+        outer: for (let r = i; r < i + s; r++) {
+          for (let c = j; c < j + s; c++) {
+            if (matrix[r][c] === 0) {
+              valid = false;
+              break outer;
+            }
+          }
+        }
+        if (valid) count++;
+        else break;
+      }
+    }
+  }
+  return count;
 }
-
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countSquareSubmatricesWithAllOnes(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(countSquareSubmatricesWithAllOnes(/* example 1 */)); // expected
-// console.log(countSquareSubmatricesWithAllOnes(/* example 2 */)); // expected
-// console.log(countSquareSubmatricesWithAllOnes(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - 2D DP In-Place (Optimal)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(m·n) | Space: O(1) in-place
+ * dp[i][j] = largest square with bottom-right at (i,j)
+ * Count = sum of all dp values (each cell contributes dp[i][j] squares)
+ */
+function countSquares(matrix: number[][]): number {
+  const m = matrix.length,
+    n = matrix[0].length;
+  let count = 0;
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      if (matrix[i][j] === 1 && i > 0 && j > 0) {
+        matrix[i][j] = Math.min(matrix[i - 1][j], matrix[i][j - 1], matrix[i - 1][j - 1]) + 1;
+      }
+      count += matrix[i][j];
+    }
+  }
+  return count;
+}
+```
 
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle) — same pattern: Monotonic Stack
-- [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum) — same pattern: Dynamic Programming
-- [Count Square Submatrices with All Ones — LeetCode](https://leetcode.com/problems/count-square-submatrices-with-all-ones) — problem page
+## Solution 3 - DP Non-Mutating
+
+```typescript
+/**
+ * @complexity Time: O(m·n) | Space: O(m·n)
+ * Same DP logic but preserves original matrix
+ */
+function countSquaresDP(matrix: number[][]): number {
+  const m = matrix.length,
+    n = matrix[0].length;
+  const dp = Array.from({ length: m }, (_, i) => [...matrix[i]]);
+  let count = 0;
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      if (dp[i][j] === 1 && i > 0 && j > 0) {
+        dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1;
+      }
+      count += dp[i][j];
+    }
+  }
+  return count;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(
+  countSquares([
+    [0, 1, 1, 1],
+    [1, 1, 1, 1],
+    [0, 1, 1, 1],
+  ]),
+); // → 15
+console.log(
+  countSquares([
+    [1, 0, 1],
+    [1, 1, 0],
+    [1, 1, 0],
+  ]),
+); // → 7
+console.log(
+  countSquaresBrute([
+    [0, 1, 1, 1],
+    [1, 1, 1, 1],
+    [0, 1, 1, 1],
+  ]),
+); // → 15
+console.log(
+  countSquaresDP([
+    [1, 1],
+    [1, 1],
+  ]),
+); // → 5
+console.log(countSquares([[1]])); // → 1
+```
+
+## Related Problems
+
+| Problem                         | Difficulty | Link                                                                     |
+| ------------------------------- | ---------- | ------------------------------------------------------------------------ |
+| Maximal Square                  | Medium     | [LC 221](https://leetcode.com/problems/maximal-square)                   |
+| Count Submatrices With All Ones | Medium     | [LC 1504](https://leetcode.com/problems/count-submatrices-with-all-ones) |
+| Maximal Rectangle               | Hard       | [LC 85](https://leetcode.com/problems/maximal-rectangle)                 |

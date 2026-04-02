@@ -7,100 +7,148 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/unique-morse-code-words"
 ---
 
-# Unique Morse Code Words / Unique Morse Code Words
+# Unique Morse Code Words / Số Từ Mã Morse Duy Nhất
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Unique Morse Code Words example:**
-
-```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
-```
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Set / String Transform
+> **Frequency**: 📘 Tier 2 — Gặp ở 3 companies
+> **See also**: [Jewels and Stones](https://leetcode.com/problems/jewels-and-stones) | [Ransom Note](https://leetcode.com/problems/ransom-note)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Unique Morse Code Words. ([LeetCode](https://leetcode.com/problems/unique-morse-code-words))
+Trong điện tín xưa, mỗi chữ cái có một tín hiệu Morse riêng. Bạn cần đếm xem bao nhiêu từ trong danh sách có tín hiệu Morse khác nhau khi ghép lại. Ví dụ "gin" và "zen" đều mã hóa thành `"--...-."`— chúng "nghe giống nhau" qua điện tín! Bài toán đơn giản: chuyển mỗi từ thành chuỗi Morse, bỏ vào Set để loại trùng, trả về kích thước Set. Đây là bài toán cổ điển "map + set" — thường xuất hiện trong vòng đầu phỏng vấn để kiểm tra tư duy tạo hàm hash.
 
-Difficulty: Easy | Acceptance: 83.2%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+MORSE = [".-","-...","-.-.","-..",".","..-.","--.","....",
+         "..",".---","-.-",".-..","--","-.","---",".--.","--.-",
+         ".-.","...","-","..-","...-",".--","-..-","-.--","--.."]
+
+words = ["gin","zen","gig","msg"]
+
+"gin": g=--. i=.. n=-. → "--...-.""zen": z=--.. e=. n=-. → "--...-.""gig": g=--. i=.. g=--. → "--..--.""msg": m=-- s=... g=--. → "--...--.
+
+Set = {"--...-.", "--..--."}  → size = 2
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/unique-morse-code-words) for full constraints
+## Problem (Bài toán)
 
----
+Given an array of strings `words`, return the number of **different** Morse code transformations. Each letter maps to its international Morse code (a→".-", b→"-...", ..., z→"--..").
 
-## 📝 Interview Tips
+**Example 1:** `words = ["gin","zen","gig","msg"]` → `2` ("gin" and "zen" share "--...-."; "gig" and "msg" share "--..--.")
+**Example 2:** `words = ["a"]` → `1`
+**Example 3:** `words = ["the","ebt"]` → `1` (both map to same code)
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Constraints:** `1 ≤ words.length ≤ 100`, `1 ≤ words[i].length ≤ 12`, `words[i]` consists of lowercase English letters
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **Lookup table** / Bảng tra cứu: Mảng 26 phần tử indexed by `charCode - 97` nhanh hơn object/Map cho bảng cố định
+- **String concatenation** / Nối chuỗi: Cộng Morse code từng ký tự là O(k) per word — tổng O(sum of lengths) = O(26k) max
+- **Set for uniqueness** / Set để loại trùng: `new Set<string>()` tự động loại các mã trùng
+- **Không cần decode** / No decode needed: Chỉ cần encode một chiều, không cần giải mã
+- **Môi trường phỏng vấn** / Interview env: Thường được phép nhìn bảng Morse — không cần ghi nhớ thuộc lòng
+- **Biến thể** / Variations: Có thể bị hỏi "tìm các từ cùng mã Morse" — group by Morse code dùng Map<string, string[]>
+
+## Solution 1 - Direct Set Approach O(n·k)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n·k) | Space: O(n·k)
+ * Encode each word to Morse, add to Set, return Set size.
+ * MORSE[i] = code for letter (i + 'a'.charCodeAt(0))
  */
-function uniqueMorseCodeWordsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+const MORSE_TABLE = [
+  ".-",
+  "-...",
+  "-.-.",
+  "-..",
+  ".",
+  "..-.",
+  "--.",
+  "....",
+  "..",
+  ".---",
+  "-.-",
+  ".-..",
+  "--",
+  "-.",
+  "---",
+  ".--.",
+  "--.-",
+  ".-.",
+  "...",
+  "-",
+  "..-",
+  "...-",
+  ".--",
+  "-..-",
+  "-.--",
+  "--..",
+];
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function uniqueMorseCodeWords(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function uniqueMorseRepresentations(words: string[]): number {
+  const codes = new Set<string>();
+  for (const word of words) {
+    let code = "";
+    for (const c of word) code += MORSE_TABLE[c.charCodeAt(0) - 97];
+    codes.add(code);
+  }
+  return codes.size;
 }
-
-// === Test Cases ===
-// console.log(uniqueMorseCodeWords(/* example 1 */)); // expected
-// console.log(uniqueMorseCodeWords(/* example 2 */)); // expected
-// console.log(uniqueMorseCodeWords(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Functional One-Liner O(n·k)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n·k) | Space: O(n·k)
+ * Uses the shared MORSE_TABLE; functional map+join pipeline
+ */
+function uniqueMorseRepresentationsFP(words: string[]): number {
+  const toMorse = (w: string) => [...w].map((c) => MORSE_TABLE[c.charCodeAt(0) - 97]).join("");
+  return new Set(words.map(toMorse)).size;
+}
+```
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Unique Morse Code Words — LeetCode](https://leetcode.com/problems/unique-morse-code-words) — problem page
+## Solution 3 - Group by Morse Code
+
+```typescript
+/**
+ * @complexity Time: O(n·k) | Space: O(n·k)
+ * Returns groups of words sharing the same Morse representation.
+ * Useful when you need to list which words are "identical" over wire.
+ */
+function groupByMorse(words: string[]): Map<string, string[]> {
+  const groups = new Map<string, string[]>();
+  for (const word of words) {
+    const code = [...word].map((c) => MORSE_TABLE[c.charCodeAt(0) - 97]).join("");
+    const bucket = groups.get(code) ?? [];
+    bucket.push(word);
+    groups.set(code, bucket);
+  }
+  return groups;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(uniqueMorseRepresentations(["gin", "zen", "gig", "msg"])); // → 2
+console.log(uniqueMorseRepresentationsFP(["gin", "zen", "gig", "msg"])); // → 2
+console.log(uniqueMorseRepresentations(["a"])); // → 1
+console.log(uniqueMorseRepresentations(["the", "ebt"])); // → 1
+const groups = groupByMorse(["gin", "zen", "gig", "msg"]);
+console.log([...groups.entries()].map(([k, v]) => `${k}: ${v}`));
+// → ["--...-.": gin,zen", "--..--.": gig,msg"]
+```
+
+## Related Problems
+
+| Problem                  | Difficulty | Link                                                             |
+| ------------------------ | ---------- | ---------------------------------------------------------------- |
+| Jewels and Stones        | Easy       | [LC 771](https://leetcode.com/problems/jewels-and-stones)        |
+| Group Anagrams           | Medium     | [LC 49](https://leetcode.com/problems/group-anagrams)            |
+| Find and Replace Pattern | Medium     | [LC 890](https://leetcode.com/problems/find-and-replace-pattern) |

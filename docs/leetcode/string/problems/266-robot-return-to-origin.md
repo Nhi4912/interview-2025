@@ -7,97 +7,138 @@ tags: [String, Simulation]
 leetcode_url: "https://leetcode.com/problems/robot-return-to-origin"
 ---
 
-# Robot Return to Origin / Robot Return to Origin
+# Robot Return to Origin / Robot Trở Về Gốc
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Multiply Strings](https://leetcode.com/problems/multiply-strings)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Phân tích bài "Robot Return to Origin" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Robot Return to Origin example:**
-
-```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
-```
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Simulation / Counter
+> **Frequency**: 📘 Tier 2 — Gặp ở 4 companies
+> **See also**: [Path Crossing](https://leetcode.com/problems/path-crossing) | [Walking Robot Simulation](https://leetcode.com/problems/walking-robot-simulation)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Robot Return to Origin. ([LeetCode](https://leetcode.com/problems/robot-return-to-origin))
+Hãy tưởng tượng một robot giao hàng trong kho hàng dạng lưới ô vuông. Robot nhận lệnh di chuyển dạng chuỗi ký tự: `U` (lên), `D` (xuống), `L` (trái), `R` (phải). Sau khi thực hiện hết lệnh, người quản lý hỏi: "Robot có trở về điểm xuất phát không?" Đây không cần mô phỏng từng bước — chỉ cần đếm: `U` và `D` phải bằng nhau (dọc cân bằng), `L` và `R` phải bằng nhau (ngang cân bằng). Nếu cả hai cặp cân bằng, robot ắt đứng đúng chỗ ban đầu.
 
-Difficulty: Easy | Acceptance: 76.2%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+moves = "UDLR"
+Start (0,0):
+  U → (0, 1)
+  D → (0, 0)
+  L → (-1, 0)
+  R → (0, 0)   ← back to origin  ✓
+
+moves = "LLRR"  → x: -1-1+1+1=0, y: 0  → (0,0) ✓
+
+moves = "UUDDLR"
+  x: L+R = -1+1 = 0  ✓
+  y: UU+DD = 2-2 = 0 ✓  → back to origin ✓
+
+moves = "UUUU"
+  y = 4 ≠ 0  → NOT at origin ✗
+
+Counter approach:
+  Count U=count D AND count L=count R  →  O(n), O(1)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/robot-return-to-origin) for full constraints
+## Problem (Bài toán)
 
----
+Given string `moves` where each character is `'U'`, `'D'`, `'L'`, or `'R'`, return `true` if the robot returns to the origin `(0,0)` after executing all moves.
 
-## 📝 Interview Tips
+**Example 1:** `moves = "UD"` → `true` (up then down)
+**Example 2:** `moves = "LL"` → `false` (moved left twice, not at origin)
+**Example 3:** `moves = "UUDDLR"` → `true`
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Constraints:** `1 ≤ moves.length ≤ 2×10⁴`, `moves` only contains `'U'`, `'D'`, `'L'`, `'R'`
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **Counter không cần tọa độ** / Counter beats coordinates: Chỉ cần đếm `U==D && L==R` — không cần lưu `x,y` nếu muốn space O(1)
+- **Hoặc tọa độ đơn giản** / Coordinate is clearer: `x,y` tracking dễ đọc hơn và mở rộng tốt cho biến thể phức tạp hơn
+- **Biến thể 3D** / 3D variant: Thêm `F/B` (forward/backward) → kiểm tra thêm `z=0`
+- **Early exit** / Thoát sớm: Không thể thoát sớm hiệu quả (không biết tổng trước) — nhưng có thể dừng nếu phát hiện ra rõ
+- **Không cần visited set** / No Set needed: Đây chỉ là về vị trí cuối, không phải đường đi — khác với "Path Crossing"
+- **String vs char array** / String vs array: Dùng `for...of` trên string để tránh `.split('')`
+
+## Solution 1 - Coordinate Tracking O(n)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n) | Space: O(1)
+ * Track (x, y) position; check if returns to (0, 0)
  */
-function robotReturnToOriginBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function judgeCircle(moves: string): boolean {
+  let x = 0,
+    y = 0;
+  for (const m of moves) {
+    if (m === "U") y++;
+    else if (m === "D") y--;
+    else if (m === "L") x--;
+    else x++;
+  }
+  return x === 0 && y === 0;
 }
-
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function robotReturnToOrigin(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(robotReturnToOrigin(/* example 1 */)); // expected
-// console.log(robotReturnToOrigin(/* example 2 */)); // expected
-// console.log(robotReturnToOrigin(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Count-Based O(n)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Just count each direction; balanced pairs = return to origin
+ */
+function judgeCircleCount(moves: string): boolean {
+  let u = 0,
+    d = 0,
+    l = 0,
+    r = 0;
+  for (const m of moves) {
+    if (m === "U") u++;
+    else if (m === "D") d++;
+    else if (m === "L") l++;
+    else r++;
+  }
+  return u === d && l === r;
+}
+```
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Robot Return to Origin — LeetCode](https://leetcode.com/problems/robot-return-to-origin) — problem page
+## Solution 3 - Frequency Map One-Liner
+
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Count all chars; compare pairs
+ */
+function judgeCircleOneLiner(moves: string): boolean {
+  const freq: Record<string, number> = { U: 0, D: 0, L: 0, R: 0 };
+  for (const m of moves) freq[m]++;
+  return freq["U"] === freq["D"] && freq["L"] === freq["R"];
+}
+
+// Functional style
+function judgeCircleFP(moves: string): boolean {
+  const count = (c: string) => [...moves].filter((m) => m === c).length;
+  return count("U") === count("D") && count("L") === count("R");
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(judgeCircle("UD")); // → true
+console.log(judgeCircle("LL")); // → false
+console.log(judgeCircle("UUDDLR")); // → true
+console.log(judgeCircleCount("UD")); // → true
+console.log(judgeCircleCount("LRLR")); // → true
+console.log(judgeCircleOneLiner("UUUU")); // → false
+console.log(judgeCircleFP("UDLR")); // → true
+```
+
+## Related Problems
+
+| Problem                         | Difficulty | Link                                                                     |
+| ------------------------------- | ---------- | ------------------------------------------------------------------------ |
+| Path Crossing                   | Easy       | [LC 1496](https://leetcode.com/problems/path-crossing)                   |
+| Walking Robot Simulation        | Medium     | [LC 874](https://leetcode.com/problems/walking-robot-simulation)         |
+| Number of Laser Beams in a Bank | Medium     | [LC 2125](https://leetcode.com/problems/number-of-laser-beams-in-a-bank) |

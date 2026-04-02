@@ -7,97 +7,117 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/special-array-i"
 ---
 
-# Special Array I / Special Array I
+# Special Array I / Mảng Đặc Biệt I
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array Traversal
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
+> **See also**: [Special Array II](https://leetcode.com/problems/special-array-ii) | [Check Array Formation Through Concatenation](https://leetcode.com/problems/check-array-formation-through-concatenation)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## Vietnamese Analogy (Ví dụ thực tế)
 
-**Analogy:** Phân tích bài "Special Array I" — xác định pattern phù hợp dựa trên constraints và input/output.
+Hãy tưởng tượng một hàng đèn giao thông: đỏ (chẵn) và xanh (lẻ) phải xen kẽ nhau — không được có hai đèn cùng màu đứng cạnh nhau. Mảng được gọi là "đặc biệt" nếu mỗi cặp đèn liền kề luôn khác màu. Ta chỉ cần đi qua hàng đèn một lần và kiểm tra từng cặp kề nhau có đúng quy tắc không.
 
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Special Array I example:**
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+nums = [2, 1, 4]
+       E  O  E     E=Even, O=Odd
+
+Pair (2,1): E-O → different parity ✓
+Pair (1,4): O-E → different parity ✓
+→ Special: true
+
+nums = [4, 3, 1, 6]
+       E  O  O  E
+
+Pair (4,3): E-O ✓
+Pair (3,1): O-O ✗ ← FAIL
+→ Special: false
+
+Key check: nums[i] % 2 !== nums[i+1] % 2
+           ↔ (nums[i] + nums[i+1]) % 2 === 1
+           ↔ nums[i] % 2 !== nums[i+1] % 2
 ```
 
----
+## Problem (Bài toán)
 
-## Problem Description
+An array is **special** if every pair of its adjacent elements contains two numbers with different parity. Given an integer array `nums`, return `true` if it is special, `false` otherwise.
 
-Special Array I. ([LeetCode](https://leetcode.com/problems/special-array-i))
+**Example 1:** `nums = [1]` → `true` (no adjacent pairs)
+**Example 2:** `nums = [2,1,4]` → `true`
+**Example 3:** `nums = [4,3,1,6]` → `false`
 
-Difficulty: Easy | Acceptance: 81.8%
+**Constraints:** `1 ≤ nums.length ≤ 100`, `1 ≤ nums[i] ≤ 100`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+## Tips (Mẹo phỏng vấn)
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/special-array-i) for full constraints
+- **Parity check** / Kiểm tra tính chẵn lẻ: `nums[i] % 2 !== nums[i+1] % 2` là điều kiện cốt lõi
+- **Single pass** / Một lần duyệt: O(n) với early exit khi tìm vi phạm đầu tiên
+- **Bitwise shortcut** / Phím tắt bit: `(nums[i] & 1) !== (nums[i+1] & 1)` — nhanh hơn modulo
+- **Edge case** / Trường hợp đặc biệt: Mảng 1 phần tử → always `true` (không có cặp kề)
+- **Sum parity trick** / Mẹo tổng: `(a+b) % 2 === 1` ↔ a và b khác tính chẵn lẻ
+- **Follow-up** / Mở rộng: Special Array II hỏi cho từng query range — cần prefix sum để O(1)/query
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+## Solution 1 - Linear Scan (Optimal O(n))
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n) | Space: O(1)
+ * Check each adjacent pair has different parity
  */
-function specialArrayIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function isArraySpecial(nums: number[]): boolean {
+  for (let i = 0; i < nums.length - 1; i++) {
+    if ((nums[i] & 1) === (nums[i + 1] & 1)) return false;
+  }
+  return true;
 }
-
-/**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function specialArrayI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(specialArrayI(/* example 1 */)); // expected
-// console.log(specialArrayI(/* example 2 */)); // expected
-// console.log(specialArrayI(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Every/Some (Functional)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Using Array.prototype.every for declarative style
+ */
+function isArraySpecialFunctional(nums: number[]): boolean {
+  return nums.every((val, i) => i === nums.length - 1 || val % 2 !== nums[i + 1] % 2);
+}
+```
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Special Array I — LeetCode](https://leetcode.com/problems/special-array-i) — problem page
+## Solution 3 - XOR Parity Trick
+
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * XOR of adjacent elements is odd iff they have different parity
+ */
+function isArraySpecialXor(nums: number[]): boolean {
+  for (let i = 0; i < nums.length - 1; i++) {
+    // XOR is odd (bit 0 = 1) iff exactly one of them is odd
+    if (((nums[i] ^ nums[i + 1]) & 1) === 0) return false;
+  }
+  return true;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(isArraySpecial([1])); // → true (single element)
+console.log(isArraySpecial([2, 1, 4])); // → true
+console.log(isArraySpecial([4, 3, 1, 6])); // → false
+console.log(isArraySpecial([2, 4, 6])); // → false (all even)
+console.log(isArraySpecial([1, 3, 5])); // → false (all odd)
+console.log(isArraySpecialFunctional([2, 1, 4])); // → true
+```
+
+## Related Problems
+
+| Problem                              | Difficulty | Link                                                                          |
+| ------------------------------------ | ---------- | ----------------------------------------------------------------------------- |
+| Special Array II                     | Medium     | [LC 3152](https://leetcode.com/problems/special-array-ii)                     |
+| Check if Array Is Sorted and Rotated | Easy       | [LC 1752](https://leetcode.com/problems/check-if-array-is-sorted-and-rotated) |
+| Monotonic Array                      | Easy       | [LC 896](https://leetcode.com/problems/monotonic-array)                       |

@@ -2,107 +2,152 @@
 layout: page
 title: "Toss Strange Coins"
 difficulty: Medium
-category: Dynamic Programming
-tags: [Array, Math, Dynamic Programming, Probability and Statistics]
+category: DP
+tags: [Math, Dynamic Programming, Probability]
 leetcode_url: "https://leetcode.com/problems/toss-strange-coins"
 ---
 
-# Toss Strange Coins / Toss Strange Coins
+# Toss Strange Coins / Tung Đồng Xu Kỳ Lạ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Predict the Winner](https://leetcode.com/problems/predict-the-winner) | [Count Strictly Increasing Subarrays](https://leetcode.com/problems/count-strictly-increasing-subarrays)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Toss Strange Coins example:**
-
-```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
-```
+> **Track**: DP | **Difficulty**: 🟡 Medium | **Pattern**: Probability DP
+> **Frequency**: 📙 Tier 2 — Gặp ở các vòng phỏng vấn về xác suất
+> **See also**: [Soup Servings](https://leetcode.com/problems/soup-servings) | [New 21 Game](https://leetcode.com/problems/new-21-game)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Toss Strange Coins. ([LeetCode](https://leetcode.com/problems/toss-strange-coins))
+Bạn có `n` đồng xu ma thuật — đồng xu thứ `i` có xác suất `prob[i]` ra mặt ngửa. Tung tất cả đồng xu, xác suất để đúng `target` đồng ra mặt ngửa là bao nhiêu? Giống như `n` học sinh thi đậu với tỉ lệ khác nhau — xác suất đúng `k` người đậu? DP theo từng học sinh: `dp[j]` = xác suất đúng `j` người đậu sau khi xét `i` người đầu.
 
-Difficulty: Medium | Acceptance: 58.1%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+prob = [0.4, 0.5, 0.6], target = 2
+
+dp[j] = P(exactly j heads with first i coins)
+
+Initial (0 coins): dp[0]=1.0, dp[1..3]=0
+
+After coin 0 (p=0.4):
+  dp[1] = dp[0]*0.4 = 0.4
+  dp[0] = dp[0]*0.6 = 0.6
+
+After coin 1 (p=0.5):
+  dp[2] = old_dp[1]*0.5 = 0.4*0.5 = 0.20
+  dp[1] = old_dp[1]*0.5 + old_dp[0]*0.5 = 0.4*0.5 + 0.6*0.5 = 0.50
+  dp[0] = old_dp[0]*0.5 = 0.6*0.5 = 0.30
+
+After coin 2 (p=0.6):
+  dp[2] = old_dp[2]*0.4 + old_dp[1]*0.6
+        = 0.20*0.4 + 0.50*0.6 = 0.08 + 0.30 = 0.38
+
+Answer: dp[2] = 0.38 ✓ (wait: 0.4*0.5*0.4 + 0.4*0.5*0.6 + 0.6*0.5*0.6 = exact same)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/toss-strange-coins) for full constraints
+## Problem (Bài toán)
 
----
+You have `n` coins with probabilities `prob[i]` of landing heads. Toss all coins simultaneously. Return the **probability** that exactly `target` coins show heads.
 
-## 📝 Interview Tips
+**Example 1:** `prob = [0.4]`, `target = 1` → `0.4`
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+**Example 2:** `prob = [0.5, 0.5, 0.5, 0.5, 0.5]`, `target = 0` → `0.03125`
 
----
+**Example 3:** `prob = [0.4, 0.5, 0.6]`, `target = 2` → `0.38`
 
-## Solutions
+**Constraints:** `1 ≤ prob.length ≤ 1000`, `0 ≤ prob[i] ≤ 1`, `0 ≤ target ≤ prob.length`
+
+## Tips (Mẹo phỏng vấn)
+
+- **dp[j] = P(exactly j heads)** / Ý nghĩa: Sau khi xét `i` đồng xu, xác suất đúng `j` mặt ngửa
+- **Reverse iteration** / Duyệt ngược: Duyệt `j` từ `i` xuống 1 để tránh dùng coin mới nhiều lần
+- **Update rule** / Công thức: `dp[j] = dp[j]*notHead + dp[j-1]*head` — xác suất tổng hợp
+- **Floating point** / Số thực: Dùng `number` đủ chính xác với `prob.length ≤ 1000`
+- **Base case** / Cơ sở: `dp[0] = 1.0` (0 đồng xu, 0 mặt ngửa — chắc chắn)
+- **Space O(target)** / Không gian: Chỉ cần mảng 1D — duyệt ngược tránh ghi đè
+
+## Solution 1 - Naive Recursion with Memo
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n·target) | Space: O(n·target)
+ * Memoized recursion: P(i coins, exactly j heads)
  */
-function tossStrangeCoinsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function probabilityOfHeadsMemo(prob: number[], target: number): number {
+  const n = prob.length;
+  const memo: Map<string, number> = new Map();
+
+  function dp(i: number, heads: number): number {
+    if (heads < 0 || heads > i) return 0;
+    if (i === 0) return heads === 0 ? 1 : 0;
+    const key = `${i},${heads}`;
+    if (memo.has(key)) return memo.get(key)!;
+    const res = prob[i - 1] * dp(i - 1, heads - 1) + (1 - prob[i - 1]) * dp(i - 1, heads);
+    memo.set(key, res);
+    return res;
+  }
+
+  return dp(n, target);
+}
+```
+
+## Solution 2 - 1D DP (Optimal)
+
+```typescript
+/**
+ * @complexity Time: O(n·target) | Space: O(target)
+ * Rolling 1D DP: iterate coins, update dp in reverse
+ */
+function probabilityOfHeads(prob: number[], target: number): number {
+  // dp[j] = probability of exactly j heads so far
+  const dp = new Array(target + 1).fill(0);
+  dp[0] = 1.0;
+
+  for (const p of prob) {
+    // Reverse to avoid using this coin twice in one pass
+    for (let j = Math.min(target, prob.indexOf(p) + 1); j >= 1; j--) {
+      dp[j] = dp[j] * (1 - p) + dp[j - 1] * p;
+    }
+    dp[0] *= 1 - p;
+  }
+
+  return dp[target];
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n·target) | Space: O(target)
+ * Cleaner version: track coin index separately
  */
-function tossStrangeCoins(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+function probabilityOfHeadsClean(prob: number[], target: number): number {
+  const n = prob.length;
+  const dp = new Array(target + 1).fill(0);
+  dp[0] = 1.0;
 
-// === Test Cases ===
-// console.log(tossStrangeCoins(/* example 1 */)); // expected
-// console.log(tossStrangeCoins(/* example 2 */)); // expected
-// console.log(tossStrangeCoins(/* edge case */)); // expected
+  for (let i = 0; i < n; i++) {
+    const p = prob[i];
+    for (let j = Math.min(i + 1, target); j >= 1; j--) {
+      dp[j] = dp[j] * (1 - p) + dp[j - 1] * p;
+    }
+    dp[0] *= 1 - p;
+  }
+
+  return dp[target];
+}
 ```
 
----
+## Test Cases
 
-## 🔗 Related Problems
+```typescript
+console.log(probabilityOfHeadsClean([0.4], 1)); // → 0.4
+console.log(probabilityOfHeadsClean([0.5, 0.5, 0.5, 0.5, 0.5], 0)); // → 0.03125
+console.log(probabilityOfHeadsClean([0.4, 0.5, 0.6], 2)); // → ~0.38
+console.log(probabilityOfHeadsMemo([0.4, 0.5, 0.6], 2)); // → ~0.38
+console.log(probabilityOfHeadsClean([1.0, 1.0, 1.0], 3)); // → 1.0
+```
 
-- [Predict the Winner](https://leetcode.com/problems/predict-the-winner) — same pattern: Dynamic Programming
-- [Count Strictly Increasing Subarrays](https://leetcode.com/problems/count-strictly-increasing-subarrays) — same pattern: Dynamic Programming
-- [The Number of Good Subsets](https://leetcode.com/problems/the-number-of-good-subsets) — same pattern: Dynamic Programming
-- [Airplane Seat Assignment Probability](https://leetcode.com/problems/airplane-seat-assignment-probability) — same pattern: Dynamic Programming
-- [Toss Strange Coins — LeetCode](https://leetcode.com/problems/toss-strange-coins) — problem page
+## Related Problems
+
+| Problem              | Difficulty | Link                                                          |
+| -------------------- | ---------- | ------------------------------------------------------------- |
+| New 21 Game          | Medium     | [LC 837](https://leetcode.com/problems/new-21-game)           |
+| Soup Servings        | Medium     | [LC 808](https://leetcode.com/problems/soup-servings)         |
+| Dice Roll Simulation | Hard       | [LC 1223](https://leetcode.com/problems/dice-roll-simulation) |

@@ -2,107 +2,149 @@
 layout: page
 title: "Divisor Game"
 difficulty: Easy
-category: Dynamic Programming
-tags: [Math, Dynamic Programming, Brainteaser, Game Theory]
+category: DP
+tags: [Math, Dynamic Programming, Game Theory]
 leetcode_url: "https://leetcode.com/problems/divisor-game"
 ---
 
-# Divisor Game / Divisor Game
+# Divisor Game / Trò Chơi Ước Số
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Predict the Winner](https://leetcode.com/problems/predict-the-winner) | [Construct the Longest New String](https://leetcode.com/problems/construct-the-longest-new-string)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Divisor Game example:**
-
-```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
-```
+> **Track**: DP | **Difficulty**: 🟢 Easy | **Pattern**: Game Theory DP / Math
+> **Frequency**: 📘 Tier 3 — Gặp ở các vòng phỏng vấn cơ bản
+> **See also**: [Nim Game](https://leetcode.com/problems/nim-game) | [Stone Game](https://leetcode.com/problems/stone-game)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Divisor Game. ([LeetCode](https://leetcode.com/problems/divisor-game))
+Hai người chơi trò chơi với số `n`. Người đến lượt chọn một ước số `x` của `n` (0 < x < n), rồi `n` trở thành `n - x`. Ai không thể chọn được thì thua. Alice đi trước — cô ấy có thể thắng không? Mẹo thú vị: nếu `n` chẵn, Alice luôn chọn `x = 1` (ước số chẵn - ước số lẻ = lẻ), đẩy Bob vào tình thế số lẻ. Bob buộc phải trả số chẵn cho Alice, và cứ thế Alice luôn kiểm soát. Đáp án: Alice thắng khi và chỉ khi `n` chẵn!
 
-Difficulty: Easy | Acceptance: 70.4%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+n=1: Alice cần ước < 1 → không có → thua (false)
+n=2: Alice chọn x=1 → n=1 → Bob thua (true)
+n=3: Alice chọn x=1 → n=2 → Bob thắng (false)
+     (3's divisors: 1,3→ only x=1 valid)
+n=4: Alice chọn x=1 → n=3 → Bob thua (true)
+     OR chọn x=2 → n=2 → Bob thắng... so choose x=1!
+n=5: Alice must choose x=1 → n=4 → Bob wins (false)
+     OR x=5→ invalid
+
+Pattern: even→true, odd→false!
+
+DP verification:
+dp[1]=F, dp[2]=T, dp[3]=F, dp[4]=T, dp[5]=F, dp[6]=T...
+For n: dp[n] = OR of (!dp[n-x]) for all divisors x of n
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/divisor-game) for full constraints
+## Problem (Bài toán)
 
----
+Alice and Bob take turns. Alice goes first. On each turn, the current player picks `x` where `0 < x < n` and `x` divides `n`, then replaces `n` with `n - x`. The player who can't make a move loses. Return `true` if Alice wins (both play optimally).
 
-## 📝 Interview Tips
+**Example 1:** `n = 2` → `true` (Alice picks 1, n becomes 1, Bob can't move)
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+**Example 2:** `n = 3` → `false` (Alice picks 1, n becomes 2, Bob picks 1, n becomes 1, Alice can't)
 
----
+**Example 3:** `n = 4` → `true`
 
-## Solutions
+**Constraints:** `1 ≤ n ≤ 1000`
+
+## Tips (Mẹo phỏng vấn)
+
+- **Math insight** / Nhận xét toán học: `n % 2 === 0` → Alice wins; `n % 2 === 1` → Alice loses
+- **Why** / Tại sao: Số lẻ chỉ có ước lẻ (ngoại trừ chính nó) → `odd - odd = even` → chỉ có thể tạo số chẵn
+- **Induction** / Quy nạp: `n=1` thua, `n=2` thắng (chọn 1→n=1), mọi số chẵn kế thừa thắng
+- **DP solution** / DP: `dp[n] = any !dp[n-x]` cho `x` là ước của `n` — O(n²) nhưng không cần
+- **O(1) solution** / O(1): `return n % 2 === 0` — không cần DP!
+- **Interview pitfall** / Bẫy phỏng vấn: Hỏi DP nhưng toán học đơn giản hơn nhiều — nhận ra là điểm cộng
+
+## Solution 1 - Brute Force Recursion
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n²) | Space: O(n)
+ * Recursive game theory: try all valid moves
  */
-function divisorGameBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function divisorGameBrute(n: number): boolean {
+  const memo = new Map<number, boolean>();
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function divisorGame(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  function canWin(num: number): boolean {
+    if (memo.has(num)) return memo.get(num)!;
+    // Find all divisors x (0 < x < num, x divides num)
+    for (let x = 1; x < num; x++) {
+      if (num % x === 0) {
+        if (!canWin(num - x)) {
+          memo.set(num, true);
+          return true; // can move to losing position for opponent
+        }
+      }
+    }
+    memo.set(num, false);
+    return false; // no winning move
+  }
 
-// === Test Cases ===
-// console.log(divisorGame(/* example 1 */)); // expected
-// console.log(divisorGame(/* example 2 */)); // expected
-// console.log(divisorGame(/* edge case */)); // expected
+  return canWin(n);
+}
 ```
 
----
+## Solution 2 - DP Bottom-Up
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n²) | Space: O(n)
+ * dp[i] = true if current player wins with number i
+ */
+function divisorGameDP(n: number): boolean {
+  const dp = new Array(n + 1).fill(false);
+  // dp[1] = false (no valid x: 0 < x < 1 doesn't exist)
 
-- [Predict the Winner](https://leetcode.com/problems/predict-the-winner) — same pattern: Dynamic Programming
-- [Construct the Longest New String](https://leetcode.com/problems/construct-the-longest-new-string) — same pattern: Dynamic Programming
-- [Airplane Seat Assignment Probability](https://leetcode.com/problems/airplane-seat-assignment-probability) — same pattern: Dynamic Programming
-- [Chalkboard XOR Game](https://leetcode.com/problems/chalkboard-xor-game) — same pattern: Bit Manipulation
-- [Divisor Game — LeetCode](https://leetcode.com/problems/divisor-game) — problem page
+  for (let i = 2; i <= n; i++) {
+    // Try every divisor x of i
+    for (let x = 1; x < i; x++) {
+      if (i % x === 0 && !dp[i - x]) {
+        dp[i] = true;
+        break; // found a winning move
+      }
+    }
+  }
+
+  return dp[n];
+}
+```
+
+## Solution 3 - Mathematical O(1)
+
+```typescript
+/**
+ * @complexity Time: O(1) | Space: O(1)
+ * Key insight: Alice wins iff n is even.
+ * Proof by induction:
+ *   Base: n=1 (odd)→ false, n=2 (even)→ true
+ *   n=odd: only valid moves x must be odd (odd divisors), odd-odd=even → Bob gets even → Bob wins
+ *   n=even: Alice picks x=1 (always a divisor), n-1=odd → Bob gets odd → Alice wins
+ */
+function divisorGame(n: number): boolean {
+  return n % 2 === 0;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(divisorGame(1)); // → false
+console.log(divisorGame(2)); // → true
+console.log(divisorGame(3)); // → false
+console.log(divisorGame(4)); // → true
+console.log(divisorGame(1000)); // → true
+console.log(divisorGameDP(6)); // → true
+console.log(divisorGameBrute(7)); // → false
+```
+
+## Related Problems
+
+| Problem       | Difficulty | Link                                                  |
+| ------------- | ---------- | ----------------------------------------------------- |
+| Nim Game      | Easy       | [LC 292](https://leetcode.com/problems/nim-game)      |
+| Stone Game    | Medium     | [LC 877](https://leetcode.com/problems/stone-game)    |
+| Cat and Mouse | Hard       | [LC 913](https://leetcode.com/problems/cat-and-mouse) |

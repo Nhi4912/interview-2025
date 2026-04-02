@@ -7,97 +7,124 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/monotonic-array"
 ---
 
-# Monotonic Array / Monotonic Array
+# Monotonic Array / Mảng Đơn Điệu
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Phân tích bài "Monotonic Array" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Monotonic Array example:**
-
-```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
-```
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array Traversal
+> **Frequency**: 📙 Tier 2 — Gặp ở 3+ companies
+> **See also**: [Non-decreasing Array](https://leetcode.com/problems/non-decreasing-array) | [Check if Array Is Sorted and Rotated](https://leetcode.com/problems/check-if-array-is-sorted-and-rotated)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Monotonic Array. ([LeetCode](https://leetcode.com/problems/monotonic-array))
+Hãy tưởng tượng giá cổ phiếu theo thời gian. Mảng "đơn điệu" nghĩa là giá chỉ tăng dần HOẶC chỉ giảm dần — không bao giờ đổi chiều. Như một con dốc: hoặc chỉ lên, hoặc chỉ xuống, không có điểm quay đầu. Bài kiểm tra chỉ cần một lần đi qua dãy số và xem có cả "tăng" lẫn "giảm" trong cùng dãy không.
 
-Difficulty: Easy | Acceptance: 61.7%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+[1, 2, 2, 3]   → ↑↑= → monotone increasing ✓
+                  (no strict decrease ever)
+
+[6, 5, 4, 4]   → ↓↓= → monotone decreasing ✓
+                  (no strict increase ever)
+
+[1, 3, 2]      → ↑↓ → NOT monotonic ✗
+                  (has both increase and decrease)
+
+Algorithm: track if we ever see a[i]>a[i-1] AND a[i]<a[i-1]
+           if both happen → not monotonic
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/monotonic-array) for full constraints
+## Problem (Bài toán)
 
----
+An array is **monotonic** if it is either entirely non-increasing or non-decreasing. Given an integer array `nums`, return `true` if the array is monotonic.
 
-## 📝 Interview Tips
+**Example 1:** `nums = [1,2,2,3]` → `true`
+**Example 2:** `nums = [6,5,4,4]` → `true`
+**Example 3:** `nums = [1,3,2]` → `false`
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Constraints:** `1 ≤ nums.length ≤ 10^5`, `-10^5 ≤ nums[i] ≤ 10^5`
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **Two flags approach** / Hai cờ: Track `hasIncrease` và `hasDecrease` — nếu cả hai đều true → false
+- **Early exit** / Thoát sớm: Ngay khi cả hai cờ đều true có thể return false ngay
+- **Equals OK** / Bằng nhau: `a[i] === a[i+1]` không vi phạm — non-increasing cho phép equal
+- **Two-pass alternative** / Hai lần duyệt: Kiểm tra riêng "tất cả ≤" và "tất cả ≥" — rõ ràng hơn
+- **Edge case** / Trường hợp đặc biệt: Mảng 1 phần tử hoặc tất cả bằng nhau → always true
+- **Strict vs non-strict** / Nghiêm ngặt vs không: "Non-decreasing" = a[i] ≤ a[i+1], cho phép equal
+
+## Solution 1 - Two-pass Check (Clear O(n))
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n) | Space: O(1)
+ * Check separately: is it non-decreasing? is it non-increasing?
  */
-function monotonicArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function isMonotonicTwoPass(nums: number[]): boolean {
+  const isNonDecreasing = nums.every((v, i) => i === 0 || nums[i - 1] <= v);
+  const isNonIncreasing = nums.every((v, i) => i === 0 || nums[i - 1] >= v);
+  return isNonDecreasing || isNonIncreasing;
 }
-
-/**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function monotonicArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(monotonicArray(/* example 1 */)); // expected
-// console.log(monotonicArray(/* example 2 */)); // expected
-// console.log(monotonicArray(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Single Pass with Flags (Optimal O(n))
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Track whether we've seen an increase or decrease; both = not monotonic
+ */
+function isMonotonic(nums: number[]): boolean {
+  let hasInc = false,
+    hasDec = false;
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Monotonic Array — LeetCode](https://leetcode.com/problems/monotonic-array) — problem page
+  for (let i = 1; i < nums.length; i++) {
+    if (nums[i] > nums[i - 1]) hasInc = true;
+    else if (nums[i] < nums[i - 1]) hasDec = true;
+    if (hasInc && hasDec) return false;
+  }
+  return true;
+}
+```
+
+## Solution 3 - Direction Detection (Concise)
+
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Determine direction from first unequal pair, then verify
+ */
+function isMonotonicDirection(nums: number[]): boolean {
+  let dir = 0; // 0=unknown, 1=increasing, -1=decreasing
+
+  for (let i = 1; i < nums.length; i++) {
+    const diff = nums[i] - nums[i - 1];
+    if (diff === 0) continue;
+    const step = diff > 0 ? 1 : -1;
+    if (dir === 0) dir = step;
+    else if (dir !== step) return false;
+  }
+  return true;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(isMonotonic([1, 2, 2, 3])); // → true
+console.log(isMonotonic([6, 5, 4, 4])); // → true
+console.log(isMonotonic([1, 3, 2])); // → false
+console.log(isMonotonic([1])); // → true (single)
+console.log(isMonotonic([1, 1, 1])); // → true (all equal)
+console.log(isMonotonicTwoPass([1, 2, 2, 3])); // → true
+console.log(isMonotonicDirection([6, 5, 4, 4])); // → true
+```
+
+## Related Problems
+
+| Problem                                   | Difficulty | Link                                                                              |
+| ----------------------------------------- | ---------- | --------------------------------------------------------------------------------- |
+| Non-decreasing Array                      | Medium     | [LC 665](https://leetcode.com/problems/non-decreasing-array)                      |
+| Check if Array Is Sorted and Rotated      | Easy       | [LC 1752](https://leetcode.com/problems/check-if-array-is-sorted-and-rotated)     |
+| Longest Continuous Increasing Subsequence | Easy       | [LC 674](https://leetcode.com/problems/longest-continuous-increasing-subsequence) |

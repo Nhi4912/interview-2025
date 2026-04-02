@@ -7,97 +7,118 @@ tags: [Array, Hash Table, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/contiguous-array"
 ---
 
-# Contiguous Array / Contiguous Array
+# Contiguous Array / Mảng Liên Tiếp Cân Bằng
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) | [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
-
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Contiguous Array example:**
-
-```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
-```
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum + Hash Map
+> **Frequency**: 📙 Tier 2 — Gặp ở 5+ companies (Facebook, Amazon, Google)
+> **See also**: [Maximum Size Subarray Sum Equals k](https://leetcode.com/problems/maximum-size-subarray-sum-equals-k) | [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Contiguous Array. ([LeetCode](https://leetcode.com/problems/contiguous-array))
+Hãy tưởng tượng bạn đang đếm số lần đội nhà thắng (1) và thua (0) trong một mùa giải. Bạn muốn tìm chuỗi trận dài nhất mà số thắng bằng số thua. Thủ thuật: đổi thua (0) thành -1, lúc đó bài toán trở thành "tìm mảng con dài nhất có tổng = 0". Nếu prefix sum tại vị trí i và j bằng nhau, mảng con từ i+1 đến j có tổng 0 → ta tìm thấy chuỗi cân bằng!
 
-Difficulty: Medium | Acceptance: 49.4%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+nums  = [0, 1, 0, 0, 1, 1, 0]
+trans = [-1, 1,-1,-1, 1, 1,-1]  (0→-1, 1→1)
+
+index:   -1   0   1   2   3   4   5   6
+prefix:   0  -1   0  -1  -2  -1   0  -1
+
+prefixMap: { 0: -1 }
+i=0: prefix=-1 → map={0:-1, -1:0}
+i=1: prefix=0  → 0 in map at -1 → len=1-(-1)=2 → maxLen=2
+i=2: prefix=-1 → -1 in map at 0 → len=2-0=2 → maxLen=2
+i=3: prefix=-2 → map={..., -2:3}
+i=4: prefix=-1 → -1 in map at 0 → len=4-0=4 → maxLen=4
+i=5: prefix=0  → 0 in map at -1 → len=5-(-1)=6 → maxLen=6 ✓
+i=6: prefix=-1 → -1 in map at 0 → len=6-0=6 → maxLen=6
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/contiguous-array) for full constraints
+## Problem (Bài toán)
 
----
+Given a binary array `nums`, return the maximum length of a contiguous subarray with equal number of `0`s and `1`s.
 
-## 📝 Interview Tips
+**Example 1:** `nums = [0,1]` → `2`
+**Example 2:** `nums = [0,1,0]` → `2`
+**Example 3:** `nums = [0,1,0,0,1,1,0]` → `6`
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Constraints:** `1 ≤ nums.length ≤ 10^5`, `nums[i] ∈ {0, 1}`
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **Transform 0 → -1** / Biến đổi: Bài "số 0 bằng số 1" → "tổng mảng con = 0" — classic trick
+- **Prefix sum + hashmap** / Prefix sum + bảng băm: Lưu lần đầu tiên gặp mỗi prefix sum → O(n) time
+- **Initialize map[0] = -1** / Khởi tạo: Map phải có `{0: -1}` để xử lý trường hợp prefix sum = 0 từ đầu
+- **Length formula** / Công thức độ dài: Nếu `prefix[i] == prefix[j]` thì `length = i - j`
+- **Don't overwrite** / Không ghi đè: Chỉ lưu lần ĐẦU TIÊN gặp mỗi prefix sum để tối đa hóa độ dài
+- **Related pattern** / Pattern liên quan: Giống hệt "Max Size Subarray Sum = k" với k=0
+
+## Solution 1 - Brute Force (O(n²))
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n²) | Space: O(1)
+ * Check every subarray, count 0s and 1s
  */
-function contiguousArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findMaxLengthBrute(nums: number[]): number {
+  let maxLen = 0;
+  for (let i = 0; i < nums.length; i++) {
+    let zeros = 0,
+      ones = 0;
+    for (let j = i; j < nums.length; j++) {
+      if (nums[j] === 0) zeros++;
+      else ones++;
+      if (zeros === ones) maxLen = Math.max(maxLen, j - i + 1);
+    }
+  }
+  return maxLen;
 }
-
-/**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function contiguousArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(contiguousArray(/* example 1 */)); // expected
-// console.log(contiguousArray(/* example 2 */)); // expected
-// console.log(contiguousArray(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Prefix Sum + Hash Map (Optimal O(n))
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(n)
+ * Transform 0→-1, find longest subarray with sum=0 using prefix sum map
+ */
+function findMaxLength(nums: number[]): number {
+  const firstSeen = new Map<number, number>();
+  firstSeen.set(0, -1); // prefix sum 0 before array starts
+  let prefix = 0,
+    maxLen = 0;
 
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom) — same pattern: Prefix Sum
-- [Subarray Sums Divisible by K](https://leetcode.com/problems/subarray-sums-divisible-by-k) — same pattern: Prefix Sum
-- [Maximum Good Subarray Sum](https://leetcode.com/problems/maximum-good-subarray-sum) — same pattern: Prefix Sum
-- [Contiguous Array — LeetCode](https://leetcode.com/problems/contiguous-array) — problem page
+  for (let i = 0; i < nums.length; i++) {
+    prefix += nums[i] === 1 ? 1 : -1;
+    if (firstSeen.has(prefix)) {
+      maxLen = Math.max(maxLen, i - firstSeen.get(prefix)!);
+    } else {
+      firstSeen.set(prefix, i); // only store first occurrence
+    }
+  }
+  return maxLen;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(findMaxLength([0, 1])); // → 2
+console.log(findMaxLength([0, 1, 0])); // → 2
+console.log(findMaxLength([0, 1, 0, 0, 1, 1, 0])); // → 6
+console.log(findMaxLength([0, 0, 0, 0])); // → 0
+console.log(findMaxLength([0, 1, 1, 0, 1, 1, 1, 0])); // → 4
+console.log(findMaxLengthBrute([0, 1, 0, 0, 1, 1, 0])); // → 6
+```
+
+## Related Problems
+
+| Problem                            | Difficulty | Link                                                                       |
+| ---------------------------------- | ---------- | -------------------------------------------------------------------------- |
+| Maximum Size Subarray Sum Equals k | Medium     | [LC 325](https://leetcode.com/problems/maximum-size-subarray-sum-equals-k) |
+| Subarray Sum Equals K              | Medium     | [LC 560](https://leetcode.com/problems/subarray-sum-equals-k)              |
+| Binary Subarrays With Sum          | Medium     | [LC 930](https://leetcode.com/problems/binary-subarrays-with-sum)          |

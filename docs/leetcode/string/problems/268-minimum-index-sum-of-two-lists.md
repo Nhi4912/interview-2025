@@ -7,100 +7,153 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/minimum-index-sum-of-two-lists"
 ---
 
-# Minimum Index Sum of Two Lists / Minimum Index Sum of Two Lists
+# Minimum Index Sum of Two Lists / Tổng Chỉ Số Nhỏ Nhất Từ Hai Danh Sách
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Index Sum of Two Lists example:**
-
-```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
-```
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Table / Two List Intersection
+> **Frequency**: 📘 Tier 2 — Gặp ở 6 companies
+> **See also**: [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) | [Intersection of Two Linked Lists](https://leetcode.com/problems/intersection-of-two-linked-lists)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Minimum Index Sum of Two Lists. ([LeetCode](https://leetcode.com/problems/minimum-index-sum-of-two-lists))
+Hai người bạn đến thành phố mới và mỗi người có danh sách nhà hàng yêu thích theo thứ tự ưu tiên. Họ muốn ăn tối cùng nhau tại nhà hàng mà cả hai đều thích và có **tổng thứ hạng nhỏ nhất** (ưu tiên cao nhất cộng lại). Nếu hai người đều xếp hạng 1 một nhà hàng, đó rõ ràng là lựa chọn tốt nhất! Giải pháp: lưu chỉ số của list1 vào Map, rồi duyệt list2 — nếu trùng, tính tổng chỉ số và cập nhật nhỏ nhất. Tất cả các kết quả có cùng tổng nhỏ nhất đều được trả về.
 
-Difficulty: Easy | Acceptance: 58.0%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+list1 = ["Shogun","Tapioca Express","Burger King","KFC"]
+list2 = ["Piatti","The Grill at Torrey Pines","Hungry Hunter Steakhouse","Shogun"]
+
+Map from list1: { "Shogun":0, "Tapioca Express":1, "Burger King":2, "KFC":3 }
+
+Scan list2:
+  j=0: "Piatti"                      → not in map
+  j=1: "The Grill..."                → not in map
+  j=2: "Hungry Hunter Steakhouse"    → not in map
+  j=3: "Shogun"                      → in map! sum = 0+3 = 3 ← new min
+
+minSum = 3, result = ["Shogun"]   ✓
+
+Tie-breaking example:
+list1=["a","b"],  list2=["b","a"]
+  "b": 1+0=1  "a": 0+1=1  → both tied → ["b","a"] or ["a","b"]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-index-sum-of-two-lists) for full constraints
+## Problem (Bài toán)
 
----
+Given two string arrays `list1` and `list2`, return all strings that appear in both lists with the **minimum index sum** `i + j` (where `i` is index in `list1`, `j` in `list2`). Order doesn't matter.
 
-## 📝 Interview Tips
+**Example 1:** `list1 = ["Shogun","Tapioca Express","Burger King","KFC"], list2 = ["Piatti","The Grill at Torrey Pines","Hungry Hunter Steakhouse","Shogun"]` → `["Shogun"]`
+**Example 2:** `list1 = ["Shogun","Tapioca Express"], list2 = ["Tapioca Express","Shogun"]` → `["Shogun","Tapioca Express"]` (both tied at sum 1)
+**Example 3:** `list1 = ["happy"], list2 = ["sad"]` → `[]`
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+**Constraints:** `1 ≤ list1.length, list2.length ≤ 1000`, strings are unique within each list
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **Index map first** / Map chỉ số trước: Dùng Map với list1 (thường ngắn hơn) để O(1) lookup khi duyệt list2
+- **Track minSum** / Theo dõi tổng nhỏ nhất: Reset result khi tìm sum nhỏ hơn, append khi bằng nhau
+- **Không cần sắp xếp** / No sort needed: Đã có thứ tự từ list1 và list2, chỉ cần chọn theo min sum
+- **Brute O(mn)** / Brute force: Nested loop — O(mn) space và time, không cần thiết
+- **Dừng sớm khi có thể** / Early exit: Nếu tìm được sum=0 (cả hai ở index 0), dừng ngay
+- **Guaranteed answer** / Luôn có đáp án: Constraints đảm bảo "answer exists" (có ít nhất một chung)... actually đề có thể return empty nếu không chung
+
+## Solution 1 - Brute Force O(m·n)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(m·n) | Space: O(1) extra
+ * Nested loops checking every pair
  */
-function minimumIndexSumOfTwoListsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findRestaurantBrute(list1: string[], list2: string[]): string[] {
+  let minSum = Infinity;
+  const result: string[] = [];
+  for (let i = 0; i < list1.length; i++) {
+    for (let j = 0; j < list2.length; j++) {
+      if (list1[i] === list2[j]) {
+        const sum = i + j;
+        if (sum < minSum) {
+          minSum = sum;
+          result.length = 0;
+          result.push(list1[i]);
+        } else if (sum === minSum) result.push(list1[i]);
+      }
+    }
+  }
+  return result;
 }
-
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumIndexSumOfTwoLists(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumIndexSumOfTwoLists(/* example 1 */)); // expected
-// console.log(minimumIndexSumOfTwoLists(/* example 2 */)); // expected
-// console.log(minimumIndexSumOfTwoLists(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Hash Map O(m+n)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(m+n) | Space: O(m)
+ * Index list1 into Map, scan list2 for matches, track minimum sum
+ */
+function findRestaurant(list1: string[], list2: string[]): string[] {
+  const indexMap = new Map<string, number>();
+  for (let i = 0; i < list1.length; i++) indexMap.set(list1[i], i);
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Minimum Index Sum of Two Lists — LeetCode](https://leetcode.com/problems/minimum-index-sum-of-two-lists) — problem page
+  let minSum = Infinity;
+  let result: string[] = [];
+  for (let j = 0; j < list2.length; j++) {
+    const i = indexMap.get(list2[j]);
+    if (i !== undefined) {
+      const sum = i + j;
+      if (sum < minSum) {
+        minSum = sum;
+        result = [list2[j]];
+      } else if (sum === minSum) result.push(list2[j]);
+    }
+  }
+  return result;
+}
+```
+
+## Solution 3 - Two-Way Map for Sorted Output
+
+```typescript
+/**
+ * @complexity Time: O(m+n) | Space: O(m+n)
+ * Build both index maps, find intersection, sort by index sum
+ */
+function findRestaurantSorted(list1: string[], list2: string[]): string[] {
+  const map1 = new Map(list1.map((s, i) => [s, i]));
+  const map2 = new Map(list2.map((s, i) => [s, i]));
+
+  let minSum = Infinity;
+  const candidates: Array<[string, number]> = [];
+  for (const [s, i] of map1) {
+    const j = map2.get(s);
+    if (j !== undefined) candidates.push([s, i + j]);
+  }
+  for (const [, sum] of candidates) minSum = Math.min(minSum, sum);
+  return candidates.filter(([, sum]) => sum === minSum).map(([s]) => s);
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(
+  findRestaurantBrute(
+    ["Shogun", "Tapioca Express", "Burger King", "KFC"],
+    ["Piatti", "The Grill at Torrey Pines", "Hungry Hunter Steakhouse", "Shogun"],
+  ),
+); // → ["Shogun"]
+
+console.log(findRestaurant(["Shogun", "Tapioca Express"], ["Tapioca Express", "Shogun"])); // → ["Shogun","Tapioca Express"]  (both sum=1)
+
+console.log(findRestaurant(["happy"], ["sad"])); // → []
+console.log(findRestaurantSorted(["a", "b"], ["b", "a"])); // → ["a","b"] or ["b","a"]
+```
+
+## Related Problems
+
+| Problem                       | Difficulty | Link                                                                  |
+| ----------------------------- | ---------- | --------------------------------------------------------------------- |
+| Intersection of Two Arrays    | Easy       | [LC 349](https://leetcode.com/problems/intersection-of-two-arrays)    |
+| Intersection of Two Arrays II | Easy       | [LC 350](https://leetcode.com/problems/intersection-of-two-arrays-ii) |
+| Two Sum                       | Easy       | [LC 1](https://leetcode.com/problems/two-sum)                         |

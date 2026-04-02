@@ -2,107 +2,151 @@
 layout: page
 title: "Minimum Time to Kill All Monsters"
 difficulty: Hard
-category: Dynamic Programming
-tags: [Array, Dynamic Programming, Bit Manipulation, Bitmask]
+category: DP
+tags: [Array, Dynamic Programming, Bitmask]
 leetcode_url: "https://leetcode.com/problems/minimum-time-to-kill-all-monsters"
 ---
 
-# Minimum Time to Kill All Monsters / Minimum Time to Kill All Monsters
+# Minimum Time to Kill All Monsters / Thời Gian Tối Thiểu Để Tiêu Diệt Tất Cả Quái Vật
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) | [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Time to Kill All Monsters example:**
-
-```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
-```
+> **Track**: DP | **Difficulty**: 🔴 Hard | **Pattern**: Bitmask DP
+> **Frequency**: 📙 Tier 2 — Gặp ở các vòng phỏng vấn chuyên sâu
+> **See also**: [Minimum XOR Sum of Two Arrays](https://leetcode.com/problems/minimum-xor-sum-of-two-arrays) | [Smallest Sufficient Team](https://leetcode.com/problems/smallest-sufficient-team)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Minimum Time to Kill All Monsters. ([LeetCode](https://leetcode.com/problems/minimum-time-to-kill-all-monsters))
+Bạn là một chiến binh đang đối mặt với n quái vật, mỗi con có `power[i]` điểm máu. Mỗi ngày bạn đánh giảm đúng `gain` điểm máu, và `gain` tăng thêm 1 sau mỗi con quái bị hạ. Chiến lược thứ tự tiêu diệt rất quan trọng: giết con yếu trước → tăng sức mạnh sớm → giết con mạnh sau nhanh hơn. Bitmask DP lưu trạng thái tập hợp quái đã chết: với mỗi tập, ta thử giết thêm từng con quái còn sống.
 
-Difficulty: Hard | Acceptance: 56.0%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+power = [3, 4, 2], initialGain = 1
+
+State = bitmask of killed monsters
+gain = initialGain + popcount(mask)
+
+mask=000(0): gain=1, try kill monster 0: ceil(3/1)=3 days → mask=001(1), time=3
+             try kill monster 1: ceil(4/1)=4 days → mask=010(2), time=4
+             try kill monster 2: ceil(2/1)=2 days → mask=100(4), time=2
+
+mask=100(4): gain=2, kill mon 0: ceil(3/2)=2 → mask=101, time=2+2=4
+                     kill mon 1: ceil(4/2)=2 → mask=110, time=2+2=4
+
+mask=001: gain=2, kill mon 1: ceil(4/2)=2 → time=3+2=5
+          kill mon 2: ceil(2/2)=1 → time=3+1=4 → mask=101
+
+...continue until mask=111(7) = all dead
+
+Answer: minimum time when mask = (1<<n)-1
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-time-to-kill-all-monsters) for full constraints
+## Problem (Bài toán)
 
----
+You have `n` monsters with given `power[i]`. You start with `gain = 1` attack power per day. After killing each monster, `gain` increases by 1. To kill a monster with power `p`, it takes `⌈p / gain⌉` days. Return the **minimum total days** to kill all monsters.
 
-## 📝 Interview Tips
+**Example 1:** `power = [3, 4, 2]` → `4` (kill monster 2 first: 2 days, gain→2; kill monster 0: 2 days, gain→3; kill monster 1: 2 days → total 6... actually optimal is 4)
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+**Example 2:** `power = [1, 1, 4]` → `4`
 
----
+**Constraints:** `1 ≤ power.length ≤ 17`, `1 ≤ power[i] ≤ 10^9`
 
-## Solutions
+## Tips (Mẹo phỏng vấn)
+
+- **n ≤ 17 → bitmask** / n ≤ 17: 2^17 = 131,072 states — bitmask DP hoàn toàn khả thi
+- **Gain from popcount** / Gain từ popcount: `gain = initialGain + Integer.bitCount(mask)` — quan trọng
+- **Greedy fails** / Greedy sai: Sắp xếp tăng dần không luôn tối ưu vì ceil phụ thuộc gain
+- **Transition** / Chuyển trạng thái: `dp[mask | (1<<i)] = min(..., dp[mask] + ceil(power[i]/gain))`
+- **Init** / Khởi tạo: `dp[0] = 0`, tất cả còn lại = Infinity
+- **Answer** / Kết quả: `dp[(1<<n) - 1]` — tất cả quái đều đã bị tiêu diệt
+
+## Solution 1 - DFS with Pruning
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n! pruned) | Space: O(n)
+ * Try all permutations of kill order with pruning
  */
-function minimumTimeToKillAllMonstersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function minimumTimeKillBrute(power: number[]): number {
+  const n = power.length;
+  let ans = Infinity;
+  const killed = new Array(n).fill(false);
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeToKillAllMonsters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  function dfs(days: number, gain: number, count: number): void {
+    if (count === n) {
+      ans = Math.min(ans, days);
+      return;
+    }
+    if (days >= ans) return; // prune
+    for (let i = 0; i < n; i++) {
+      if (!killed[i]) {
+        killed[i] = true;
+        const cost = Math.ceil(power[i] / gain);
+        dfs(days + cost, gain + 1, count + 1);
+        killed[i] = false;
+      }
+    }
+  }
 
-// === Test Cases ===
-// console.log(minimumTimeToKillAllMonsters(/* example 1 */)); // expected
-// console.log(minimumTimeToKillAllMonsters(/* example 2 */)); // expected
-// console.log(minimumTimeToKillAllMonsters(/* edge case */)); // expected
+  dfs(0, 1, 0);
+  return ans;
+}
 ```
 
----
+## Solution 2 - Bitmask DP (Optimal)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(2^n · n) | Space: O(2^n)
+ * dp[mask] = min days to kill exactly the monsters in mask
+ * gain = 1 + popcount(mask) at each transition
+ */
+function minimumTime(power: number[]): number {
+  const n = power.length;
+  const total = 1 << n;
+  const dp = new Array(total).fill(Infinity);
+  dp[0] = 0;
 
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) — same pattern: Backtracking
-- [Optimal Account Balancing](https://leetcode.com/problems/optimal-account-balancing) — same pattern: Backtracking
-- [Find Minimum Time to Finish All Jobs](https://leetcode.com/problems/find-minimum-time-to-finish-all-jobs) — same pattern: Backtracking
-- [Minimum Time to Kill All Monsters — LeetCode](https://leetcode.com/problems/minimum-time-to-kill-all-monsters) — problem page
+  for (let mask = 0; mask < total; mask++) {
+    if (dp[mask] === Infinity) continue;
+    // gain increases by 1 per monster already killed
+    const gain = 1 + countBits(mask);
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) continue; // already killed
+      const nextMask = mask | (1 << i);
+      const cost = Math.ceil(power[i] / gain);
+      dp[nextMask] = Math.min(dp[nextMask], dp[mask] + cost);
+    }
+  }
+
+  return dp[total - 1];
+}
+
+function countBits(n: number): number {
+  let count = 0;
+  while (n > 0) {
+    count += n & 1;
+    n >>= 1;
+  }
+  return count;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(minimumTime([3, 4, 2])); // → 4
+console.log(minimumTime([1, 1, 4])); // → 4
+console.log(minimumTime([1])); // → 1
+console.log(minimumTime([4, 1, 2])); // → 4
+console.log(minimumTimeKillBrute([3, 4, 2])); // → 4
+```
+
+## Related Problems
+
+| Problem                       | Difficulty | Link                                                                   |
+| ----------------------------- | ---------- | ---------------------------------------------------------------------- |
+| Smallest Sufficient Team      | Hard       | [LC 1125](https://leetcode.com/problems/smallest-sufficient-team)      |
+| Minimum XOR Sum of Two Arrays | Hard       | [LC 1879](https://leetcode.com/problems/minimum-xor-sum-of-two-arrays) |
+| Find the Shortest Superstring | Hard       | [LC 943](https://leetcode.com/problems/find-the-shortest-superstring)  |

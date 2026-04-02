@@ -2,107 +2,156 @@
 layout: page
 title: "All Possible Full Binary Trees"
 difficulty: Medium
-category: Tree-Graph
+category: Tree & Graph
 tags: [Dynamic Programming, Tree, Recursion, Memoization, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/all-possible-full-binary-trees"
 ---
 
-# All Possible Full Binary Trees / All Possible Full Binary Trees
+# All Possible Full Binary Trees / Tất Cả Cây Nhị Phân Đầy Có Thể
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Number of Ways to Reorder Array to Get Same BST](https://leetcode.com/problems/number-of-ways-to-reorder-array-to-get-same-bst) | [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — All Possible Full Binary Trees example:**
-
-```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
-```
+> **Track**: Tree & Graph | **Difficulty**: 🟡 Medium | **Pattern**: Divide & Conquer + Memoization
+> **Frequency**: 📘 Tier 3 — Gặp ở Amazon, Google
+> **See also**: [Unique Binary Search Trees II](https://leetcode.com/problems/unique-binary-search-trees-ii) | [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-All Possible Full Binary Trees. ([LeetCode](https://leetcode.com/problems/all-possible-full-binary-trees))
+Hãy tưởng tượng bạn đang xây các tòa nhà đối xứng từ những viên gạch. Một "cây nhị phân đầy" giống như một tòa nhà mà mỗi tầng hoặc có đúng 2 cột con hoặc không có cột nào (lá). Cho trước n viên gạch, bạn phân chia: 1 viên cho mái (root), còn lại chia đôi cho cánh trái và phải. Vì phân đôi chỉ khả thi khi n lẻ, ta chỉ cần thử các cách chia (1,n-2), (3,n-4), ... — memoize để tránh tính lại.
 
-Difficulty: Medium | Acceptance: 82.7%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+n=7: need 7 nodes, all full binary trees
+
+Split possibilities (left_nodes, right_nodes):
+  (1, 5): root + 1-node left + 5-node right
+  (3, 3): root + 3-node left + 3-node right
+  (5, 1): root + 5-node left + 1-node right
+
+For n=3: only (1,1) → one tree:
+    *
+   / \
+  *   *
+
+For n=5: splits (1,3) and (3,1) → two trees:
+    *         *
+   / \       / \
+  *   *     *   *
+     / \   / \
+    *   * *   *
+
+n=7: |FBT(1)|*|FBT(5)| + |FBT(3)|*|FBT(3)| + |FBT(5)|*|FBT(1)|
+   =  1*2  +  1*1  +  2*1  = 5 trees total
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/all-possible-full-binary-trees) for full constraints
+## Problem (Bài toán)
 
----
+Given an integer `n`, return a list of all possible **full binary trees** with exactly `n` nodes. A full binary tree is a binary tree where every node has either 0 or 2 children. Each node value should be `0`. Return the list in any order.
 
-## 📝 Interview Tips
+**Example 1:** `n=7` → list of 5 structurally distinct full binary trees
+**Example 2:** `n=3` → `[[0,0,0]]` (one tree: root with two leaf children)
+**Example 3:** `n=1` → `[[0]]` (single root node)
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+**Constraints:** `1 ≤ n ≤ 20`, if n is even → return `[]` (impossible)
 
----
+## Tips (Mẹo phỏng vấn)
 
-## Solutions
+- **Only odd n is valid** / Chỉ n lẻ mới hợp lệ: Full binary tree luôn có số node lẻ — nếu n chẵn return `[]` ngay
+- **Divide and conquer** / Chia để trị: Root chiếm 1 node, chia i node bên trái và (n-1-i) bên phải với i lẻ từ 1 đến n-2
+- **Memoize by n** / Ghi nhớ theo n: `Map<number, TreeNode[]>` lưu kết quả theo n tránh tính lại các cây con
+- **Create new nodes** / Tạo node mới: Mỗi combination (left, right) cần tạo node root mới — không tái sử dụng tránh sharing reference
+- **Catalan number growth** / Tăng trưởng Catalan: Số cây tăng nhanh theo số Catalan — với n=19 có 1430 cây
+- **Base case n=1** / Base case n=1: Trả về `[new TreeNode(0)]` — chỉ 1 lá duy nhất
+
+## Solution 1 - Recursive without Memoization
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(2^n) | Space: O(2^n) output size
+ * Pure recursion: for each valid left size i, pair with all (n-1-i) right trees
  */
-function allPossibleFullBinaryTreesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function allPossibleFullBinaryTrees(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function allPossibleFBT(n: number): TreeNode[] {
+  if (n % 2 === 0) return [];
+  if (n === 1) return [new TreeNode(0)];
+  const result: TreeNode[] = [];
+  for (let left = 1; left < n - 1; left += 2) {
+    const right = n - 1 - left;
+    for (const l of allPossibleFBT(left)) {
+      for (const r of allPossibleFBT(right)) {
+        result.push(new TreeNode(0, l, r));
+      }
+    }
+  }
+  return result;
 }
-
-// === Test Cases ===
-// console.log(allPossibleFullBinaryTrees(/* example 1 */)); // expected
-// console.log(allPossibleFullBinaryTrees(/* example 2 */)); // expected
-// console.log(allPossibleFullBinaryTrees(/* edge case */)); // expected
 ```
 
----
+## Solution 2 - Memoized Recursion (Optimal)
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(2^n) output bounded | Space: O(2^n) memo + output
+ * Memoize results per n; avoid recomputing same subtree structures
+ */
+function allPossibleFBTMemo(n: number): TreeNode[] {
+  const memo = new Map<number, TreeNode[]>();
 
-- [Number of Ways to Reorder Array to Get Same BST](https://leetcode.com/problems/number-of-ways-to-reorder-array-to-get-same-bst) — same pattern: Union Find
-- [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) — same pattern: Dynamic Programming
-- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — same pattern: Dynamic Programming
-- [Binary Tree Cameras](https://leetcode.com/problems/binary-tree-cameras) — same pattern: Dynamic Programming
-- [All Possible Full Binary Trees — LeetCode](https://leetcode.com/problems/all-possible-full-binary-trees) — problem page
+  function dp(k: number): TreeNode[] {
+    if (memo.has(k)) return memo.get(k)!;
+    if (k % 2 === 0) return [];
+    if (k === 1) return [new TreeNode(0)];
+
+    const result: TreeNode[] = [];
+    for (let left = 1; left < k - 1; left += 2) {
+      const right = k - 1 - left;
+      for (const l of dp(left)) {
+        for (const r of dp(right)) {
+          // Create fresh root each time to avoid sharing subtree refs
+          result.push(new TreeNode(0, l, r));
+        }
+      }
+    }
+    memo.set(k, result);
+    return result;
+  }
+
+  return dp(n);
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(allPossibleFBTMemo(1).length); // → 1
+console.log(allPossibleFBTMemo(3).length); // → 1
+console.log(allPossibleFBTMemo(5).length); // → 2
+console.log(allPossibleFBTMemo(7).length); // → 5
+console.log(allPossibleFBTMemo(2).length); // → 0 (even n)
+console.log(allPossibleFBT(7).length); // → 5
+// Verify structure: each tree has exactly n=7 nodes
+function countNodes(root: TreeNode | null): number {
+  if (!root) return 0;
+  return 1 + countNodes(root.left) + countNodes(root.right);
+}
+console.log(allPossibleFBTMemo(7).every((t) => countNodes(t) === 7)); // → true
+```
+
+## Related Problems
+
+| Problem                           | Difficulty | Link                                                                      |
+| --------------------------------- | ---------- | ------------------------------------------------------------------------- |
+| Unique Binary Search Trees II     | Medium     | [LC 95](https://leetcode.com/problems/unique-binary-search-trees-ii)      |
+| Different Ways to Add Parentheses | Medium     | [LC 241](https://leetcode.com/problems/different-ways-to-add-parentheses) |
+| Count Complete Tree Nodes         | Easy       | [LC 222](https://leetcode.com/problems/count-complete-tree-nodes)         |

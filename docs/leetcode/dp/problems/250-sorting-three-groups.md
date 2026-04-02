@@ -2,107 +2,160 @@
 layout: page
 title: "Sorting Three Groups"
 difficulty: Medium
-category: Dynamic Programming
-tags: [Array, Binary Search, Dynamic Programming]
+category: DP
+tags: [Array, Dynamic Programming, Binary Search]
 leetcode_url: "https://leetcode.com/problems/sorting-three-groups"
 ---
 
-# Sorting Three Groups / Sorting Three Groups
+# Sorting Three Groups / Sắp Xếp Ba Nhóm
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) | [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum)
-
----
-
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sorting Three Groups example:**
-
-```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
-```
+> **Track**: DP | **Difficulty**: 🟡 Medium | **Pattern**: LIS Variant
+> **Frequency**: 📗 Tier 2 — Gặp ở các vòng phỏng vấn
+> **See also**: [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence) | [Non-decreasing Array](https://leetcode.com/problems/non-decreasing-array)
 
 ---
 
-## Problem Description
+## Vietnamese Analogy (Ví dụ thực tế)
 
-Sorting Three Groups. ([LeetCode](https://leetcode.com/problems/sorting-three-groups))
+Bạn có một hàng học sinh được gán nhãn 1, 2, hoặc 3 (nhóm yếu, trung bình, giỏi). Bạn muốn hàng trở thành non-decreasing (không giảm) bằng cách thay đổi nhãn của ít học sinh nhất. Đây tương đương với: giữ lại dãy con dài nhất đã là non-decreasing — phần còn lại cần được "sửa". Số thay đổi = `n - LIS_length`.
 
-Difficulty: Medium | Acceptance: 41.9%
+## Visual (Minh họa trực quan)
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+nums = [2, 1, 3, 2, 1, 3]
+
+Goal: make non-decreasing (1 ≤ nums[i] ≤ 3)
+Min changes = n - (longest non-decreasing subsequence)
+
+LIS (non-decreasing) in [2,1,3,2,1,3]:
+  [1,2,3] length 3? → [1,3,3] or [1,2,3]
+  Longest: [1,2,3] or [1,1,3] or [2,2,3] → length 3?
+  Actually [1,2,3] wait: indices 1,3,5 → nums[1]=1, nums[3]=2, nums[5]=3 → [1,2,3] ✓ length 3
+  Or [2,2,3]? idx 0,3,5 → [2,2,3] ✓ length 3
+  But [1,1,3]? idx 1,4,5 → [1,1,3] ✓ length 3
+  Maximum = 3, changes = 6 - 3 = 3
+
+DP approach: dp[i] = length of longest non-decreasing subseq ending at i
+  dp[0]=1(2), dp[1]=1(1), dp[2]=2(1,3 or 2,3), dp[3]=2(1,2),
+  dp[4]=2(1,1), dp[5]=3(1,2,3 or 2,2,3 or 1,1,3)
+  max=3, ans=6-3=3 ✓
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sorting-three-groups) for full constraints
+## Problem (Bài toán)
 
----
+You have an array `nums` where each element is `1`, `2`, or `3`. In one operation, replace any element with any value in `{1,2,3}`. Return the **minimum number of operations** to make `nums` non-decreasing.
 
-## 📝 Interview Tips
+**Example 1:** `nums = [2,1,3,2,1,3]` → `3`
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+**Example 2:** `nums = [1,3,2,1,3,3]` → `2`
 
----
+**Example 3:** `nums = [2,2,2]` → `0`
 
-## Solutions
+**Constraints:** `1 ≤ nums.length ≤ 100`, `nums[i] ∈ {1,2,3}`
+
+## Tips (Mẹo phỏng vấn)
+
+- **Key insight** / Ý tưởng chính: `min_ops = n - len(longest non-decreasing subsequence)`
+- **Non-decreasing LIS** / LIS không giảm: Cho phép bằng nhau — dùng `≤` thay vì `<`
+- **Only 3 values** / Chỉ 3 giá trị: DP state nhỏ — dp cho 3 suffix/prefix patterns
+- **DP O(n)** / O(n) DP: Vì chỉ 3 giá trị, đếm chuỗi con optimally trong O(n)
+- **O(n log n) LIS** / LIS nhị phân: Binary search trên patience sorting — dùng `upper_bound`
+- **Think complement** / Nghĩ phần bù: Giữ tối đa → thay đổi tối thiểu — cách tư duy quan trọng
+
+## Solution 1 - O(n²) LIS DP
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * @complexity Time: O(n²) | Space: O(n)
+ * Find longest non-decreasing subsequence, answer = n - its length
  */
-function sortingThreeGroupsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function minimumOperationsBrute(nums: number[]): number {
+  const n = nums.length;
+  const dp = new Array(n).fill(1);
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sortingThreeGroups(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[j] <= nums[i]) {
+        dp[i] = Math.max(dp[i], dp[j] + 1);
+      }
+    }
+  }
 
-// === Test Cases ===
-// console.log(sortingThreeGroups(/* example 1 */)); // expected
-// console.log(sortingThreeGroups(/* example 2 */)); // expected
-// console.log(sortingThreeGroups(/* edge case */)); // expected
+  return n - Math.max(...dp);
+}
 ```
 
----
+## Solution 2 - O(n) DP (Optimal for values {1,2,3})
 
-## 🔗 Related Problems
+```typescript
+/**
+ * @complexity Time: O(n) | Space: O(1)
+ * Since values are only 1,2,3, use three dp variables:
+ * dp1 = longest non-decreasing subseq ending with 1
+ * dp2 = longest non-decreasing subseq ending with 2
+ * dp3 = longest non-decreasing subseq ending with 3
+ */
+function minimumOperations(nums: number[]): number {
+  let dp1 = 0,
+    dp2 = 0,
+    dp3 = 0;
 
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum) — same pattern: Prefix Sum
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Russian Doll Envelopes](https://leetcode.com/problems/russian-doll-envelopes) — same pattern: Dynamic Programming
-- [Sorting Three Groups — LeetCode](https://leetcode.com/problems/sorting-three-groups) — problem page
+  for (const x of nums) {
+    if (x === 1) {
+      dp1 = dp1 + 1;
+      // dp2, dp3 unchanged (can't extend them with 1 decreasing)
+    } else if (x === 2) {
+      dp2 = Math.max(dp1, dp2) + 1;
+    } else {
+      dp3 = Math.max(dp1, dp2, dp3) + 1;
+    }
+  }
+
+  return nums.length - Math.max(dp1, dp2, dp3);
+}
+```
+
+## Solution 3 - O(n log n) Patience Sorting LIS
+
+```typescript
+/**
+ * @complexity Time: O(n log n) | Space: O(n)
+ * Binary search patience sorting for non-decreasing LIS
+ * Uses upper_bound (right-most valid position)
+ */
+function minimumOperationsNLogN(nums: number[]): number {
+  const tails: number[] = [];
+
+  for (const x of nums) {
+    // Find first position > x (for non-decreasing, allow equal → use upper bound)
+    let lo = 0,
+      hi = tails.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (tails[mid] <= x) lo = mid + 1;
+      else hi = mid;
+    }
+    tails[lo] = x;
+  }
+
+  return nums.length - tails.length;
+}
+```
+
+## Test Cases
+
+```typescript
+console.log(minimumOperations([2, 1, 3, 2, 1, 3])); // → 3
+console.log(minimumOperations([1, 3, 2, 1, 3, 3])); // → 2
+console.log(minimumOperations([2, 2, 2])); // → 0
+console.log(minimumOperationsBrute([2, 1, 3, 2, 1, 3])); // → 3
+console.log(minimumOperationsNLogN([1, 3, 2, 1, 3, 3])); // → 2
+```
+
+## Related Problems
+
+| Problem                           | Difficulty | Link                                                                      |
+| --------------------------------- | ---------- | ------------------------------------------------------------------------- |
+| Longest Increasing Subsequence    | Medium     | [LC 300](https://leetcode.com/problems/longest-increasing-subsequence)    |
+| Non-decreasing Array              | Medium     | [LC 665](https://leetcode.com/problems/non-decreasing-array)              |
+| Delete Columns to Make Sorted III | Hard       | [LC 960](https://leetcode.com/problems/delete-columns-to-make-sorted-iii) |
