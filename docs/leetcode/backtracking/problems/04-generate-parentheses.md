@@ -5,6 +5,16 @@ difficulty: Medium
 category: Backtracking
 tags: [String, Dynamic Programming, Backtracking]
 leetcode_url: "https://leetcode.com/problems/generate-parentheses/"
+leetcode_number: 22
+pattern: "Backtracking with Constraints"
+frequency_tier: 2
+companies: [Google, Amazon, Bloomberg, Microsoft]
+target_time_minutes: 20
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Generate Parentheses / Tạo Dấu Ngoặc Hợp Lệ
@@ -41,6 +51,19 @@ Result: ["(())", "()()"]
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Trigger          | Response                                                                        |
+| ---------------- | ------------------------------------------------------------------------------- |
+| **When you see** | "generate all valid combinations", "well-formed parentheses"                    |
+| **Think**        | Backtracking — add `(` only if `open < n`, add `)` only if `close < open`      |
+| **Template**     | `if open < n: recurse(open+1, close, cur+"("); if close < open: recurse(...)` |
+| **Time target**  | ⏱️ 20 min (Medium)                                                              |
+
+> 💡 **Memory hook / Móc nhớ:** "2 điều kiện: open < n mới thêm `(`; close < open mới thêm `)` — không filter, không sai!"
+
+---
+
 ## Problem Description
 
 Given `n` pairs of parentheses, generate all combinations of well-formed (valid) parentheses.
@@ -57,6 +80,30 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+### Step 1 — Understand / Hiểu Đề (1 min)
+
+> "We need all valid combinations of n pairs of parentheses. Output order doesn't matter. n is at most 8 so output size is manageable."
+
+### Step 2 — Match & Plan / Nhận Dạng & Lên Kế Hoạch (2-3 min)
+
+> "Brute force: generate all 2^(2n) strings then validate — wasteful. Better: backtracking with early pruning. Two rules: only add `(` if we haven't used all n opens; only add `)` if there's an unmatched `(`. This guarantees every completed string is valid — no post-filtering needed. Time is O(4^n/√n) — the Catalan number."
+
+### Step 3 — Implement / Viết Code (5 min)
+
+> "I'll write a recursive backtrack(current, open, close). Base case: current.length === 2n, push to result. Then try adding `(` if open < n, and `)` if close < open."
+
+### Step 4 — Review / Kiểm Tra (1-2 min)
+
+> "For n=2: start empty. Add `(` → open=1. Add `(` → open=2. Now can only add `)` → `(()`. Add `)` → close=2 — done: `(())`. Backtrack and try `)` earlier gives `()()`. Two results match expected."
+
+### Step 5 — Evaluate / Đánh Giá (1 min)
+
+> "Time O(4^n/√n) — Catalan number of valid strings, each length 2n. Space O(n) recursion depth. Edge case: n=1 gives exactly `[\"()\"]`."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Is there a required ordering in the output? (LeetCode accepts any valid order.) / Có yêu cầu thứ tự output không?
@@ -64,6 +111,16 @@ Constraints:
 3. **Approach**: "Backtracking with two counters — open and close. Add `(` only if open < n, add `)` only if close < open. This prunes invalid branches early." / Backtracking với pruning, không cần filter sau
 4. **Complexity**: The number of valid strings is Catalan(n) ≈ 4^n / √n. Total time is O(4^n / √n × n) — dominated by the output size / Độ phức tạp theo số Catalan
 5. **Edge cases**: n=1 always gives `["()"]`; every valid string has exactly n `(`s and n `)`s / n=1 cho kết quả đơn giản, kiểm tra trước
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| #   | Mistake / Sai lầm                                    | Why Wrong / Tại sao sai                                     | Fix / Cách sửa                                        |
+| --- | ---------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------- |
+| 1   | Generate all 2^(2n) strings then filter              | Exponential waste — most strings are invalid                | Use backtracking constraints to prune invalid branches |
+| 2   | Add `)` whenever `close < n` instead of `close < open` | Generates strings like `))((` — not well-formed           | Condition: `close < open` ensures matching pairs       |
+| 3   | Forget to check `open < n` before adding `(`        | May add more `(` than allowed by n                          | Guard: only add `(` when `open < n`                   |
 
 ---
 
@@ -139,3 +196,20 @@ console.log(generateParenthesisBrute(2)); // ["(())", "()()"] ✅
 - [Letter Combinations of a Phone Number](https://leetcode.com/problems/letter-combinations-of-a-phone-number/) — same backtracking structure
 - [Permutations](https://leetcode.com/problems/permutations/) — backtracking template for generating all arrangements
 - [Combination Sum](https://leetcode.com/problems/combination-sum/) — backtracking with pruning on sum constraint
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric / Tiêu chí                              | Result / Kết quả                         |
+| ---------------------------------------------- | ---------------------------------------- |
+| Solved without hints? / Giải không cần gợi ý?  | ☐ Yes ☐ Needed hint ☐ Looked at solution |
+| Time taken / Thời gian                         | ___ min (target: 20 min)                 |
+| Confidence (1-5) / Độ tự tin                   | ☐1 ☐2 ☐3 ☐4 ☐5                           |
+| Can explain to interviewer? / Giải thích được? | ☐ Yes ☐ Partially ☐ No                   |
+
+**SRS Schedule / Lịch ôn tập:** Review in 1d → 3d → 7d → 14d → 30d after solving
+
+| Date | Confidence | Time | Notes |
+| ---- | ---------- | ---- | ----- |
+|      |            |      |       |

@@ -5,6 +5,16 @@ difficulty: Medium
 category: Tree/Graph
 tags: [Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/"
+leetcode_number: 236
+pattern: "DFS Post-order, Return Ancestor"
+frequency_tier: 2
+companies: [Amazon, Facebook, Microsoft, Google]
+target_time_minutes: 20
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Lowest Common Ancestor of a Binary Tree / Tổ Tiên Chung Thấp Nhất của Cây Nhị Phân
@@ -46,6 +56,19 @@ dfs(3): left=node(5), right=null → returns node(5) ✅ LCA
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Khi thấy | Nghĩ đến |
+|---|---|
+| **When you see** | Find LCA of two nodes p, q in binary tree |
+| **Think** | Post-order DFS — if node equals p or q return it; merge results from left and right subtrees |
+| **Template** | `if (!node \|\| node===p \|\| node===q) return node; const L=lca(left); const R=lca(right); return L&&R ? node : L\|\|R` |
+| **Time target** | ≤ 20 min — code in ~10 min, trace through example in ~5 min |
+
+**Memory hook:** "LCA = cả hai xuất hiện thì nút hiện tại là tổ tiên chung"
+
+---
+
 ## Problem Description
 
 Given a binary tree, find the lowest common ancestor (LCA) of two nodes p and q. The LCA is the deepest node that has both p and q as descendants (a node can be a descendant of itself).
@@ -64,6 +87,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> **U — Understand:** "So I need to find the deepest node that is an ancestor of both p and q. A node is a descendant of itself, so if p is an ancestor of q, then p is the LCA. Are p and q guaranteed to exist in the tree? Are all node values unique?"
+
+> **M — Match:** "This is a classic post-order DFS problem. I've seen this pattern before — I'll recurse down, and when I find p or q I return it up. The key insight is: if both left and right subtrees return non-null, the current node is where p and q split — that's the LCA."
+
+> **P — Plan:** "I'll write a recursive function that returns null if node is null, returns the node if it equals p or q. Then I recurse left and right. If both results are non-null, return current node as LCA. Otherwise return whichever side is non-null."
+
+> **I — Implement:** "Base case: `if (!root || root === p || root === q) return root`. Recurse: `const L = lca(root.left, p, q); const R = lca(root.right, p, q)`. Merge: `return L && R ? root : L || R`."
+
+> **R/E — Review & Evaluate:** "Time O(n) — we visit every node once in the worst case. Space O(h) — recursion stack where h is tree height, O(log n) balanced, O(n) worst. Edge case: p is ancestor of q → we return p immediately because `root === p` triggers before we recurse deeper, and q must be in p's subtree."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Are p and q guaranteed to exist? / VI: "Cả hai node có chắc chắn tồn tại trong cây không? Node có thể là tổ tiên của chính nó không?"
@@ -71,6 +108,16 @@ Constraints:
 3. **Optimize**: Single-pass post-order DFS — return node when found, if both children return non-null → LCA / VI: Một lần DFS: trả về non-null khi gặp p hoặc q; nếu cả hai con đều non-null thì node hiện tại là LCA
 4. **Edge cases**: One node is ancestor of the other (p=5, q=4 → LCA=5 because we return p immediately) / VI: Khi gặp p thì trả về ngay, không cần tìm tiếp vì q chắc chắn ở trong subtree của p
 5. **Follow-up**: What if it's a BST? / VI: Nếu là BST có thể dùng ordering property để đạt O(log n)
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| Mistake | Why It Fails | Fix |
+|---|---|---|
+| Checking `node.val === p.val` instead of `node === p` | Breaks when duplicate values exist — wrong node returned | Compare node references with `===`, not `.val` |
+| Not handling the case where p is ancestor of q | Returns wrong node — continues searching below p unnecessarily | Return early when `node === p` or `node === q`; the other target must be in that subtree |
+| Traversing both subtrees before checking if node equals p or q | Wastes time; also masks the ancestor-is-target edge case | Check `root === p || root === q` as the first base case, before recursive calls |
 
 ---
 
@@ -149,3 +196,22 @@ return left || right; // pass up whichever side found something
 - [Binary Tree Paths](https://leetcode.com/problems/binary-tree-paths/) — path tracking in tree, same DFS pattern
 - [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree/) — post-order DFS returning info upward
 - [Course Schedule II](./15-course-schedule-ii.md) — graph DFS with state tracking
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | Your Result |
+|---|---|---|
+| Time to solve | ≤ 20 min | _____ min |
+| Got optimal on first try | Yes | ☐ Yes ☐ No |
+| Explained clearly | Yes | ☐ Yes ☐ No |
+| Handled all edge cases | Yes | ☐ Yes ☐ No |
+
+**SRS Schedule:** After solving — review in 1 day → 3 days → 7 days → 14 days → 30 days.
+
+### Review Log
+
+| Date | Time Taken | Notes |
+|---|---|---|
+| | | |

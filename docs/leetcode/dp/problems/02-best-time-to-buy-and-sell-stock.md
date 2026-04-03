@@ -5,12 +5,23 @@ difficulty: Easy
 category: Dynamic Programming
 tags: [Dynamic Programming, Greedy, Array]
 leetcode_url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/"
+leetcode_number: 121
+pattern: "Greedy / Kadane"
+frequency_tier: 1
+companies: [Amazon, Google, Meta, Microsoft, Goldman Sachs]
+target_time_minutes: 10
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
-# Best Time to Buy and Sell Stock / Thời Điểm Tốt Nhất Để Mua và Bán Cổ Phiếu
+# Best Time to Buy and Sell Stock / Thời Điểm Tốt Nhất Để Mua Bán Cổ Phiếu
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DP/Greedy (Kadane variant)
-> **Frequency**: 🔥 Tier 1 — Bài kinh điển xuất hiện trong hầu hết vòng coding interview
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Greedy / Kadane
+> **Frequency**: 🔥 Tier 1 — Gặp >90% interviews | **Target**: ⏱️ 10 min
+> **Companies**: Amazon, Google, Meta, Microsoft, Goldman Sachs
 > **See also**: [Maximum Subarray](./03-maximum-subarray.md) | [Best Time II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/)
 
 ---
@@ -38,9 +49,22 @@ profit:   0    0    4    2    5    3
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Trigger          | Response                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| **When you see** | "maximize profit", "buy low sell high", "single transaction"                               |
+| **Think**        | Track running minimum, compute profit at each step                                         |
+| **Template**     | `minPrice = Math.min(minPrice, price); maxProfit = Math.max(maxProfit, price - minPrice);` |
+| **Time target**  | ⏱️ 10 min (Easy)                                                                           |
+
+> 💡 **Memory hook / Móc nhớ:** "Luôn nhớ giá rẻ nhất đã thấy — mỗi ngày tính lời nếu bán hôm nay!"
+
+---
+
 ## Problem Description
 
-Given an array `prices` where `prices[i]` is the stock price on day `i`, choose **one day to buy** and a **later day to sell** to maximize profit. Return the maximum profit, or `0` if no profit is possible.
+Given an array `prices` where `prices[i]` is the stock price on day `i`, choose one day to buy and a later day to sell to maximize profit. Return the maximum profit, or `0` if no profit is possible.
 
 ```
 Example 1: [7,1,5,3,6,4] → 5    (buy@1, sell@6)
@@ -55,67 +79,126 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+### Step 1 — Understand / Hiểu Đề (1 min)
+
+> "We have daily stock prices. We can buy on one day and sell on a later day.
+> We want to maximize profit from a single transaction.
+> Clarification: Must we make a transaction? → No, return 0 if no profit possible."
+
+### Step 2 — Match & Plan / Nhận Dạng & Lên Kế Hoạch (2 min)
+
+> "Brute force: try all (buy, sell) pairs where buy < sell — O(n²).
+> But I notice we just need the minimum price seen so far at each point.
+> I'll track running minimum and compute max profit in one pass.
+> O(n) time, O(1) space. Should I go ahead?"
+
+### Step 3 — Implement / Viết Code (3-5 min)
+
+> "I'll initialize minPrice to first element and maxProfit to 0.
+> For each price starting from index 1, update minPrice if lower.
+> Then update maxProfit if current price minus minPrice is larger."
+
+### Step 4 — Review / Kiểm Tra (1-2 min)
+
+> "Trace [7,1,5,3,6,4]: min=7,profit=0 → min=1,profit=0 → profit=4 →
+> profit=4 → profit=5 → profit=5. Return 5. Buy day 1 ($1), sell day 4 ($6). Correct."
+
+### Step 5 — Evaluate / Đánh Giá (1 min)
+
+> "Time: O(n) — one pass. Space: O(1) — two variables.
+> Edge cases: single element → 0, all same prices → 0, strictly decreasing → 0.
+> This is optimal. Follow-up: multiple transactions → greedy sum all positive diffs."
+
+---
+
 ## 📝 Interview Tips
 
-1. **Clarify**: Can we hold the stock over multiple days? Must we make exactly one transaction? / Chỉ được 1 lần mua-bán, không bắt buộc phải giao dịch
-2. **Brute force**: Try all pairs (i, j) where i < j — O(n²) / Thử tất cả cặp mua-bán
-3. **Optimize**: Track running minimum — single pass O(n) / Duyệt 1 lần, cập nhật giá min liên tục
+1. **Clarify**: Only one transaction allowed? Must we trade? / Chỉ 1 giao dịch, không bắt buộc
+2. **Brute force**: Try all pairs — O(n²) / Thử tất cả cặp mua-bán
+3. **Optimize**: Track running minimum — single pass O(n) / Duyệt 1 lần, cập nhật giá min
 4. **Edge cases**: All same prices → 0; single element → 0; strictly decreasing → 0
-5. **Follow-up**: Multiple transactions allowed? → LC 122; with cooldown? → LC 309
+5. **Follow-up**: Multiple transactions? → LC 122; with cooldown? → LC 309 / Nhiều giao dịch
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| #   | Mistake / Sai lầm                  | Why Wrong / Tại sao sai                                   | Fix / Cách sửa                                            |
+| --- | ---------------------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
+| 1   | Find global min and max separately | Max might come BEFORE min — can't sell before buying      | Track min as you go, only compute profit from current min |
+| 2   | Return negative profit             | Problem says return 0 if no profit possible               | Initialize maxProfit = 0, never goes negative             |
+| 3   | Use DP array when not needed       | Wastes O(n) space for a problem solvable with 2 variables | Just use `minPrice` and `maxProfit` variables             |
 
 ---
 
 ## Solutions
 
 ```typescript
-
 /**
-
-- Solution 1: Brute Force
-- Time: O(n²) — try every buy/sell pair
-- Space: O(1) — no extra memory
-  */
-  function maxProfitBrute(prices: number[]): number {
+ * Solution 1: Brute Force — Try All Pairs
+ * Time: O(n²) — check every buy/sell pair
+ * Space: O(1) — no extra memory
+ */
+function maxProfitBrute(prices: number[]): number {
   let maxProfit = 0;
 
-for (let i = 0; i < prices.length - 1; i++) {
-for (let j = i + 1; j < prices.length; j++) {
-maxProfit = Math.max(maxProfit, prices[j] - prices[i]);
-}
-}
+  for (let i = 0; i < prices.length - 1; i++) {
+    for (let j = i + 1; j < prices.length; j++) {
+      maxProfit = Math.max(maxProfit, prices[j] - prices[i]);
+    }
+  }
 
-return maxProfit;
+  return maxProfit;
 }
 
 /**
-
-- Solution 2: One-Pass Greedy (Optimal)
-- Time: O(n) — single scan, update min price and max profit
-- Space: O(1) — two variables only
-  */
-  function maxProfit(prices: number[]): number {
+ * Solution 2: One-Pass Greedy (Optimal)
+ * Time: O(n) — single scan, update min and max profit
+ * Space: O(1) — two variables only
+ */
+function maxProfit(prices: number[]): number {
   let minPrice = prices[0];
   let maxProfit = 0;
 
-for (let i = 1; i < prices.length; i++) {
-minPrice = Math.min(minPrice, prices[i]);
-maxProfit = Math.max(maxProfit, prices[i] - minPrice);
-}
+  for (let i = 1; i < prices.length; i++) {
+    minPrice = Math.min(minPrice, prices[i]);
+    maxProfit = Math.max(maxProfit, prices[i] - minPrice);
+  }
 
-return maxProfit;
+  return maxProfit;
 }
 
 // === Test Cases ===
 console.log(maxProfit([7, 1, 5, 3, 6, 4])); // 5
 console.log(maxProfit([7, 6, 4, 3, 1])); // 0
-console.log(maxProfit([1])); // 0 (edge: single day)
-
+console.log(maxProfit([1])); // 0
+console.log(maxProfit([2, 4, 1])); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Maximum Subarray](./03-maximum-subarray.md) — cùng tư duy Kadane, tìm max gain liên tiếp
-- [Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/) — biến thể cho phép nhiều giao dịch
-- [Best Time to Buy and Sell Stock with Cooldown](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/) — thêm ràng buộc cooldown
+- [Maximum Subarray](./03-maximum-subarray.md) — same Kadane idea, find max contiguous gain
+- [Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/) — unlimited transactions
+- [Best Time with Cooldown](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/) — state machine DP
+- [Best Time with Transaction Fee](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/) — greedy with fee
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric / Tiêu chí                              | Result / Kết quả                         |
+| ---------------------------------------------- | ---------------------------------------- |
+| Solved without hints? / Giải không cần gợi ý?  | ☐ Yes ☐ Needed hint ☐ Looked at solution |
+| Time taken / Thời gian                         | \_\_\_ min (target: 10 min)              |
+| Confidence (1-5) / Độ tự tin                   | ☐1 ☐2 ☐3 ☐4 ☐5                           |
+| Can explain to interviewer? / Giải thích được? | ☐ Yes ☐ Partially ☐ No                   |
+
+**SRS Schedule / Lịch ôn tập:** Review in 1d → 3d → 7d → 14d → 30d after solving
+
+| Date | Confidence | Time | Notes |
+| ---- | ---------- | ---- | ----- |
+|      |            |      |       |

@@ -5,6 +5,16 @@ difficulty: Medium
 category: Sorting-Searching
 tags: [Array, Divide and Conquer, Sorting, Heap, Quickselect]
 leetcode_url: "https://leetcode.com/problems/kth-largest-element-in-an-array/"
+leetcode_number: 215
+pattern: "Min-Heap of size K / QuickSelect"
+frequency_tier: 2
+companies: [Amazon, Google, Facebook, Bloomberg]
+target_time_minutes: 20
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Kth Largest Element in an Array / Phần Tử Lớn Thứ K trong Mảng
@@ -42,6 +52,18 @@ heap.min() = 5 ✅  (kth largest = min of top-k heap)
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| When you see... | Think... | Template | Time target |
+|---|---|---|---|
+| Kth largest/smallest in unsorted array | Min-Heap of size k — discard elements smaller than current heap min | `push num; if heap.size > k: pop min` — heap.min() is answer | < 5 min to recognize |
+| "Top k elements", "k most frequent" | Same min-heap pattern; heap size stays exactly k throughout | Initialize empty heap, iterate all elements once | < 15 min to code |
+| Follow-up: "Can you do O(n)?" | QuickSelect — partition around pivot, recurse only on side containing index (n-k) | Random pivot + Lomuto/Hoare partition, no extra space | < 20 min total |
+
+**Memory hook:** "Kth largest = min-heap kích thước k — cái bé bị đẩy ra, cái lớn còn lại" — heap is a filter, not a sorter.
+
+---
+
 ## Problem Description
 
 Given an integer array `nums` and integer `k`, return the **kth largest** element in sorted order (not kth distinct).
@@ -59,6 +81,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> **U — Understand:** "We need the kth largest element — by position in sorted order, not kth distinct value. So if k=2 and array has duplicates like [5,5,4], the answer is 5 not 4, right? And k is guaranteed to be valid — between 1 and n inclusive?"
+
+> **M — Match:** "This is a 'kth order statistic' problem. Two well-known approaches: min-heap of size k in O(n log k), or QuickSelect in O(n) average. I'll start with the heap approach since it's simpler to reason about in an interview, then offer QuickSelect as the follow-up optimization."
+
+> **P — Plan:** "Maintain a min-heap of exactly k elements. For each number: push it in. If heap size exceeds k, pop the minimum — we just discarded the smallest of the top-k candidates. After all elements, heap.min() holds the kth largest. For QuickSelect: find index (n-k) in sorted order by partitioning in-place — recurse only on the partition that contains the target index."
+
+> **I — Implement:** "Min-heap version: `const heap = []; for num of nums: heapPush(num); if heap.length > k: heapPop(); return heap[0];`. In JS we simulate with a sorted array for interview clarity. QuickSelect: random pivot, Lomuto partition, recurse left or right based on pivot's final index vs target."
+
+> **R — Review & E — Evaluate:** "Tracing [3,2,1,5,6,4] k=2: heap grows to [3], [2,3], skip 1, becomes [3,5], [5,6], [5,6]. Return 5. Correct. Time O(n log k) for heap — better than O(n log n) sort when k is small. QuickSelect is O(n) average with random pivot to avoid O(n²) worst case. Trade-off: heap is deterministic and simpler; QuickSelect is faster but trickier to implement correctly."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: kth largest in sorted order, not kth distinct? Can array have duplicates? / Lớn thứ k theo vị trí sắp xếp, không phải k giá trị phân biệt?
@@ -66,6 +102,16 @@ Constraints:
 3. **Optimize**: Min Heap size k → O(n log k); Quick Select → O(n) average / Min-heap tốt khi k << n; Quick Select là optimal cho trường hợp chung.
 4. **Edge cases**: k=1 (return max), k=n (return min), all duplicates, single element / k=1 là max, k=n là min, mảng toàn số giống nhau.
 5. **Follow-up**: "Can you do O(n)?" → Quick Select with random pivot / Hỏi thêm Quick Select; mention Median-of-Medians cho O(n) guaranteed.
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| Mistake | Why it's wrong | Fix |
+|---|---|---|
+| Using max-heap instead of min-heap | A max-heap keeps the largest on top — you'd pop the largest, keeping the smallest, opposite of what you want | Use min-heap: smallest of the top-k sits at root, gets evicted first when a larger element arrives |
+| Sorting entire array to solve it | O(n log n) — technically correct but misses the point; interviewer expects you to recognize heap/QuickSelect | Heap is O(n log k), strictly better when k << n; always mention this trade-off explicitly |
+| Confusing kth largest vs kth smallest index in QuickSelect | kth largest corresponds to index (n-k) in 0-indexed ascending sorted array — off-by-one causes wrong answer | `target = nums.length - k`; partition until pivot lands exactly at target index |
 
 ---
 
@@ -149,3 +195,28 @@ console.log(findKthLargestSort([1], 1)); // 1
 - [Median of Two Sorted Arrays](./04-median-of-two-sorted-arrays.md) — harder order-statistic problem
 - [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements/) — same "top k" pattern with heap + frequency map
 - [Kth Smallest Element in BST](../tree-graph/problems/10-kth-smallest-element-in-a-bst.md) — same "kth element" concept in BST structure
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | My result |
+|---|---|---|
+| Time to solve | ≤ 20 min | \_\_\_ min |
+| Recognized pattern | ≤ 2 min | \_\_\_ min |
+| Coded min-heap solution | O(n log k) | [ ] Yes [ ] No |
+| Offered QuickSelect follow-up | O(n) avg | [ ] Yes [ ] No |
+| Handled edge cases | k=1, k=n, duplicates | [ ] Yes [ ] No |
+
+**SRS Schedule:**
+
+- First solve → review in 1 day
+- Correct (shaky) → review in 3 days
+- Correct (confident) → review in 7 days
+- Mastered → review in 14 days
+
+**Review Log:**
+
+| Date | Result | Notes |
+|---|---|---|
+| \_\_\_\_ | ⬜ unsolved / 🟡 hint needed / 🟢 solved | |

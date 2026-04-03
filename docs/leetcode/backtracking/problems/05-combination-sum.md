@@ -5,6 +5,16 @@ difficulty: Medium
 category: Backtracking
 tags: [Array, Backtracking]
 leetcode_url: "https://leetcode.com/problems/combination-sum/"
+leetcode_number: 39
+pattern: "Backtracking + Unlimited Reuse"
+frequency_tier: 2
+companies: [Amazon, Google, Bloomberg, Facebook]
+target_time_minutes: 20
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Combination Sum / Tổng Tổ Hợp
@@ -45,6 +55,19 @@ Result: [[2,2,3], [7]]
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Trigger          | Response                                                                          |
+| ---------------- | --------------------------------------------------------------------------------- |
+| **When you see** | "all combinations summing to target", "same element reused"                       |
+| **Think**        | Backtracking with `start` index; recurse from `i` (not `i+1`) to allow reuse     |
+| **Template**     | `backtrack(i, rem): if rem===0 push; for j=i: if cands[j]<=rem recurse(j,...)`   |
+| **Time target**  | ⏱️ 20 min (Medium)                                                                |
+
+> 💡 **Memory hook / Móc nhớ:** "Unlimited reuse = start từ `i`, không phải `i+1` — cho phép dùng lại!"
+
+---
+
 ## Problem Description
 
 Given an array of **distinct** integers `candidates` and `target`, return all unique combinations where chosen numbers sum to `target`. The same number may be used **unlimited times**.
@@ -62,6 +85,30 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+### Step 1 — Understand / Hiểu Đề (1 min)
+
+> "We need all unique combinations from the candidates array that sum to target. Each candidate can be used unlimited times. Output order doesn't matter."
+
+### Step 2 — Match & Plan / Nhận Dạng & Lên Kế Hoạch (2-3 min)
+
+> "This is backtracking. I'll sort the candidates first. I'll use a start index to avoid duplicate combos — when recurring after choosing candidates[i], I pass i (not i+1) to allow reuse. If candidates[i] > remaining, I break since the array is sorted and all subsequent candidates are too large."
+
+### Step 3 — Implement / Viết Code (5 min)
+
+> "backtrack(start, current, remaining). Base case: remaining===0, push copy. For i=start: if candidates[i] > remaining break; push, recurse(i, ...), pop."
+
+### Step 4 — Review / Kiểm Tra (1-2 min)
+
+> "For [2,3,6,7], target=7: explore 2→2→2→3 (rem=0, push [2,2,3]), then 7 (push [7]). Result [[2,2,3],[7]] correct."
+
+### Step 5 — Evaluate / Đánh Giá (1 min)
+
+> "Time O(N^(T/M)) where N=candidates, T=target, M=min candidate. Space O(T/M) recursion depth. The sort+break optimization dramatically reduces explored branches."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Can elements be reused? Are candidates guaranteed distinct? / Được dùng lại? Candidates có distinct không?
@@ -69,6 +116,16 @@ Constraints:
 3. **Optimize**: Sort candidates → replace `if sum > target return` with `if candidates[i] > remaining break` — eliminates all larger candidates at once / Sắp xếp + break thay vì return để cắt cả đuôi vòng lặp.
 4. **Edge cases**: No valid combination (return `[]`), single candidate equals target, target=0 (return `[[]]`) / Không có kết quả, candidate chính bằng target.
 5. **Explain the `start` index**: "I pass `i` (not `i+1`) to allow reuse, but never go backward to avoid duplicate combos" / Truyền `i` để dùng lại, không truyền `i-1` để tránh hoán vị trùng.
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| #   | Mistake / Sai lầm                                          | Why Wrong / Tại sao sai                                   | Fix / Cách sửa                                              |
+| --- | ---------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- |
+| 1   | Recurse with `start=i+1` instead of `i`                    | Misses reuse of same candidate — e.g., [2,2,3] impossible | Pass `i` (not `i+1`) to allow unlimited reuse              |
+| 2   | Not sorting candidates before backtracking                 | Can't use `break` for pruning — must check every candidate | Sort candidates ascending to enable early break            |
+| 3   | Checking `if sum > target return` but not `break`          | Only exits current branch, still explores larger candidates | With sorted input, `if candidates[i] > remaining break`    |
 
 ---
 
@@ -143,3 +200,20 @@ console.log(JSON.stringify(combinationSum([1], 2))); // [[1,1]]
 - [Permutations](./03-permutations.md) — backtracking without start index (order matters)
 - [Combination Sum II](https://leetcode.com/problems/combination-sum-ii/) — harder: each element used once, input has duplicates
 - [Generate Parentheses](./04-generate-parentheses.md) — same explore-prune-backtrack structure
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric / Tiêu chí                              | Result / Kết quả                         |
+| ---------------------------------------------- | ---------------------------------------- |
+| Solved without hints? / Giải không cần gợi ý?  | ☐ Yes ☐ Needed hint ☐ Looked at solution |
+| Time taken / Thời gian                         | ___ min (target: 20 min)                 |
+| Confidence (1-5) / Độ tự tin                   | ☐1 ☐2 ☐3 ☐4 ☐5                           |
+| Can explain to interviewer? / Giải thích được? | ☐ Yes ☐ Partially ☐ No                   |
+
+**SRS Schedule / Lịch ôn tập:** Review in 1d → 3d → 7d → 14d → 30d after solving
+
+| Date | Confidence | Time | Notes |
+| ---- | ---------- | ---- | ----- |
+|      |            |      |       |

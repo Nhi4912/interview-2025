@@ -1,10 +1,20 @@
 ---
 layout: page
 title: "Edit Distance"
-difficulty: Medium
+difficulty: Hard
 category: Dynamic Programming
 tags: [String, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/edit-distance/"
+leetcode_number: 72
+pattern: "2D DP (min operations)"
+frequency_tier: 2
+companies: [Google, Amazon, Grab, LinkedIn]
+target_time_minutes: 30
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Edit Distance / Khoảng Cách Chỉnh Sửa
@@ -46,6 +56,19 @@ leetcode_url: "https://leetcode.com/problems/edit-distance/"
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| When you see... | Think... | Template | Complexity |
+|---|---|---|---|
+| "Minimum operations to transform one string to another" | 2D DP — dp[i][j] = min edits for prefixes i, j | `if match: dp[i][j]=dp[i-1][j-1]; else: dp[i][j]=1+min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])` | O(mn) time, O(mn) space |
+| Which operation is which direction? | ← insert into word1, ↑ delete from word1, ↖ replace | left=insert, up=delete, diagonal=replace | — |
+| Empty string base cases | Converting to/from empty string | dp[i][0]=i (delete all), dp[0][j]=j (insert all) | — |
+| Space optimization request | Only need previous row + current row | Rolling 1D array → O(min(m,n)) space | O(mn) time, O(n) space |
+
+**Memory hook:** "Edit = 3 options: insert(←), delete(↑), replace(↖) — lấy min"
+
+---
+
 ## Problem Description
 
 Given two strings `word1` and `word2`, return the minimum number of operations to convert `word1` to `word2`. Allowed operations: insert, delete, or replace a character (each costs 1).
@@ -65,6 +88,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> "Clarifying: all three operations — insert, delete, replace — each cost exactly 1, right? And we want the minimum total cost to transform word1 into word2?"
+
+> "I'll use 2D DP. dp[i][j] = minimum edits to convert word1's first i characters to word2's first j characters. Base cases: dp[0][j] = j (insert j chars into empty) and dp[i][0] = i (delete i chars to reach empty)."
+
+> "Recurrence: if word1[i-1] equals word2[j-1], no operation needed — dp[i][j] = dp[i-1][j-1]. Otherwise, take the minimum of three choices: delete from word1 (dp[i-1][j]+1), insert into word1 (dp[i][j-1]+1), or replace (dp[i-1][j-1]+1)."
+
+> "This is O(m×n) time and O(m×n) space. For a follow-up, we can reduce to O(n) space since each row only needs the previous row."
+
+> "Edge cases: if either string is empty, the answer is the other string's length — this is handled by the base cases."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Are all three operations cost-1? / Ba thao tác có chi phí bằng nhau không?
@@ -73,6 +110,16 @@ Constraints:
 4. **Edge cases**: Either string empty → answer is the other string's length / Chuỗi rỗng thì đáp án = độ dài chuỗi còn lại.
 5. **Complexity**: Time O(m×n), Space O(m×n) → optimized O(min(m,n)) / Space tối ưu xuống O(n).
 6. **Follow-up**: Reconstruct the actual edit sequence by backtracking from dp[m][n] / Tái tạo chuỗi thao tác cụ thể.
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+1. **Not understanding which direction means which operation** — confuses when to use which dp cell. Remember: `dp[i-1][j]` means we deleted a character from word1 (one fewer char in word1, same chars in word2); `dp[i][j-1]` means we inserted into word1 (same word1, one fewer char remaining in word2); `dp[i-1][j-1]` means replace.
+
+2. **Not handling base cases (empty string)** — forgetting to initialize `dp[i][0] = i` and `dp[0][j] = j` causes wrong answers for any input where one string is a prefix of the empty string. Converting any string of length k to empty requires k deletions.
+
+3. **Confusing edit distance with LCS** — both use 2D DP but different recurrences. LCS takes the max of 2 options on no-match; edit distance takes the min of 3 options. Don't mix them up under interview pressure.
 
 ---
 
@@ -144,3 +191,20 @@ console.log(minDistanceOptimal("abc", "abc")); // 0
 - [One Edit Distance](https://leetcode.com/problems/one-edit-distance/) — simplified: check if edit distance equals exactly 1
 - [Minimum ASCII Delete Sum](https://leetcode.com/problems/minimum-ascii-delete-sum-for-two-strings/) — variant with character cost weighting
 - [Delete Operation for Two Strings](https://leetcode.com/problems/delete-operation-for-two-strings/) — only delete operations allowed
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | Actual |
+|---|---|---|
+| Time to solve | 30 min | __ min |
+| Solution correctness | All test cases pass | ✅ / ❌ |
+| Base cases correct | dp[i][0]=i, dp[0][j]=j | ✅ / ❌ |
+| Direction semantics explained | insert/delete/replace | ✅ / ❌ |
+
+**SRS Schedule:** Day 1 → Day 3 → Day 7 → Day 14 → Day 30
+
+| Date | Solve Time | Confidence (1-5) | Notes |
+|---|---|---|---|
+| | | | |

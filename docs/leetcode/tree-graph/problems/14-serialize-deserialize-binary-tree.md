@@ -5,6 +5,16 @@ difficulty: Hard
 category: Tree/Graph
 tags: [String, Tree, DFS, BFS, Design, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/serialize-and-deserialize-binary-tree/"
+leetcode_number: 297
+pattern: "BFS or DFS Serialization"
+frequency_tier: 2
+companies: [Amazon, Google, Microsoft, Facebook]
+target_time_minutes: 35
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Serialize and Deserialize Binary Tree / Tuần Tự Hóa Cây Nhị Phân
@@ -50,6 +60,19 @@ leetcode_url: "https://leetcode.com/problems/serialize-and-deserialize-binary-tr
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| When you see... | Think... | Template | Complexity |
+|---|---|---|---|
+| "Encode/decode tree to/from string" | Preorder DFS with null markers — simplest correct approach | `serialize: DFS, append val or 'null'; deserialize: split string, advance pointer, build recursively` | O(n) both ways |
+| Why preorder and not inorder/postorder? | Preorder places root first — deserialization can immediately create root then recurse into children | With inorder you'd need to know root position first | — |
+| BFS serialization (LeetCode format) | Level-order traversal, enqueue children including nulls | `queue with (TreeNode\|null); skip null nodes when enqueueing` | O(n) both ways |
+| Compact format for BST only | BST property: no null markers needed (structure deducible from values) | Only works for BST, not general binary tree | O(n) smaller output |
+
+**Memory hook:** "Serialize = flatten với dấu 'null' đánh dấu khoảng trống"
+
+---
+
 ## Problem Description
 
 Design an algorithm to serialize (tree → string) and deserialize (string → tree) a binary tree. Format choice is yours — just ensure round-trip fidelity: `deserialize(serialize(root))` produces the original tree.
@@ -69,6 +92,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> "So we need to convert a binary tree to a string and back, and the only requirement is that the round-trip works — the format itself is our choice? Great, I'll use preorder DFS with null markers since it's the simplest to implement correctly."
+
+> "For serialize: DFS the tree in preorder (root, left, right). When we hit a real node, append its value. When we hit null, append the string 'null'. Join with commas."
+
+> "For deserialize: split by comma into an array. Use a shared index pointer. At each recursive call, read the current token — if it's 'null', advance index and return null. Otherwise, create a node with that value, advance index, then recursively build left and right subtrees."
+
+> "The key insight is that preorder gives us the root first, so during deserialization we always know what to create before recursing into children. The null markers tell us exactly where subtrees end."
+
+> "Both directions are O(n) time and space. For a follow-up, I could use BFS to match LeetCode's format, but the deserialization is slightly more involved since we have to handle null children when rebuilding."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Must match LeetCode's exact format? (No, any format works) / Có thể dùng bất kỳ format nào miễn round-trip đúng.
@@ -77,6 +114,16 @@ Constraints:
 4. **Edge cases**: Empty tree, single node, negative values, skewed trees / Cây rỗng, 1 node, giá trị âm, cây lệch.
 5. **Complexity**: O(n) time both ways; O(n) space for serialized string + O(h) recursion stack / Cả hai chiều đều O(n).
 6. **Follow-up**: Serialize N-ary tree / BST with more compact format / Tuần tự hóa cây N-nhánh hoặc BST compact hơn.
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+1. **Not including null markers in the serialized output** — without null markers for empty children, the structure is ambiguous. For example "1,2,3" could be a root-1 with children 2,3, or a left-skewed chain 1→2→3. Null markers are mandatory for general binary trees (unlike BST where structure can be inferred from values).
+
+2. **Inconsistent delimiter between serialize and deserialize** — picking space as delimiter in serialize but splitting by comma in deserialize (or vice versa) causes parse errors. Choose one delimiter and use it consistently in both methods. Comma is the conventional choice.
+
+3. **Applying BST-only compact formats to general binary trees** — a BST's structure can be reconstructed from preorder values alone (no null markers needed) because the BST property constrains where each value goes. This optimization is invalid for a general binary tree where any structure is possible. Always use explicit null markers for the general case.
 
 ---
 
@@ -177,3 +224,20 @@ console.log(serializeBFS(t1)); // "1,2,3,null,null,4,5"
 - [Encode and Decode Strings](https://leetcode.com/problems/encode-and-decode-strings/) — similar round-trip design for string arrays
 - [Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal/) — prerequisite BFS traversal pattern
 - [Word Ladder](./13-word-ladder.md) — contrast: BFS for shortest path in graph vs DFS for tree serialization
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | Actual |
+|---|---|---|
+| Time to solve | 35 min | __ min |
+| Solution correctness | Round-trip fidelity verified | ✅ / ❌ |
+| Null markers included | Both serialize and deserialize | ✅ / ❌ |
+| Delimiter consistency | Same in both methods | ✅ / ❌ |
+
+**SRS Schedule:** Day 1 → Day 3 → Day 7 → Day 14 → Day 30
+
+| Date | Solve Time | Confidence (1-5) | Notes |
+|---|---|---|---|
+| | | | |

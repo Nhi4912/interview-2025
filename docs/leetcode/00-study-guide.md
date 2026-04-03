@@ -25,7 +25,7 @@ Nếu chỉ có 2 tuần, chỉ làm tier này. 25 bài cover 70%+ coding rounds
 | # | Problem | Pattern | Diff | Why Essential |
 |---|---------|---------|------|---------------|
 | 1 | [Two Sum](./array/problems/04-two-sum.md) | Hash Map | 🟢 | Bài #1 mọi danh sách, test hash map thinking |
-| 2 | [Valid Parentheses](./others/problems/01-valid-parentheses.md) | Stack | 🟢 | Classic stack, mở rộng thành nhiều variants |
+| 2 | [Valid Parentheses](./stack-queue/problems/01-valid-parentheses.md) | Stack | 🟢 | Classic stack, mở rộng thành nhiều variants |
 | 3 | [Merge Two Sorted Lists](./linked-list/problems/02-merge-two-sorted-lists.md) | Linked List | 🟢 | Foundation cho merge sort, merge K lists |
 | 4 | [Best Time Buy Sell Stock](./dp/problems/02-best-time-to-buy-and-sell-stock.md) | DP/Greedy | 🟢 | Kadane variant, rất hay gặp |
 | 5 | [Valid Palindrome](./string/problems/05-valid-palindrome.md) | Two Pointers | 🟢 | Two pointer foundation |

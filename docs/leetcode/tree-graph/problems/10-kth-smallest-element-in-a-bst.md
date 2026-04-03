@@ -5,6 +5,16 @@ difficulty: Medium
 category: Tree-Graph
 tags: [Tree, Binary Search Tree, Depth-First Search]
 leetcode_url: "https://leetcode.com/problems/kth-smallest-element-in-a-bst/"
+leetcode_number: 230
+pattern: "BST Inorder Traversal"
+frequency_tier: 2
+companies: [Amazon, Google, Microsoft, LinkedIn]
+target_time_minutes: 20
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Kth Smallest Element in a BST / Phần Tử Nhỏ Thứ K trong BST
@@ -49,6 +59,19 @@ Stack trace (iterative):
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Trigger          | Response                                                             |
+| ---------------- | -------------------------------------------------------------------- |
+| **When you see** | "kth smallest in BST", "kth element in sorted BST order"            |
+| **Think**        | Inorder traversal — BST inorder = sorted ascending, stop at k       |
+| **Template**     | `inorder: push all lefts → pop → count++; if count===k return val`  |
+| **Time target**  | ⏱️ 20 min (Medium)                                                  |
+
+> 💡 **Memory hook / Móc nhớ:** "BST inorder = từ điển sắp xếp sẵn — đọc đến từ thứ k thì dừng!"
+
+---
+
 ## Problem Description
 
 Given the root of a binary search tree and integer `k`, return the **kth smallest value** (1-indexed) among all node values.
@@ -66,6 +89,30 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+### Step 1 — Understand / Hiểu Đề (1 min)
+
+> "We need the kth smallest value in a BST, 1-indexed. k is guaranteed valid (1 ≤ k ≤ n). Values may not be unique."
+
+### Step 2 — Match & Plan / Nhận Dạng & Lên Kế Hoạch (2 min)
+
+> "BST inorder traversal naturally produces sorted ascending order. So kth smallest = the kth node visited during inorder traversal. I can collect all values in O(n) space, or use iterative inorder with early exit at count===k for O(h+k) space. The iterative approach is better."
+
+### Step 3 — Implement / Viết Code (5 min)
+
+> "Iterative inorder with a stack. Push all left nodes. Pop, increment count. If count===k return value. Then push right subtree's left chain."
+
+### Step 4 — Review / Kiểm Tra (1-2 min)
+
+> "For tree [5,3,6,2,4,null,null,1], k=3: inorder visits 1→2→3, count reaches 3 at node 3 → return 3. Correct."
+
+### Step 5 — Evaluate / Đánh Giá (1 min)
+
+> "Time O(h+k), space O(h). If BST is frequently modified, augment each node with subtree count to answer in O(h) per query."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Is k always valid (1 ≤ k ≤ n)? Are node values unique? / k có đảm bảo hợp lệ? Giá trị node có unique không?
@@ -73,6 +120,16 @@ Constraints:
 3. **Optimize**: Iterative inorder with early exit when count reaches k. O(h+k) time, O(h) space / Stack + dừng khi đếm đủ k.
 4. **Edge cases**: k=1 (leftmost node), k=n (rightmost), left-skewed tree (h=n) / k bằng 1, bằng n, cây lệch hoàn toàn.
 5. **Follow-up**: If BST is modified often, augment nodes with subtree count for O(h) per query / Nếu BST thay đổi thường xuyên, thêm `count` vào mỗi node.
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| #   | Mistake / Sai lầm                                        | Why Wrong / Tại sao sai                                    | Fix / Cách sửa                                         |
+| --- | -------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| 1   | Using BFS / level-order instead of inorder               | Level-order doesn't give sorted order in BST               | Always use inorder (left → node → right) for BST sort  |
+| 2   | Collecting all values then indexing `arr[k-1]`           | O(n) space — wasteful when k is small                      | Use iterative inorder with early stop at count===k     |
+| 3   | Off-by-one: returning when `count === k-1`               | Returns k-1th element instead of kth                       | Increment count before check: `if (++count === k)`     |
 
 ---
 
@@ -152,3 +209,20 @@ console.log(kthSmallest(new TreeNode(3, new TreeNode(1), new TreeNode(4)), 2)); 
 - [Validate Binary Search Tree](./02-validate-binary-search-tree.md) — same BST in-order property exploited
 - [Inorder Successor in BST](./11-inorder-successor-in-bst.md) — same in-order navigation pattern
 - [Kth Largest Element in Array](https://leetcode.com/problems/kth-largest-element-in-an-array/) — same "kth element" concept, different data structure
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric / Tiêu chí                              | Result / Kết quả                         |
+| ---------------------------------------------- | ---------------------------------------- |
+| Solved without hints? / Giải không cần gợi ý?  | ☐ Yes ☐ Needed hint ☐ Looked at solution |
+| Time taken / Thời gian                         | ___ min (target: 20 min)                 |
+| Confidence (1-5) / Độ tự tin                   | ☐1 ☐2 ☐3 ☐4 ☐5                           |
+| Can explain to interviewer? / Giải thích được? | ☐ Yes ☐ Partially ☐ No                   |
+
+**SRS Schedule / Lịch ôn tập:** Review in 1d → 3d → 7d → 14d → 30d after solving
+
+| Date | Confidence | Time | Notes |
+| ---- | ---------- | ---- | ----- |
+|      |            |      |       |

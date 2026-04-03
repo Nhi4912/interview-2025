@@ -5,25 +5,36 @@ difficulty: Medium
 category: Tree/Graph
 tags: [Tree, DFS, BST, Inorder]
 leetcode_url: "https://leetcode.com/problems/validate-binary-search-tree/"
+leetcode_number: 98
+pattern: "DFS Inorder"
+frequency_tier: 1
+companies: [Amazon, Meta, Bloomberg, Microsoft]
+target_time_minutes: 20
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Validate Binary Search Tree / Kiểm Tra Cây Tìm Kiếm Nhị Phân Hợp Lệ
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS (In-order)
 > **Frequency**: 🔥 Tier 1 — câu hỏi kinh điển về BST trong mọi vòng phỏng vấn
-> **See also**: [Max Depth](./01-maximum-depth-of-binary-tree.md) | [Kth Smallest in BST](./10-kth-smallest-element-in-a-bst.md) | [Inorder Successor](./11-inorder-successor-in-bst.md)
+> **Target**: ⏱️ 20 min | **Companies**: Amazon, Meta, Bloomberg, Microsoft
+> **See also**: [Max Depth](./01-maximum-depth-of-binary-tree.md) | [Kth Smallest in BST](./10-kth-smallest-element-in-a-bst.md)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy nghĩ đến việc kiểm tra danh sách điện thoại: nếu đọc từ trái sang phải, tên phải luôn tăng dần theo thứ tự ABC. BST hợp lệ cũng vậy — duyệt in-order (trái → gốc → phải) phải cho ra dãy số tăng dần. Nếu thấy số nào không lớn hơn số trước, cây không hợp lệ.
+**Analogy:** Kiểm tra danh bạ điện thoại: đọc từ trái sang phải, tên phải luôn tăng dần theo ABC. BST hợp lệ cũng vậy — duyệt in-order (trái → gốc → phải) phải cho ra dãy tăng dần. Thấy số nào không lớn hơn số trước → không hợp lệ.
 
 **Pattern Recognition:**
 
-- Signal: "BST hợp lệ?" → **DFS in-order, theo dõi giá trị trước (prev)**
-- Sai lầm phổ biến: chỉ so sánh con trực tiếp với cha. Node [5,4,6,null,null,3,7] — node 3 bé hơn 5 nhưng nằm bên phải 5.
-- Cần truyền range [min, max] xuống từng node → solution 1 (range) hoặc dùng in-order + prev → solution 2
+- Signal: "valid BST?" → **DFS in-order, theo dõi prev**
+- Sai lầm: chỉ so con trực tiếp với cha. Node 3 trong [5,1,4,null,null,3,6] bé hơn 5 nhưng nằm bên phải
+- Hai cách: truyền range [min, max] hoặc in-order + prev
 
 **Visual — In-order trên cây [5,1,4,null,null,3,6] (invalid):**
 
@@ -36,8 +47,21 @@ leetcode_url: "https://leetcode.com/problems/validate-binary-search-tree/"
 
 In-order: 1 → 5 → 3 → 6
                   ↑
-              3 < 5 = prev → return false ✓
+              3 < 5 = prev → return false
 ```
+
+---
+
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Trigger          | Response                                                               |
+| ---------------- | ---------------------------------------------------------------------- |
+| **When you see** | "valid BST", "is this a BST", "BST property"                           |
+| **Think**        | DFS Inorder — valid BST ↔ strictly increasing in-order sequence        |
+| **Template**     | `if (prev !== null && node.val <= prev) return false; prev = node.val` |
+| **Time target**  | ⏱️ 20 min (Medium)                                                     |
+
+> 💡 **Memory hook / Móc nhớ:** "In-order BST = dãy tăng — thấy giảm là sai!"
 
 ---
 
@@ -47,7 +71,7 @@ Given the root of a binary tree, determine if it is a valid BST. A valid BST req
 
 ```
 Example 1: root = [2,1,3]                   → true
-Example 2: root = [5,1,4,null,null,3,6]     → false  (4 is in right but 4 < 5)
+Example 2: root = [5,1,4,null,null,3,6]     → false  (4 in right subtree < 5)
 ```
 
 Constraints:
@@ -57,85 +81,111 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+### Step 1 — Understand / Hiểu Đề (1-2 min)
+
+> "We need to check if a binary tree satisfies the BST property — every node in the left subtree is strictly less, every node in the right subtree is strictly greater. No duplicates allowed."
+
+### Step 2 — Match & Plan / Nhận Dạng & Lên Kế Hoạch (2-3 min)
+
+> "I could collect all values in-order and check if sorted — O(n) time and space. Better: in-order traversal tracking `prev` value — if current ≤ prev, return false. O(n) time, O(h) space. Alternatively, recursive range validation passing [min, max] bounds."
+
+### Step 3 — Implement / Viết Code (5-7 min)
+
+> "I'll use in-order with prev. Base case: null returns true. Recurse left. Check node.val > prev. Update prev. Recurse right."
+
+### Step 4 — Review / Kiểm Tra (1-2 min)
+
+> "Trace [5,1,4,null,null,3,6]: inorder left→1 (prev=null, ok, prev=1). Visit 5 (5>1, ok, prev=5). Recurse right→3 (3≤5, return false). Correct."
+
+### Step 5 — Evaluate / Đánh Giá (1 min)
+
+> "Time: O(n) — visit each node once. Space: O(h) — recursion stack. Edge cases: empty tree → true; single node → true; INT_MIN/MAX values — use null for prev instead of number."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: "Duplicates allowed?" / "BST có cho phép giá trị bằng nhau không?" (thường là không)
-2. **Brute force**: Thu thập tất cả giá trị in-order vào array, rồi kiểm tra tăng dần — O(n) time, O(n) space
-3. **Optimize**: Duyệt in-order và theo dõi `prev` — O(n) time, O(h) space, không cần array
-4. **Edge cases**: Node với `val = INT_MIN` hay `INT_MAX` / dùng `null` thay số để tránh overflow
-5. **Follow-up**: "Nếu cần tìm node sai thì sao?" — trả về node đó thay vì boolean
+2. **Brute force**: Collect in-order into array, check sorted — O(n) space / Thu thập vào mảng
+3. **Optimize**: In-order with `prev` tracking — O(h) space only / Theo dõi prev, không cần mảng
+4. **Edge cases**: INT_MIN/MAX nodes — use `null` instead of number bounds / Dùng null thay số
+5. **Follow-up**: "Find the swapped nodes?" — track the two violating nodes in in-order
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| #   | Mistake / Sai lầm                              | Why Wrong / Tại sao sai                                                | Fix / Cách sửa                               |
+| --- | ---------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------- |
+| 1   | Only comparing node with direct parent         | Misses violations deeper in subtree (e.g., 3 < 5 but in right subtree) | Pass range [min, max] or use in-order + prev |
+| 2   | Using `node.val < prev` instead of `<=`        | BST requires strictly increasing — duplicates are invalid              | Use `<=` for comparison                      |
+| 3   | Initializing prev as `Number.MIN_SAFE_INTEGER` | Fails if tree contains that exact value                                | Use `null` and check `prev !== null`         |
 
 ---
 
 ## Solutions
 
 ```typescript
-
 interface TreeNode {
-val: number;
-left: TreeNode | null;
-right: TreeNode | null;
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
 }
 
 /**
-
-- Solution 1: Recursive with Range (Brute Force style)
-- Time: O(n) — visit every node once
-- Space: O(h) — recursion stack depth = tree height
-- Intuition: pass valid range [min, max] to each node
-  */
-  function isValidBSTRange(root: TreeNode | null): boolean {
+ * Solution 1: Recursive with Range [min, max]
+ * Time: O(n) — visit every node once
+ * Space: O(h) — recursion stack depth = tree height
+ */
+function isValidBSTRange(root: TreeNode | null): boolean {
   function validate(node: TreeNode | null, min: number | null, max: number | null): boolean {
-  if (!node) return true;
-  if (min !== null && node.val <= min) return false;
-  if (max !== null && node.val >= max) return false;
-  return validate(node.left, min, node.val) && validate(node.right, node.val, max);
+    if (!node) return true;
+    if (min !== null && node.val <= min) return false;
+    if (max !== null && node.val >= max) return false;
+    return validate(node.left, min, node.val) && validate(node.right, node.val, max);
   }
   return validate(root, null, null);
-  }
-
-/**
-
-- Solution 2: In-order with prev pointer (Optimal)
-- Time: O(n) — visit every node once
-- Space: O(h) — recursion stack; no extra array needed
-- Intuition: valid BST ↔ in-order yields strictly increasing sequence
-  */
-  function isValidBST(root: TreeNode | null): boolean {
-  let prev: number | null = null;
-
-function inorder(node: TreeNode | null): boolean {
-if (!node) return true;
-if (!inorder(node.left)) return false; // check left subtree
-if (prev !== null && node.val <= prev) return false; // check order
-prev = node.val;
-return inorder(node.right); // check right subtree
 }
 
-return inorder(root);
+/**
+ * Solution 2: In-order with prev (Optimal)
+ * Time: O(n) — visit every node once
+ * Space: O(h) — recursion stack; no extra array
+ */
+function isValidBST(root: TreeNode | null): boolean {
+  let prev: number | null = null;
+
+  function inorder(node: TreeNode | null): boolean {
+    if (!node) return true;
+    if (!inorder(node.left)) return false;
+    if (prev !== null && node.val <= prev) return false;
+    prev = node.val;
+    return inorder(node.right);
+  }
+
+  return inorder(root);
 }
 
 // === Test Cases ===
-// [2,1,3] → true
 const t1: TreeNode = {
-val: 2,
-left: { val: 1, left: null, right: null },
-right: { val: 3, left: null, right: null },
+  val: 2,
+  left: { val: 1, left: null, right: null },
+  right: { val: 3, left: null, right: null },
 };
 console.log(isValidBST(t1)); // true
 
-// [5,1,4,null,null,3,6] → false
 const t2: TreeNode = {
-val: 5,
-left: { val: 1, left: null, right: null },
-right: {
-val: 4,
-left: { val: 3, left: null, right: null },
-right: { val: 6, left: null, right: null },
-},
+  val: 5,
+  left: { val: 1, left: null, right: null },
+  right: {
+    val: 4,
+    left: { val: 3, left: null, right: null },
+    right: { val: 6, left: null, right: null },
+  },
 };
 console.log(isValidBST(t2)); // false
-
 ```
 
 ---
@@ -144,4 +194,21 @@ console.log(isValidBST(t2)); // false
 
 - [Maximum Depth of Binary Tree](./01-maximum-depth-of-binary-tree.md) — DFS cơ bản trên cây
 - [Kth Smallest Element in BST](./10-kth-smallest-element-in-a-bst.md) — in-order traversal tương tự
-- [Inorder Successor in BST](./11-inorder-successor-in-bst.md) — cùng khai thác tính chất in-order BST
+- [Inorder Successor in BST](./11-inorder-successor-in-bst.md) — khai thác tính chất in-order BST
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric / Tiêu chí                              | Result / Kết quả                         |
+| ---------------------------------------------- | ---------------------------------------- |
+| Solved without hints? / Giải không cần gợi ý?  | ☐ Yes ☐ Needed hint ☐ Looked at solution |
+| Time taken / Thời gian                         | \_\_\_ min (target: 20 min)              |
+| Confidence (1-5) / Độ tự tin                   | ☐1 ☐2 ☐3 ☐4 ☐5                           |
+| Can explain to interviewer? / Giải thích được? | ☐ Yes ☐ Partially ☐ No                   |
+
+**SRS Schedule / Lịch ôn tập:** Review in 1d → 3d → 7d → 14d → 30d after solving
+
+| Date | Confidence | Time | Notes |
+| ---- | ---------- | ---- | ----- |
+|      |            |      |       |

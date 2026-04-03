@@ -204,3 +204,76 @@ Files in `docs/shared/08-l5-competencies/` use a hybrid format (not full technic
 ## Gap Tracking
 
 Current content gaps: `docs/specs/knowledge-generation-process.md` → "Current Content Gaps" section
+
+---
+
+## LeetCode Skills
+
+### `/leetcode`
+
+**Trigger when**: User asks to create, improve, or review a LeetCode problem file — e.g., "create Two Sum", "upgrade this problem to v2.0", "add interview script to this file"
+**Purpose**: Generate or enhance LeetCode problem files following RULES.md v2.0 (12-section template)
+**Template**: `docs/leetcode/RULES.md` Section 7 (Format Template)
+
+**Process**:
+1. Check if problem already exists — search `docs/leetcode/` by problem number or name
+2. Determine category from signal keywords (see RULES.md Section 2.3)
+3. Determine pattern from problem description
+4. Generate all 12 sections in exact order from the v2.0 template
+5. Fill YAML frontmatter with all 16 fields including `companies`, `target_time_minutes`, `status: "unsolved"`
+6. Verify all quality gates before finishing
+
+**Quality gates** (must ALL pass before done):
+- Vietnamese analogy is real-life, not a technical restatement
+- 🎯 Pattern Trigger has: When you see / Think / Template / Memory hook
+- 🗣️ Interview Script has all 5 UMPIRE steps with quoted speech
+- ❌ Common Mistakes has ≥ 3 problem-specific entries (not generic advice)
+- 📊 Self-Assessment has metrics table + SRS schedule + review log
+- ASCII visual diagram shows step-by-step execution with labeled steps
+- 2-3 solutions only (brute → optimal), no test harness/class wrappers/exports
+- File is 120-250 lines total
+
+**Anti-patterns to enforce** (from RULES.md Section 8):
+- No more than 3 solutions
+- No `testFunction()`, `performanceComparison()`, `class Wrapper`, `export { ... }`
+- No generic common mistakes ("don't forget edge cases")
+- No English-only content (bilingual required throughout)
+
+---
+
+### `/leetcode-review`
+
+**Trigger when**: User asks "what should I review today", "SRS check", "show my review queue", or "which problems are due"
+**Purpose**: Surface problems due for spaced repetition review based on `srs_dates` in YAML frontmatter and `last_reviewed` field
+**Output**: Prioritized review queue for today's study session
+
+**Process**:
+1. Scan YAML frontmatter of all problem files in `docs/leetcode/` categories
+2. Collect problems where: any date in `srs_dates` <= today AND `status` is `solved` or `needs-review`
+3. Sort by: lowest `confidence` first, then oldest `last_reviewed`
+4. Group by: Overdue (past due) | Due Today | Coming Soon (next 3 days)
+5. Present queue with: problem name, category, pattern, confidence, days overdue
+
+**Output format**:
+```
+## 📅 SRS Review Queue — {today's date}
+
+### 🔴 Overdue ({n} problems)
+| Problem | Category | Pattern | Confidence | Due |
+|---------|----------|---------|------------|-----|
+| ...     | ...      | ...     | 3/5        | 2 days ago |
+
+### 🟡 Due Today ({n} problems)
+...
+
+### 🟢 Coming Soon — Next 3 Days ({n} problems)
+...
+
+Total review time estimate: ~{n × 5} minutes
+```
+
+**After user completes review**:
+- Ask for new confidence score (1-5) for each reviewed problem
+- Calculate next SRS date: confidence 1-2 → +1d, confidence 3 → +3d, confidence 4 → +7d, confidence 5 → +14d
+- Update `last_reviewed` and `srs_dates` in YAML frontmatter
+- Update `status` to `needs-review` if confidence dropped below 3

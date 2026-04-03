@@ -5,6 +5,16 @@ difficulty: Medium
 category: Dynamic Programming
 tags: [String, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/longest-common-subsequence/"
+leetcode_number: 1143
+pattern: "2D DP (classic subsequence)"
+frequency_tier: 2
+companies: [Google, Amazon, Microsoft, Oracle]
+target_time_minutes: 25
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Longest Common Subsequence / Dãy Con Chung Dài Nhất

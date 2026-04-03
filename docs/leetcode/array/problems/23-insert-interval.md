@@ -5,6 +5,16 @@ difficulty: Medium
 category: Array
 tags: [Array, Greedy]
 leetcode_url: "https://leetcode.com/problems/insert-interval/"
+leetcode_number: 57
+pattern: "Linear Scan (3-phase merge)"
+frequency_tier: 2
+companies: [Google, Facebook, Amazon, LinkedIn]
+target_time_minutes: 20
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Insert Interval / Chèn Khoảng Vào Danh Sách
@@ -45,6 +55,19 @@ Result: [[1,5],[6,9]] ✅
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| When you see... | Think... | Template |
+|---|---|---|
+| Insert new interval into sorted non-overlapping intervals | 3 phases: add all before new (end < newStart), merge overlapping (start ≤ newEnd), add remaining | `while end < newStart: add; while start ≤ newEnd: expand newInterval; add remaining` |
+| Sorted input with a single insertion point | Don't re-sort — exploit existing sort order with a linear scan | Identify the insertion zone, process it, and pass through the rest unchanged |
+| Two intervals touch at a boundary (e.g. [1,3] and [3,5]) | They overlap — use `<=` not `<` for the merge condition | `intervals[i][0] <= newInterval[1]` — boundary contact counts as overlap |
+| Input intervals array is empty | Early return — no phases needed | `if (!intervals.length) return [newInterval]` |
+
+**Memory hook:** "3 phases: trước | gộp | sau — đơn giản nếu nhớ 3 pha"
+
+---
+
 ## Problem Description
 
 You are given sorted non-overlapping intervals and a `newInterval`. Insert `newInterval`, merging any overlapping intervals. Return the result in sorted order with no overlaps.
@@ -67,6 +90,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> **Understand:** "I have a list of sorted, non-overlapping intervals, and I need to insert a new interval — merging wherever they overlap. Quick confirms: intervals are already sorted by start, guaranteed non-overlapping. Empty intervals array is possible — I should handle that. Touching boundaries like [1,3] and [3,5] — do those merge? I'll assume yes."
+
+> **Match:** "Since input is already sorted, I don't need to re-sort. I can do a single O(n) linear scan split into three clean phases: copy all intervals that end before the new one starts, merge all that overlap with it, then copy the rest."
+
+> **Plan:** "Phase 1: `while intervals[i][1] < newInterval[0]` → push directly. Phase 2: `while intervals[i][0] <= newInterval[1]` → expand newInterval to cover the union. Phase 3: push remaining. This naturally handles the edge case where newInterval goes before everything or after everything."
+
+> **Implement:** "The merge condition `intervals[i][0] <= newInterval[1]` uses `<=` not `<` — boundary-touching intervals must merge. During phase 2, I update `newInterval[0] = min(...)` and `newInterval[1] = max(...)` to track the growing merged interval. I push `newInterval` once after phase 2 exits."
+
+> **Review:** "Trace example 2: [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval=[4,8]. Phase 1: [1,2] ends at 2 < 4 → push. Phase 2: [3,5] start 3≤8 → new=[3,8]; [6,7] start 6≤8 → new=[3,8]; [8,10] start 8≤8 → new=[3,10]; [12,16] start 12>8 → stop. Push [3,10]. Phase 3: push [12,16]. Result: [[1,2],[3,10],[12,16]]. Correct."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Can `intervals` be empty? Is `newInterval` guaranteed to have `start <= end`? / Mảng có thể rỗng không? Start có thể bằng end không?
@@ -74,6 +111,16 @@ Constraints:
 3. **Optimize**: Three-phase single scan — skip non-overlapping before, expand newInterval through all overlaps, append rest. O(n) time.
 4. **Edge cases**: Empty intervals; newInterval before/after all; newInterval swallows all existing intervals.
 5. **Overlap condition**: Remember it's `intervals[i][0] <= newInterval[1]` (not `<`) — touching intervals at boundary DO overlap.
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| Mistake | Why it happens | Correct approach |
+|---|---|---|
+| Checking overlap with `<` instead of `<=` | Off-by-one: intervals [1,3] and [3,5] share boundary 3 — they must merge | Use `intervals[i][0] <= newInterval[1]` — touching at boundary counts as overlap |
+| Not handling empty intervals array | Forgetting the edge case — the while loops never run but `newInterval` still needs to be pushed | The three-phase structure handles it automatically — phase 2 exits immediately and `newInterval` is pushed; no special case needed if code is structured correctly |
+| Not updating newInterval bounds during phase 2 merge | Only updating one bound (max end) but forgetting to also take min of starts | Update both: `newInterval[0] = Math.min(newInterval[0], intervals[i][0])` and `newInterval[1] = Math.max(newInterval[1], intervals[i][1])` |
 
 ---
 
@@ -154,3 +201,20 @@ console.log(JSON.stringify(insert([[1,5]], [2,3])));
 - [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals/) — greedy removal to minimize overlaps
 - [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii/) — count max concurrent intervals
 - [Data Stream as Disjoint Intervals](https://leetcode.com/problems/data-stream-as-disjoint-intervals/) — dynamic insert pattern
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | Your Result |
+|---|---|---|
+| Time to solve | ≤ 20 min | ___ min |
+| Solution correctness | All test cases pass | ✅ / ❌ |
+| Space complexity | O(n) | ___ |
+| Explained out loud | Yes | ✅ / ❌ |
+
+**SRS Schedule:** First review → 1 day · Second → 3 days · Third → 7 days · Then → 14 days
+
+| Date | Attempt # | Time (min) | Confidence (1-5) | Notes |
+|---|---|---|---|---|
+| | | | | |

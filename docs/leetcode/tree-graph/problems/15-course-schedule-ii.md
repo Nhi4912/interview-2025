@@ -5,6 +5,16 @@ difficulty: Medium
 category: Tree/Graph
 tags: [Depth-First Search, Breadth-First Search, Graph, Topological Sort]
 leetcode_url: "https://leetcode.com/problems/course-schedule-ii/"
+leetcode_number: 210
+pattern: "Topological Sort (DFS Cycle Detection)"
+frequency_tier: 2
+companies: [Amazon, Google, Facebook, Airbnb]
+target_time_minutes: 25
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Course Schedule II / Thứ Tự Hoàn Thành Các Khóa Học
@@ -52,6 +62,19 @@ result.length=4 === numCourses=4 → return [0,1,2,3] ✅
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Khi thấy | Nghĩ đến |
+|---|---|
+| **When you see** | Dependency ordering, prerequisites, "can you finish all tasks" |
+| **Think** | Topological Sort — DFS with 3-color marking (white/gray/black) or Kahn's BFS with in-degree |
+| **Template** | `dfs(node): mark GRAY; visit neighbors; if GRAY neighbor → cycle; mark BLACK; push to result` |
+| **Time target** | ≤ 25 min — build graph ~5 min, Kahn's BFS ~10 min, test + explain ~10 min |
+
+**Memory hook:** "Topo sort = DFS ngược — xong rồi mới push vào kết quả"
+
+---
+
 ## Problem Description
 
 Given `numCourses` (labeled 0 to numCourses-1) and `prerequisites[i] = [a, b]` meaning "take b before a", return a valid ordering to finish all courses. If impossible (cycle exists), return `[]`.
@@ -70,6 +93,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> **U — Understand:** "I need to return a valid ordering of all courses such that every prerequisite is taken first. If a cycle exists — meaning two courses depend on each other — I should return an empty array. Multiple valid orderings are acceptable, right?"
+
+> **M — Match:** "This is Topological Sort on a directed graph. The prerequisite pairs define directed edges. I can either use Kahn's BFS with an in-degree array, or DFS with 3-color cycle detection. Kahn's is easier to trace through in an interview."
+
+> **P — Plan:** "Build adjacency list and in-degree array from prereqs. Initialize queue with all nodes that have in-degree 0. Pop from queue, add to result, decrement in-degree of neighbors — enqueue any neighbor that reaches 0. At the end, if result.length < numCourses, there's a cycle."
+
+> **I — Implement:** "Build graph: `for [a,b] of prereqs: graph[b].push(a); inDegree[a]++`. Queue all zero in-degree nodes. BFS loop: pop course, push to result, reduce neighbors' in-degree, enqueue zeros. Return `result.length === numCourses ? result : []`."
+
+> **R/E — Review & Evaluate:** "Time O(V+E) — each vertex and edge processed once. Space O(V+E) — adjacency list. Edge case: no prerequisites → all in-degrees are 0, entire range is enqueued immediately, any ordering works. Cycle case: result shorter than numCourses because stuck nodes never reach in-degree 0."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Multiple valid orderings are fine — return any one / VI: "Nhiều thứ tự hợp lệ tồn tại, trả về bất kỳ cái nào đúng là được"
@@ -77,6 +114,16 @@ Constraints:
 3. **Optimize**: Kahn's BFS — iterative, in-degree array, easier to trace in interview / VI: BFS với mảng in-degree trực quan hơn khi explain; queue chứa các node sẵn sàng xử lý
 4. **Edge cases**: No prerequisites → return `[0,1,...,n-1]`; single course → `[0]` / VI: Không có dependency → bất kỳ thứ tự nào đều hợp lệ
 5. **Follow-up**: Minimum number of semesters if parallelism is allowed? / VI: Số học kỳ tối thiểu nếu có thể học nhiều môn song song trong cùng kỳ
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| Mistake | Why It Fails | Fix |
+|---|---|---|
+| Not detecting cycles at all | Infinite loop or silently returns incorrect result when a cycle exists | Use 3-color marking (DFS) or check `result.length < numCourses` at end (Kahn's) |
+| Forgetting to reverse the DFS result | Post-order DFS builds reversed topological order — returned as-is gives wrong dependency sequence | After all DFS calls complete, call `result.reverse()` before returning |
+| Using a single boolean `visited` array | Cannot distinguish "currently being explored" (in-progress) from "fully processed" — misses back edges that indicate cycles | Use 3 states: unvisited (0) / in-progress (1) / done (2) |
 
 ---
 
@@ -165,3 +212,22 @@ console.log(findOrder(1, [])); // [0]
 - [Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) — topological sort on character dependency
 - [Minimum Height Trees](https://leetcode.com/problems/minimum-height-trees/) — similar in-degree peeling technique
 - [Lowest Common Ancestor](./16-lowest-common-ancestor-binary-tree.md) — tree DFS with state propagation
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | Your Result |
+|---|---|---|
+| Time to solve | ≤ 25 min | _____ min |
+| Got optimal on first try | Yes | ☐ Yes ☐ No |
+| Explained clearly | Yes | ☐ Yes ☐ No |
+| Handled all edge cases | Yes | ☐ Yes ☐ No |
+
+**SRS Schedule:** After solving — review in 1 day → 3 days → 7 days → 14 days → 30 days.
+
+### Review Log
+
+| Date | Time Taken | Notes |
+|---|---|---|
+| | | |

@@ -5,6 +5,16 @@ difficulty: Medium
 category: Dynamic Programming
 tags: [Array, Dynamic Programming, Greedy]
 leetcode_url: "https://leetcode.com/problems/jump-game/"
+leetcode_number: 55
+pattern: "Greedy (Track Max Reachable Index)"
+frequency_tier: 2
+companies: [Amazon, Microsoft, Grab, Google]
+target_time_minutes: 15
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Jump Game / Trò Chơi Nhảy
@@ -48,6 +58,19 @@ i=4: i(4) > maxReachable(3)  →  return false ❌
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Khi thấy | Nghĩ đến |
+|---|---|
+| **When you see** | Can you reach end from start, each position has max jump length |
+| **Think** | Greedy — track `maxReach`; if `i > maxReach` you're stuck, cannot reach current position |
+| **Template** | `maxReach = max(maxReach, i + nums[i]); if i > maxReach return false` |
+| **Time target** | ≤ 15 min — greedy insight ~3 min, code ~5 min, trace examples ~7 min |
+
+**Memory hook:** "maxReach = tầm với xa nhất — nếu vị trí hiện tại vượt qua tầm với, stuck!"
+
+---
+
 ## Problem Description
 
 Given an integer array `nums` where `nums[i]` is the maximum jump length at position `i`. Starting at index 0, return `true` if you can reach the last index, `false` otherwise.
@@ -65,6 +88,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> **U — Understand:** "I start at index 0 and each element tells me the maximum number of steps I can jump forward. I need to return true if I can reach the last index via any sequence of jumps. Can array length be 1? Can all elements be 0?"
+
+> **M — Match:** "My first instinct is DP, but this is actually a Greedy problem. Instead of tracking which exact path to take, I just need to track the farthest index I can reach at any point. If the current index ever exceeds my farthest reachable index, I'm stuck — return false."
+
+> **P — Plan:** "Maintain `maxReach = 0`. Loop through each index i from 0 to n-1. First check: if `i > maxReach`, return false — I can't even be standing here. Then update `maxReach = max(maxReach, i + nums[i])`. If the loop completes without getting stuck, return true."
+
+> **I — Implement:** "`let maxReach = 0; for (let i = 0; i < nums.length; i++) { if (i > maxReach) return false; maxReach = Math.max(maxReach, i + nums[i]); } return true;`"
+
+> **R/E — Review & Evaluate:** "Time O(n) — single left-to-right pass. Space O(1) — one variable. Edge case: `[0]` — loop runs once, i=0 is not > maxReach=0, returns true. Edge case: `[0,1]` — at i=0, maxReach stays 0; at i=1, i(1) > maxReach(0) → false."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Can array length be 1? Can nums[i] be 0? / Mảng có thể chỉ có 1 phần tử không? nums[i] = 0 có hợp lệ không?
@@ -72,6 +109,16 @@ Constraints:
 3. **Optimize**: Greedy — track `maxReachable`. Nếu `i > maxReachable` → return false. O(n) time, O(1) space.
 4. **Edge cases**: `nums = [0]` → true (single element); `nums = [0, 1]` → false (can't move from index 0).
 5. **Follow-up**: Jump Game II — số bước nhảy ít nhất để đến cuối (same greedy idea, track jump count and current level end).
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| Mistake | Why It Fails | Fix |
+|---|---|---|
+| Using DP O(n²) when greedy O(n) works | Correct but slower than necessary — will pass but signals missed insight | Recognize that we only need to track the max reachable index, not which specific jumps to take |
+| Checking `nums[i] === 0` as the failure condition | Zeros don't always block — you might have enough reach from before to skip over them | Only fail when `i > maxReach`; a zero at position 3 is fine if `maxReach` is already 5 |
+| Not updating `maxReach` at every step | Misses longer jumps from earlier positions — `maxReach` stays artificially low | Update `maxReach = max(maxReach, i + nums[i])` at every index i in the loop |
 
 ---
 
@@ -135,3 +182,22 @@ console.log(canJump([0, 1])); // false
 - [Jump Game III](https://leetcode.com/problems/jump-game-iii/) — bi-directional jump variant
 - [Climbing Stairs](./02-climbing-stairs.md) — DP reachability prerequisite
 - [Merge Intervals](../../array/problems/22-merge-intervals.md) — greedy + array scan pattern
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | Your Result |
+|---|---|---|
+| Time to solve | ≤ 15 min | _____ min |
+| Got optimal on first try | Yes | ☐ Yes ☐ No |
+| Explained clearly | Yes | ☐ Yes ☐ No |
+| Handled all edge cases | Yes | ☐ Yes ☐ No |
+
+**SRS Schedule:** After solving — review in 1 day → 3 days → 7 days → 14 days → 30 days.
+
+### Review Log
+
+| Date | Time Taken | Notes |
+|---|---|---|
+| | | |

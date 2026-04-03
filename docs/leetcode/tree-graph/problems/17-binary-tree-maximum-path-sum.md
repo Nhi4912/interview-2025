@@ -5,6 +5,16 @@ difficulty: Hard
 category: Tree/Graph
 tags: [Dynamic Programming, Tree, DFS, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/binary-tree-maximum-path-sum/"
+leetcode_number: 124
+pattern: "DFS Post-order with Global Max"
+frequency_tier: 2
+companies: [Amazon, Google, Microsoft, ByteDance]
+target_time_minutes: 30
+status: "unsolved"
+confidence: null
+solve_count: 0
+last_reviewed: null
+srs_dates: []
 ---
 
 # Binary Tree Maximum Path Sum / Tổng Đường Đi Lớn Nhất Trong Cây
@@ -46,6 +56,19 @@ leetcode_url: "https://leetcode.com/problems/binary-tree-maximum-path-sum/"
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| When you see... | Think... | Template | Complexity |
+|---|---|---|---|
+| "Maximum path sum through any path in binary tree" | Post-order DFS — at each node compute gain from both children | `gain(node) = node.val + max(0, gain(left)) + max(0, gain(right))` [global max]; `return node.val + max(0, gain(left), gain(right))` [for parent] | O(n) time, O(h) space |
+| Path can start/end anywhere | Global variable updated at every node | `maxSum = Math.max(maxSum, node.val + leftGain + rightGain)` | — |
+| Child subtree is negative | Ignore it — don't drag down the path | `max(0, childGain)` clamps negative to 0 | — |
+| All-negative tree | Still must include one node | Initialize `maxSum = -Infinity`, not 0 | — |
+
+**Memory hook:** "Global max = node + cả hai bên; return cho parent = node + một bên tốt nhất"
+
+---
+
 ## Problem Description
 
 Given the root of a binary tree, return the maximum path sum of any non-empty path. A path is a sequence of nodes connected by edges where each node appears at most once. The path does not need to pass through the root.
@@ -63,6 +86,20 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+> "Checking my understanding: a path can start and end at any node, doesn't need to go through root, and must contain at least one node. Values can be negative, so the answer might be a single node with a negative value if all nodes are negative?"
+
+> "I'll use post-order DFS. At each node I compute the maximum 'gain' the node can contribute if we extend upward to a parent. The gain is: node.val plus the best of its children's gains, clamping negatives to zero so we ignore harmful subtrees."
+
+> "Separately, at each node I also consider it as the 'bend point' — the peak of a path that combines both left and right subtrees. This is node.val + leftGain + rightGain. I update a global max variable with this. I return only the single-branch extension to the parent."
+
+> "Time is O(n) since we visit each node once. Space is O(h) for the recursion stack — O(log n) balanced, O(n) worst case for a skewed tree."
+
+> "The tricky part is maintaining two distinct values: what I return upward (single branch) vs what I use for global max update (both branches). These must not be confused."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Must the path include the root? (No) / Đường đi có phải qua root không? (Không).
@@ -71,6 +108,16 @@ Constraints:
 4. **Edge cases**: All-negative tree → answer is the single least-negative node / Tất cả âm thì chọn node lớn nhất.
 5. **Complexity**: O(n) time — each node visited once; O(h) space — recursion depth / Mỗi node thăm đúng 1 lần.
 6. **Follow-up**: Return the actual path nodes, not just the sum / Trả về danh sách node thực tế trên đường đi.
+
+---
+
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+1. **Returning sum including both children to parent** — a path cannot branch, so you can only extend in one direction toward the parent. Returning `node.val + leftGain + rightGain` upward would create a forked path, which is invalid. Always return `node.val + max(leftGain, rightGain)` to the parent.
+
+2. **Including negative subtrees in the path** — if a child's best path sum is negative, adding it hurts the total. Use `max(0, gain(child))` to treat a negative subtree as if it doesn't exist; the path simply won't extend into that direction.
+
+3. **Forgetting to update global max inside recursion** — the optimal path may not pass through the root. You must update `maxSum` at every single node during the DFS, not just at the root after recursion returns. Forgetting this means you miss all non-root paths.
 
 ---
 
@@ -164,3 +211,20 @@ console.log(maxPathSumIterative(n(1, n(-2), n(3)))); // 4
 - [Path Sum II](https://leetcode.com/problems/path-sum-ii/) — return all root-to-leaf paths matching target
 - [Diameter of Binary Tree](https://leetcode.com/problems/diameter-of-binary-tree/) — same post-order DFS, maximize path length not sum
 - [Word Ladder](./13-word-ladder.md) — contrast: BFS for shortest path in graph vs DFS for max in tree
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric | Target | Actual |
+|---|---|---|
+| Time to solve | 30 min | __ min |
+| Solution correctness | All test cases pass | ✅ / ❌ |
+| Return value vs global max distinct | Single branch up / both branches global | ✅ / ❌ |
+| Negative subtree handling | max(0, childGain) used | ✅ / ❌ |
+
+**SRS Schedule:** Day 1 → Day 3 → Day 7 → Day 14 → Day 30
+
+| Date | Solve Time | Confidence (1-5) | Notes |
+|---|---|---|---|
+| | | | |
