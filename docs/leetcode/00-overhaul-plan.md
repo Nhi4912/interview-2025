@@ -163,7 +163,7 @@ Each index.md should list only the curated problems with: difficulty, pattern, s
 - Cross-link to existing company guides in `docs/shared/07-company-guides/`
 - Data source: existing `company-wise/` files + `interview-company-wise-problems/` CSVs
 
-#### 3C. Company-wise Restructure — PENDING
+#### 3C. Company-wise Restructure — ✅ Done
 
 - Create `company-wise/target-companies/` with 6 enhanced files (Google, Microsoft, Grab, Axon, EH, Zalo)
 - Move remaining 459 generated company files to `company-wise/other-companies/`
@@ -213,7 +213,7 @@ Add sections:
 | **P2**   | Prune skeletons (archive ~2,000)                    | mass move to `_archive/`                   | ✅ Done    |
 | **P2**   | Upgrade 25 Tier 2 problems to v2.0                  | 25 problem files                           | ✅ Done    |
 | **P2**   | Update market overview with salary/trends           | `docs/00-interview-market-overview.md`     | ⏳ Pending |
-| **P3**   | Restructure company-wise/ folder                    | target-companies/ + other-companies/       | ⏳ Pending |
+| **P3**   | Restructure company-wise/ folder                    | target-companies/ + other-companies/       | ✅ Done    |
 | **P3**   | Update all category index.md files                  | 12 index files updated/created             | ✅ Done    |
 
 ---
