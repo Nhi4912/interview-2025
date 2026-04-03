@@ -183,7 +183,7 @@ Each index.md should list only the curated problems with: difficulty, pattern, s
 - Progress visualization (ASCII chart)
 - Mindset section: growth mindset principles for interview prep
 
-#### 4B. Market Research — PENDING
+#### 4B. Market Research — ✅ DONE
 
 **File**: `docs/00-interview-market-overview.md` — MODIFY (already exists)
 
@@ -199,22 +199,22 @@ Add sections:
 
 ## Implementation Order
 
-| Priority | Task                                                | Files                                      | Status     |
-| -------- | --------------------------------------------------- | ------------------------------------------ | ---------- |
-| **P0**   | Upgrade RULES.md to v2.0 template                   | `docs/leetcode/RULES.md`                   | ✅ Done    |
-| **P0**   | Add `/leetcode` + `/leetcode-review` skills         | `.claude/skill-rules.md`                   | ✅ Done    |
-| **P0**   | Create master tracker                               | `docs/leetcode/00-master-tracker.md`       | ✅ Done    |
-| **P1**   | Rename `others/` → `stack-queue/`                   | folder rename + update refs                | ✅ Done    |
-| **P1**   | Create company dashboard                            | `docs/leetcode/00-company-dashboard.md`    | ✅ Done    |
-| **P1**   | Create daily study calendar                         | `docs/leetcode/00-daily-study-calendar.md` | ✅ Done    |
-| **P1**   | Create motivation file                              | `docs/leetcode/00-motivation.md`           | ✅ Done    |
-| **P1**   | Upgrade 25 Tier 1 problems to v2.0                  | 25 problem files                           | ✅ Done    |
-| **P2**   | Create heap/, greedy/, bit-manipulation/ categories | new folders + move problems                | ✅ Done    |
-| **P2**   | Prune skeletons (archive ~2,000)                    | mass move to `_archive/`                   | ✅ Done    |
-| **P2**   | Upgrade 25 Tier 2 problems to v2.0                  | 25 problem files                           | ✅ Done    |
-| **P2**   | Update market overview with salary/trends           | `docs/00-interview-market-overview.md`     | ⏳ Pending |
-| **P3**   | Restructure company-wise/ folder                    | target-companies/ + other-companies/       | ✅ Done    |
-| **P3**   | Update all category index.md files                  | 12 index files updated/created             | ✅ Done    |
+| Priority | Task                                                | Files                                      | Status  |
+| -------- | --------------------------------------------------- | ------------------------------------------ | ------- |
+| **P0**   | Upgrade RULES.md to v2.0 template                   | `docs/leetcode/RULES.md`                   | ✅ Done |
+| **P0**   | Add `/leetcode` + `/leetcode-review` skills         | `.claude/skill-rules.md`                   | ✅ Done |
+| **P0**   | Create master tracker                               | `docs/leetcode/00-master-tracker.md`       | ✅ Done |
+| **P1**   | Rename `others/` → `stack-queue/`                   | folder rename + update refs                | ✅ Done |
+| **P1**   | Create company dashboard                            | `docs/leetcode/00-company-dashboard.md`    | ✅ Done |
+| **P1**   | Create daily study calendar                         | `docs/leetcode/00-daily-study-calendar.md` | ✅ Done |
+| **P1**   | Create motivation file                              | `docs/leetcode/00-motivation.md`           | ✅ Done |
+| **P1**   | Upgrade 25 Tier 1 problems to v2.0                  | 25 problem files                           | ✅ Done |
+| **P2**   | Create heap/, greedy/, bit-manipulation/ categories | new folders + move problems                | ✅ Done |
+| **P2**   | Prune skeletons (archive ~2,000)                    | mass move to `_archive/`                   | ✅ Done |
+| **P2**   | Upgrade 25 Tier 2 problems to v2.0                  | 25 problem files                           | ✅ Done |
+| **P2**   | Update market overview with salary/trends           | `docs/00-interview-market-overview.md`     | ✅ Done |
+| **P3**   | Restructure company-wise/ folder                    | target-companies/ + other-companies/       | ✅ Done |
+| **P3**   | Update all category index.md files                  | 12 index files updated/created             | ✅ Done |
 
 ---
 
