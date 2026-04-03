@@ -49,6 +49,19 @@ srs_dates: []
 
 ---
 
+## 🎯 Pattern Trigger / Nhận Dạng
+
+| Trigger          | Response                                                                      |
+| ---------------- | ----------------------------------------------------------------------------- |
+| **When you see** | "two strings", "common subsequence", "longest/shortest common"                |
+| **Think**        | 2D DP — `dp[i][j]` = LCS of first i chars of text1 and first j chars of text2 |
+| **Template**     | `match → dp[i-1][j-1]+1; else → max(dp[i-1][j], dp[i][j-1])`                  |
+| **Time target**  | ⏱️ 25 min (Medium)                                                            |
+
+> 💡 **Memory hook / Móc nhớ:** "Hai chuỗi = bảng 2D — trùng thì chéo +1, khác thì max(trên, trái)!"
+
+---
+
 ## Problem Description
 
 Given two strings `text1` and `text2`, return the **length** of their longest common subsequence. A subsequence preserves relative order but doesn't need to be contiguous. Return 0 if none exists.
@@ -66,6 +79,30 @@ Constraints:
 
 ---
 
+## 🗣️ Interview Script / Kịch Bản Phỏng Vấn
+
+### Step 1 — Understand / Hiểu Đề (1-2 min)
+
+> "We have two strings and need the length of their longest common subsequence — characters in the same relative order but not necessarily contiguous. Clarify: strictly subsequence, not substring?"
+
+### Step 2 — Match & Plan / Nhận Dạng & Lên Kế Hoạch (2-3 min)
+
+> "Brute force recursion tries all 2^(m+n) combinations — way too slow. I recognize this as classic 2D DP: define dp[i][j] as LCS of text1[0..i-1] and text2[0..j-1]. If characters match, dp[i][j] = dp[i-1][j-1] + 1. Otherwise, take max of dp[i-1][j] and dp[i][j-1]. O(m·n) time and space."
+
+### Step 3 — Implement / Viết Code (5-7 min)
+
+> "Create (m+1)×(n+1) table initialized to 0. Fill row by row: if text1[i-1] === text2[j-1], diagonal + 1; else max of top and left. Return dp[m][n]."
+
+### Step 4 — Review / Kiểm Tra (1-2 min)
+
+> "For 'abcde' and 'ace': dp fills to 3 at dp[5][3]. Trace: a→c→e matches. Correct."
+
+### Step 5 — Evaluate / Đánh Giá (1 min)
+
+> "Time O(m·n), Space O(m·n) — optimizable to O(min(m,n)) with rolling array. Edge cases: no common chars → 0, identical strings → full length."
+
+---
+
 ## 📝 Interview Tips
 
 1. **Clarify**: Return length or the actual subsequence string? / Trả về độ dài hay chuỗi thực tế?
@@ -77,34 +114,41 @@ Constraints:
 
 ---
 
+## ❌ Common Mistakes / Sai Lầm Thường Gặp
+
+| #   | Mistake / Sai lầm                                   | Why Wrong / Tại sao sai                                          | Fix / Cách sửa                                          |
+| --- | --------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------- |
+| 1   | Confusing subsequence with substring (contiguous)   | Substring requires consecutive chars; subsequence doesn't        | Subsequence = same order, not necessarily adjacent      |
+| 2   | Off-by-one: using `dp[i][j]` for chars at index i,j | dp table is (m+1)×(n+1); row/col 0 are base cases (empty string) | `dp[i][j]` corresponds to `text1[i-1]` and `text2[j-1]` |
+| 3   | Forgetting to initialize first row/column to 0      | LCS of any string with empty string is 0 — must be explicit      | Fill `dp[0][j]=0` and `dp[i][0]=0` (or use `.fill(0)`)  |
+
+---
+
 ## Solutions
 
 ```typescript
-
 /**
 
 - Solution 1: Recursion with Memoization (Top-Down)
 - Time: O(m·n) — each (i,j) pair computed exactly once
 - Space: O(m·n) — memo map + O(m+n) recursion stack
   */
-  function lcsTopDown(text1: string, text2: string): number {
+function lcsTopDown(text1: string, text2: string): number {
   const memo = new Map<string, number>();
 
-function dfs(i: number, j: number): number {
-if (i >= text1.length || j >= text2.length) return 0;
-const key = `${i},${j}`;
-if (memo.has(key)) return memo.get(key)!;
+  function dfs(i: number, j: number): number {
+    if (i >= text1.length || j >= text2.length) return 0;
+    const key = `${i},${j}`;
+    if (memo.has(key)) return memo.get(key)!;
 
-    const result = text1[i] === text2[j]
-      ? 1 + dfs(i + 1, j + 1)
-      : Math.max(dfs(i + 1, j), dfs(i, j + 1));
+    const result =
+      text1[i] === text2[j] ? 1 + dfs(i + 1, j + 1) : Math.max(dfs(i + 1, j), dfs(i, j + 1));
 
     memo.set(key, result);
     return result;
+  }
 
-}
-
-return dfs(0, 0);
+  return dfs(0, 0);
 }
 
 /**
@@ -113,23 +157,23 @@ return dfs(0, 0);
 - Time: O(m·n) — fill entire table
 - Space: O(m·n) — dp table; reducible to O(n) with rolling 1D array
   */
-  function longestCommonSubsequence(text1: string, text2: string): number {
+function longestCommonSubsequence(text1: string, text2: string): number {
   const m = text1.length;
   const n = text2.length;
   // dp[i][j] = LCS length of text1[0..i-1] and text2[0..j-1]
   const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
 
-for (let i = 1; i <= m; i++) {
-for (let j = 1; j <= n; j++) {
-if (text1[i - 1] === text2[j - 1]) {
-dp[i][j] = dp[i - 1][j - 1] + 1; // characters match → extend LCS
-} else {
-dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]); // take best excluding one
-}
-}
-}
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (text1[i - 1] === text2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1; // characters match → extend LCS
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]); // take best excluding one
+      }
+    }
+  }
 
-return dp[m][n];
+  return dp[m][n];
 }
 
 // === Test Cases ===
@@ -137,7 +181,6 @@ console.log(longestCommonSubsequence("abcde", "ace")); // 3
 console.log(longestCommonSubsequence("abc", "abc")); // 3
 console.log(longestCommonSubsequence("abc", "def")); // 0
 console.log(longestCommonSubsequence("bl", "yby")); // 1
-
 ```
 
 ---
@@ -148,3 +191,20 @@ console.log(longestCommonSubsequence("bl", "yby")); // 1
 - [Longest Increasing Subsequence](./06-longest-increasing-subsequence.md) — 1D DP on single sequence
 - [Distinct Subsequences](https://leetcode.com/problems/distinct-subsequences/) — count occurrences of LCS
 - [Shortest Common Supersequence](https://leetcode.com/problems/shortest-common-supersequence/) — build string using LCS result
+
+---
+
+## 📊 Self-Assessment / Tự Đánh Giá
+
+| Metric / Tiêu chí                              | Result / Kết quả                         |
+| ---------------------------------------------- | ---------------------------------------- |
+| Solved without hints? / Giải không cần gợi ý?  | ☐ Yes ☐ Needed hint ☐ Looked at solution |
+| Time taken / Thời gian                         | \_\_\_ min (target: 25 min)              |
+| Confidence (1-5) / Độ tự tin                   | ☐1 ☐2 ☐3 ☐4 ☐5                           |
+| Can explain to interviewer? / Giải thích được? | ☐ Yes ☐ Partially ☐ No                   |
+
+**SRS Schedule / Lịch ôn tập:** Review in 1d → 3d → 7d → 14d → 30d after solving
+
+| Date | Confidence | Time | Notes |
+| ---- | ---------- | ---- | ----- |
+|      |            |      |       |

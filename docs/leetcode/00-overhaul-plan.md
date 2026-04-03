@@ -211,7 +211,7 @@ Add sections:
 | **P1**   | Upgrade 25 Tier 1 problems to v2.0                  | 25 problem files                           | ✅ Done    |
 | **P2**   | Create heap/, greedy/, bit-manipulation/ categories | new folders + move problems                | ✅ Done    |
 | **P2**   | Prune skeletons (archive ~2,000)                    | mass move to `_archive/`                   | ✅ Done    |
-| **P2**   | Upgrade 25 Tier 2 problems to v2.0                  | 25 problem files                           | ⏳ Pending |
+| **P2**   | Upgrade 25 Tier 2 problems to v2.0                  | 25 problem files                           | ✅ Done    |
 | **P2**   | Update market overview with salary/trends           | `docs/00-interview-market-overview.md`     | ⏳ Pending |
 | **P3**   | Restructure company-wise/ folder                    | target-companies/ + other-companies/       | ⏳ Pending |
 | **P3**   | Update all category index.md files                  | 12 index files updated/created             | ✅ Done    |
