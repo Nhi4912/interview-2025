@@ -74,3 +74,5 @@ When adding new content, follow the 5-phase specs-driven process:
 Full process: [docs/specs/knowledge-generation-process.md](docs/specs/knowledge-generation-process.md)
 
 Skill rules: [.claude/skill-rules.md](.claude/skill-rules.md)
+
+Code standards: [.claude/react-typescript-standards.md](.claude/react-typescript-standards.md)

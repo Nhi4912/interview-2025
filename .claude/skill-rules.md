@@ -16,6 +16,26 @@
 **Output**: Annotated spec with Q&A plan
 **Process**: See `docs/specs/knowledge-generation-process.md` Phase 3
 
+### `/react-code`
+**Trigger when**: User asks to generate, review, refactor, or fix React/TypeScript code — doc examples or standalone projects
+**Purpose**: Enforce React/TypeScript coding standards on all generated code
+**Standards file**: [react-typescript-standards.md](./react-typescript-standards.md)
+
+**Process**:
+1. Before writing any React/TS code, load standards from `.claude/react-typescript-standards.md`
+2. Apply ALL rules from Sections 1-8 to generated code
+3. After writing code, verify against Section 10 BANNED checklist
+4. If generating code examples for docs (fe-track), also apply bilingual comment convention
+
+**Quality gates** (must ALL pass):
+- Zero `any`, zero `let`, zero `export default`
+- Components under 150 lines, functions under 30 lines
+- No props drilling beyond 2 levels
+- Import order follows Section 4 standard
+- Early returns for edge cases (no nested if/else beyond 2 levels)
+- Discriminated unions for state (no boolean flag combos)
+- React 19 patterns used where applicable
+
 ## Content Rules (always apply)
 
 1. **Never start writing without a spec** — always create `docs/specs/pending/{topic}.spec.md` first
@@ -23,6 +43,7 @@
 3. **Bilingual always** — every section needs EN explanation + VI reinforcement
 4. **Standard file header** — Track + Difficulty + See also (see process spec for template)
 5. **Review before done** — run Phase 5 checklist before marking complete
+6. **Code examples follow standards** — all React/TypeScript code blocks must comply with [react-typescript-standards.md](./react-typescript-standards.md)
 
 ## Pedagogical Rules (always apply)
 
