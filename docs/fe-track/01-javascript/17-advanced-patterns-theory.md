@@ -2,6 +2,7 @@
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **L5 Competencies**: Technical Mastery (20pts), Scope & Impact (15pts) — patterns scale codebase quality
 
 ## Real-World Scenario / Tình Huống Thực Tế
 

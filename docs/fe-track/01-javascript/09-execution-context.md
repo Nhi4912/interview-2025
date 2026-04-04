@@ -886,6 +886,46 @@ Internally, async function được transform thành state machine (generator-li
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: VinID — Recursive Tree Rendering Caused Stack Overflow on Deep Category Trees
+
+**Situation:** VinID's loyalty program had a category hierarchy for merchant offers that could theoretically go 50+ levels deep (imported from a legacy catalog). A recursive component renderer crashed with `Maximum call stack size exceeded` for merchants with deeply nested categories.
+
+**What went wrong:**
+```javascript
+// Recursive tree render — crashes on deep trees:
+function renderCategory(node) {
+  if (!node.children?.length) return renderLeaf(node);
+  return renderNode(node, node.children.map(renderCategory)); // ← recursive
+  // At depth 50+: 50+ stack frames → stack overflow
+}
+```
+
+**Decision made:** Converted to iterative BFS with an explicit stack:
+```javascript
+function renderCategoryTree(root) {
+  const stack = [{ node: root, depth: 0 }];
+  const elements = [];
+
+  while (stack.length) {
+    const { node, depth } = stack.pop();
+    elements.push(createElement(node, depth));
+    // Push children in reverse order so left children render first
+    node.children?.slice().reverse().forEach(child =>
+      stack.push({ node: child, depth: depth + 1 })
+    );
+  }
+  return elements;
+}
+```
+
+**Trade-off accepted:** Iterative DFS loses the clean recursive mental model. Team documented the reason (stack overflow protection) in a comment and kept the recursive version as a reference implementation for trees with bounded depth (<20 levels).
+
+**Lesson:** The call stack is a finite resource. Recursive algorithms on user-supplied data (trees, graphs, JSON) must either have a bounded depth guarantee or use iteration. The execution context model explains exactly why: each call creates a new context pushed onto the stack, and the stack has a fixed limit (~10,000 frames in V8).
+
+---
+
 ## Q&A Summary / Tóm Tắt Q&A
 
 | #   | Topic                   | Level | One-liner                                                             |
@@ -951,7 +991,9 @@ Internally, async function được transform thành state machine (generator-li
 - [Event Loop](./07-event-loop-async.md) — Call Stack + Task Queue interaction
 - [Engine Internals](./17-engine-internals.md) — V8 EC implementation
 
-### Khác track (Cross-track)
+## Cross-Track / Liên Kết Chéo
 
-- [React Hooks](../03-react/03-hooks-deep-dive.md) — Hooks use closures (scope), not this (context)
-- [TypeScript](../02-typescript/01-typescript-basics.md) — TS strict mode affects this binding
+- 🔗 **BE perspective**: [Go Memory & GC](../../be-track/01-golang/04-memory-gc.md) — Go has per-goroutine call stacks with dynamic growth; escape analysis decides stack vs heap allocation — same concept as JS execution context but with explicit goroutine ownership
+- 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks use closures (lexical scope), not `this` (execution context); understanding EC explains why stale closures form in `useEffect`
+- 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-typescript-basics.md) — `strict` mode and `noImplicitThis` affect `this` binding at compilation, catching runtime EC bugs at build time
+- 🔗 **Shared theory**: [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — process memory layout (stack/heap/code segments) is the hardware model that JS execution context abstracts

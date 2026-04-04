@@ -2,6 +2,7 @@
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **L5 Competencies**: Technical Mastery (20pts), Problem-Solving (15pts) — modern syntax reduces bugs and improves readability
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
@@ -1350,6 +1351,11 @@ setItems(items.with(editIndex, newItem)); // instead of spread+splice
 - ✅ Strong: Explains why mutation is the historical default (memory); demonstrates the React stale-reference bug; shows `with()` for index replacement; mentions `[...arr].sort()` as previous workaround
 - ❌ Weak: "Use spread before sort: `[...arr].sort()`" — correct workaround but doesn't mention the ES2023 native solution or explain the root cause
 
+🔗 **Follow-up Chain:**
+1. → "React's `Object.is` compares state references. If `sort()` mutates and returns `this`, what does `setItems(items.sort())` pass to the state updater — and why does the UI sometimes not re-render?"
+2. → "You have a 50,000-row data table where users can sort columns. `toSorted()` creates a new array every time — at this scale, is that acceptable? How would you combine `useMemo` with `toSorted()` to avoid performance issues?"
+3. → "Design a multi-step undo/redo system for array state using only ES2023 immutable methods. What data structure stores the history, and how do you implement undo without mutation?"
+
 ---
 
 ## Q&A Summary / Tóm Tắt Q&A
@@ -1410,11 +1416,78 @@ setItems(items.with(editIndex, newItem)); // instead of spread+splice
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case 1: Tiki Product Page — `??` Fixes a Revenue Bug
+
+**Situation:** Tiki's pricing team discovered that products with `price: 0` (free samples, promotional items) were displaying "Price unavailable" instead of "Free" on the product detail page.
+
+**Root cause:**
+```javascript
+// In the price display component:
+const displayPrice = product.price || "Price unavailable";
+// ← product.price = 0 → falsy → falls through to default string
+```
+
+**Impact:** Free promotional products showed as unavailable → users added them to cart expecting price to load, got confused, cart abandonment spiked for that product category.
+
+**Fix and trade-off:**
+```javascript
+const displayPrice = product.price ?? "Price unavailable";
+// 0 is not nullish → keeps 0 → UI renders "Free" or formats as "₫0"
+```
+
+**Lesson:** The `||` vs `??` distinction is not academic — on any platform where `0`, `''`, or `false` are valid user-facing values (inventory counts, scores, flags), `||` silently produces wrong defaults. The TC39 introduced `??` specifically because this class of bug was endemic in production JavaScript.
+
+---
+
+### Case 2: Grab Ride Dispatch — `Promise.allSettled` for Partial Data Tolerance
+
+**Situation:** Grab's driver dispatch screen fetches driver location, ETA, and surge pricing simultaneously. Using `Promise.all`, a transient failure on the surge-pricing microservice caused the entire dispatch UI to show an error spinner — even though location and ETA data had loaded successfully.
+
+**Before:**
+```javascript
+const [location, eta, surge] = await Promise.all([
+  getDriverLocation(driverId),
+  getETA(origin, destination),
+  getSurgePricing(zone),
+]);
+// If getSurgePricing fails: everything fails — driver location lost
+```
+
+**After (with graceful degradation):**
+```javascript
+const [locationResult, etaResult, surgeResult] = await Promise.allSettled([
+  getDriverLocation(driverId),
+  getETA(origin, destination),
+  getSurgePricing(zone),
+]);
+
+const location = locationResult.status === "fulfilled" ? locationResult.value : null;
+const eta = etaResult.status === "fulfilled" ? etaResult.value : "ETA unavailable";
+const surge = surgeResult.status === "fulfilled" ? surgeResult.value : { multiplier: 1 }; // default no surge
+```
+
+**Trade-off accepted:** Showing stale/default surge pricing is better than blocking the core ride dispatch flow. The team added a "surge data may be delayed" UI indicator when `surgeResult.status === 'rejected'`.
+
+**Lesson:** `Promise.all` is appropriate when all-or-nothing semantics are correct (e.g., payment multi-step validation). `allSettled` is correct when independent services should not block each other (dashboards, feature-loaded UIs).
+
+---
+
 ## Connections / Liên Kết
 
-- **Prereqs**: [07-es6-features.md](./07-es6-features.md) (ES6 foundations), [09-async-comprehensive.md](./09-async-comprehensive.md) (Promises)
+- **Prereqs**: [08-es6-features.md](./08-es6-features.md) (ES6 foundations), [09-async-comprehensive.md](./09-async-comprehensive.md) (Promises, async/await)
 - **See also**: [13-javascript-basics-theory.md](./13-javascript-basics-theory.md) (truthy/falsy), [03-react/03-hooks-deep-dive.md](../03-react/03-hooks-deep-dive.md) (React state immutability)
 - **TypeScript**: [02-typescript/06-typescript-modern-features.md](../02-typescript/06-typescript-modern-features.md) — TypeScript adds compile-time safety for these runtime patterns
+
+---
+
+## Cross-Track / Liên Kết Chéo
+
+- 🔗 **BE perspective**: [Go Language Fundamentals](../../be-track/01-golang/01-language-fundamentals.md) — Go has no `null` (uses zero values + explicit `error` returns); no optional chaining needed; Go's explicit error handling eliminates the entire `??`/`?.` bug class at the language level
+- 🔗 **FE — TypeScript**: [TypeScript Modern Features](../02-typescript/06-typescript-modern-features.md) — TypeScript's `strictNullChecks` catches `??` vs `||` bugs at compile time; `T | null | undefined` forces explicit null handling before you even run the code
+- 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — `toSorted`/`toReversed`/`with` directly replace `[...arr].sort()` spread patterns in `setState` calls; `Promise.allSettled` pattern is the foundation of resilient `useEffect` data fetching
+- 🔗 **Shared theory**: [Concurrency & Parallelism](../../shared/01-cs-fundamentals/07-concurrency-and-parallelism.md) — Promise combinators model the classic parallel task coordination problem: fail-fast vs collect-all vs first-success are fundamental concurrency strategies, not just JS API choices
 
 ---
 

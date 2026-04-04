@@ -771,9 +771,68 @@ Edge cases: (1) LRU eviction → bounded memory, (2) custom keyFn → handle non
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Grab — Event Listener Closure Memory Leak on Ride Map
+
+**Situation:** Grab's ride-tracking map component leaked ~2MB per ride session. Memory profiler showed thousands of `RideMarker` objects retained in memory long after rides ended, preventing garbage collection.
+
+**Root cause — closure holding stale reference:**
+```javascript
+class RideMap {
+  constructor(rideData) {
+    this.markers = [];
+    this.rideData = rideData; // ← large object: GPS history, metadata, etc.
+
+    // Bug: closure captures 'this' (entire RideMap) via arrow function
+    this.mapInstance.on('zoom', () => {
+      this.updateMarkers(); // ← 'this' still referenced
+    });
+    // mapInstance event listener prevents 'this' (and rideData) from being GC'd
+    // even after the component is "destroyed"
+  }
+
+  destroy() {
+    this.markers = null;
+    // ❌ Forgot to remove event listener — closure still holds 'this'
+  }
+}
+```
+
+**Fix — explicit cleanup:**
+```javascript
+constructor(rideData) {
+  this.handleZoom = () => this.updateMarkers(); // ← named for removal
+  this.mapInstance.on('zoom', this.handleZoom);
+}
+
+destroy() {
+  this.mapInstance.off('zoom', this.handleZoom); // ✅ break the closure reference
+  this.handleZoom = null;
+  this.rideData = null;
+}
+```
+
+**Decision made:** Created a `Disposable` base class with a `cleanup: Function[]` registry. Every component's `destroy()` method calls `cleanup.forEach(fn => fn())`. Closures registered at construction time are automatically cleaned up.
+
+**Trade-off accepted:** Slightly more boilerplate per component (`this.cleanup.push(() => ...)`) but eliminates the class of "forgot to remove listener" bugs. WeakRef considered but rejected — WeakRef doesn't prevent the event emitter from keeping the reference alive.
+
+**Lesson:** Closures extend the lifetime of everything they capture. Event listeners that capture `this` keep the entire object graph alive. The "destroy" pattern must explicitly break all closure-held references.
+
+---
+
 ## Connections / Liên Kết
 
 - ⬅️ **Built on:** [Scope & Hoisting](./03-scope-hoisting.md) — lexical scope là nền tảng
 - ➡️ **Enables:** React Hooks — useState/useEffect internals dùng closure
 - ➡️ **Enables:** [Event Loop & Async](./07-event-loop-async.md) — Promise chains dùng closure maintain context
 - 🔗 **Applied in:** Module pattern, debounce/throttle, memoization, React hooks
+
+---
+
+## Cross-Track / Liên Kết Chéo
+
+- 🔗 **BE perspective**: [Go Language Fundamentals](../../be-track/01-golang/01-language-fundamentals.md) — Go closures work identically (same capture-by-reference semantics); same goroutine-closure pitfall as JS loop closures — captures loop variable, not value
+- 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — `useState`/`useEffect` internals rely on closures; every hook captures its render's scope — stale closure = the #1 React bug pattern
+- 🔗 **FE — Patterns**: [React Patterns](../03-react/04-advanced-patterns.md) — Module pattern, factory functions, partial application = closure-based patterns used in component design
+- 🔗 **Shared theory**: [Software Engineering Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — closure implements Decorator, Memoize, and Module patterns without classes

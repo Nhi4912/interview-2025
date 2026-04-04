@@ -1112,6 +1112,39 @@ config.api.timeout = 10000; // ❌ Error with helpful message
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Sendo — Destructuring Default Value Masked a Critical API Change
+
+**Situation:** Sendo's product team updated the backend API to rename `product.stock_qty` to `product.available_qty`. The frontend used destructuring with a default value — which silently swallowed the breaking change for two weeks before a monitoring alert fired on unusually high out-of-stock checkouts.
+
+**What went wrong:**
+```javascript
+// Old API: { stock_qty: 5 }
+// New API: { available_qty: 5 } ← renamed field
+
+// Frontend destructuring with default:
+const { stock_qty = 0 } = product; // ← product now has no 'stock_qty'
+// stock_qty = 0 (the default) — silently, no error thrown
+// UI showed "Out of Stock" for all products, even those with 50 units available
+```
+
+**Decision made:** Team adopted runtime schema validation at API boundaries using Zod:
+```javascript
+const ProductSchema = z.object({
+  available_qty: z.number(), // ← throws if field missing/renamed
+  // No default — if field is absent, it's an error, not a fallback
+});
+
+const product = ProductSchema.parse(apiResponse); // throws on schema mismatch
+```
+
+**Trade-off accepted:** Zod validation adds ~2ms overhead per API response. Strict validation means schema changes require coordinated FE+BE deploys. Team accepted this by implementing Zod schema in a shared types package versioned alongside the API contract.
+
+**Lesson:** Destructuring defaults are a runtime convenience — they're not a resilience strategy. A missing field should usually be a loud error during development, not a silent fallback. Use defaults only for genuinely optional fields, not as protection against API contract violations.
+
+---
+
 ## Q&A Summary / Tóm Tắt Q&A
 
 | #   | Topic               | Level | One-liner                                                   |
@@ -1177,8 +1210,10 @@ config.api.timeout = 10000; // ❌ Error with helpful message
 - [Modern JavaScript](./12-modern-javascript.md) — ES2020+ features: ?., ??, ??=
 - [Advanced Patterns](./14-advanced-patterns.md) — Decorator, Mixins dùng Proxy
 
-### Khác track (Cross-track)
+## Cross-Track / Liên Kết Chéo
 
-- [TypeScript](../02-typescript/01-typescript-basics.md) — TypeScript = superset of ES6+
-- [React Fundamentals](../03-react/01-react-fundamentals.md) — Destructuring props, spread, useState
-- [React State Management](../03-react/05-state-management.md) — Immutable updates with spread
+- 🔗 **BE perspective**: [Go Language Fundamentals](../../be-track/01-golang/01-language-fundamentals.md) — Go has analogous modern features: multiple return ≈ destructuring, variadic `...` ≈ spread, built-in Map/Set; but no dynamic iteration protocols
+- 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-typescript-basics.md) — TypeScript = ES6+ superset; learn ES6 first then TS adds type layer on top
+- 🔗 **FE — React**: [React Fundamentals](../03-react/01-react-fundamentals.md) — destructuring props, spread for state updates, `useState` returned as array destructuring
+- 🔗 **FE — State**: [React State Management](../03-react/05-state-management.md) — immutable updates with spread, Map/Set for O(1) lookups in reducers
+- 🔗 **Shared theory**: [Software Engineering Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — ES6 classes enable clean OOP patterns; Symbol + WeakMap enable private state patterns

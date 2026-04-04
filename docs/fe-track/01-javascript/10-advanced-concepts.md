@@ -792,7 +792,62 @@ function memoizeLRU(fn, maxSize = 100) {
 - [ES6+ Features](./08-es6-features.md) — Proxy/Reflect, WeakMap/WeakSet
 - [Memory Management](./13-memory-management.md) — GC deep dive, WeakRef
 
-### Khác track
+---
 
-- [React Performance](../03-react/09-performance-optimization.md) — debounce/throttle trong React
-- [React Patterns](../03-react/04-advanced-patterns.md) — memoization, Proxy trong React
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Lazada — Debounce Implementation Without Cleanup Leaked Timers on Unmount
+
+**Situation:** Lazada's search bar used a custom debounce for API calls. Memory profiler showed `setTimeout` handles accumulating even after the search component unmounted — each remount created a new debounced function but the old timers from previous instances were never cancelled.
+
+**What went wrong:**
+```javascript
+// Custom debounce — no way to cancel:
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+// In React component:
+const debouncedSearch = useMemo(() => debounce(search, 300), []); // created once
+// ← But if search prop changes, old debounced fn has stale closure over old search
+// ← On unmount: timer still running, fn call on unmounted component → React warning
+```
+
+**Decision made:** Extended debounce to return a `cancel()` function, used in `useEffect` cleanup:
+```javascript
+function debounce(fn, delay) {
+  let timer;
+  const debounced = (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+  debounced.cancel = () => clearTimeout(timer); // ← explicit cancel
+  return debounced;
+}
+
+useEffect(() => {
+  const debounced = debounce(search, 300);
+  inputRef.current.addEventListener('input', debounced);
+  return () => {
+    debounced.cancel(); // ✅ cancel pending timer on unmount
+    inputRef.current.removeEventListener('input', debounced);
+  };
+}, [search]);
+```
+
+**Trade-off accepted:** Adopted `lodash.debounce` (already in bundle) which includes `.cancel()` and `.flush()` — eliminated custom implementation entirely.
+
+**Lesson:** Any closure that creates timers or holds external references needs an explicit teardown path. In React, this means `useEffect` cleanup. The advanced concepts (closures, WeakRef, timer management) are most valuable when you understand how they compose with component lifecycle.
+
+---
+
+## Cross-Track / Liên Kết Chéo
+
+- 🔗 **BE perspective**: [Go Advanced Patterns](../../be-track/01-golang/08-advanced-patterns.md) — Go implements similar patterns: WeakRef via finalizers, Proxy via interface wrappers, generators via channels + goroutines
+- 🔗 **FE — React**: [React Performance](../03-react/09-performance-optimization.md) — debounce/throttle prevent over-rendering; memoization with `useMemo`/`useCallback`
+- 🔗 **FE — Patterns**: [React Patterns](../03-react/04-advanced-patterns.md) — Proxy enables transparent reactivity (Vue uses it); memoization is core to React render optimization
+- 🔗 **Shared theory**: [Software Engineering Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — Proxy, Observer, Decorator patterns in JS; Iterator protocol (for...of) = Iterator design pattern

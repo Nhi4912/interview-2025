@@ -957,6 +957,35 @@ function processOrder(raw: unknown) {
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Zalo — Type Coercion Caused Silent Message ID Collision
+
+**Situation:** A chat feature stored message IDs from the API (returned as strings: `"1234567890123"`) in a Map. A comparison function used `==` instead of `===` to look up messages. JavaScript's Abstract Equality Comparison coerced the string `"0"` to `0`, matching numeric key `0` — causing first unread message markers to silently attach to the wrong message on clients using 32-bit number parsing.
+
+**What went wrong:**
+```javascript
+// API returned: { id: "1234567890123", ... }
+const messageMap = new Map();
+messageMap.set(msg.id, msg); // set with string key "1234567890123"
+
+// Bug: lookup used ==
+function findMessage(id) {
+  for (const [key, val] of messageMap) {
+    if (key == id) return val; // ← "1234567890123" == 1234567890123 → true (coercion)
+  }
+}
+// On 32-bit overflow: large IDs coerced to wrong number → wrong message returned
+```
+
+**Decision made:** Enforce `===` via ESLint `eqeqeq: "error"` rule across entire codebase. All IDs treated as strings end-to-end — never coerced to number. Added type annotations in JSDoc to document ID type contract.
+
+**Trade-off accepted:** Stricter typing means more explicit `String(id)` or `Number(id)` conversions at API boundaries, but eliminates entire class of coercion bugs silently corrupting data.
+
+**Lesson:** JS type coercion is not a feature to use in production — it's a footgun to audit out. `===` everywhere and string IDs from APIs are non-negotiable at scale.
+
+---
+
 ## Q&A Summary / Tóm Tắt Q&A
 
 | #   | Topic                         | Level | One-liner                                                  |
@@ -1006,3 +1035,12 @@ function processOrder(raw: unknown) {
 - 🔗 **Applied in**: [Event Loop & Async](./07-event-loop-async.md) — microtask vs macrotask chi tiết
 - 🔗 **Applied in**: [React Fundamentals](../03-react/01-react-fundamentals.md) — `Object.is` state comparison
 - 🔗 **Applied in**: [TypeScript](../02-typescript/01-type-system-basics.md) — strict null checks motivated by null/undefined semantics
+
+---
+
+## Cross-Track / Liên Kết Chéo
+
+- 🔗 **BE perspective**: [Go Language Fundamentals](../../be-track/01-golang/01-language-fundamentals.md) — Go has similar single-threaded execution per goroutine; type coercion doesn't exist (strict static types); same value vs reference semantics concept
+- 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-type-system-basics.md) — TypeScript eliminates type coercion surprises at build time; `strict` mode enforces JS best practices
+- 🔗 **FE — React**: [React Fundamentals](../03-react/01-react-fundamentals.md) — `Object.is` (not `===`) is used for state change detection; understanding JS equality prevents infinite re-render bugs
+- 🔗 **Shared theory**: [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — JS single-threaded model maps to single OS thread per tab; event loop is the runtime scheduler above the OS scheduler

@@ -463,11 +463,21 @@ Without SOP, a malicious tab open in your browser could silently read your Gmail
 **Attack Flow:**
 
 ```
-1. Attacker submits malicious script
-2. Server stores script in database
-3. Victim requests page
-4. Server includes malicious script in response
-5. Script executes in victim's browser
+Attacker ──POST /comment with <script>steal()</script>──► Server
+                                                               │
+                                                          stores in DB
+                                                               │
+Victim ──GET /page────────────────────────────────────► Response
+                                                    (includes stored script)
+                                                               │
+                                                               ▼
+                                                    Browser executes script
+                                                    ┌─────────────────────────┐
+                                                    │ steal document.cookie   │
+                                                    │ POST to attacker.com    │
+                                                    │ keylog / DOM manipulate │
+                                                    └─────────────────────────┘
+                                                      All future victims hit too
 ```
 
 **Example Scenario:**
@@ -490,10 +500,18 @@ Without SOP, a malicious tab open in your browser could silently read your Gmail
 **Attack Flow:**
 
 ```
-1. Attacker crafts malicious URL
-2. Victim clicks link
-3. Server reflects input in response
-4. Script executes in victim's browser
+Attacker crafts URL:
+  https://site.com/search?q=<script>steal()</script>
+  └─ sends via email / social engineering
+         │
+         ▼
+Victim clicks link ──GET /search?q=<script>steal()──► Server
+                                                        │
+                                               reflects q in HTML response
+                                                        │
+                                                        ▼
+                                               Browser executes script
+                                               → one-time hit (victim only)
 ```
 
 **Example:**
@@ -515,11 +533,18 @@ https://example.com/search?q=<script>alert('XSS')</script>
 **Attack Flow:**
 
 ```
-1. Attacker crafts malicious URL
-2. Victim clicks link
-3. Client-side JavaScript processes input
-4. Script modifies DOM unsafely
-5. Malicious code executes
+Attacker crafts URL:
+  https://site.com/page#<img src=x onerror=steal()>
+         │
+         ▼
+Victim clicks ──► Browser loads page (server sees clean URL)
+                       │
+                  Client JS reads location.hash
+                  writes to innerHTML / document.write
+                       │
+                       ▼
+                  Browser executes injected payload
+                  (server never saw malicious content)
 ```
 
 **Example:**
@@ -694,12 +719,22 @@ Page loads ──→ JS reads location.hash ──→ innerHTML = hash ──→
 **Attack Flow:**
 
 ```
-1. Victim logs into legitimate site
-2. Site sets authentication cookie
-3. Victim visits malicious site (while still logged in)
-4. Malicious site triggers request to legitimate site
-5. Browser automatically includes authentication cookie
-6. Legitimate site processes request as if from victim
+① Victim logs into bank.com
+   Browser stores: Cookie: session=abc123
+
+② Victim visits evil.com (new tab, still logged in)
+   evil.com HTML:  <img src="bank.com/transfer?to=attacker&amount=1000">
+         │
+         ▼
+③ Browser auto-sends request to bank.com
+   GET bank.com/transfer?to=attacker&amount=1000
+   Cookie: session=abc123  ← browser adds automatically
+         │
+         ▼
+④ bank.com sees authenticated request
+   → executes transfer  ✅  (victim never knew)
+
+Key insight: browser adds cookies regardless of which site triggers the request
 ```
 
 **Example Attack:**
@@ -891,6 +926,30 @@ Server rejects requests without matching token ✓
 **Definition:** CSP is a security layer that helps detect and mitigate certain types of attacks, including XSS and data injection.
 
 **Định nghĩa:** CSP là lớp bảo mật giúp phát hiện và giảm thiểu một số loại tấn công, bao gồm XSS và chèn dữ liệu.
+
+```
+CSP as Defense Layer / CSP là Tầng Phòng Thủ
+
+Server sends header:
+  Content-Security-Policy: default-src 'self'; script-src 'self' cdn.example.com
+         │
+         ▼
+Browser enforces policy on every resource load:
+
+  <script src="/app.js">         ── 'self' ✅ allowed
+  <script src="cdn.example.com"> ── listed  ✅ allowed
+  <script src="evil.com/x.js">   ── not listed ❌ BLOCKED
+  <script>inline code</script>   ── no 'unsafe-inline' ❌ BLOCKED
+  eval("code")                   ── no 'unsafe-eval' ❌ BLOCKED
+
+XSS injected script: <script>steal()</script>
+  → browser checks CSP: inline not allowed → BLOCKED ✅
+  → attack neutralized even if code was injected into HTML
+
+Reporting:
+  report-uri /csp-report → browser sends JSON log of violations
+  → monitor before enforcing with Content-Security-Policy-Report-Only
+```
 
 ### CSP Directives
 

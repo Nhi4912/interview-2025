@@ -2,6 +2,7 @@
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **L5 Competencies**: Technical Mastery (20pts), Problem-Solving (15pts)
 
 ## JavaScript Fundamentals - Chapter 13 / Kiến Thức JavaScript Nền Tảng - Chương 13
 

@@ -824,6 +824,50 @@ Design decisions:
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: MoMo — `this` Context Loss Broke Payment Callback
+
+**Situation:** MoMo's payment SDK exposed a `PaymentHandler` class. Merchants integrated by passing `handler.onSuccess` as a callback to their own event system. Every successful payment triggered `onSuccess` but `this.transactionLog` was `undefined` — crashing silently and losing the transaction audit trail.
+
+**What went wrong:**
+```javascript
+class PaymentHandler {
+  constructor(config) {
+    this.transactionLog = [];
+    this.config = config;
+  }
+
+  onSuccess(transactionId) {
+    this.transactionLog.push(transactionId); // ❌ 'this' is undefined in strict mode
+    this.config.onComplete(transactionId);   // ← throws: Cannot read property 'push' of undefined
+  }
+}
+
+// Merchant integration (the trap):
+const handler = new PaymentHandler(config);
+eventBus.on('payment_success', handler.onSuccess); // ← extracts method, loses 'this'
+```
+
+**Decision made:** The SDK switched to arrow functions for all public callback methods:
+```javascript
+constructor(config) {
+  this.transactionLog = [];
+  this.config = config;
+  // Arrow function binds 'this' at creation time — safe to extract
+  this.onSuccess = (transactionId) => {
+    this.transactionLog.push(transactionId); // ✅ always correct 'this'
+    this.config.onComplete(transactionId);
+  };
+}
+```
+
+**Trade-off accepted:** Arrow function methods are instance properties (not on prototype) — each instance gets its own function copy, using more memory than prototype methods. For a payment SDK with few handler instances, this is acceptable. For a component rendered 10,000 times, this matters.
+
+**Lesson:** Any method intended to be passed as a callback must either use arrow function syntax or be explicitly bound. Document this in SDK APIs — method extraction losing `this` is the #1 class method bug in JavaScript.
+
+---
+
 ## Q&A Summary / Tóm Tắt Q&A
 
 | #   | Topic                   | Level | One-liner                                                           |
@@ -901,7 +945,9 @@ class Fetcher {
 - [Execution Context](./09-execution-context.md) — execution context là nơi `this` nhận giá trị
 - [ES6+ Features](./08-es6-features.md) — arrow function, class syntax
 
-### Khác track (Cross-track)
+## Cross-Track / Liên Kết Chéo
 
-- [TypeScript](../02-typescript/01-typescript-basics.md) — `this` parameter type annotation
-- [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks thay thế class this patterns
+- 🔗 **BE perspective**: [Go Interfaces & Generics](../../be-track/01-golang/02-interfaces-generics.md) — Go receivers (`func (s *Struct) method()`) are the static equivalent of `this`; no dynamic binding, no surprises
+- 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-typescript-basics.md) — `this` parameter type annotation, `noImplicitThis` flag forces explicit binding
+- 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks replaced class `this` entirely; `useState` + closures = no more `this` binding bugs
+- 🔗 **Shared theory**: [Software Engineering Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — `this` is core to OOP patterns: Strategy, Command, Observer all rely on dynamic dispatch

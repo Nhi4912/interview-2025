@@ -759,6 +759,38 @@ const label = apiResponse.label ?? "N/A"; // "" stays ""
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Shopee — Shallow Copy Mutation Broke Cart State
+
+**Situation:** Shopee's cart feature used a shared `cartItems` array in a global state object. A "remove item" function did `cart.items.splice(index, 1)` directly on the state object. Components displayed stale counts because React/Redux never detected the change — the array reference hadn't changed, only its contents.
+
+**What went wrong:**
+```javascript
+// Redux reducer — mutation bug:
+case REMOVE_ITEM:
+  state.cart.items.splice(action.index, 1); // ❌ mutates in-place
+  return state; // same reference → React.memo sees no change → no re-render
+
+// Fix:
+case REMOVE_ITEM:
+  return {
+    ...state,
+    cart: {
+      ...state.cart,
+      items: state.cart.items.filter((_, i) => i !== action.index) // ✅ new array
+    }
+  };
+```
+
+**Decision made:** Added an Immer.js integration (`produce()`) to all reducers to make mutation safe-by-default. Also added a Redux middleware that deep-compares old/new state in development to detect accidental mutations.
+
+**Trade-off accepted:** Immer adds ~14KB to bundle and has a small performance overhead. Accepted because the developer experience improvement (write mutation-style code, get immutable output) reduced reducer bugs to near zero.
+
+**Lesson:** Reference equality is the invisible rule of React/Redux. Every developer must internalize that `state.arr.push(x)` and `return state` is silently broken — not just "bad practice."
+
+---
+
 ## Q&A Summary / Tóm Tắt Q&A
 
 | #   | Topic                       | Level | One-liner                                                            |
@@ -809,3 +841,12 @@ const label = apiResponse.label ?? "N/A"; // "" stays ""
 - 🔗 **Applied in**: [Engine Internals](./17-engine-internals.md) — V8 SMI/HeapNumber connects to hidden classes and GC
 
 [← Previous: JavaScript Basics](./01-javascript-basics.md) | [Next: Scope & Hoisting →](./03-scope-hoisting.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Cross-Track / Liên Kết Chéo
+
+- 🔗 **BE perspective**: [Go Language Fundamentals](../../be-track/01-golang/01-language-fundamentals.md) — Go's static typing catches type errors at compile time vs JS runtime; Go `var` vs `:=` vs `const` mirrors JS `var`/`let`/`const` semantics
+- 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-type-system-basics.md) — TypeScript adds static types on top of JS dynamic types; understanding JS types makes TS type errors interpretable
+- 🔗 **FE — React**: [React Fundamentals](../03-react/01-react-fundamentals.md) — immutability (no mutation of state) is why shallow copy `{...state}` is required in React state updates
+- 🔗 **Shared theory**: [CS Data Structures](../../shared/01-cs-fundamentals/data-structures-theory.md) — primitive vs reference types map to value types (stack) vs pointer types (heap) in CS theory

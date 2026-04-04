@@ -767,6 +767,39 @@ function objectCreate(proto, propertiesObject) {
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: VNG — Extending Native Prototype Broke a Third-Party Library
+
+**Situation:** VNG's gaming platform team added `Array.prototype.last` to return the final element (before it became native in ES2023). Six months later, a vendor analytics library began throwing `TypeError: arr.last is not a function` — despite the polyfill being present. The vendor's bundled code ran in a different realm (sandboxed iframe) where the prototype extension wasn't applied.
+
+**What went wrong:**
+```javascript
+// Team added a "harmless" polyfill:
+Array.prototype.last = function() {
+  return this[this.length - 1];
+};
+
+// Works in main page context. But analytics script ran in:
+// <iframe sandbox> ← separate JS realm, separate Array.prototype
+// → arr.last is undefined in the iframe realm
+// → vendor code crashed silently
+```
+
+**Decision made:** Removed all native prototype extensions. Replaced with utility functions:
+```javascript
+// Before: arr.last()
+// After:
+const last = (arr) => arr[arr.length - 1];
+// or import { last } from 'lodash';
+```
+
+**Trade-off accepted:** Utility functions are less ergonomic than prototype methods (can't chain: `arr.filter(fn).last()`). Team used functional pipeline utilities from Ramda to maintain composability without touching prototypes.
+
+**Lesson:** Extending native prototypes violates the Open-Closed principle for built-in types. A prototype extension that "works everywhere" will eventually break in a different realm, a different JS engine version, or when the native spec ships the same name with slightly different behavior (`Array.prototype.at` vs custom `last`).
+
+---
+
 ## Q&A Summary / Tóm Tắt Q&A
 
 | #   | Topic                       | Level | One-liner                                                        |
@@ -831,7 +864,9 @@ function objectCreate(proto, propertiesObject) {
 - [ES6+ Features](./08-es6-features.md) — class syntax, private fields, Symbol
 - [Advanced Patterns](./14-advanced-patterns.md) — Mixins, decorators, composition patterns
 
-### Khác track
+## Cross-Track / Liên Kết Chéo
 
-- [React Fundamentals](../03-react/01-react-fundamentals.md) — `class Component extends React.Component` = prototype chain
-- [TypeScript](../02-typescript/01-typescript-basics.md) — class typing, interface vs type cho prototype patterns
+- 🔗 **BE perspective**: [Go Interfaces & Generics](../../be-track/01-golang/02-interfaces-generics.md) — Go uses interfaces + struct embedding instead of prototype chains; composition over inheritance is idiomatic Go
+- 🔗 **FE — React**: [React Fundamentals](../03-react/01-react-fundamentals.md) — `class Component extends React.Component` walks the prototype chain; function components avoid this complexity
+- 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-typescript-basics.md) — class typing, `interface` vs `type` for prototype patterns, `extends` vs `implements`
+- 🔗 **Shared theory**: [Software Engineering Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — Prototype pattern, Delegation pattern; why composition is generally preferred over inheritance

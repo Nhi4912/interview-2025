@@ -13,6 +13,28 @@
 - Mục tiêu phỏng vấn: hiểu rõ trade-off giữa kích thước JS, số lượng request, thời gian parse/execute và trải nghiệm người dùng.
 - Trọng tâm thực chiến: code splitting, tree shaking, lazy loading, preload/prefetch, CDN, compression, performance budget.
 
+```
+Bundle Optimization Pipeline / Quy Trình Tối Ưu Bundle
+
+Source Files          Build Step             Delivery
+─────────────         ──────────             ────────
+app.tsx  ─┐                                  CDN edge
+utils.ts ─┤──► Bundler ──► Tree Shake ──►   ┌──────────┐
+vendor/  ─┘   (Webpack/     remove          │ main.js  │◄── preload (critical)
+              Vite/Rollup)  dead code       │ vendor.js│◄── long cache (hash)
+                   │                        │ route-A  │◄── lazy (on navigate)
+                   ▼                        │ route-B  │◄── lazy (on navigate)
+              Code Split                    └──────────┘
+              by route/feature                   │
+                   │                        Compression
+                   ▼                        gzip / brotli
+              Bundle Budget                 (70-80% smaller)
+              ≤ 200KB initial JS
+              ≤ 50KB per route chunk
+
+Key trade-off: fewer requests ↔ larger parse cost ↔ cache granularity
+```
+
 ## Related Reading / Tài Liệu Liên Quan
 - [Core Web Vitals](./01-core-web-vitals.md)
 - [Web Performance Comprehensive](./04-web-performance-comprehensive.md)

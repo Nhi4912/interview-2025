@@ -735,7 +735,47 @@ validateUser({ name: "", email: "bad" });
 - [ES6+ Features](./08-es6-features.md) — arrow functions, spread, destructuring cho FP style
 - [Advanced Concepts](./10-advanced-concepts.md) — memoization, debounce dùng FP patterns
 
-### Khác track
+---
 
-- [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks built on FP (pure functions, closures)
-- [React State Management](../03-react/05-state-management.md) — Redux reducers = pure functions
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Teko — Impure Reducer Caused Non-Deterministic Order Processing
+
+**Situation:** Teko's warehouse management system used Redux for order state. An order sorting reducer mutated the input array using `.sort()` and returned the same reference. The bug was intermittent: sorted order varied based on which browser tab processed first — a race condition visible only in multi-tab scenarios.
+
+**What went wrong:**
+```javascript
+// Impure reducer — mutates input:
+function ordersReducer(state = [], action) {
+  switch (action.type) {
+    case SORT_ORDERS:
+      return state.sort((a, b) => a.priority - b.priority); // ❌ mutates state array
+      // sort() returns 'this' — same reference, but sorted
+      // Redux devtools replay breaks: replaying action on different state gives different result
+      // Multi-tab: two tabs calling sort() simultaneously get different sort outcomes
+  }
+}
+```
+
+**Fix — pure reducer:**
+```javascript
+case SORT_ORDERS:
+  return [...state].sort((a, b) => a.priority - b.priority); // ✅ new array
+  // or ES2023:
+  return state.toSorted((a, b) => a.priority - b.priority); // ✅ non-mutating
+```
+
+**Decision made:** Added Redux `redux-immutable-state-invariant` middleware in development — it deep-freezes state and throws if any reducer mutates it. Zero tolerance for impure reducers enforced by tooling, not code review.
+
+**Trade-off accepted:** `redux-immutable-state-invariant` has significant performance overhead (deep-freeze on every dispatch) — disabled in production. Development-only safety net is acceptable; production uses bundle-split builds without the middleware.
+
+**Lesson:** Pure functions in Redux reducers are not a style preference — they are the correctness invariant that makes time-travel debugging, replay, and multi-tab state sync possible. An impure reducer is a time bomb: it works in happy paths and fails in the exact scenarios where correctness matters most.
+
+---
+
+## Cross-Track / Liên Kết Chéo
+
+- 🔗 **BE perspective**: [Go Advanced Patterns](../../be-track/01-golang/08-advanced-patterns.md) — Go's functional approach: higher-order functions, immutability via value semantics, function types as first-class; `map`/`filter` via slice iteration
+- 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks are designed around FP: pure functions, no side effects in render, `useReducer` = pure reducer pattern
+- 🔗 **FE — State**: [React State Management](../03-react/05-state-management.md) — Redux reducers must be pure functions; Zustand/Jotai use FP-style atoms
+- 🔗 **Shared theory**: [Software Engineering Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — FP patterns (pure functions, immutability, composition) vs OOP patterns; when to choose each

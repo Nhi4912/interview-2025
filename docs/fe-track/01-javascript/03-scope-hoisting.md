@@ -801,9 +801,50 @@ function processOrder(order) {
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Tiki — `var` in Loop Caused All Analytics Events to Report Same Index
+
+**Situation:** Tiki's product listing page tracked "product card viewed" events using click handlers attached in a `for` loop. All click events reported `productIndex = 5` regardless of which card was clicked — the last index from the loop.
+
+**What went wrong:**
+```javascript
+// Old code with var:
+for (var i = 0; i < products.length; i++) {
+  cards[i].addEventListener('click', function() {
+    trackEvent('product_click', { index: i }); // ❌ closure captures var i
+    // By the time any click fires, the loop has finished → i = products.length = 5
+  });
+}
+
+// Fix with let:
+for (let i = 0; i < products.length; i++) {
+  cards[i].addEventListener('click', function() {
+    trackEvent('product_click', { index: i }); // ✅ each iteration gets its own i binding
+  });
+}
+```
+
+**Decision made:** ESLint rule `no-var` enforced across all frontend code. A migration script replaced all `var` declarations with `let`/`const`. Senior engineers reviewed all `for` loops touching async callbacks or event handlers specifically.
+
+**Trade-off accepted:** The `no-var` rule occasionally required adding block scopes `{}` around code that relied on `var`'s function-scoping for intentional hoisting. These were edge cases reviewed individually.
+
+**Lesson:** The `var` closure-in-loop bug is the most common JavaScript interview question precisely because it trips up developers at all levels in production. `let`/`const` in `for` loops is not a style choice — it's a correctness requirement.
+
+---
+
 ## Connections / Liên Kết
 
 - ⬅️ **Built on:** [Variables & Types](./02-variables-types.md) — var/let/const declarations
 - ➡️ **Enables:** [Closures](./04-closures.md) — closure captures scope chain
 - ➡️ **Enables:** [Execution Context](./09-execution-context.md) — hoisting = creation phase
 - 🔗 **Applied in:** Mọi JS file — scope decisions ảnh hưởng performance (closures), correctness (TDZ), maintainability (var bugs)
+
+---
+
+## Cross-Track / Liên Kết Chéo
+
+- 🔗 **BE perspective**: [Go Language Fundamentals](../../be-track/01-golang/01-language-fundamentals.md) — Go has block scoping like `let`/`const` with no hoisting; Go `:=` creates a new binding in current scope — same concept, no surprises
+- 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-type-system-basics.md) — `noImplicitAny` + `strict` catches variable declaration bugs at compile time that TDZ only catches at runtime
+- 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — stale closures in `useEffect` are a direct consequence of lexical scoping; understanding TDZ prevents hook dependency array bugs
+- 🔗 **Shared theory**: [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — scope chain maps to call stack frames; each function call pushes a new execution frame with its own variable bindings

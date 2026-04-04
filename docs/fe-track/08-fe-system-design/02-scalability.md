@@ -12,6 +12,30 @@
 - Khả năng mở rộng frontend không chỉ là hiệu năng runtime mà còn là khả năng mở rộng team, codebase, quy trình release, và vận hành.
 - Đây là chủ đề trọng điểm cho phỏng vấn Mid/Senior khi hệ thống nhiều domain nghiệp vụ, nhiều squad, nhiều vùng địa lý.
 
+```
+Frontend Scalability — 5 Dimensions / 5 Chiều Mở Rộng
+
+                  ┌─────────────────────────────────────┐
+                  │         Frontend Application        │
+                  └──────────────┬──────────────────────┘
+                                 │
+         ┌───────────────────────┼───────────────────────┐
+         │                       │                       │
+    📈 Traffic              👥 Team                📦 Codebase
+    CDN + SSR/SSG        Micro-frontends          Bundle splitting
+    Virtual scroll        Monorepo               Tree shaking
+    Lazy load          Code ownership           Build budgets
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                   ┌─────────────┴─────────────┐
+                   │                           │
+              🚀 Release                 🔭 Operations
+           Feature flags              RUM monitoring
+           Canary deploys            Error tracking
+           Independent deploy         MTTR < 30min
+```
+
 ## Related Reading / Tài Liệu Liên Quan
 
 - [Architecture Patterns](./01-architecture-patterns.md)

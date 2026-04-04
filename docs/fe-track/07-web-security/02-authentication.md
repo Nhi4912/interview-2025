@@ -12,6 +12,31 @@
 - Mục tiêu: hiểu rõ cách frontend phối hợp với backend để xác thực an toàn, giảm rủi ro XSS/CSRF/token leakage/session hijack.
 - Trọng tâm phỏng vấn senior: trade-off giữa cookie session và token-based auth trong SPA/SSR/hybrid app.
 
+```
+Auth Strategy Comparison / So Sánh Chiến Lược Xác Thực
+
+                Cookie Session          JWT / Token-based
+                ──────────────          ─────────────────
+Storage         httpOnly cookie         localStorage (❌ XSS risk)
+                (XSS-safe)              OR httpOnly cookie (✅)
+
+CSRF risk       YES → need SameSite     NO (not auto-sent)
+                + CSRF token
+
+Revocation      Easy (delete session)   Hard (short expiry + refresh token)
+
+Scaling         Sticky session or       Stateless → any server
+                shared session store    verifies signature
+
+Best for        SSR apps, SPAs with     Microservices, mobile, 3rd-party API
+                same-origin backend     consumers, multi-domain
+
+                        ↓ Decision guide ↓
+           SPA + same domain? → httpOnly cookie + SameSite=Lax
+           Multi-domain / mobile? → JWT in httpOnly cookie (not localStorage)
+           Never store tokens in localStorage for sensitive apps
+```
+
 ## Related Reading / Tài Liệu Liên Quan
 
 - [Modern Auth Patterns (Shared)](../../shared/04-security/04-modern-auth-patterns.md)

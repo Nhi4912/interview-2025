@@ -731,6 +731,43 @@ Key: monotonically increasing request ID — stale responses ignored. Same patte
 
 ---
 
+## Study Cases / Tình Huống Thực Tế Sâu (Block C)
+
+### Case: Axon — JSON Parsing Blocked the Main Thread, Froze Camera Feed UI
+
+**Situation:** Axon's evidence review tool allowed officers to export large case files as JSON (sometimes 50MB+). A "load case" button parsed the JSON synchronously, blocking the event loop for 3-5 seconds during which the live camera feed preview froze and UI input was completely unresponsive.
+
+**What went wrong:**
+```javascript
+// Blocking the event loop:
+loadCaseBtn.addEventListener('click', async () => {
+  const raw = await fetch('/api/case/123/export').then(r => r.text());
+  const caseData = JSON.parse(raw); // ← 50MB JSON parse: 3-5 seconds on main thread
+  // Event loop blocked during parse: camera feed drops frames, UI freezes
+  renderCaseData(caseData);
+});
+```
+
+**Decision made:** Offloaded JSON parsing to a Web Worker:
+```javascript
+// main.js
+const worker = new Worker('/workers/json-parser.js');
+worker.postMessage({ raw }); // transfer raw string off main thread
+worker.onmessage = ({ data }) => renderCaseData(data.caseData);
+
+// workers/json-parser.js
+self.onmessage = ({ data }) => {
+  const caseData = JSON.parse(data.raw); // runs in separate thread
+  self.postMessage({ caseData });
+};
+```
+
+**Trade-off accepted:** Web Worker adds `postMessage` serialization overhead (~10ms for 50MB). The team also evaluated streaming JSON parsers (`@streamparser/json`) which parse incrementally without blocking — ultimately used streaming for the largest files, Web Worker for medium-sized ones.
+
+**Lesson:** `JSON.parse` on large payloads is a synchronous CPU operation that fully blocks the event loop. Any operation that takes >16ms belongs in a Worker or must be broken into microtasks via `setTimeout(fn, 0)` chunks. The event loop's single-threaded nature is not a limitation to work around — it's a constraint to design for.
+
+---
+
 ## Q&A Summary / Tóm Tắt Q&A
 
 | #   | Topic                     | Level | One-liner                                                                    |
@@ -792,7 +829,9 @@ Key: monotonically increasing request ID — stale responses ignored. Same patte
 - [ES6+ Features](./08-es6-features.md) — Promises, iterators, generators
 - [Concurrency Models](./15-concurrency-models.md) — Web Workers, SharedArrayBuffer
 
-### Khác track
+## Cross-Track / Liên Kết Chéo
 
-- [React Performance](../03-react/09-performance-optimization.md) — avoiding event loop blocks in React
-- [React Hooks](../03-react/03-hooks-deep-dive.md) — useEffect async patterns
+- 🔗 **BE perspective**: [Go Concurrency](../../be-track/01-golang/03-concurrency.md) — Go uses goroutines + channels (M:N threading) vs JS single-threaded event loop; fundamentally different concurrency models with different failure modes
+- 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — `useEffect` async patterns, cleanup functions, avoiding stale closures in async callbacks
+- 🔗 **FE — Performance**: [React Performance](../03-react/09-performance-optimization.md) — blocking the event loop with heavy computation causes dropped frames; offload to Web Workers
+- 🔗 **Shared theory**: [Concurrency & Parallelism](../../shared/01-cs-fundamentals/07-concurrency-and-parallelism.md) — theoretical foundation: cooperative vs preemptive scheduling, why JS chose single-threaded model
