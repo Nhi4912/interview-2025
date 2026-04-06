@@ -1,7 +1,7 @@
 # Networking
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **See also**: [Table of Contents](../../00-table-of-contents.md) | [Networking Theory (Shared)](../../shared/01-cs-fundamentals/networking-theory.md)
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
@@ -110,11 +110,11 @@ Sender (Application → Physical):       Receiver (Physical → Application):
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-| ------- | ----------- | ------- |
-| "OSI model = TCP/IP model" | OSI là lý thuyết 7 layers dùng để học; TCP/IP là thực tế 4 layers được implement trên Internet | Dùng OSI để phân tích/debug theo tầng, TCP/IP để hiểu implementation thực tế |
-| "Data đi tuần tự qua đủ 7 layers" | Hardware offloading (NIC checksum, TSO) có thể bỏ qua một số bước trong kernel | Phụ thuộc vào NIC capabilities — kiểm tra bằng `ethtool -k eth0` |
-| "Layer 5/6 không tồn tại trong TCP/IP" | Session management và serialization vẫn tồn tại, chỉ gộp vào Application layer | TLS session resumption, JSON/protobuf encoding đều là biểu hiện của layer 5/6 |
+| Sai lầm                                | Tại sao sai                                                                                    | Đúng là                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| "OSI model = TCP/IP model"             | OSI là lý thuyết 7 layers dùng để học; TCP/IP là thực tế 4 layers được implement trên Internet | Dùng OSI để phân tích/debug theo tầng, TCP/IP để hiểu implementation thực tế  |
+| "Data đi tuần tự qua đủ 7 layers"      | Hardware offloading (NIC checksum, TSO) có thể bỏ qua một số bước trong kernel                 | Phụ thuộc vào NIC capabilities — kiểm tra bằng `ethtool -k eth0`              |
+| "Layer 5/6 không tồn tại trong TCP/IP" | Session management và serialization vẫn tồn tại, chỉ gộp vào Application layer                 | TLS session resumption, JSON/protobuf encoding đều là biểu hiện của layer 5/6 |
 
 **Interview Pattern:** "Khi gõ URL vào browser, chuyện gì xảy ra?" → DNS → TCP 3-way → TLS → HTTP request → server process → HTTP response → render. Mention each layer touched.
 
@@ -165,11 +165,11 @@ Client        Server               Client          Server
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-| ------- | ----------- | ------- |
-| "TIME_WAIT là bug, cần disable" | TIME_WAIT ngăn delayed packets từ connection cũ corrupt connection mới trên cùng port tuple | Feature, không phải bug. Fix bằng connection pooling và `SO_REUSEADDR` |
-| "Nhiều connections = throughput cao hơn" | TCP congestion control giới hạn bandwidth per connection; nhiều connections cạnh tranh nhau trên cùng bottleneck | Dùng HTTP/2 multiplexing hoặc tune `MaxIdleConnsPerHost` đúng cách |
-| "TCP keepalive = HTTP keep-alive" | TCP keepalive là L4 probe (detect dead peer, default 2h); HTTP keep-alive là L7 connection reuse cho multiple requests | Phân biệt rõ layer — set cả hai tùy mục đích |
+| Sai lầm                                  | Tại sao sai                                                                                                            | Đúng là                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| "TIME_WAIT là bug, cần disable"          | TIME_WAIT ngăn delayed packets từ connection cũ corrupt connection mới trên cùng port tuple                            | Feature, không phải bug. Fix bằng connection pooling và `SO_REUSEADDR` |
+| "Nhiều connections = throughput cao hơn" | TCP congestion control giới hạn bandwidth per connection; nhiều connections cạnh tranh nhau trên cùng bottleneck       | Dùng HTTP/2 multiplexing hoặc tune `MaxIdleConnsPerHost` đúng cách     |
+| "TCP keepalive = HTTP keep-alive"        | TCP keepalive là L4 probe (detect dead peer, default 2h); HTTP keep-alive là L7 connection reuse cho multiple requests | Phân biệt rõ layer — set cả hai tùy mục đích                           |
 
 **Interview Pattern:** "Why do you see thousands of TIME_WAIT on your Go server?" → High connection churn + short-lived connections. Fix: connection pooling (`MaxIdleConnsPerHost`), SO_REUSEADDR, HTTP/2 multiplexing.
 
@@ -223,11 +223,11 @@ HTTP/1.1 (queue):          HTTP/2 (multiplex):        HTTP/3 (QUIC/UDP):
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-| ------- | ----------- | ------- |
+| Sai lầm                          | Tại sao sai                                                                                     | Đúng là                                                                           |
+| -------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | "HTTP/2 luôn nhanh hơn HTTP/1.1" | Single large request không có sự khác biệt; HTTP/2 tốt nhất với nhiều small concurrent requests | Benchmark trước khi switch; HTTP/2 shine cho browser-facing APIs với nhiều assets |
-| "HTTP/3 thay thế TCP hoàn toàn" | HTTP/3 chỉ dùng QUIC/UDP cho HTTP traffic; database connections, SSH, gRPC vẫn dùng TCP | HTTP/3 là application-layer choice, không ảnh hưởng đến non-HTTP protocols |
-| "Server Push được dùng rộng rãi" | Hầu hết CDN và browsers đã disable do cache invalidation complexity | Dùng `103 Early Hints` hoặc `<link rel="preload">` trong HTML thay thế |
+| "HTTP/3 thay thế TCP hoàn toàn"  | HTTP/3 chỉ dùng QUIC/UDP cho HTTP traffic; database connections, SSH, gRPC vẫn dùng TCP         | HTTP/3 là application-layer choice, không ảnh hưởng đến non-HTTP protocols        |
+| "Server Push được dùng rộng rãi" | Hầu hết CDN và browsers đã disable do cache invalidation complexity                             | Dùng `103 Early Hints` hoặc `<link rel="preload">` trong HTML thay thế            |
 
 **Interview Pattern:** "When would you choose HTTP/2 vs gRPC vs HTTP/3?" → HTTP/2: browser-facing APIs, multiplexing. gRPC: internal microservices (protobuf + streaming). HTTP/3: mobile clients (connection migration on network switch).
 
@@ -285,11 +285,11 @@ mTLS thêm: Client cũng gửi Certificate + CertificateVerify → mutual authen
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-| ------- | ----------- | ------- |
-| "HTTPS = hoàn toàn bảo mật" | TLS chỉ bảo vệ transport; XSS, SQLi, IDOR là application-level vulnerabilities không liên quan đến TLS | Defense in depth: TLS + input validation + proper auth + output encoding |
-| "Certificate pinning luôn là best practice" | Khó rotate cert khi expired; cần update tất cả clients đồng thời → operational nightmare | Dùng short-lived certs + ACME automation (Let's Encrypt) thay vì hardcode pinning |
-| "mTLS chỉ dành cho microservices" | mTLS cũng dùng cho IoT device auth, B2B API authentication thay thế API keys | mTLS bất cứ khi nào cần mutual identity verification giữa hai bên |
+| Sai lầm                                     | Tại sao sai                                                                                            | Đúng là                                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| "HTTPS = hoàn toàn bảo mật"                 | TLS chỉ bảo vệ transport; XSS, SQLi, IDOR là application-level vulnerabilities không liên quan đến TLS | Defense in depth: TLS + input validation + proper auth + output encoding          |
+| "Certificate pinning luôn là best practice" | Khó rotate cert khi expired; cần update tất cả clients đồng thời → operational nightmare               | Dùng short-lived certs + ACME automation (Let's Encrypt) thay vì hardcode pinning |
+| "mTLS chỉ dành cho microservices"           | mTLS cũng dùng cho IoT device auth, B2B API authentication thay thế API keys                           | mTLS bất cứ khi nào cần mutual identity verification giữa hai bên                 |
 
 **Interview Pattern:** "Explain TLS 1.3 handshake and why it's faster than 1.2" → 1.3 combines key exchange + cipher negotiation in single round-trip. Pre-shared keys enable 0-RTT. Removed insecure ciphers (RSA key exchange, CBC mode).
 
@@ -347,11 +347,11 @@ Browser         DNS System                Client             Server
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-| ------- | ----------- | ------- |
-| "DNS resolution gần như instant" | Cache miss yêu cầu recursive lookup qua Root → TLD → Authoritative; có thể thêm 50–200ms | Đo DNS latency trong production; dùng DNS prefetch và giảm TTL khi chuẩn bị đổi IP |
-| "WebSocket luôn tốt hơn SSE" | SSE đơn giản hơn cho server→client only; SSE auto-reconnect built-in, không cần implement lại | Chọn theo use case: bidirectional → WebSocket; server push only → SSE |
-| "WebSocket không cần heartbeat" | NAT gateways và firewalls drop idle connections; timeout thường 30s–5 phút | Implement ping/pong every 25s; thiếu heartbeat là nguyên nhân phổ biến của connection drops |
+| Sai lầm                          | Tại sao sai                                                                                   | Đúng là                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| "DNS resolution gần như instant" | Cache miss yêu cầu recursive lookup qua Root → TLD → Authoritative; có thể thêm 50–200ms      | Đo DNS latency trong production; dùng DNS prefetch và giảm TTL khi chuẩn bị đổi IP          |
+| "WebSocket luôn tốt hơn SSE"     | SSE đơn giản hơn cho server→client only; SSE auto-reconnect built-in, không cần implement lại | Chọn theo use case: bidirectional → WebSocket; server push only → SSE                       |
+| "WebSocket không cần heartbeat"  | NAT gateways và firewalls drop idle connections; timeout thường 30s–5 phút                    | Implement ping/pong every 25s; thiếu heartbeat là nguyên nhân phổ biến của connection drops |
 
 **Interview Pattern:** "Design a chat system — why WebSocket over polling?" → Polling: N clients × M checks/sec = N×M requests. WebSocket: N persistent connections, server pushes immediately. Trade-off: more server memory per connection, but massively less bandwidth.
 
@@ -412,11 +412,11 @@ Client ──► [LB]                    Client ──► [LB] ──► /api/* 
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-| ------- | ----------- | ------- |
-| "gRPC thay thế REST hoàn toàn" | gRPC không browser-friendly (cần grpc-web proxy); REST vẫn là standard cho public APIs | gRPC cho internal microservices; REST cho public-facing APIs và browser clients |
-| "L7 LB luôn tốt hơn L4" | L7 thêm latency từ HTTP parsing và SSL termination; L4 nhanh hơn đáng kể cho raw TCP throughput | L4 cho latency-sensitive, high-throughput (gaming, streaming); L7 cho intelligent HTTP routing |
-| "Round Robin là công bằng" | Requests có độ phức tạp rất khác nhau; RR không tính đến server load thực tế | Dùng least-connections hoặc weighted round robin cho workloads không đồng đều |
+| Sai lầm                        | Tại sao sai                                                                                     | Đúng là                                                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| "gRPC thay thế REST hoàn toàn" | gRPC không browser-friendly (cần grpc-web proxy); REST vẫn là standard cho public APIs          | gRPC cho internal microservices; REST cho public-facing APIs và browser clients                |
+| "L7 LB luôn tốt hơn L4"        | L7 thêm latency từ HTTP parsing và SSL termination; L4 nhanh hơn đáng kể cho raw TCP throughput | L4 cho latency-sensitive, high-throughput (gaming, streaming); L7 cho intelligent HTTP routing |
+| "Round Robin là công bằng"     | Requests có độ phức tạp rất khác nhau; RR không tính đến server load thực tế                    | Dùng least-connections hoặc weighted round robin cho workloads không đồng đều                  |
 
 **Interview Pattern:** "How does gRPC load balancing differ from HTTP?" → gRPC uses long-lived HTTP/2 connections → L4 LB sees one connection → can't distribute. Need L7 LB that understands HTTP/2 streams, or client-side LB (grpc.WithResolvers + round_robin policy).
 
@@ -478,11 +478,11 @@ Token Bucket Rate Limiting:
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-| ------- | ----------- | ------- |
-| "REST yêu cầu JSON" | REST là architectural style (HTTP methods + URIs + stateless); format là implementation choice | REST có thể dùng JSON, XML, protobuf — chọn format phù hợp với client requirements |
-| "Rate limiting ở application layer là đủ" | Traffic vẫn hit server trước khi bị block; DDoS exhausts connections trước khi limiter xử lý | Rate limiting phải ở CDN/API Gateway level đầu tiên; application là last line of defense |
-| "CORS ngăn chặn unauthorized API access" | CORS chỉ là browser security policy; curl, Postman, backend calls bỏ qua hoàn toàn | CORS bảo vệ browser cross-origin; authentication (JWT/API key) mới là security thực sự |
+| Sai lầm                                   | Tại sao sai                                                                                    | Đúng là                                                                                  |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| "REST yêu cầu JSON"                       | REST là architectural style (HTTP methods + URIs + stateless); format là implementation choice | REST có thể dùng JSON, XML, protobuf — chọn format phù hợp với client requirements       |
+| "Rate limiting ở application layer là đủ" | Traffic vẫn hit server trước khi bị block; DDoS exhausts connections trước khi limiter xử lý   | Rate limiting phải ở CDN/API Gateway level đầu tiên; application là last line of defense |
+| "CORS ngăn chặn unauthorized API access"  | CORS chỉ là browser security policy; curl, Postman, backend calls bỏ qua hoàn toàn             | CORS bảo vệ browser cross-origin; authentication (JWT/API key) mới là security thực sự   |
 
 **Interview Pattern:** "Design rate limiting for an API" → Token bucket per user (in-memory for single server, Redis for distributed). HTTP 429 with Retry-After header. Sliding window counter for precise per-second limiting.
 
@@ -3257,13 +3257,13 @@ Before Interview:
 
 ## Self-Check / Tự Kiểm Tra
 
-| #   | Loại           | Câu hỏi |
-| --- | -------------- | ------- |
-| 1   | 🔍 Retrieval   | Vẽ từ trí nhớ: TCP 3-way handshake và 4-way teardown với tất cả states. Giải thích tại sao TIME_WAIT cần chính xác 2×MSL và điều gì xảy ra nếu bỏ nó đi? |
-| 2   | 🎨 Visual      | Vẽ sơ đồ so sánh HTTP/1.1, HTTP/2, HTTP/3: chỉ rõ HOL blocking xảy ra ở layer nào trong mỗi version, và vì sao QUIC giải quyết được vấn đề mà HTTP/2 không giải quyết được |
-| 3   | 🛠️ Application | Viết Go HTTP client với `http.Transport` được cấu hình đúng cho high-traffic service: set `MaxIdleConnsPerHost`, các timeouts cần thiết, và pattern xử lý response body đúng cách để tránh TIME_WAIT leak |
+| #   | Loại           | Câu hỏi                                                                                                                                                                                                            |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | Vẽ từ trí nhớ: TCP 3-way handshake và 4-way teardown với tất cả states. Giải thích tại sao TIME_WAIT cần chính xác 2×MSL và điều gì xảy ra nếu bỏ nó đi?                                                           |
+| 2   | 🎨 Visual      | Vẽ sơ đồ so sánh HTTP/1.1, HTTP/2, HTTP/3: chỉ rõ HOL blocking xảy ra ở layer nào trong mỗi version, và vì sao QUIC giải quyết được vấn đề mà HTTP/2 không giải quyết được                                         |
+| 3   | 🛠️ Application | Viết Go HTTP client với `http.Transport` được cấu hình đúng cho high-traffic service: set `MaxIdleConnsPerHost`, các timeouts cần thiết, và pattern xử lý response body đúng cách để tránh TIME_WAIT leak          |
 | 4   | 🐛 Debug       | Production alert: Go service có 50,000 connections ở TIME_WAIT trên `netstat`, service bắt đầu fail với "cannot assign requested address". Trace từng bước nguyên nhân và đưa ra ít nhất 3 cách fix với trade-offs |
-| 5   | 🎓 Teach       | Giải thích cho một junior developer tại sao gRPC hoạt động tốt trong lab nhưng khi deploy với L4 load balancer thì tất cả traffic đổ vào 1 backend. Cần làm gì để fix và tại sao? |
+| 5   | 🎓 Teach       | Giải thích cho một junior developer tại sao gRPC hoạt động tốt trong lab nhưng khi deploy với L4 load balancer thì tất cả traffic đổ vào 1 backend. Cần làm gì để fix và tại sao?                                  |
 
 💬 **Feynman Prompt:** Giải thích cho người không biết lập trình tại sao khi bạn đang dùng WiFi rồi chuyển sang 4G, web HTTP/1.1 bị mất kết nối phải load lại từ đầu, nhưng HTTP/3 không bị như vậy — dùng ví dụ từ cuộc sống hàng ngày ở Việt Nam.
 

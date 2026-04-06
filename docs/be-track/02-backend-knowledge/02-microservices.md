@@ -2,7 +2,7 @@
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [API Design](./01-api-design.md)
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **See also**: [Table of Contents](../../00-table-of-contents.md) | [Message Queues (Shared)](../../shared/02-system-design/05-message-queues.md)
 
 ---
 

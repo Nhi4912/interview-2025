@@ -1,7 +1,7 @@
 # Operating Systems — Go Backend Interview Prep
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **See also**: [Table of Contents](../../00-table-of-contents.md) | [OS Theory (Shared)](../../shared/01-cs-fundamentals/os-theory.md)
 
 > **Target:** Middle/Senior Go Backend Developer
 > **Companies:** Zalo, Grab, Axon, Employment Hero, Microsoft, Google
