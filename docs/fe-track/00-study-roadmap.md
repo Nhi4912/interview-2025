@@ -22,16 +22,16 @@
 
 | #   | Topic                    | File                                             | Priority |
 | --- | ------------------------ | ------------------------------------------------ | -------- |
-| 1   | Variables & Data Types   | `01-javascript/01-variables-data-types.md`       | Critical |
+| 1   | Variables & Data Types   | `01-javascript/02-variables-types.md`       | Critical |
 | 2   | Scope & Hoisting         | `01-javascript/02-scope-hoisting.md`             | Critical |
 | 3   | Closures                 | `01-javascript/03-closures.md`                   | Critical |
-| 4   | Prototypes & Inheritance | `01-javascript/04-prototypes-inheritance.md`     | Critical |
+| 4   | Prototypes & Inheritance | `01-javascript/06-prototypes-inheritance.md`     | Critical |
 | 5   | `this` Keyword           | `01-javascript/05-this-keyword.md`               | Critical |
-| 6   | Event Loop & Async       | `01-javascript/06-event-loop-async.md`           | Critical |
-| 7   | ES6+ Features            | `01-javascript/07-es6-features.md`               | Critical |
-| 8   | Advanced Concepts        | `01-javascript/08-advanced-concepts.md`          | High     |
+| 6   | Event Loop & Async       | `01-javascript/07-event-loop-async.md`           | Critical |
+| 7   | ES6+ Features            | `01-javascript/08-es6-features.md`               | Critical |
+| 8   | Advanced Concepts        | `01-javascript/10-advanced-concepts.md`          | High     |
 | 9   | Async Comprehensive      | `01-javascript/09-async-comprehensive.md`        | High     |
-| 10  | Functional Programming   | `01-javascript/12-functional-programming.md`     | Medium   |
+| 10  | Functional Programming   | `01-javascript/11-functional-programming.md`     | Medium   |
 | 11  | Memory Management        | `01-javascript/15-memory-management-advanced.md` | Medium   |
 | 12  | Execution Context Theory | `01-javascript/16-execution-context-theory.md`   | Medium   |
 
@@ -39,8 +39,8 @@
 
 | #   | Topic                            | File                                               | Priority |
 | --- | -------------------------------- | -------------------------------------------------- | -------- |
-| 13  | Scope & Hoisting (Comprehensive) | `01-javascript/02-scope-hoisting-comprehensive.md` | Medium   |
-| 14  | Closures (Comprehensive)         | `01-javascript/03-closures-comprehensive.md`       | Medium   |
+| 13  | Scope & Hoisting (Comprehensive) | `01-javascript/03-scope-hoisting.md` | Medium   |
+| 14  | Closures (Comprehensive)         | `01-javascript/04-closures.md`       | Medium   |
 | 15  | Prototypes (Deep)                | `01-javascript/10-prototypes-inheritance-deep.md`  | Medium   |
 | 16  | ES6 (Deep)                       | `01-javascript/11-es6-features-deep.md`            | Medium   |
 | 17  | Metaprogramming                  | `01-javascript/18-metaprogramming-theory.md`       | Low      |

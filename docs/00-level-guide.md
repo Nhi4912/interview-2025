@@ -17,18 +17,18 @@ Mỗi level build on level trước — **không skip**.
 > **Target**: Có thể implement features, hiểu basic concepts, pass coding rounds Easy-Medium.
 
 ### JavaScript Core
-- [ ] [01-variables-data-types.md](./fe-track/01-javascript/01-variables-data-types.md)
-- [ ] [02-scope-hoisting-comprehensive.md](./fe-track/01-javascript/02-scope-hoisting-comprehensive.md)
-- [ ] [03-closures-comprehensive.md](./fe-track/01-javascript/03-closures-comprehensive.md)
-- [ ] [04-prototypes-inheritance.md](./fe-track/01-javascript/04-prototypes-inheritance.md)
+- [ ] [02-variables-types.md](./fe-track/01-javascript/02-variables-types.md)
+- [ ] [03-scope-hoisting.md](./fe-track/01-javascript/03-scope-hoisting.md)
+- [ ] [04-closures.md](./fe-track/01-javascript/04-closures.md)
+- [ ] [06-prototypes-inheritance.md](./fe-track/01-javascript/06-prototypes-inheritance.md)
 - [ ] [05-this-keyword.md](./fe-track/01-javascript/05-this-keyword.md)
-- [ ] [06-event-loop-async.md](./fe-track/01-javascript/06-event-loop-async.md)
-- [ ] [07-es6-features.md](./fe-track/01-javascript/07-es6-features.md)
-- [ ] [00-javascript-basics.md](./fe-track/01-javascript/00-javascript-basics.md)
+- [ ] [07-event-loop-async.md](./fe-track/01-javascript/07-event-loop-async.md)
+- [ ] [08-es6-features.md](./fe-track/01-javascript/08-es6-features.md)
+- [ ] [01-javascript-basics.md](./fe-track/01-javascript/01-javascript-basics.md)
 
 ### TypeScript Basics
 - [ ] [01-typescript-basics.md](./fe-track/02-typescript/01-typescript-basics.md)
-- [ ] [01-type-system-basics.md](./fe-track/02-typescript/01-type-system-basics.md)
+- [ ] [01-typescript-basics.md](./fe-track/02-typescript/01-typescript-basics.md)
 
 ### React Fundamentals
 - [ ] [01-react-fundamentals.md](./fe-track/03-react/01-react-fundamentals.md)
@@ -54,9 +54,9 @@ Mỗi level build on level trước — **không skip**.
 > **Target**: Hiểu internals, debug production issues, design component APIs, pass Medium coding rounds.
 
 ### JavaScript Advanced
-- [ ] [08-advanced-concepts.md](./fe-track/01-javascript/08-advanced-concepts.md)
+- [ ] [10-advanced-concepts.md](./fe-track/01-javascript/10-advanced-concepts.md)
 - [ ] [09-async-comprehensive.md](./fe-track/01-javascript/09-async-comprehensive.md)
-- [ ] [12-functional-programming.md](./fe-track/01-javascript/12-functional-programming.md)
+- [ ] [11-functional-programming.md](./fe-track/01-javascript/11-functional-programming.md)
 - [ ] [10-prototypes-inheritance-deep.md](./fe-track/01-javascript/10-prototypes-inheritance-deep.md)
 - [ ] [11-es6-features-deep.md](./fe-track/01-javascript/11-es6-features-deep.md)
 

@@ -28,9 +28,9 @@ Trước khi bắt đầu, xác định level hiện tại để chọn đúng l
 
 | Week | Topic | Resources | Priority |
 |------|-------|-----------|----------|
-| 1-2 | JavaScript Core | [Variables & Types](./fe-track/01-javascript/01-variables-data-types.md), [Scope & Hoisting](./fe-track/01-javascript/02-scope-hoisting-comprehensive.md), [Closures](./fe-track/01-javascript/03-closures-comprehensive.md) | Critical |
-| 2-3 | JS Advanced | [Prototypes](./fe-track/01-javascript/04-prototypes-inheritance.md), [this Keyword](./fe-track/01-javascript/05-this-keyword.md), [Event Loop](./fe-track/01-javascript/06-event-loop-async.md), [ES6+](./fe-track/01-javascript/07-es6-features.md) | Critical |
-| 3-4 | TypeScript | [TS Basics](./fe-track/02-typescript/01-typescript-basics.md), [Type System](./fe-track/02-typescript/01-type-system-basics.md), [Advanced Types](./fe-track/02-typescript/02-advanced-types.md) | Critical |
+| 1-2 | JavaScript Core | [Variables & Types](./fe-track/01-javascript/02-variables-types.md), [Scope & Hoisting](./fe-track/01-javascript/03-scope-hoisting.md), [Closures](./fe-track/01-javascript/04-closures.md) | Critical |
+| 2-3 | JS Advanced | [Prototypes](./fe-track/01-javascript/06-prototypes-inheritance.md), [this Keyword](./fe-track/01-javascript/05-this-keyword.md), [Event Loop](./fe-track/01-javascript/07-event-loop-async.md), [ES6+](./fe-track/01-javascript/08-es6-features.md) | Critical |
+| 3-4 | TypeScript | [TS Basics](./fe-track/02-typescript/01-typescript-basics.md), [Type System](./fe-track/02-typescript/01-typescript-basics.md), [Advanced Types](./fe-track/02-typescript/02-advanced-types.md) | Critical |
 | 4-5 | React | [Fundamentals](./fe-track/03-react/01-react-fundamentals.md), [Hooks Deep Dive](./fe-track/03-react/03-hooks-deep-dive.md), [State Management](./fe-track/03-react/05-state-management.md) | Critical |
 | 5-6 | HTML/CSS | [HTML5 Fundamentals](./fe-track/05-html-css/00-html5-fundamentals.md), [CSS Fundamentals](./fe-track/05-html-css/00-css-fundamentals.md), [Flexbox & Grid](./fe-track/05-html-css/01-grid-flexbox.md) | High |
 
@@ -149,4 +149,4 @@ Repo này cover 10 competencies theo framework L5 Senior Engineer:
 
 ---
 
-[Start Learning → JavaScript Fundamentals](./fe-track/01-javascript/01-variables-data-types.md)
+[Start Learning → JavaScript Fundamentals](./fe-track/01-javascript/02-variables-types.md)

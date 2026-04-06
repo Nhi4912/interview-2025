@@ -29,13 +29,13 @@
 
 | Tuần | Chủ đề             | Tài liệu                                                                          | Mức độ      |
 | ---- | ------------------ | --------------------------------------------------------------------------------- | ----------- |
-| 1-2  | JavaScript Basics  | [Variables & Data Types](./fe-track/01-javascript/01-variables-data-types.md)     | 🔴 Critical |
+| 1-2  | JavaScript Basics  | [Variables & Data Types](./fe-track/01-javascript/02-variables-types.md)     | 🔴 Critical |
 |      |                    | [Scope & Hoisting](./fe-track/01-javascript/02-scope-hoisting.md)                 | 🔴 Critical |
 |      |                    | [Closures](./fe-track/01-javascript/03-closures.md)                               | 🔴 Critical |
-| 3    | Advanced JS        | [Prototypes & Inheritance](./fe-track/01-javascript/04-prototypes-inheritance.md) | 🔴 Critical |
+| 3    | Advanced JS        | [Prototypes & Inheritance](./fe-track/01-javascript/06-prototypes-inheritance.md) | 🔴 Critical |
 |      |                    | [this Keyword](./fe-track/01-javascript/05-this-keyword.md)                       | 🔴 Critical |
-| 4    | Async & Event Loop | [Event Loop & Async](./fe-track/01-javascript/06-event-loop-async.md)             | 🔴 Critical |
-|      |                    | [ES6+ Features](./fe-track/01-javascript/07-es6-features.md)                      | 🔴 Critical |
+| 4    | Async & Event Loop | [Event Loop & Async](./fe-track/01-javascript/07-event-loop-async.md)             | 🔴 Critical |
+|      |                    | [ES6+ Features](./fe-track/01-javascript/08-es6-features.md)                      | 🔴 Critical |
 
 **✅ Deliverable cuối tháng:** Giải thích được event loop, closure, prototype chain
 
@@ -48,7 +48,7 @@
 | Tuần | Chủ đề             | Tài liệu                                                              | Mức độ      |
 | ---- | ------------------ | --------------------------------------------------------------------- | ----------- |
 | 5    | TypeScript Basics  | [TypeScript Basics](./fe-track/02-typescript/01-typescript-basics.md) | 🔴 Critical |
-|      |                    | [Type System](./fe-track/02-typescript/01-type-system-basics.md)      | 🔴 Critical |
+|      |                    | [Type System](./fe-track/02-typescript/01-typescript-basics.md)      | 🔴 Critical |
 | 6    | Advanced TS        | [Advanced Types](./fe-track/02-typescript/02-advanced-types.md)       | 🔴 Critical |
 |      |                    | [Generics](./fe-track/02-typescript/03-generics-deep-dive.md)         | 🔴 Critical |
 | 7    | React Fundamentals | [React Fundamentals](./fe-track/03-react/01-react-fundamentals.md)    | 🔴 Critical |

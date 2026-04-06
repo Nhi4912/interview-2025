@@ -112,15 +112,15 @@
 
 | #   | Topic                    | File                                                                                  | Priority |
 | --- | ------------------------ | ------------------------------------------------------------------------------------- | -------- |
-| 1   | Basics                   | [00-javascript-basics.md](./fe-track/01-javascript/00-javascript-basics.md)           | Critical |
-| 2   | Variables & Data Types   | [01-variables-data-types.md](./fe-track/01-javascript/01-variables-data-types.md)     | Critical |
+| 1   | Basics                   | [01-javascript-basics.md](./fe-track/01-javascript/01-javascript-basics.md)           | Critical |
+| 2   | Variables & Data Types   | [02-variables-types.md](./fe-track/01-javascript/02-variables-types.md)     | Critical |
 | 3   | Scope & Hoisting         | [02-scope-hoisting.md](./fe-track/01-javascript/02-scope-hoisting.md)                 | Critical |
 | 4   | Closures                 | [03-closures.md](./fe-track/01-javascript/03-closures.md)                             | Critical |
-| 5   | Prototypes & Inheritance | [04-prototypes-inheritance.md](./fe-track/01-javascript/04-prototypes-inheritance.md) | Critical |
+| 5   | Prototypes & Inheritance | [06-prototypes-inheritance.md](./fe-track/01-javascript/06-prototypes-inheritance.md) | Critical |
 | 6   | `this` Keyword           | [05-this-keyword.md](./fe-track/01-javascript/05-this-keyword.md)                     | Critical |
-| 7   | Event Loop & Async       | [06-event-loop-async.md](./fe-track/01-javascript/06-event-loop-async.md)             | Critical |
-| 8   | ES6+ Features            | [07-es6-features.md](./fe-track/01-javascript/07-es6-features.md)                     | Critical |
-| 9   | Advanced Concepts        | [08-advanced-concepts.md](./fe-track/01-javascript/08-advanced-concepts.md)           | High     |
+| 7   | Event Loop & Async       | [07-event-loop-async.md](./fe-track/01-javascript/07-event-loop-async.md)             | Critical |
+| 8   | ES6+ Features            | [08-es6-features.md](./fe-track/01-javascript/08-es6-features.md)                     | Critical |
+| 9   | Advanced Concepts        | [10-advanced-concepts.md](./fe-track/01-javascript/10-advanced-concepts.md)           | High     |
 
 ### 02 — TypeScript (7+ files)
 
