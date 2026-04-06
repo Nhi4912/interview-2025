@@ -2041,3 +2041,26 @@ Trả lời không nhìn tài liệu. Nếu < 4/5 đúng → đọc lại phần
 ---
 
 > **Tiếp theo:** [02-indexing-and-query-optimization.md](./02-indexing-optimization.md) — B-tree, Hash, GIN, GiST, EXPLAIN ANALYZE, query plan optimization.
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **ACID = Atomicity, Consistency, Isolation, Durability** — the 4 guarantees of a reliable transaction / **ACID = Atomicity, Consistency, Isolation, Durability** — 4 đảm bảo của transaction đáng tin cậy.
+- **Normalization reduces redundancy**: 1NF (atomic values), 2NF (no partial dependency), 3NF (no transitive dependency) — denormalize only for read performance / **Chuẩn hóa giảm dư thừa**: 1NF (giá trị nguyên tử), 2NF (không phụ thuộc bộ phận), 3NF (không phụ thuộc bắc cầu) — denormalize chỉ khi cần hiệu suất đọc.
+- **Isolation levels trade consistency for performance**: READ UNCOMMITTED → READ COMMITTED → REPEATABLE READ → SERIALIZABLE (increasing isolation, decreasing concurrency) / **Mức isolation đánh đổi nhất quán lấy hiệu suất**: READ UNCOMMITTED → READ COMMITTED → REPEATABLE READ → SERIALIZABLE (tăng isolation, giảm concurrency).
+- **JOIN types**: INNER (matching rows only), LEFT (all left + matching right), RIGHT, FULL OUTER — know the difference for NULL handling / **Các loại JOIN**: INNER (chỉ hàng khớp), LEFT (tất cả bên trái + khớp bên phải), RIGHT, FULL OUTER — hiểu rõ sự khác biệt khi xử lý NULL.
+- **Window functions vs GROUP BY**: window functions retain individual rows while computing aggregates (`ROW_NUMBER`, `RANK`, `LAG`, `LEAD`) / **Window function vs GROUP BY**: window function giữ từng hàng trong khi tính toán tổng hợp (`ROW_NUMBER`, `RANK`, `LAG`, `LEAD`).
+- **`EXPLAIN ANALYZE` reveals the query plan** — look for Seq Scan on large tables, Hash Join vs Nested Loop, high row estimates mismatch / **`EXPLAIN ANALYZE` hiển thị query plan** — chú ý Seq Scan trên bảng lớn, Hash Join vs Nested Loop, ước tính số hàng sai lệch.
+- **Foreign keys enforce referential integrity** but add write overhead — sometimes dropped in high-throughput systems and enforced at application layer / **Foreign key đảm bảo tính toàn vẹn tham chiếu** nhưng tốn chi phí ghi — đôi khi bỏ ở hệ thống throughput cao và enforce ở application.
+- **NULL is not a value** — use `IS NULL` / `IS NOT NULL`; NULL in aggregate functions is ignored; NULL comparisons always return UNKNOWN / **NULL không phải giá trị** — dùng `IS NULL` / `IS NOT NULL`; NULL trong aggregate bị bỏ qua; so sánh với NULL luôn trả về UNKNOWN.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **"Explain ACID"** — Give a real example (bank transfer): atomicity=both debit+credit or neither; isolation=concurrent transfers don't interfere; durability=survives crash / **"Giải thích ACID"** — Dùng ví dụ thực (chuyển khoản): atomicity=cả hai thao tác hoặc không cái nào; isolation=các transfer đồng thời không ảnh hưởng nhau; durability=sống sót sau crash.
+- **"What is a dirty read / phantom read?"** — Dirty read: reading uncommitted data; phantom read: re-running a query returns different rows due to concurrent insert/delete / **"Dirty read / phantom read là gì?"** — Dirty read: đọc dữ liệu chưa commit; phantom read: chạy lại query ra kết quả khác do insert/delete đồng thời.
+- **"When to use a CTE vs subquery?"** — CTE for readability and recursive queries; subquery for simple inline filters; CTE may be materialised (depends on DB) / **"Khi nào dùng CTE vs subquery?"** — CTE cho dễ đọc và query đệ quy; subquery cho filter đơn giản inline; CTE có thể được materialise (tuỳ DB).
+- **"PostgreSQL vs MySQL key differences?"** — PG: MVCC full ACID, advanced types (JSONB, arrays), better standards compliance; MySQL: simpler ops, InnoDB MVCC, wider hosting support / **"Khác biệt chính PostgreSQL vs MySQL?"** — PG: MVCC ACID đầy đủ, kiểu dữ liệu nâng cao (JSONB, array), tuân thủ chuẩn tốt hơn; MySQL: vận hành đơn giản, InnoDB MVCC, hỗ trợ hosting rộng hơn.
+- **"How do you optimize a slow query?"** — Check `EXPLAIN ANALYZE`, add appropriate index, rewrite correlated subqueries, avoid `SELECT *`, use connection pooling / **"Tối ưu query chậm thế nào?"** — Kiểm tra `EXPLAIN ANALYZE`, thêm index phù hợp, viết lại correlated subquery, tránh `SELECT *`, dùng connection pooling.

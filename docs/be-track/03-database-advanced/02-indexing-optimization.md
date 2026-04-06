@@ -1,7 +1,7 @@
 # Database Indexing & Query Optimization
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **See also**: [Table of Contents](../../00-table-of-contents.md) | [Database Theory](../../shared/03-database/database-theory.md) | [Indexing & Optimization (Shared)](../../shared/03-database/02-indexing-and-optimization.md)
 
 > Theory-focused guide (~85% theory, 15% SQL/examples). Bilingual: English headings + Vietnamese explanations.
 > Difficulty: 🟢 Junior | 🟡 Middle | 🔴 Senior
@@ -2121,3 +2121,26 @@ Trả lời không nhìn tài liệu. Nếu < 4/5 đúng → đọc lại phần
 - → [02-backend-knowledge/01-API Design](../02-backend-knowledge/01-api-design.md) — Pagination API design depends on keyset vs offset strategy
 - → [02-backend-knowledge/03-Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — Sharding = horizontal partitioning across nodes
 - → [04-be-system-design/01-Design Framework](../04-be-system-design/01-design-framework.md) — System design requires DB schema + index justification
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **B+ Tree is the default index structure** — all data in leaf nodes, linked for range scans, balanced O(log n) lookups / **B+ Tree là cấu trúc index mặc định** — toàn bộ data ở leaf node, được liên kết để range scan, lookup cân bằng O(log n).
+- **Composite index column order matters**: place the most selective / equality-filtered column first; range columns go last / **Thứ tự cột trong composite index quan trọng**: cột có selectivity cao / lọc bằng nhau đặt trước; cột range đặt cuối.
+- **Covering index eliminates table lookups** — if all queried columns are in the index, the engine never touches the heap / **Covering index loại bỏ table lookup** — nếu tất cả cột truy vấn đều có trong index, engine không cần đụng đến heap.
+- **Index bloat kills performance**: too many indexes slow down writes (INSERT/UPDATE/DELETE must update every index) / **Quá nhiều index làm chậm ghi**: INSERT/UPDATE/DELETE phải cập nhật tất cả index.
+- **`EXPLAIN ANALYZE` is mandatory for tuning** — read cost, actual rows, loops, and look for Seq Scan on large tables / **`EXPLAIN ANALYZE` bắt buộc khi tối ưu** — đọc cost, actual rows, loops và chú ý Seq Scan trên bảng lớn.
+- **Partial indexes index a subset of rows** — great for filtering on low-cardinality status columns (`WHERE status = 'active'`) / **Partial index chỉ đánh chỉ mục một phần hàng** — rất tốt cho cột status có ít giá trị phân biệt (`WHERE status = 'active'`).
+- **Partitioning splits large tables** by range, list, or hash — enables partition pruning so queries only scan relevant partitions / **Partitioning chia bảng lớn** theo range, list hoặc hash — cho phép partition pruning để query chỉ quét partition liên quan.
+- **N+1 query problem**: fetching 1 list + N detail queries — solve with JOIN, batch load, or DataLoader pattern / **Vấn đề N+1 query**: lấy 1 danh sách + N query chi tiết — giải quyết bằng JOIN, batch load hoặc DataLoader pattern.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **"How does a database index work?"** — B+ Tree: sorted structure, O(log n) lookup, leaf nodes store row pointers or data, linked list for range scans / **"Database index hoạt động thế nào?"** — B+ Tree: cấu trúc đã sắp xếp, lookup O(log n), leaf node lưu con trỏ hoặc data, linked list cho range scan.
+- **"Why not just index every column?"** — Write amplification: every INSERT/UPDATE/DELETE updates all indexes; storage cost; planner confusion / **"Tại sao không index tất cả cột?"** — Write amplification: mỗi INSERT/UPDATE/DELETE cập nhật tất cả index; tốn bộ nhớ; planner bị nhầm lẫn.
+- **"What is index selectivity?"** — Ratio of distinct values to total rows; high selectivity (e.g. email) = useful index; low selectivity (e.g. boolean) = often not worth it / **"Selectivity của index là gì?"** — Tỷ lệ giá trị phân biệt / tổng hàng; selectivity cao (email) = index hữu ích; thấp (boolean) = thường không đáng.
+- **"How do you read EXPLAIN output?"** — Focus on: node type (Seq Scan bad on big tables), cost estimate vs actual rows, loops count, and total time / **"Đọc output EXPLAIN thế nào?"** — Chú ý: loại node (Seq Scan xấu trên bảng lớn), cost ước tính vs actual rows, số loops và tổng thời gian.
+- **"Keyset vs offset pagination?"** — Offset degrades as page grows (DB must skip N rows); keyset uses `WHERE id > last_seen_id LIMIT n` — O(log n) regardless of page / **"Keyset vs offset pagination?"** — Offset tệ hơn khi page tăng (DB phải bỏ qua N hàng); keyset dùng `WHERE id > last_seen_id LIMIT n` — O(log n) bất kể page nào.

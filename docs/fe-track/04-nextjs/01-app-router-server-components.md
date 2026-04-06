@@ -742,3 +742,23 @@ Giải thích tiếng Việt: Chia component theo interactivity: read-only conte
 - [React Fundamentals](../03-react/01-react-fundamentals.md) — React rendering model RSC builds upon
 - [React 19 Features](../03-react/02-react-19-features.md) — concurrent features and Actions that complement RSC
 - [React Performance](../06-browser-performance/02-react-performance.md) — how RSC reduces client bundle and re-renders
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **Server Components** run only on the server — zero JS bundle cost, direct DB/filesystem access, but cannot use state, effects, or browser APIs / Server Components chỉ chạy trên server — không tốn bundle JS, truy cập DB trực tiếp, nhưng không dùng được state/effects/browser APIs.
+- **`'use client'` boundary** marks a subtree as client-rendered; it doesn't mean "client only" — Server Components can still be passed as children/props through the boundary / `'use client'` đánh dấu một nhánh là client-rendered; Server Components vẫn có thể truyền qua boundary dưới dạng children/props.
+- **Layouts** persist across navigations (state preserved, no remount) while **templates** remount on every navigation — choose based on whether you need persistent state / Layout giữ state qua navigation; template remount mỗi lần — chọn dựa vào có cần state bền vững không.
+- **`loading.js`** uses Suspense under the hood to show instant loading UI; **`error.js`** is an Error Boundary — both are file-system conventions in App Router / `loading.js` dùng Suspense để hiện UI loading ngay; `error.js` là Error Boundary — cả hai là convention của App Router.
+- **Server Actions** (`'use server'`) are async functions that run on the server, called directly from client components — they replace many API route use cases and integrate with `<form>` natively / Server Actions là hàm async chạy trên server, gọi từ client — thay thế nhiều API routes và tích hợp native với `<form>`.
+- **Data fetching in App Router** is done by `async/await` directly in Server Components — no `useEffect`, no `getServerSideProps`; fetch is extended with caching options / Fetch data bằng `async/await` trực tiếp trong Server Components — không cần useEffect hay getServerSideProps.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- The #1 interview confusion: **Server Components ≠ SSR** — SSR renders the full page HTML on request; Server Components are a rendering model that can run at build time, request time, or be cached / Nhầm lẫn hay gặp nhất: Server Components ≠ SSR — SSR render HTML toàn trang; SC là mô hình rendering linh hoạt hơn.
+- When explaining `'use client'`, emphasize the **composition pattern**: you can wrap a Client Component inside a Server Component and pass Server-rendered children through it / Khi giải thích `'use client'`, nhấn mạnh pattern composition: Server Component có thể wrap Client Component và truyền children.
+- For Server Actions vs API routes: Server Actions win for **mutations from forms**; API routes are still better for **third-party webhooks, public endpoints, or non-React consumers** / Server Actions thắng cho mutation từ form; API routes vẫn tốt hơn cho webhook, public endpoint.
+- Always mention **caching behavior** when discussing App Router data fetching: `fetch` with `cache: 'no-store'` for dynamic, `revalidate` for ISR-style, default for static / Luôn đề cập caching khi nói về data fetching: no-store, revalidate, hay mặc định static.

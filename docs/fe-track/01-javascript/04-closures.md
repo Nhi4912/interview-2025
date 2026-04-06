@@ -836,3 +836,26 @@ destroy() {
 - 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — `useState`/`useEffect` internals rely on closures; every hook captures its render's scope — stale closure = the #1 React bug pattern
 - 🔗 **FE — Patterns**: [React Patterns](../03-react/04-advanced-patterns.md) — Module pattern, factory functions, partial application = closure-based patterns used in component design
 - 🔗 **Shared theory**: [Software Engineering Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — closure implements Decorator, Memoize, and Module patterns without classes
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **Every function in JavaScript is a closure — when created, it receives an `[[Environment]]` reference pointing to the scope where it was written / Mọi function trong JS đều là closure — khi tạo, nó nhận `[[Environment]]` trỏ đến scope nơi nó được viết.**
+- **Closure captures a REFERENCE to variables, not a copy — if the variable changes, the closure sees the new value / Closure capture REFERENCE đến biến, không phải copy — nếu biến thay đổi, closure thấy giá trị mới.**
+- **GC won't collect a variable as long as any closure holds a reference to it — attach a closure to a DOM event listener without cleanup = memory leak / GC không thu hồi biến khi còn closure giữ reference — gắn closure vào DOM listener mà không cleanup = memory leak.**
+- **`removeEventListener` requires the exact same function reference — anonymous functions cannot be removed / `removeEventListener` cần cùng function reference — anonymous function không remove được.**
+- **4 classic closure patterns: Module (private state), Memoize (cache map), Debounce (timerId), Partial Application (pre-filled args) / 4 pattern closure kinh điển: Module (trạng thái riêng tư), Memoize (cache), Debounce (timerId), Partial Application (tham số cố định).**
+- **Stale closure in React: a function created at render N captures state = X; state later changes to Y but the function still sees X / Stale closure trong React: function tạo ở render N capture state = X; state đổi thành Y nhưng function vẫn thấy X.**
+- **Fix stale closure: add state to `useEffect` deps (fresh closure) OR use `useRef` to escape the closure (always current, not reactive) / Fix stale closure: thêm state vào deps array (closure mới) HOẶC dùng `useRef` để thoát khỏi closure (luôn mới nhất, không reactive).**
+- **Closure vs class `#private`: closure creates per-instance function copies (higher memory); class shares prototype methods (more efficient for many instances) / Closure vs class `#private`: closure tạo function riêng mỗi instance (tốn bộ nhớ hơn); class share prototype methods (hiệu quả hơn với nhiều instances).**
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **When asked "what is a closure?", open with "every function is a closure" — it shows spec-level understanding before giving the textbook definition / Khi hỏi "closure là gì?", mở đầu bằng "mọi function đều là closure" — thể hiện hiểu spec trước khi định nghĩa.**
+- **For debounce implementation: explain that `timerId` persisting between calls IS the closure at work — don't just write the code, narrate it / Khi implement debounce: giải thích `timerId` tồn tại giữa các lần gọi CHÍNH LÀ closure — đừng chỉ viết code, hãy giải thích.**
+- **For memory leak questions: trace the reference chain — "event listener holds → handler function → closure captures → large object" — this is what a senior dev does in DevTools / Với câu hỏi memory leak: trace reference chain — đây là cách senior debug trong DevTools.**
+- **Distinguish debounce (fires after silence ends) from throttle (fires at max once per interval) — interviewers often ask for both / Phân biệt debounce (chạy sau khi ngừng gọi) với throttle (chạy tối đa 1 lần/interval) — interviewer thường hỏi cả hai.**
+- **For stale closure: frame your answer as "closure captured state at creation time, state mutated later" — then offer both fix strategies and explain the trade-off / Với stale closure: "closure capture state lúc tạo, state thay đổi sau đó" — sau đó đưa ra cả 2 cách fix và trade-off.**

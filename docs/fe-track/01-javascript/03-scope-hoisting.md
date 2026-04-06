@@ -848,3 +848,26 @@ for (let i = 0; i < products.length; i++) {
 - 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-type-system-basics.md) — `noImplicitAny` + `strict` catches variable declaration bugs at compile time that TDZ only catches at runtime
 - 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — stale closures in `useEffect` are a direct consequence of lexical scoping; understanding TDZ prevents hook dependency array bugs
 - 🔗 **Shared theory**: [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — scope chain maps to call stack frames; each function call pushes a new execution frame with its own variable bindings
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **`var` is function-scoped and ignores block boundaries; `let`/`const` are block-scoped and die outside their `{}` / `var` là function-scoped, bỏ qua mọi block; `let`/`const` là block-scoped, chết ngoài `{}`.**
+- **JavaScript uses lexical (static) scope — the scope chain is determined at write time, not call time / JavaScript dùng lexical scope — scope chain xác định lúc viết code, không phải lúc gọi.**
+- **Scope chain lookup goes inner → outer → global and is one-way — outer scope cannot see into inner scope / Scope chain đi từ trong ra ngoài — outer scope không nhìn vào được inner scope.**
+- **Hoisting is a 2-pass process: compile phase creates bindings, execute phase runs code line by line / Hoisting là 2 pass: compile phase tạo binding, execute phase chạy code từng dòng.**
+- **`let`/`const` ARE hoisted but enter TDZ — accessing them before their declaration line throws `ReferenceError`, not `undefined` / `let`/`const` CÓ hoisted nhưng vào TDZ — truy cập trước dòng khai báo throw `ReferenceError`, không phải `undefined`.**
+- **Classic `var` loop bug: all closures share one `i` binding; loop ends before callbacks fire → all print the final value / Bug `var` trong loop: tất cả closures share 1 binding `i`; loop xong trước khi callbacks chạy → tất cả in giá trị cuối.**
+- **`let` in a `for` loop creates a new binding per iteration — each closure captures its own `i` (spec behavior, not a copy) / `let` trong for-loop tạo binding mới mỗi iteration — mỗi closure capture `i` riêng (spec behavior, không phải copy).**
+- **Function declarations win over `var` in the compile phase — a `var foo` and `function foo(){}` in the same scope: the function survives / Function declaration thắng `var` trong compile phase — khi cùng tên, function tồn tại.**
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **For the loop bug, say "shared binding vs new binding per iteration" — this shows you understand the spec, not just the fix / Với bug loop, nói "shared binding vs new binding per iteration" — thể hiện hiểu spec, không chỉ biết cách fix.**
+- **Distinguish `typeof undeclaredVar` (safe — returns `"undefined"`) from `typeof letVar` before its declaration (throws ReferenceError in TDZ) — many candidates miss this / Phân biệt `typeof undeclaredVar` (an toàn) với `typeof letVar` trước khai báo (ReferenceError trong TDZ) — nhiều ứng viên bỏ qua.**
+- **For scope chain questions: always start with "lexical scope — determined at write time" to signal the right mental model / Với câu hỏi về scope chain: luôn bắt đầu bằng "lexical scope — xác định lúc viết code" để thể hiện mental model đúng.**
+- **When asked about `var` bugs in production, mention the `no-var` ESLint rule and tree-shakeable ES modules as the modern solution / Khi hỏi bug `var` trong production, đề cập ESLint `no-var` và ES modules là giải pháp hiện đại.**
+- **TDZ shadowing gotcha: inner `let x` shadows outer `x` from the top of its block — accessing outer `x` inside becomes a ReferenceError / TDZ shadowing: inner `let x` shadow outer `x` từ đầu block — truy cập outer `x` bên trong là ReferenceError.**

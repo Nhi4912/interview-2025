@@ -674,3 +674,26 @@ bus.emit("USER_LOGIN", { userId: "1", wrong: "field" }); // ❌ Error
 - [JS ES6 Features](../01-javascript/07-es6-features.md) — JavaScript features TypeScript is built on
 - [JS Type System Theory](../01-javascript/14-javascript-type-system-theory.md) — JS dynamic types TS adds safety to
 - [CS Fundamentals: Computation Theory](../../shared/01-cs-fundamentals/08-computation-theory.md) — type theory and static analysis foundations
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **TypeScript is a compile-time tool — type annotations are erased at runtime, zero performance cost, but also no runtime protection for external data / TypeScript là công cụ compile-time — annotations bị xóa lúc runtime, không tốn hiệu năng, nhưng cũng không bảo vệ data từ bên ngoài.**
+- **Prefer type inference for local variables; annotate at boundaries — function parameters, public return types, and complex objects / Ưu tiên type inference cho biến local; annotate ở biên — tham số hàm, return type public, và object phức tạp.**
+- **`any` opts out of the type system and is "contagious" — it infects surrounding types and silences errors until runtime; prefer `unknown` / `any` thoát khỏi type system và "lây nhiễm" — nó vô hiệu hóa kiểm tra lỗi xung quanh; ưu tiên `unknown`.**
+- **`unknown` requires narrowing before use — it is the safe alternative to `any` for external data (API responses, `JSON.parse`, user input) / `unknown` yêu cầu narrow trước khi dùng — là lựa chọn an toàn thay `any` cho data bên ngoài.**
+- **`interface` = object contract with declaration merging and `extends`; `type` = flexible alias for unions, intersections, and computed types / `interface` = contract với declaration merging và `extends`; `type` = alias linh hoạt cho union, intersection, computed types.**
+- **Type narrowing: `typeof` (primitives), `instanceof` (class instances), `in` (object shape), custom `is` predicates (complex shapes) / Narrowing: `typeof` (primitive), `instanceof` (class), `in` (shape object), predicate `is` tùy chỉnh.**
+- **Discriminated unions with a `kind`/`type` field + `never` exhaustiveness check ensures every variant is handled — if you add a new variant, TypeScript errors at the unhandled `default` branch / Discriminated union với field `kind`/`type` + kiểm tra `never` đảm bảo mọi variant được xử lý.**
+- **`strict: true` bundles 7 flags; `strictNullChecks` alone catches ~30% of runtime errors by making `null`/`undefined` non-assignable by default / `strict: true` bật 7 flag; riêng `strictNullChecks` ngăn ~30% lỗi runtime bằng cách không cho `null`/`undefined` gán mặc định.**
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **When asked about `any`: say it is "contagious" and disables IntelliSense around it — then pivot to `unknown` and explain the narrow-before-use contract / Khi hỏi về `any`: nói nó "lây nhiễm" và vô hiệu hóa IntelliSense — sau đó chuyển sang `unknown` và giải thích yêu cầu narrow trước khi dùng.**
+- **For `interface` vs `type`: lead with "interface for object shapes that may be extended or merged; type for union, computed, and primitive aliases" — then give the declaration merging example / Với `interface` vs `type`: mở đầu bằng "interface cho object shapes có thể extend/merge; type cho union, computed, primitive alias".**
+- **For complex state handling (loading/success/error), always propose a discriminated union with exhaustiveness checking — it demonstrates senior-level type design / Với state phức tạp (loading/success/error), luôn đề xuất discriminated union với exhaustiveness checking — thể hiện tư duy type design cấp senior.**
+- **TypeScript is compile-time only — always distinguish it from runtime validation; for API boundaries use Zod or `io-ts` to validate that external data matches the expected shape / TypeScript chỉ tồn tại compile-time — luôn phân biệt với runtime validation; dùng Zod cho API boundary.**
+- **Know at least `strictNullChecks` and `noUncheckedIndexedAccess` by name and impact — being able to explain why `arr[0]` should return `T | undefined` signals real production experience / Biết ít nhất `strictNullChecks` và `noUncheckedIndexedAccess` — giải thích tại sao `arr[0]` nên trả `T | undefined` thể hiện kinh nghiệm production thực sự.**

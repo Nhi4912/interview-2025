@@ -1310,3 +1310,24 @@ Use `product.id` as key (not index). When scrolling, position 1 may change from 
 - ➡️ **Next**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — useState, useEffect, useRef in detail
 - 🔗 **Related**: [JavaScript Closures](../01-javascript/04-closures.md) — foundation for understanding stale closure
 - 🔗 **Related**: [Performance Optimization](./09-performance-optimization.md) — applying render/commit knowledge
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **UI = f(state)** — React's core mental model: the UI is a pure function of state; same state always produces the same UI / Mô hình cốt lõi: UI là hàm thuần của state, cùng state luôn ra cùng UI.
+- **JSX** compiles to `React.createElement()` calls — it's syntactic sugar, not HTML; attributes differ (e.g., `className`, `onClick`) / JSX biên dịch thành `React.createElement()`, không phải HTML; thuộc tính viết khác HTML (className, onClick...).
+- **Virtual DOM** is a lightweight JS object tree representing the UI; React diffs old vs new VD and only applies minimal real DOM changes / Virtual DOM là cây object JS; React so sánh VD cũ/mới rồi chỉ cập nhật DOM thực sự cần thiết.
+- **Render phase** (pure, no side effects) vs **Commit phase** (applies changes to real DOM, runs effects) — never mutate state or call APIs during render / Render phase (thuần, không side effect) vs Commit phase (thay đổi DOM thật, chạy effects).
+- **Fiber** splits rendering into interruptible units of work, enabling concurrent features (prioritized updates, Suspense, transitions) / Fiber chia rendering thành đơn vị công việc có thể ngắt, cho phép concurrent features.
+- **Keys** must be stable and unique among siblings — using array index as key causes bugs when items reorder or are inserted / Key phải ổn định và duy nhất trong siblings — dùng index gây bug khi danh sách thay đổi thứ tự.
+- **Stale closure** occurs when a callback captures an old state/prop value; fix with functional updater `setState(prev => ...)` or with `useRef` / Stale closure xảy ra khi callback bắt giữ giá trị state/prop cũ; sửa bằng functional updater hoặc useRef.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- When asked "how does React update the UI", walk through all 3 phases: **trigger → render → commit** — most candidates stop at "Virtual DOM diffing" and miss Fiber / Khi hỏi React update UI thế nào, hãy trình bày đủ 3 bước: trigger → render → commit.
+- Demonstrate a stale closure bug live: show `setInterval` capturing stale count, then fix it with `setState(prev => prev + 1)` / Trình bày live lỗi stale closure với setInterval, rồi fix bằng functional updater.
+- Explain *why* Fiber exists in terms of the problem it solves (long render blocking the main thread) before going into how it works / Giải thích Fiber bằng vấn đề nó giải quyết (render chặn main thread) trước khi nói cách hoạt động.
+- The `{count && <Component />}` falsy render trap (renders `0` when count is 0) is a common interview gotcha — mention it proactively / Bẫy render falsy `{count && <Component />}` khi count = 0 là câu hay hỏi — chủ động đề cập.

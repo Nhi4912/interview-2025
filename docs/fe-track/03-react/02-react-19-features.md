@@ -923,3 +923,23 @@ function UserProfile({ userId }) {
 - ➡️ **Enables**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — which hooks Compiler replaces, which still need manual writing
 - ➡️ **Enables**: [Modern React Features](./10-modern-react-features.md) — Server Components + Streaming SSR leverage Actions + use()
 - 🔗 **Applied in**: Next.js 14+ (Server Actions), Remix (form actions), production React 19 apps
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **React Compiler** automatically memoizes components and values — no more manual `useMemo`/`useCallback`/`memo` for most cases; it only works when code follows the Rules of React / React Compiler tự động memo hóa — không cần dùng `useMemo`/`useCallback`/`memo` thủ công; chỉ hoạt động khi code tuân thủ Rules of React.
+- **Actions pattern** solves async form/mutation state management with three new hooks: `useActionState` (pending + result), `useFormStatus` (form context), `useOptimistic` (optimistic UI) / Actions pattern giải quyết state form/mutation async với 3 hooks mới.
+- **`use()` API** reads a Promise or Context inside render — enables `Suspense`-based data fetching without `useEffect`; the Promise must be stable (cached) / `use()` đọc Promise hoặc Context ngay trong render — cho phép fetch data qua Suspense mà không cần useEffect; Promise phải ổn định.
+- **`ref` as prop** — `forwardRef` is deprecated; pass `ref` directly as a regular prop in React 19; ref cleanup functions now supported / `forwardRef` deprecated — truyền `ref` như prop thường; hỗ trợ cleanup function cho ref.
+- **Context simplification** — `<Context>` can be used as a provider directly (no `.Provider` suffix); `useDeferredValue` accepts initial value / Dùng `<Context>` trực tiếp làm provider, bỏ `.Provider`.
+- **Document metadata** — `<title>`, `<meta>`, `<link>` inside components are automatically hoisted to `<head>` without `react-helmet` / Các tag `<title>`, `<meta>`, `<link>` trong component tự động được đẩy lên `<head>`.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- When asked about React Compiler, stress the **condition**: it requires rules of React compliance and currently can't optimize all patterns (e.g., external mutable stores) / Khi hỏi về Compiler, nhấn mạnh điều kiện: code phải tuân thủ Rules of React, không tối ưu được mọi pattern.
+- For `use()`, make clear it is **not a replacement for `useEffect`** — it's for reading stable, pre-created Promises inside render, paired with Suspense / `use()` không thay thế `useEffect` — dùng để đọc Promise ổn định trong render, phải đi kèm Suspense.
+- Migration risk question: mention **concurrent mode strictness**, `forwardRef` deprecation, and changed `ref` behavior as the top breaking changes in React 18→19 / Câu hỏi migration: đề cập strict mode concurrent, deprecated forwardRef, thay đổi ref là các breaking changes chính.
+- Compare `useActionState` to `useState + useEffect` pattern: Actions eliminate the "pending/error state boilerplate" and integrate with `<form>` natively / So sánh `useActionState` với useState + useEffect: Actions loại bỏ boilerplate pending/error và tích hợp native với `<form>`.

@@ -1270,3 +1270,24 @@ _References: System Design Interview (Alex Xu), Designing Data-Intensive Applica
 - 🔗 [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — CAP, consistency models for tradeoff reasoning
 - 🔗 [Database Advanced](../03-database-advanced/01-sql-fundamentals.md) — SQL vs NoSQL decision criteria
 - 🔗 [Caching Patterns](../03-database-advanced/04-caching-patterns.md) — cache strategies for building blocks
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- The framework: Clarify → Estimate → API → Data Model → High-Level Design → Deep Dives → Tradeoffs / Framework: Làm rõ → Ước tính → API → Mô hình dữ liệu → Thiết kế tổng quát → Phân tích sâu → Đánh đổi
+- Always separate functional requirements (what it does) from non-functional requirements (scale, latency, availability) / Luôn tách yêu cầu chức năng (nó làm gì) khỏi yêu cầu phi chức năng (quy mô, độ trễ, tính sẵn sàng)
+- Capacity estimation demonstrates scale intuition: derive QPS, storage, and bandwidth from user counts / Ước tính năng lực thể hiện trực giác về quy mô: suy ra QPS, lưu trữ, băng thông từ số lượng người dùng
+- Know your numbers: Redis ~0.1ms, SQL write ~1ms, HDD seek ~10ms, network RTT ~100ms / Nắm rõ con số: Redis ~0.1ms, SQL write ~1ms, tìm HDD ~10ms, RTT mạng ~100ms
+- Deep dives prove senior-level depth — pick 2-3 hard sub-problems and solve them with concrete tradeoffs / Phân tích sâu chứng tỏ độ sâu senior — chọn 2-3 bài toán con khó và giải quyết với tradeoff cụ thể
+- Communication is half the score — narrate your thinking, ask clarifying questions, invite feedback / Giao tiếp chiếm một nửa điểm số — trình bày quá trình suy nghĩ, hỏi làm rõ, mời phản hồi
+- There is no perfect design; demonstrating awareness of tradeoffs is more valuable than a "correct" answer / Không có thiết kế hoàn hảo; thể hiện nhận thức về tradeoff có giá trị hơn một câu trả lời "đúng"
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- Start with requirements, not architecture — interviewers penalize candidates who jump straight to solutions / Bắt đầu với yêu cầu, không phải kiến trúc — người phỏng vấn trừ điểm thí sinh nhảy thẳng vào giải pháp
+- Never choose a specific database or technology until you've established the scale and access patterns / Không bao giờ chọn database hay công nghệ cụ thể cho đến khi xác định rõ quy mô và access pattern
+- Practice the 45-minute arc: 5min clarify, 5min estimate, 10min HLD, 20min deep dives, 5min wrap-up / Luyện tập khung 45 phút: 5 phút làm rõ, 5 phút ước tính, 10 phút HLD, 20 phút phân tích sâu, 5 phút tổng kết
+- End with "given more time, I'd improve X by doing Y" — signals you see beyond the immediate design / Kết thúc với "nếu có thêm thời gian, tôi sẽ cải thiện X bằng cách Y" — cho thấy bạn nhìn xa hơn thiết kế hiện tại

@@ -2153,3 +2153,26 @@ Vietnamese explanation: Distributed rate limiting: Redis is the standard (Lua sc
 - ⬅️ [Networking Theory](../../shared/01-cs-fundamentals/networking-theory.md) — HTTP/TCP/DNS foundations
 - 🔗 [System Design](../04-be-system-design/01-design-framework.md) — API design as first step in system design interviews
 - 🔗 [Database](../03-database-advanced/01-sql-fundamentals.md) — N+1 query problem in both GraphQL and ORM
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **REST uses HTTP verbs + nouns**: GET (read), POST (create), PUT/PATCH (update), DELETE (remove) — method semantics matter for caching and idempotency / **REST dùng HTTP verb + noun**: GET đọc, POST tạo, PUT/PATCH cập nhật, DELETE xoá — semantics ảnh hưởng caching và idempotency.
+- **Idempotency**: GET/PUT/DELETE are idempotent (repeat = same result); POST is not — use idempotency keys for safe retries / **Idempotency**: GET/PUT/DELETE là idempotent (lặp lại = cùng kết quả); POST thì không — dùng idempotency key để retry an toàn.
+- **Status codes matter**: 2xx success, 3xx redirect, 4xx client error, 5xx server error — never return 200 with an error body / **Status code quan trọng**: 2xx thành công, 3xx redirect, 4xx lỗi client, 5xx lỗi server — không bao giờ trả 200 kèm body lỗi.
+- **gRPC uses Protocol Buffers** over HTTP/2 — strongly typed, binary, lower latency; ideal for internal microservice calls / **gRPC dùng Protocol Buffers** qua HTTP/2 — strongly typed, binary, latency thấp; lý tưởng cho giao tiếp microservice nội bộ.
+- **GraphQL lets clients specify shape** — solves over/under-fetching; but N+1 query problem requires DataLoader / **GraphQL để client chỉ định shape** — giải quyết over/under-fetching; nhưng vấn đề N+1 cần DataLoader.
+- **Rate limiting protects services**: Token Bucket (burst allowed), Leaky Bucket (smooth), Fixed/Sliding Window — implement at gateway / **Rate limiting bảo vệ service**: Token Bucket (cho phép burst), Leaky Bucket (mượt), Fixed/Sliding Window — implement ở gateway.
+- **API versioning strategies**: URL path (`/v1/`), header (`Accept: application/vnd.api+json;version=1`), query param — URL is most visible / **Chiến lược versioning API**: URL path (`/v1/`), header, query param — URL path rõ ràng nhất.
+- **CORS is a browser security mechanism** — server must respond with `Access-Control-Allow-Origin` header; preflight OPTIONS for non-simple requests / **CORS là cơ chế bảo mật của browser** — server phải trả header `Access-Control-Allow-Origin`; preflight OPTIONS cho request phức tạp.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **"REST vs gRPC vs GraphQL — when to use each?"** — REST for public APIs; gRPC for low-latency internal services; GraphQL for flexible client-driven queries / **"REST vs gRPC vs GraphQL — khi nào dùng cái nào?"** — REST cho public API; gRPC cho service nội bộ latency thấp; GraphQL cho query linh hoạt từ client.
+- **"How do you design a paginated API?"** — Cursor/keyset pagination for large datasets (no offset drift); include `next_cursor` and `has_more` in response / **"Thiết kế API phân trang thế nào?"** — Cursor/keyset pagination cho dataset lớn (không bị offset drift); trả `next_cursor` và `has_more`.
+- **"How do you handle API backward compatibility?"** — Add fields (don't remove); version breaking changes; use `required: false` for new fields; document deprecation timeline / **"Xử lý backward compatibility thế nào?"** — Thêm field (đừng xoá); version khi thay đổi breaking; dùng `required: false` cho field mới; ghi rõ deprecation.
+- **"Explain idempotency keys"** — Client generates a unique UUID per request; server stores result keyed on it; duplicate requests return cached result / **"Giải thích idempotency key"** — Client tạo UUID duy nhất cho mỗi request; server lưu kết quả theo key đó; request trùng lặp trả kết quả đã cache.
+- **"What is an API Gateway?"** — Single entry point that handles auth, rate limiting, routing, load balancing, and observability before reaching services / **"API Gateway là gì?"** — Điểm vào duy nhất xử lý auth, rate limit, routing, load balance và observability trước khi đến service.

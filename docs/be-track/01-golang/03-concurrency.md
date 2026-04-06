@@ -1,7 +1,7 @@
 # Go Concurrency — Deep Theory & Interview Questions
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **Prerequisites**: [Go Fundamentals](./01-language-fundamentals.md) | [OS Theory](../../shared/01-cs-fundamentals/os-theory.md)
+> **Prerequisites**: [Go Fundamentals](./01-language-fundamentals.md) | [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) | [Concurrency & Parallelism](../../shared/01-cs-fundamentals/07-concurrency-and-parallelism.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 > **Phạm vi**: Goroutines, Scheduler (GMP), Channels, sync, Context, Concurrency Patterns, Race/Deadlock.
@@ -2110,3 +2110,26 @@ Vietnamese explanation: Context tạo thành **cây phân cấp**: cancel parent
 - ⬅️ **Built on:** [Go Fundamentals](./01-language-fundamentals.md) | [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — goroutines map to OS threads via scheduler
 - ➡️ **Enables:** [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) | [Go Memory & GC](./04-memory-gc.md)
 - 🔗 **Patterns used in production:** Worker pools in API handlers | Fan-out for parallel DB queries | Context for request cancellation
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **Goroutines are cheap** (~2 KB stack, multiplexed over OS threads via GMP scheduler) — launch thousands freely / **Goroutine rất nhẹ** (~2 KB stack, ghép kênh qua GMP scheduler) — có thể chạy hàng nghìn cái.
+- **"Do not communicate by sharing memory; share memory by communicating"** — channels are the idiomatic way to pass data between goroutines / **"Đừng chia sẻ bộ nhớ để giao tiếp; hãy giao tiếp để chia sẻ bộ nhớ"** — channel là cách idiom để truyền dữ liệu.
+- **Buffered vs unbuffered channels**: unbuffered = synchronous handoff; buffered = async up to capacity / **Channel có buffer vs không buffer**: không buffer = bắt tay đồng bộ; có buffer = bất đồng bộ đến giới hạn.
+- **`select` for multi-channel**: blocks until one case is ready; add `default` for non-blocking / **`select` cho đa channel**: chặn đến khi một case sẵn sàng; thêm `default` để non-blocking.
+- **`sync.Mutex` protects shared state**; `sync.RWMutex` allows concurrent reads / **`sync.Mutex` bảo vệ state chia sẻ**; `sync.RWMutex` cho phép đọc đồng thời.
+- **`context.Context` carries deadlines and cancellation** — always pass as first arg, never store in struct / **`context.Context` mang deadline và cancellation** — luôn truyền làm arg đầu tiên, không lưu trong struct.
+- **Data race = undefined behaviour** — detect with `go test -race`; fix with mutex or channel / **Data race = hành vi không xác định** — phát hiện bằng `go test -race`; sửa bằng mutex hoặc channel.
+- **Worker pool limits concurrency** — use a buffered channel as a semaphore or `errgroup` for bounded parallel work / **Worker pool giới hạn concurrency** — dùng buffered channel làm semaphore hoặc `errgroup` cho parallel work.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **"Goroutine vs OS thread?"** — Goroutines are user-space, M:N scheduled, much cheaper; OS threads are 1-2 MB stack / **"Goroutine vs OS thread?"** — Goroutine là user-space, M:N scheduling, rẻ hơn nhiều; OS thread stack 1-2 MB.
+- **"How do you prevent goroutine leaks?"** — Always provide a way to signal done: cancel context, close channel, or use `WaitGroup` / **"Ngăn goroutine leak thế nào?"** — Luôn có cách báo kết thúc: cancel context, close channel, hoặc `WaitGroup`.
+- **"When to use channel vs mutex?"** — Channel for ownership transfer / pipelines; mutex for protecting shared state with reads/writes / **"Khi nào dùng channel vs mutex?"** — Channel để chuyển quyền sở hữu/pipeline; mutex để bảo vệ state chia sẻ.
+- **"What causes a deadlock?"** — Goroutines waiting on each other cyclically; Go runtime detects and panics with "all goroutines are asleep" / **"Deadlock xảy ra do đâu?"** — Goroutine chờ nhau thành vòng; Go runtime phát hiện và panic "all goroutines are asleep".
+- **"Explain the GMP model"** — G=goroutine, M=OS thread, P=processor (logical CPU); P has local run queue; work stealing between Ps / **"Giải thích mô hình GMP"** — G=goroutine, M=OS thread, P=processor (CPU logic); P có local run queue; work stealing giữa các P.

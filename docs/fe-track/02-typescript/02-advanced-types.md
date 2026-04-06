@@ -1376,3 +1376,25 @@ Hệ thống validation type-safe kết hợp: discriminated union cho form stat
 - [JS ES6 Features](../01-javascript/07-es6-features.md) — ES6 destructuring patterns mirror TypeScript type patterns
 - [React Advanced Patterns](../03-react/04-advanced-patterns.md) — advanced types enable type-safe React patterns
 - [CS Fundamentals: Computation Theory](../../shared/01-cs-fundamentals/08-computation-theory.md) — formal type theory behind conditional types
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **Utility types** like `Partial`, `Required`, `Pick`, `Omit`, and `Record` are built on mapped types — understanding mapped types lets you build your own / Các utility type như `Partial`, `Pick`, `Omit` được xây trên mapped types — hiểu mapped types giúp tự tạo utility riêng.
+- **Conditional types** (`T extends U ? X : Y`) allow type-level branching; `infer` extracts type information from within a type expression / Conditional types cho phép rẽ nhánh ở cấp kiểu; `infer` trích xuất kiểu từ bên trong biểu thức.
+- **Discriminated unions** use a shared literal field (discriminant) to let TypeScript narrow types safely in switch/if blocks / Discriminated unions dùng một field literal chung để TypeScript thu hẹp kiểu an toàn trong switch/if.
+- **Template literal types** compose string types at the type level (e.g., `` `on${Capitalize<EventName>}` ``) enabling precise event handler typing / Template literal types ghép kiểu string ở cấp type, tạo ra typing chính xác cho event handlers.
+- **Type guards** (`typeof`, `instanceof`, custom `is` predicates) move TypeScript from `unknown | any` territory to concrete types at runtime / Type guards đưa TypeScript từ `unknown | any` về kiểu cụ thể tại runtime.
+- **Index signatures** (`[key: string]: V`) model dynamic key objects but sacrifice per-key precision; prefer `Record<K, V>` when keys are known / Index signatures mô hình hóa object có key động nhưng mất độ chính xác từng key.
+- **Recursive types** define self-referencing structures (trees, nested JSON) — pair with `infer` for deep unwrapping / Recursive types định nghĩa cấu trúc tự tham chiếu; kết hợp `infer` để unwrap sâu.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- When asked to "type a function that returns the same type as its input", demonstrate `infer` in a conditional type — this is the #1 senior TypeScript pattern / Khi được yêu cầu "typing hàm trả về cùng kiểu với input", dùng `infer` trong conditional type — đây là pattern senior TypeScript hay gặp nhất.
+- Explain discriminated unions with a concrete example (`type Shape = Circle | Square` with `kind` field) — interviewers want to see you understand exhaustive checking / Giải thích discriminated unions bằng ví dụ cụ thể với field `kind` — người phỏng vấn muốn thấy bạn hiểu exhaustive checking.
+- Know the difference between `Omit<T, K>` and `Exclude<T, K>`: `Omit` removes object keys; `Exclude` removes union members / Phân biệt `Omit` (xóa key của object) và `Exclude` (xóa member của union).
+- For template literal type questions, remember they work both for **creating** new string types and for **parsing/narrowing** existing ones / Template literal types dùng được cả để tạo kiểu string mới lẫn để parse/narrow kiểu đã có.
+- Always mention **type narrowing is automatic** after a type guard — TypeScript's control flow analysis does the work / Luôn nhắc rằng TypeScript tự động thu hẹp kiểu sau type guard nhờ control flow analysis.

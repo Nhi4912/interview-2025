@@ -1369,3 +1369,24 @@ Vietnamese explanation: Constraint trong generics là interface dùng ở vị t
 - ➡️ **Enables**: [Go Concurrency](./03-concurrency.md) — channels are interface-driven (`io.Reader`/`io.Writer`)
 - ➡️ **Enables**: [Go Testing](./05-testing-profiling.md) — mock = new struct satisfying interface, no frameworks needed
 - 🔗 **Applied in**: [API Design](../02-backend-knowledge/01-api-design.md) — handler interfaces for middleware chains
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- Go interfaces are implicit — any type with the required method set satisfies the interface, no `implements` keyword / Interface Go là ngầm định — bất kỳ kiểu nào có đủ method set đều thỏa mãn interface, không cần từ khóa `implements`
+- Prefer small interfaces (1-2 methods); `io.Reader` and `io.Writer` are the canonical examples of good design / Ưu tiên interface nhỏ (1-2 method); `io.Reader` và `io.Writer` là ví dụ chuẩn cho thiết kế tốt
+- An interface value holds two words internally: a type pointer (itab) and a data pointer — knowing this explains nil traps / Giá trị interface giữ hai con trỏ bên trong: con trỏ kiểu (itab) và con trỏ dữ liệu — hiểu điều này giải thích bẫy nil
+- The nil interface trap: a typed nil pointer assigned to an interface is NOT nil — `var p *MyType = nil; var i MyInterface = p; i != nil` / Bẫy nil interface: con trỏ nil có kiểu gán vào interface KHÔNG phải nil — đây là nguồn gốc bug phổ biến
+- Generics (Go 1.18+) enable type-safe reusable algorithms without sacrificing performance via type parameters and constraints / Generics (Go 1.18+) cho phép thuật toán tái sử dụng an toàn kiểu mà không mất hiệu năng, nhờ type parameter và constraint
+- `comparable` enables `==`/`!=`; `constraints.Ordered` enables `<`, `>`, `<=`, `>=` for generic functions / `comparable` cho phép `==`/`!=`; `constraints.Ordered` cho phép `<`, `>`, `<=`, `>=` trong hàm generic
+- "Accept interfaces, return concrete types" — the Go proverb that keeps APIs flexible and implementations clean / "Nhận interface, trả về kiểu cụ thể" — châm ngôn Go giữ cho API linh hoạt và implementation gọn gàng
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- Demonstrate the nil interface trap with a code example — this separates candidates who truly understand interfaces / Minh họa bẫy nil interface bằng ví dụ code — điều này phân biệt ứng viên thực sự hiểu interface
+- Generics vs interface question: "generics for algorithms on values (sort, map, filter); interfaces for behavior contracts (plug-ins, mocks)" / Câu hỏi generics vs interface: "generics cho thuật toán trên giá trị; interface cho hợp đồng hành vi (plugin, mock)"
+- Type switch is idiomatic Go for handling multiple concrete types behind an interface — prefer over reflection / Type switch là Go chuẩn để xử lý nhiều kiểu cụ thể đằng sau interface — ưu tiên hơn reflection
+- Go's "duck typing" philosophy: design to interfaces, not implementations — makes code testable without mocking frameworks / Triết lý "duck typing" của Go: thiết kế theo interface, không theo implementation — giúp code dễ test mà không cần framework mock

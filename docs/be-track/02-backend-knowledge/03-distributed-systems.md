@@ -1,7 +1,7 @@
 # Distributed Systems - Deep Theory
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **Prerequisites**: [Microservices Architecture](./02-microservices.md), [Database Theory](../../shared/03-database/database-theory.md)
+> **Prerequisites**: [Microservices Architecture](./02-microservices.md), [Database Theory](../../shared/03-database/database-theory.md) | [Consensus Algorithms](../../shared/02-system-design/consensus-algorithms.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 ---
@@ -2138,3 +2138,24 @@ _Document version: 2026-03. Focus on theory and conceptual understanding for bac
 - 🔗 [Database Advanced: SQL Fundamentals](../03-database-advanced/01-sql-fundamentals.md) — ACID vs BASE, transaction isolation
 - 🔗 [System Design: Design Framework](../04-be-system-design/01-design-framework.md) — CAP tradeoffs in system design interviews
 - 🔗 [Go Concurrency](../01-golang/03-concurrency.md) — Goroutines + channels as local distributed system pattern
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- CAP theorem: during a network partition you must choose Consistency or Availability — you cannot have both / CAP theorem: khi có phân vùng mạng bạn phải chọn Consistency hoặc Availability — không thể có cả hai
+- PACELC extends CAP: even without partitions, there's a latency vs consistency tradeoff (L vs C) / PACELC mở rộng CAP: ngay cả khi không có phân vùng, vẫn có đánh đổi giữa latency và consistency
+- Raft consensus requires majority quorum for writes; leader election resolves split-brain / Raft consensus yêu cầu quorum đa số để ghi; bầu leader giải quyết split-brain
+- Saga pattern handles distributed transactions without 2PC — choreography (events) vs orchestration (coordinator) / Saga pattern xử lý giao dịch phân tán không dùng 2PC — choreography (sự kiện) vs orchestration (điều phối viên)
+- Idempotency keys are the correct fix for at-least-once delivery — critical for payments and order processing / Idempotency key là cách đúng để xử lý at-least-once delivery — quan trọng với thanh toán và xử lý đơn hàng
+- Cache-aside (lazy loading) is the most common pattern; write-through for consistency, write-behind for throughput / Cache-aside (lazy loading) là pattern phổ biến nhất; write-through cho consistency, write-behind cho throughput
+- Vector clocks track causal relationships; Lamport clocks give total ordering but cannot infer causality / Vector clock theo dõi quan hệ nhân quả; Lamport clock cho thứ tự toàn phần nhưng không suy ra nhân quả được
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- Always state your CAP choice AND justify it with the business domain (e.g., CP for payments, AP for social feeds) / Luôn nêu lựa chọn CAP VÀ giải thích bằng domain kinh doanh (CP cho thanh toán, AP cho mạng xã hội)
+- For any "how to scale X?" question, anchor with partitioning strategy before jumping to technology / Với mọi câu hỏi "scale X thế nào?", bắt đầu với chiến lược partitioning trước khi nhảy vào công nghệ
+- Distributed locking: recommend Redlock for Redis HA, but proactively acknowledge Kleppmann's clock-skew critique / Distributed lock: đề xuất Redlock cho Redis HA, nhưng chủ động thừa nhận phê bình clock-skew của Kleppmann
+- "Exactly-once delivery is impossible; exactly-once processing is achievable with idempotency" — this one line answers many questions / "Exactly-once delivery là không thể; exactly-once processing khả thi với idempotency" — một câu này trả lời nhiều câu hỏi

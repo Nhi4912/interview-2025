@@ -835,3 +835,26 @@ self.onmessage = ({ data }) => {
 - 🔗 **FE — React**: [React Hooks](../03-react/03-hooks-deep-dive.md) — `useEffect` async patterns, cleanup functions, avoiding stale closures in async callbacks
 - 🔗 **FE — Performance**: [React Performance](../03-react/09-performance-optimization.md) — blocking the event loop with heavy computation causes dropped frames; offload to Web Workers
 - 🔗 **Shared theory**: [Concurrency & Parallelism](../../shared/01-cs-fundamentals/07-concurrency-and-parallelism.md) — theoretical foundation: cooperative vs preemptive scheduling, why JS chose single-threaded model
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **Event Loop cycle: run sync code → drain ALL microtasks (including newly added ones) → render opportunity (rAF) → take ONE macrotask → repeat / Vòng lặp Event Loop: chạy sync → hết microtask → render (rAF) → lấy 1 macrotask → lặp lại.**
+- **Microtasks: `Promise.then/catch/finally`, `async/await`, `queueMicrotask`, `MutationObserver` — always before macrotasks / Microtask: Promise.then, async/await, queueMicrotask — luôn chạy trước macrotask.**
+- **Macrotasks: `setTimeout`, `setInterval`, I/O callbacks, UI events — only ONE per loop iteration / Macrotask: setTimeout, setInterval, I/O — chỉ 1 task mỗi vòng lặp.**
+- **Promise has 3 irreversible states: pending → fulfilled (+ value) or rejected (+ reason) — once settled, state never changes / Promise có 3 state không thể đảo ngược: pending → fulfilled (+ value) hoặc rejected (+ reason).**
+- **`async/await` is syntactic sugar over Promises — `await` suspends the function and queues the continuation as a microtask / `async/await` là syntactic sugar của Promise — `await` tạm dừng function và đưa phần tiếp theo vào microtask queue.**
+- **Sequential `await` for independent operations wastes time — use `Promise.all` for parallel execution / `await` tuần tự cho các thao tác độc lập lãng phí thời gian — dùng `Promise.all` để chạy song song.**
+- **`Promise.all` = fail-fast; `Promise.allSettled` = report all; `Promise.race` = first settled (win or fail); `Promise.any` = first fulfilled / `all` = fail-fast; `allSettled` = báo cáo tất cả; `race` = đầu tiên xong; `any` = đầu tiên thành công.**
+- **`requestAnimationFrame` runs before each paint, synced with the display refresh rate (60fps = 16.7ms) — use it for animations, not `setInterval` / `requestAnimationFrame` chạy trước mỗi lần vẽ, đồng bộ với tần số màn hình — dùng cho animation, không dùng `setInterval`.**
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **For output-order puzzles: narrate each step — "sync runs, stack empties, microtask queue drains completely, then one macrotask" — trace out loud / Với câu đố output: đọc từng bước — "sync chạy, stack rỗng, drain hết microtask, rồi 1 macrotask" — trace to voice.**
+- **Always check if `await` calls are independent — if yes, immediately propose `Promise.all` and quantify the savings (e.g., 200ms saved) / Luôn kiểm tra `await` có độc lập không — nếu có, đề xuất `Promise.all` và tính tiết kiệm thời gian cụ thể.**
+- **For retry patterns: mention jitter (random delay) to prevent thundering herd — this signals production awareness / Với retry pattern: đề cập jitter (delay ngẫu nhiên) để tránh thundering herd — thể hiện kinh nghiệm production.**
+- **`await` inside `forEach` is a classic trap — always reach for `for...of` (sequential) or `Promise.all(array.map(...))` (parallel) as the two clean alternatives / `await` trong `forEach` là trap kinh điển — luôn dùng `for...of` (tuần tự) hoặc `Promise.all(array.map(...))` (song song).**
+- **For heavy computation blocking the UI: distinguish between `setTimeout` chunking (still main thread) and Web Workers (true parallelism, no DOM access) / Với tính toán nặng block UI: phân biệt setTimeout chunking (vẫn main thread) và Web Workers (thực sự song song, không có DOM).**

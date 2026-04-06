@@ -1279,3 +1279,24 @@ Vietnamese explanation: `sync.Pool` giải quyết vấn đề GC pressure trong
 - ⬅️ **Built on**: [Go Concurrency](./03-concurrency.md) — goroutines are the unit of memory ownership
 - ➡️ **Enables**: [Go Testing & Profiling](./05-testing-profiling.md) — `pprof` memory profiling
 - 🔗 **Applied in**: [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — memory pressure under high load
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- Go uses automatic tricolor mark-and-sweep GC with concurrent phases to minimize stop-the-world pauses / Go dùng GC tricolor mark-and-sweep tự động với các phase chạy song song để giảm thiểu stop-the-world pause
+- Stack allocation is ~10x faster than heap; the compiler uses escape analysis to decide where each variable lives / Cấp phát stack nhanh hơn heap ~10x; compiler dùng escape analysis để quyết định vị trí biến
+- `GOGC=100` (default) means GC fires when live heap doubles; lower = more frequent GC, less memory / `GOGC=100` (mặc định) nghĩa là GC chạy khi heap tăng gấp đôi; thấp hơn = GC thường xuyên hơn, ít bộ nhớ hơn
+- `GOMEMLIMIT` sets a soft memory ceiling — critical for containers to prevent OOM kills / `GOMEMLIMIT` đặt giới hạn bộ nhớ mềm — quan trọng cho container để tránh OOM kill
+- `sync.Pool` reduces GC pressure by reusing short-lived objects across goroutines / `sync.Pool` giảm áp lực GC bằng cách tái sử dụng đối tượng ngắn hạn giữa các goroutine
+- Common memory leaks: goroutine leaks, unclosed resources, unbounded global caches / Rò rỉ bộ nhớ phổ biến: goroutine leak, tài nguyên không đóng, global cache không giới hạn
+- `pprof` is the standard profiling tool — use heap profile for allocations and goroutine profile for leaks / `pprof` là công cụ profiling chuẩn — dùng heap profile cho cấp phát và goroutine profile cho leak
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- When asked about GC pauses, distinguish the concurrent marking phase (low overhead) from STW sweep (very short) / Khi hỏi về GC pause, phân biệt phase marking song song (ít overhead) với STW sweep (rất ngắn)
+- Escape analysis question: prove a variable escapes with `go build -gcflags="-m"` — shows compiler reasoning / Câu hỏi escape analysis: chứng minh biến escape bằng `go build -gcflags="-m"` — cho thấy lý luận của compiler
+- `sync.Pool` gotcha: pooled objects can be GC'd between `Get` calls — always reinitialize after Get / Lưu ý `sync.Pool`: đối tượng có thể bị GC giữa các lần `Get` — luôn khởi tạo lại sau khi Get
+- For "how do you debug a memory leak?" answer: pprof heap dump → compare snapshots over time → trace allocation site / Cho câu "debug memory leak thế nào?": pprof heap dump → so sánh snapshot theo thời gian → tìm điểm cấp phát

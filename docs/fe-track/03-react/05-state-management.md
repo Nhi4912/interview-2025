@@ -1273,3 +1273,25 @@ const toggleTodo = useMutation({
 | Compound Components + Context | Advanced Patterns                | 04-advanced-patterns.md        |
 | State for testing             | Testing Strategy                 | 06-testing.md                  |
 | Concurrent state updates      | Modern React Features            | 10-modern-react-features.md    |
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **Context API re-render problem**: every consumer re-renders when context value changes — even if the consuming component only uses part of the data; fix by splitting context or memoizing the value / Context API gây re-render toàn bộ consumer khi value thay đổi; fix bằng cách tách context hoặc memo hóa value.
+- **Redux** enforces unidirectional data flow: `action → reducer → store → view`; Redux Toolkit eliminates the boilerplate with `createSlice` and `createAsyncThunk` / Redux thực thi luồng dữ liệu một chiều; Redux Toolkit giảm boilerplate với `createSlice`.
+- **Zustand** is a minimal store with no boilerplate — just define state + actions in one object; no Provider needed; great for medium-scale apps / Zustand là store tối giản không cần Provider; phù hợp cho app quy mô vừa.
+- **Jotai** and **Recoil** use atom-based state — individual reactive pieces that components subscribe to; avoids top-level re-renders entirely / Jotai/Recoil dùng atom — mỗi atom là đơn vị state độc lập, tránh re-render từ trên xuống.
+- **Server state ≠ client state**: async data from APIs (loading/error/cache/refetch) is fundamentally different from UI state; use **TanStack Query** or **SWR** for server state — don't mix with Redux / State từ server khác state UI; dùng TanStack Query/SWR cho server state, không trộn vào Redux.
+- **State architecture rule**: co-locate state as close to where it's used as possible; only lift to a shared store when truly needed / Đặt state gần nơi dùng nhất; chỉ đưa lên store chung khi thực sự cần.
+- **Selector pattern** (in Redux/Zustand) prevents unnecessary re-renders by subscribing to only the slice of state a component needs / Pattern selector ngăn re-render thừa bằng cách subscribe đúng phần state cần.
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- When asked "Redux vs Context", the answer is **not either/or**: use Context for low-frequency global values (theme, auth), Redux/Zustand for frequently-changing shared state / Khi hỏi Redux vs Context: không phải chọn một — Context cho giá trị ít thay đổi, Redux/Zustand cho state thay đổi thường xuyên.
+- Always distinguish **server state** (TanStack Query) from **client state** (Zustand/Redux) — this separation shows senior-level architecture thinking / Luôn phân biệt server state và client state — điều này thể hiện tư duy kiến trúc cấp senior.
+- For Redux questions, mention **selectors and memoization** (`createSelector`/`reselect`) to show you understand the performance implications / Với câu hỏi Redux, đề cập selector và memoization để thể hiện hiểu về performance.
+- Zustand vs Redux trade-off: Zustand has less structure (faster to build, harder to debug at scale); Redux has more ceremony (slower, but DevTools + time-travel debugging) / Trade-off Zustand vs Redux: ít cấu trúc hơn vs nhiều ceremony nhưng debug tốt hơn ở scale lớn.
+- If asked to design state for a complex app, segment your answer: local UI state, shared client state, server state, and URL state — four distinct categories / Khi thiết kế state cho app phức tạp, phân chia 4 loại: local UI, shared client, server state, URL state.

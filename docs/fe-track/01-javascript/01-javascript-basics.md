@@ -1044,3 +1044,26 @@ function findMessage(id) {
 - 🔗 **FE — TypeScript**: [TypeScript Basics](../02-typescript/01-type-system-basics.md) — TypeScript eliminates type coercion surprises at build time; `strict` mode enforces JS best practices
 - 🔗 **FE — React**: [React Fundamentals](../03-react/01-react-fundamentals.md) — `Object.is` (not `===`) is used for state change detection; understanding JS equality prevents infinite re-render bugs
 - 🔗 **Shared theory**: [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — JS single-threaded model maps to single OS thread per tab; event loop is the runtime scheduler above the OS scheduler
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- **JavaScript is single-threaded — async works via Event Loop + Web APIs delegation, not multi-threading / JavaScript chạy trên 1 thread — async hoạt động nhờ Event Loop + Web APIs, không phải đa luồng.**
+- **Microtasks (Promise.then, async/await) always run before macrotasks (setTimeout, setInterval) — drain ALL microtasks first / Microtask luôn chạy trước macrotask — drain hết microtask queue trước khi lấy 1 macrotask.**
+- **Hoisting = Creation Phase: `var` → initialized `undefined`, function declarations → full body, `let`/`const` → bound but in TDZ (ReferenceError if accessed) / Hoisting = Creation Phase: `var` khởi tạo `undefined`, function declaration nhận full body, `let`/`const` trong TDZ.**
+- **`+` is overloaded — string present → concatenation; `-`, `*`, `/` have numeric meaning only → always call ToNumber / `+` bị overload — có string → nối chuỗi; các toán tử khác chỉ có nghĩa số học → luôn ép ToNumber.**
+- **Exactly 8 falsy values: `false 0 -0 0n "" null undefined NaN` — `"0"`, `[]`, `{}` are truthy / Đúng 8 falsy: `false 0 -0 0n "" null undefined NaN` — `"0"`, `[]`, `{}` đều truthy.**
+- **Use `??` instead of `||` for default values when `0` or `""` are valid — `||` treats them as "missing" / Dùng `??` thay `||` cho default value khi `0` hay `""` hợp lệ — `||` coi chúng là "thiếu".**
+- **`Object.is` fixes two `===` edge cases: `NaN === NaN` → true, `+0 === -0` → false — React uses `Object.is` for state comparison / `Object.is` fix 2 edge case của `===`: NaN bằng chính nó, +0 ≠ -0 — React dùng `Object.is` để so sánh state.**
+- **Primitives copy by value, objects copy by reference — mutating a shared object reference causes unexpected side-effects / Primitive copy by value, object copy by reference — mutate object dùng chung reference gây side-effect ngoài ý muốn.**
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- **For output-order puzzles: always trace sync → drain ALL microtasks → 1 macrotask, repeat / Với câu đố thứ tự output: trace sync → hết microtask → 1 macrotask, lặp lại.**
+- **Use the term "Creation Phase" instead of "code moves to the top" — code never moves; the engine creates bindings before executing / Dùng "Creation Phase" thay vì "code di chuyển lên đầu" — code không di chuyển, engine tạo binding trước khi chạy.**
+- **`== null` is the one valid use of `==` — it matches both `null` and `undefined` / `== null` là trường hợp duy nhất dùng `==` hợp lý — nó match cả `null` lẫn `undefined`.**
+- **When asked about React state comparison, mention `Object.is` and its two differences from `===` — this signals spec-level knowledge / Khi hỏi về so sánh state trong React, đề cập `Object.is` và 2 điểm khác với `===` — thể hiện hiểu biết sâu về spec.**
+- **For coercion traps at API boundaries, mention schema validation (Zod) — runtime types are always `unknown`, TypeScript can't protect you there / Với coercion trap ở API boundary, đề cập schema validation (Zod) — runtime types luôn là `unknown`, TypeScript không bảo vệ được.**

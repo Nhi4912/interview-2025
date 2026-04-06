@@ -1,7 +1,7 @@
 # Authentication & Security
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **See also**: [Table of Contents](../../00-table-of-contents.md) | [Security Fundamentals](../../shared/04-security/01-security-fundamentals.md) | [OWASP Top 10](../../shared/04-security/03-web-security-owasp.md)
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
@@ -2237,3 +2237,24 @@ Quick reference:
 - 🔗 [Go Concurrency](../01-golang/03-concurrency.md) — Context propagation for auth tokens in goroutines
 - 🔗 [Database Advanced](../03-database-advanced/01-sql-fundamentals.md) — Parameterized queries prevent SQL injection
 - 🔗 [System Design](../04-be-system-design/01-design-framework.md) — Auth as cross-cutting concern in system design
+
+---
+
+## Quick Recap / Tóm Tắt Nhanh
+
+### Key Takeaways / Điểm Chính
+
+- Authentication (401) answers "who are you?"; Authorization (403) answers "what can you do?" — always happens in that order / Authentication (401) trả lời "bạn là ai?"; Authorization (403) trả lời "bạn được làm gì?" — luôn theo thứ tự đó
+- JWT is stateless (no DB lookup), verified by signature — but cannot be revoked without a blacklist / JWT là stateless (không cần tra DB), xác thực qua chữ ký — nhưng không thể thu hồi nếu không có blacklist
+- Best practice: short-lived access token (15min) + long-lived refresh token (7 days) stored in HttpOnly cookie / Best practice: access token ngắn hạn (15 phút) + refresh token dài hạn (7 ngày) trong HttpOnly cookie
+- OAuth 2.0 delegates authorization; OIDC adds identity on top (ID token = who the user is) / OAuth 2.0 ủy quyền truy cập; OIDC thêm identity lên trên (ID token = ai là người dùng)
+- RBAC is simple (role→permissions); ABAC is flexible (attribute policies); ReBAC is graph-based (Google Zanzibar model) / RBAC đơn giản (vai trò→quyền); ABAC linh hoạt (chính sách thuộc tính); ReBAC dạng đồ thị (mô hình Google Zanzibar)
+- Always use bcrypt or argon2 for passwords — never MD5/SHA1/SHA256 without a slow algorithm / Luôn dùng bcrypt hoặc argon2 cho mật khẩu — không bao giờ dùng MD5/SHA1/SHA256 không có thuật toán chậm
+- OWASP essentials: SQLi → parameterized queries; XSS → output encoding + CSP; SSRF → URL allowlist / OWASP cốt lõi: SQLi → parameterized queries; XSS → output encoding + CSP; SSRF → URL allowlist
+
+### Interview Tips / Mẹo Phỏng Vấn
+
+- JWT vs session tradeoff: "JWT scales horizontally without shared state, but session supports instant revocation" — state both / Đánh đổi JWT vs session: "JWT scale ngang không cần shared state, nhưng session hỗ trợ thu hồi ngay lập tức" — nêu cả hai
+- mTLS is the modern answer to "how do microservices authenticate each other?" — mutual cert validation, not just TLS / mTLS là câu trả lời hiện đại cho "microservices xác thực nhau thế nào?" — xác thực cert hai chiều, không chỉ TLS
+- CORS protects browsers only — server-to-server calls bypass preflight entirely, so don't rely on CORS for API security / CORS chỉ bảo vệ browser — server-to-server bỏ qua preflight hoàn toàn, đừng dựa vào CORS cho bảo mật API
+- Security-in-depth: layer WAF + rate limiting + input validation + output encoding — no single layer is sufficient / Bảo mật chiều sâu: kết hợp WAF + rate limiting + input validation + output encoding — không có lớp nào là đủ
