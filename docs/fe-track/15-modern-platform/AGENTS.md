@@ -8,11 +8,12 @@
 
 ## WHERE TO LOOK
 
-| Topic cluster                                                          | File                                 |
-| ---------------------------------------------------------------------- | ------------------------------------ |
-| Web Components · Shadow DOM · Custom Elements · ElementInternals       | `01-web-components-shadow-dom.md`    |
-| CRDTs · Yjs · OT · real-time collab · local-first sync                 | `02-realtime-collaboration-crdts.md` |
-| Micro-frontends · Module Federation · import maps · shell/remote split | `03-micro-frontends-scale.md`        |
+| Topic cluster                                                                   | File                                   |
+| ------------------------------------------------------------------------------- | -------------------------------------- |
+| Web Components · Shadow DOM · Custom Elements · ElementInternals                | `01-web-components-shadow-dom.md`      |
+| CRDTs · Yjs · OT · real-time collab · local-first sync                          | `02-realtime-collaboration-crdts.md`   |
+| Micro-frontends · Module Federation · import maps · shell/remote split          | `03-micro-frontends-scale.md`          |
+| AI-augmented FE workflow · Cursor/Copilot/Claude · prompt patterns · guardrails | `04-ai-augmented-frontend-workflow.md` |
 
 ---
 

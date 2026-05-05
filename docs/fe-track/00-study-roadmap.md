@@ -22,7 +22,7 @@
 
 | #   | Topic                    | File                                             | Priority |
 | --- | ------------------------ | ------------------------------------------------ | -------- |
-| 1   | Variables & Data Types   | `01-javascript/02-variables-types.md`       | Critical |
+| 1   | Variables & Data Types   | `01-javascript/02-variables-types.md`            | Critical |
 | 2   | Scope & Hoisting         | `01-javascript/02-scope-hoisting.md`             | Critical |
 | 3   | Closures                 | `01-javascript/03-closures.md`                   | Critical |
 | 4   | Prototypes & Inheritance | `01-javascript/06-prototypes-inheritance.md`     | Critical |
@@ -37,16 +37,16 @@
 
 **Deep dive (nếu có thời gian):**
 
-| #   | Topic                            | File                                               | Priority |
-| --- | -------------------------------- | -------------------------------------------------- | -------- |
-| 13  | Scope & Hoisting (Comprehensive) | `01-javascript/03-scope-hoisting.md` | Medium   |
-| 14  | Closures (Comprehensive)         | `01-javascript/04-closures.md`       | Medium   |
-| 15  | Prototypes (Deep)                | `01-javascript/10-prototypes-inheritance-deep.md`  | Medium   |
-| 16  | ES6 (Deep)                       | `01-javascript/11-es6-features-deep.md`            | Medium   |
-| 17  | Metaprogramming                  | `01-javascript/18-metaprogramming-theory.md`       | Low      |
-| 18  | Concurrency Models               | `01-javascript/19-concurrency-models-theory.md`    | Low      |
-| 19  | Module Systems                   | `01-javascript/20-module-systems-theory.md`        | Low      |
-| 20  | Engine Internals (V8)            | `01-javascript/21-engine-internals-theory.md`      | Low      |
+| #   | Topic                            | File                                              | Priority |
+| --- | -------------------------------- | ------------------------------------------------- | -------- |
+| 13  | Scope & Hoisting (Comprehensive) | `01-javascript/03-scope-hoisting.md`              | Medium   |
+| 14  | Closures (Comprehensive)         | `01-javascript/04-closures.md`                    | Medium   |
+| 15  | Prototypes (Deep)                | `01-javascript/10-prototypes-inheritance-deep.md` | Medium   |
+| 16  | ES6 (Deep)                       | `01-javascript/11-es6-features-deep.md`           | Medium   |
+| 17  | Metaprogramming                  | `01-javascript/18-metaprogramming-theory.md`      | Low      |
+| 18  | Concurrency Models               | `01-javascript/19-concurrency-models-theory.md`   | Low      |
+| 19  | Module Systems                   | `01-javascript/20-module-systems-theory.md`       | Low      |
+| 20  | Engine Internals (V8)            | `01-javascript/21-engine-internals-theory.md`     | Low      |
 
 ---
 
@@ -217,6 +217,8 @@
 | 8   | Accessibility Module        | `11-accessibility/README.md`                           |
 | 9   | Networking Module           | `10-networking/README.md`                              |
 | 10  | Behavioral Module           | `12-behavioral/README.md`                              |
+| 11  | Modern Platform (2026)      | `15-modern-platform/README.md`                         |
+| 12  | Career Strategy             | `16-career-strategy/README.md`                         |
 
 ---
 

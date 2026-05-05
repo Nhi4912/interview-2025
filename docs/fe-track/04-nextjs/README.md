@@ -16,9 +16,10 @@
 
 ### Deep Dive / Nâng Cao
 
-| #   | File                                                                         | Topic / Chủ Đề                                           |
-| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------- |
-| 5   | [04-nextjs-fundamentals-appRouter.md](./04-nextjs-fundamentals-appRouter.md) | App Router fundamentals in depth / App Router chuyên sâu |
+| #   | File                                                                               | Topic / Chủ Đề                                                                                 |
+| --- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 5   | [04-nextjs-fundamentals-appRouter.md](./04-nextjs-fundamentals-appRouter.md)       | App Router fundamentals in depth / App Router chuyên sâu                                       |
+| 6   | [05-static-site-generators-landscape.md](./05-static-site-generators-landscape.md) | SSG ecosystem: Astro/Eleventy/Gatsby vs Next / Hệ sinh thái SSG: Astro/Eleventy/Gatsby vs Next |
 
 ## Study Order / Thứ Tự Học
 
@@ -32,6 +33,7 @@
 
 4. Architecture patterns: `03-nextjs-architecture.md` / Kiến trúc nâng cao
 5. App Router in depth: `04-nextjs-fundamentals-appRouter.md` / App Router chuyên sâu
+6. Framework choice: `05-static-site-generators-landscape.md` / Khi nào dùng Astro/Eleventy/Gatsby thay vì Next.js
 
 ## Related / Liên Quan
 

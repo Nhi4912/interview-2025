@@ -226,6 +226,14 @@ See [fe-track/10-company-guide.md](./fe-track/10-company-guide.md) for FE-specif
 
 See [fe-track/14-frontend-testing.md](./fe-track/14-frontend-testing.md) for Vitest, RTL, MSW, Playwright vs Cypress, testing patterns.
 
+### 15 — Modern Platform (2026) / Nền Tảng Hiện Đại (NEW)
+
+See [fe-track/15-modern-platform/](./fe-track/15-modern-platform/) for Web Components & Shadow DOM, CRDTs / real-time collaboration, micro-frontends at scale, and AI-augmented FE workflow (Cursor / Copilot / Claude Code).
+
+### 16 — Career Strategy / Chiến Lược Sự Nghiệp (NEW)
+
+See [fe-track/16-career-strategy/](./fe-track/16-career-strategy/) for the 7 FE specializations (Frontend Masters Handbook 2024 §2), career levels Junior → Distinguished, 2025 compensation bands (VN/SEA/EU/US/FAANG), and T/I/Pi-shape framing.
+
 ### Mindmaps / Bản Đồ Tư Duy
 
 See `fe-track/mindmaps/` for visual review aids per category.
