@@ -56,13 +56,13 @@ Core backend interview topics for Go mid-senior roles: API contracts, distribute
 
 ## CROSS-REFERENCES
 
-| Topic                                                  | Lives in                              |
-| ------------------------------------------------------ | ------------------------------------- |
-| Go concurrency primitives (goroutine, channel, mutex)  | `01-golang/03-concurrency.md`         |
-| Database caching (Redis patterns, cache invalidation)  | `03-database-advanced/04-caching.md`  |
-| Query optimization, indexing                           | `03-database-advanced/02-indexing.md` |
-| System design case studies (URL shortener, feed, etc.) | `04-system-design/`                   |
-| Observability (tracing, metrics, structured logs)      | sibling file TBD                      |
+| Topic                                                  | Lives in                                            |
+| ------------------------------------------------------ | --------------------------------------------------- |
+| Go concurrency primitives (goroutine, channel, mutex)  | `01-golang/03-concurrency.md`                       |
+| Database caching (Redis patterns, cache invalidation)  | `03-database-advanced/04-caching-patterns.md`       |
+| Query optimization, indexing                           | `03-database-advanced/02-indexing-optimization.md`  |
+| System design case studies (URL shortener, feed, etc.) | `04-be-system-design/`                              |
+| Observability (tracing, metrics, structured logs)      | `04-be-system-design/05-observability-and-scale.md` |
 
 ---
 
