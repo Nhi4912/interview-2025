@@ -17,10 +17,14 @@
 
 ### Deep Dive / Nâng Cao
 
-| #   | File                                                                                   | Topic / Chủ Đề                                                        |
-| --- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| 6   | [06-microservices-patterns.md](./06-microservices-patterns.md)                         | Advanced microservices patterns / Các mẫu microservices nâng cao      |
-| 7   | [07-frontend-quality-and-observability.md](./07-frontend-quality-and-observability.md) | Monitoring, logging, error tracking / Giám sát, logging, theo dõi lỗi |
+| #   | File                                                                                   | Topic / Chủ Đề                                                                         |
+| --- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 6   | [06-microservices-patterns.md](./06-microservices-patterns.md)                         | Advanced microservices patterns / Các mẫu microservices nâng cao                       |
+| 7   | [07-frontend-quality-and-observability.md](./07-frontend-quality-and-observability.md) | Monitoring, logging, error tracking / Giám sát, logging, theo dõi lỗi                  |
+| 8   | [09-design-systems.md](./09-design-systems.md)                                         | Design systems, tokens, component libraries / Design system, token, thư viện component |
+| 9   | [10-monorepos-frontend.md](./10-monorepos-frontend.md)                                 | Monorepos for FE (Nx, Turbo, pnpm) / Monorepo FE (Nx, Turbo, pnpm)                     |
+| 10  | [11-ab-testing-experimentation.md](./11-ab-testing-experimentation.md)                 | A/B testing & experimentation infra / A/B test & hạ tầng thí nghiệm                    |
+| 11  | [12-semver-and-versioning.md](./12-semver-and-versioning.md)                           | SemVer, lockfiles, versioning strategies / SemVer, lockfile, chiến lược versioning     |
 
 ## Study Order / Thứ Tự Học
 
@@ -36,6 +40,10 @@
 
 6. Advanced microservices: `06-microservices-patterns.md` / Microservices nâng cao
 7. Observability & quality: `07-frontend-quality-and-observability.md` / Quan sát & chất lượng
+8. Design systems: `09-design-systems.md` / Design system
+9. Monorepos: `10-monorepos-frontend.md` / Monorepo
+10. A/B testing infra: `11-ab-testing-experimentation.md` / Hạ tầng A/B test
+11. SemVer & versioning: `12-semver-and-versioning.md` / SemVer & versioning
 
 ## Related / Liên Quan
 

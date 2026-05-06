@@ -1,6 +1,6 @@
 # 01-JAVASCRIPT — AGENT CONTEXT
 
-**Generated:** 2026-05-05 | **Files:** 25 | **Lines:** ~23k
+**Generated:** 2026-05-05 | **Files:** 27 | **Lines:** ~28k
 
 ## OVERVIEW
 
@@ -10,25 +10,27 @@ Phase 1 anchor — JS fundamentals (Junior) through advanced theory (Senior). Hi
 
 ## WHERE TO LOOK
 
-| Topic                                | File(s)                                                              |
-| ------------------------------------ | -------------------------------------------------------------------- |
-| Closures                             | `04-closures.md` → `10-advanced-concepts.md` (GC, memory leak)       |
-| Event loop / async                   | `07-event-loop-async.md` + `09-async-comprehensive.md`               |
-| Prototypes / inheritance             | `06-prototypes-inheritance.md` → `10-prototypes-inheritance-deep.md` |
-| `this` keyword                       | `05-this-keyword.md` + `16-execution-context-theory.md` (5 rules)    |
-| Scope / hoisting / TDZ               | `03-scope-hoisting.md`                                               |
-| ES6+ features                        | `08-es6-features.md` → `11-es6-features-deep.md`                     |
-| Async patterns (Promise/RxJS)        | `09-async-comprehensive.md`                                          |
-| Functional programming               | `11-functional-programming.md`                                       |
-| Memory management / WeakMap          | `15-memory-management-advanced.md`                                   |
-| V8 internals / JIT / shapes          | `21-engine-internals-theory.md`                                      |
-| Metaprogramming (Proxy/Reflect)      | `18-metaprogramming-theory.md`                                       |
-| Execution context deep dive          | `16-execution-context-theory.md`                                     |
-| Concurrency models                   | `19-concurrency-models-theory.md`                                    |
-| Module systems (ESM/CJS/UMD)         | `20-module-systems-theory.md`                                        |
-| Modern JS (2022–2025)                | `22-modern-javascript-features.md`                                   |
-| Type system theory                   | `14-javascript-type-system-theory.md`                                |
-| Advanced patterns (decorator, mixin) | `17-advanced-patterns-theory.md`                                     |
+| Topic                                  | File(s)                                                              |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| Closures                               | `04-closures.md` → `10-advanced-concepts.md` (GC, memory leak)       |
+| Event loop / async                     | `07-event-loop-async.md` + `09-async-comprehensive.md`               |
+| Prototypes / inheritance               | `06-prototypes-inheritance.md` → `10-prototypes-inheritance-deep.md` |
+| `this` keyword                         | `05-this-keyword.md` + `16-execution-context-theory.md` (5 rules)    |
+| Scope / hoisting / TDZ                 | `03-scope-hoisting.md`                                               |
+| ES6+ features                          | `08-es6-features.md` → `11-es6-features-deep.md`                     |
+| Async patterns (Promise/RxJS)          | `09-async-comprehensive.md`                                          |
+| Functional programming                 | `11-functional-programming.md`                                       |
+| Memory management / WeakMap            | `15-memory-management-advanced.md`                                   |
+| V8 internals / JIT / shapes            | `21-engine-internals-theory.md`                                      |
+| Metaprogramming (Proxy/Reflect)        | `18-metaprogramming-theory.md`                                       |
+| Execution context deep dive            | `16-execution-context-theory.md`                                     |
+| Concurrency models                     | `19-concurrency-models-theory.md`                                    |
+| Module systems (ESM/CJS/UMD)           | `20-module-systems-theory.md`                                        |
+| Modern JS (2022–2025)                  | `22-modern-javascript-features.md`                                   |
+| Regex for frontend (validation, ReDoS) | `23-regex-for-frontend.md`                                           |
+| Polyfills, transpilation, browserslist | `24-polyfills-and-transpilation.md`                                  |
+| Type system theory                     | `14-javascript-type-system-theory.md`                                |
+| Advanced patterns (decorator, mixin)   | `17-advanced-patterns-theory.md`                                     |
 
 ---
 

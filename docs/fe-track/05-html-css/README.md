@@ -26,6 +26,7 @@
 | 10  | [08-css-framework-comparison.md](./08-css-framework-comparison.md)             | Tailwind vs Bootstrap vs others / So sánh các framework CSS           |
 | 11  | [09-css-in-js-comparison.md](./09-css-in-js-comparison.md)                     | CSS-in-JS solutions comparison / So sánh giải pháp CSS-in-JS          |
 | 12  | [10-responsive-vs-adaptive-design.md](./10-responsive-vs-adaptive-design.md)   | Responsive vs Adaptive design / Responsive vs Adaptive design         |
+| 13  | [11-web-typography-and-fonts.md](./11-web-typography-and-fonts.md)             | Web typography & font loading / Typography web & tải font             |
 
 ## Study Order / Thứ Tự Học
 
@@ -42,6 +43,7 @@
 6. Modern CSS: `06-modern-css-features.md` / CSS hiện đại
 7. Tooling comparisons: `08-css-framework-comparison.md` → `09-css-in-js-comparison.md` / So sánh công cụ
 8. Responsive vs Adaptive: `10-responsive-vs-adaptive-design.md` / Phân biệt responsive và adaptive
+9. Web typography & fonts: `11-web-typography-and-fonts.md` / Typography web & font
 
 ## Related / Liên Quan
 

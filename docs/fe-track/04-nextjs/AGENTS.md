@@ -8,14 +8,17 @@ App Router era Next.js (v14+), RSC-first architecture; covers the primary interv
 
 ## WHERE TO LOOK
 
-| Topic                                                                   | File                                  |
-| ----------------------------------------------------------------------- | ------------------------------------- |
-| App Router vs Pages Router fundamentals                                 | `00-nextjs-fundamentals.md`           |
-| RSC vs Client Components, `'use client'` boundary, streaming            | `01-app-router-server-components.md`  |
-| `fetch` / `cache` / `revalidate`, Server Actions, route handlers        | `02-data-fetching.md`                 |
-| Folder structure, layouts, route groups, middleware                     | `03-nextjs-architecture.md`           |
-| App Router deep-dive (rendering modes, Suspense, ISR/SSG/SSR tradeoffs) | `04-nextjs-fundamentals-appRouter.md` |
-| Topic index & difficulty map                                            | `README.md`                           |
+| Topic                                                                   | File                                     |
+| ----------------------------------------------------------------------- | ---------------------------------------- |
+| App Router vs Pages Router fundamentals                                 | `00-nextjs-fundamentals.md`              |
+| RSC vs Client Components, `'use client'` boundary, streaming            | `01-app-router-server-components.md`     |
+| `fetch` / `cache` / `revalidate`, Server Actions, route handlers        | `02-data-fetching.md`                    |
+| Folder structure, layouts, route groups, middleware                     | `03-nextjs-architecture.md`              |
+| App Router deep-dive (rendering modes, Suspense, ISR/SSG/SSR tradeoffs) | `04-nextjs-fundamentals-appRouter.md`    |
+| SSG ecosystem comparison (Astro/Eleventy/Gatsby vs Next)                | `05-static-site-generators-landscape.md` |
+| SEO for frontend (meta, sitemap, JSON-LD, RSC)                          | `06-seo-for-frontend.md`                 |
+| JAMstack architecture & composable web                                  | `07-jamstack-architecture.md`            |
+| Topic index & difficulty map                                            | `README.md`                              |
 
 ---
 

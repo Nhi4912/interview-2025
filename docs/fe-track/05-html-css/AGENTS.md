@@ -20,6 +20,7 @@ HTML semantics + full CSS layout stack (Flexbox/Grid/animations/modern features)
 | CSS architecture (BEM, OOCSS, ITCSS)     | `02-css-architecture.md`, `04-css-architecture-comprehensive.md`, `07-css-architecture-theory.md` |
 | CSS-in-JS (concept + comparison)         | `09-css-in-js-comparison.md`                                                                      |
 | Framework comparison (Tailwind etc.)     | `08-css-framework-comparison.md`                                                                  |
+| Web typography & font loading            | `11-web-typography-and-fonts.md`                                                                  |
 
 ## LOCAL CONVENTIONS
 

@@ -8,16 +8,20 @@ FE system design interview prep: design a Twitter feed, Google Docs editor, VinI
 
 ## WHERE TO LOOK
 
-| Topic                                                              | File                                       |
-| ------------------------------------------------------------------ | ------------------------------------------ |
-| MVC/MVVM/Flux, Monolith → Modular Monolith → MFE spectrum          | `01-architecture-patterns.md`              |
-| Code-splitting, lazy loading, CDN, bundle strategy, team scaling   | `02-scalability.md`                        |
-| HTTP cache, service worker cache, stale-while-revalidate, CDN      | `03-caching.md`                            |
-| Micro-frontends, Module Federation, shell app, shared deps         | `04-microservices.md`                      |
-| Client-side storage: localStorage, IndexedDB, offline-first design | `05-database-design.md`                    |
-| Advanced MFE patterns: cross-team contracts, routing ownership     | `06-microservices-patterns.md`             |
-| Error tracking, logging, RUM, Core Web Vitals observability        | `07-frontend-quality-and-observability.md` |
-| Navigation index + study order                                     | `README.md`                                |
+| Topic                                                                          | File                                       |
+| ------------------------------------------------------------------------------ | ------------------------------------------ |
+| MVC/MVVM/Flux, Monolith → Modular Monolith → MFE spectrum                      | `01-architecture-patterns.md`              |
+| Code-splitting, lazy loading, CDN, bundle strategy, team scaling               | `02-scalability.md`                        |
+| HTTP cache, service worker cache, stale-while-revalidate, CDN                  | `03-caching.md`                            |
+| Micro-frontends, Module Federation, shell app, shared deps                     | `04-microservices.md`                      |
+| Client-side storage: localStorage, IndexedDB, offline-first design             | `05-database-design.md`                    |
+| Advanced MFE patterns: cross-team contracts, routing ownership                 | `06-microservices-patterns.md`             |
+| Error tracking, logging, RUM, Core Web Vitals observability                    | `07-frontend-quality-and-observability.md` |
+| Design systems, design tokens, component library architecture                  | `09-design-systems.md`                     |
+| Monorepos for FE: Nx, Turborepo, pnpm workspaces, Changesets                   | `10-monorepos-frontend.md`                 |
+| A/B testing & experimentation platforms (LaunchDarkly, Optimizely, GrowthBook) | `11-ab-testing-experimentation.md`         |
+| SemVer, lockfiles, peer deps, deprecation, Renovate/Dependabot                 | `12-semver-and-versioning.md`              |
+| Navigation index + study order                                                 | `README.md`                                |
 
 ---
 

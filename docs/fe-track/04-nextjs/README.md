@@ -20,6 +20,8 @@
 | --- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | 5   | [04-nextjs-fundamentals-appRouter.md](./04-nextjs-fundamentals-appRouter.md)       | App Router fundamentals in depth / App Router chuyên sâu                                       |
 | 6   | [05-static-site-generators-landscape.md](./05-static-site-generators-landscape.md) | SSG ecosystem: Astro/Eleventy/Gatsby vs Next / Hệ sinh thái SSG: Astro/Eleventy/Gatsby vs Next |
+| 7   | [06-seo-for-frontend.md](./06-seo-for-frontend.md)                                 | SEO for frontend (meta, sitemap, JSON-LD, RSC) / SEO cho frontend                              |
+| 8   | [07-jamstack-architecture.md](./07-jamstack-architecture.md)                       | JAMstack architecture & composable web / Kiến trúc JAMstack & web có thể compose               |
 
 ## Study Order / Thứ Tự Học
 
@@ -34,6 +36,8 @@
 4. Architecture patterns: `03-nextjs-architecture.md` / Kiến trúc nâng cao
 5. App Router in depth: `04-nextjs-fundamentals-appRouter.md` / App Router chuyên sâu
 6. Framework choice: `05-static-site-generators-landscape.md` / Khi nào dùng Astro/Eleventy/Gatsby thay vì Next.js
+7. SEO for frontend: `06-seo-for-frontend.md` / SEO cho frontend
+8. JAMstack architecture: `07-jamstack-architecture.md` / Kiến trúc JAMstack
 
 ## Related / Liên Quan
 

@@ -11,14 +11,14 @@ Frontend interview prep — bilingual (EN/VI) study notes targeting Junior→Sen
 ```
 docs/fe-track/
 ├── 00-study-roadmap.md            # Phase-ordered learning path (entry point)
-├── 01-javascript/                 # 25 files — Phase 1 anchor (highest priority)
+├── 01-javascript/                 # 27 files — Phase 1 anchor (highest priority)
 ├── 02-typescript/                 # 8 files — Phase 2
 ├── 03-react/                      # 11 files — Phase 3 (primary framework)
-├── 04-nextjs/                     # 7 files — Phase 3 (Grab/Axon/EH stack)
-├── 05-html-css/                   # 13 files — Phase 4 (often underestimated)
-├── 06-browser-performance/        # 8 files — Core Web Vitals, profiling
+├── 04-nextjs/                     # 9 files — Phase 3 (Grab/Axon/EH stack)
+├── 05-html-css/                   # 14 files — Phase 4 (often underestimated)
+├── 06-browser-performance/        # 10 files — Core Web Vitals, profiling
 ├── 07-web-security/               # 4 files — XSS, CSRF, CSP, auth
-├── 08-fe-system-design/           # 8 files — FE-specific SD (NOT backend SD)
+├── 08-fe-system-design/           # 12 files — FE-specific SD (NOT backend SD)
 ├── 09-advanced-topics/            # ~75 files in 10 subdirs — senior-level deep map
 ├── 10-networking/                 # 8 files — HTTP, WS, WebRTC from FE perspective
 ├── 10-company-guide.md            # ⚠️ duplicate "10-" prefix; do not renumber
