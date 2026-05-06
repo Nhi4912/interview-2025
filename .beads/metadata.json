@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "interview_2025",
+  "project_id": "098bc0ca-11b8-4991-b324-6a4d21e6d00a"
+}
