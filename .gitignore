@@ -1,6 +1,10 @@
 node_modules
 .opencode/
 
+# macOS
+.DS_Store
+**/.DS_Store
+
 # Dolt database files (added by bd init)
 .dolt/
 *.db

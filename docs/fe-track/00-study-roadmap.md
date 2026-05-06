@@ -216,11 +216,11 @@
 | --- | ---------------------------- | ----------------------------------------------------- | -------- |
 | 1   | Complexity Analysis (shared) | `../shared/01-cs-fundamentals/complexity-analysis.md` | Critical |
 | 2   | Algorithms Theory (shared)   | `../shared/01-cs-fundamentals/algorithms-theory.md`   | Critical |
-| 3   | Data Structures (JS)         | `09-advanced-topics/01-data-structures-js.md`         | Critical |
-| 4   | Algorithms (JS)              | `09-advanced-topics/02-algorithms-js.md`              | Critical |
-| 5   | Design Patterns (TS)         | `09-advanced-topics/03-design-patterns-ts.md`         | High     |
-| 6   | Graph Algorithms             | `09-advanced-topics/04-graph-algorithms.md`           | Medium   |
-| 7   | Tree Algorithms              | `09-advanced-topics/05-tree-algorithms.md`            | Medium   |
+| 3   | Data Structures (JS)         | `09-advanced-topics/algorithms/01-data-structures-js.md`         | Critical |
+| 4   | Algorithms (JS)              | `09-advanced-topics/algorithms/02-algorithms-js.md`              | Critical |
+| 5   | Design Patterns (TS)         | `09-advanced-topics/design-patterns/03-design-patterns-ts.md`         | High     |
+| 6   | Graph Algorithms             | `09-advanced-topics/algorithms/04-graph-algorithms.md`           | Medium   |
+| 7   | Tree Algorithms              | `09-advanced-topics/algorithms/05-tree-algorithms.md`            | Medium   |
 
 ---
 
@@ -230,10 +230,10 @@
 
 | #   | Topic                 | File                                        | Priority |
 | --- | --------------------- | ------------------------------------------- | -------- |
-| 1   | STAR Method           | `12-behavioral/01-star-method.md`           | Critical |
-| 2   | Leadership Principles | `12-behavioral/02-leadership-principles.md` | High     |
-| 3   | Common Questions      | `12-behavioral/03-common-questions.md`      | High     |
-| 4   | Storytelling          | `12-behavioral/04-storytelling.md`          | Medium   |
+| 1   | STAR Method           | `../shared/09-behavioral/01-star-method.md`           | Critical |
+| 2   | Leadership Principles | `../shared/09-behavioral/02-leadership-principles.md` | High     |
+| 3   | Common Questions      | `../shared/09-behavioral/03-common-questions.md`      | High     |
+| 4   | Storytelling          | `../shared/09-behavioral/04-storytelling.md`          | Medium   |
 
 ---
 
@@ -354,27 +354,27 @@
 
 | #   | Topic                   | File                                                    | Priority |
 | --- | ----------------------- | ------------------------------------------------------- | -------- |
-| 1   | ML Fundamentals         | `shared/06-ai-and-agents/01-ml-fundamentals.md`         | High     |
-| 2   | LLMs & Transformers     | `shared/06-ai-and-agents/02-llm-and-transformers.md`    | High     |
-| 3   | Agent Patterns          | `shared/06-ai-and-agents/03-agent-patterns.md`          | Medium   |
-| 4   | RAG & Embeddings        | `shared/06-ai-and-agents/04-rag-and-embeddings.md`      | Medium   |
-| 5   | AI Engineering Practice | `shared/06-ai-and-agents/05-ai-engineering-practice.md` | Medium   |
-| 6   | AI System Design        | `shared/06-ai-and-agents/06-ai-system-design.md`        | Medium   |
+| 1   | ML Fundamentals         | `../shared/06-ai-and-agents/01-ml-fundamentals.md`         | High     |
+| 2   | LLMs & Transformers     | `../shared/06-ai-and-agents/02-llm-and-transformers.md`    | High     |
+| 3   | Agent Patterns          | `../shared/06-ai-and-agents/03-agent-patterns.md`          | Medium   |
+| 4   | RAG & Embeddings        | `../shared/06-ai-and-agents/04-rag-and-embeddings.md`      | Medium   |
+| 5   | AI Engineering Practice | `../shared/06-ai-and-agents/05-ai-engineering-practice.md` | Medium   |
+| 6   | AI System Design        | `../shared/06-ai-and-agents/06-ai-system-design.md`        | Medium   |
 
 ### Software Engineering Fundamentals
 
 | #   | Topic                   | File                                                             | Priority |
 | --- | ----------------------- | ---------------------------------------------------------------- | -------- |
-| 1   | SOLID & Design Patterns | `shared/05-software-engineering/01-solid-and-design-patterns.md` | High     |
-| 2   | Architecture Styles     | `shared/05-software-engineering/02-architecture-styles.md`       | Medium   |
-| 3   | SDLC & Practices        | `shared/05-software-engineering/03-sdlc-and-practices.md`        | Medium   |
+| 1   | SOLID & Design Patterns | `../shared/05-software-engineering/01-solid-and-design-patterns.md` | High     |
+| 2   | Architecture Styles     | `../shared/05-software-engineering/02-architecture-styles.md`       | Medium   |
+| 3   | SDLC & Practices        | `../shared/05-software-engineering/03-sdlc-and-practices.md`        | Medium   |
 
 ### Expanded Security
 
 | #   | Topic                    | File                                                  | Priority |
 | --- | ------------------------ | ----------------------------------------------------- | -------- |
-| 1   | Cryptography & Protocols | `shared/04-security/02-cryptography-and-protocols.md` | Medium   |
-| 2   | Web Security & OWASP     | `shared/04-security/03-web-security-owasp.md`         | High     |
+| 1   | Cryptography & Protocols | `../shared/04-security/02-cryptography-and-protocols.md` | Medium   |
+| 2   | Web Security & OWASP     | `../shared/04-security/03-web-security-owasp.md`         | High     |
 
 ### Company Interview Guides
 
@@ -382,7 +382,7 @@ See `shared/07-company-guides/` for detailed guides for Google, Microsoft, Grab,
 
 ### Interview Market Overview
 
-See `00-interview-market-overview.md` for current interview trends and company comparison.
+See `../00-interview-market-overview.md` for current interview trends and company comparison.
 
 ---
 
