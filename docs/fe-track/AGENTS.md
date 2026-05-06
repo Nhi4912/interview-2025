@@ -11,23 +11,23 @@ Frontend interview prep — bilingual (EN/VI) study notes targeting Junior→Sen
 ```
 docs/fe-track/
 ├── 00-study-roadmap.md            # Phase-ordered learning path (entry point)
-├── 01-javascript/                 # 27 files — Phase 1 anchor (highest priority)
+├── 01-javascript/                 # 28 files — Phase 1 anchor (highest priority)
 ├── 02-typescript/                 # 8 files — Phase 2
-├── 03-react/                      # 11 files — Phase 3 (primary framework)
+├── 03-react/                      # 12 files — Phase 3 (primary framework)
 ├── 04-nextjs/                     # 9 files — Phase 3 (Grab/Axon/EH stack)
 ├── 05-html-css/                   # 14 files — Phase 4 (often underestimated)
-├── 06-browser-performance/        # 10 files — Core Web Vitals, profiling
-├── 07-web-security/               # 4 files — XSS, CSRF, CSP, auth
-├── 08-fe-system-design/           # 12 files — FE-specific SD (NOT backend SD)
+├── 06-browser-performance/        # 11 files — Core Web Vitals, profiling
+├── 07-web-security/               # 5 files — XSS, CSRF, CSP, auth, WebCrypto/payments
+├── 08-fe-system-design/           # 14 files — FE-specific SD (NOT backend SD)
 ├── 09-advanced-topics/            # ~75 files in 10 subdirs — senior-level deep map
-├── 10-networking/                 # 8 files — HTTP, WS, WebRTC from FE perspective
+├── 10-networking/                 # 10 files — HTTP, WS, WebRTC, streaming, video/audio
 ├── 10-company-guide.md            # ⚠️ duplicate "10-" prefix; do not renumber
 ├── 11-accessibility/              # 7 files — WCAG, ARIA, keyboard nav
 ├── 12-behavioral/                 # 2 files — STAR stories
 ├── 13-coding-practice/            # 30 files + 5 subdirs — live-coding drills
 ├── 14-mock-interview/             # 3 files — full mock rounds
 ├── 14-frontend-testing.md         # ⚠️ duplicate "14-" prefix; do not renumber
-├── 15-modern-platform/            # 4 files — Web Components, CRDTs, micro-FE, AI workflow (2026 topics)
+├── 15-modern-platform/            # 5 files — Web Components, CRDTs, micro-FE, AI workflow, Module Federation deep (2026 topics)
 ├── 16-career-strategy/            # 1 file — FE specializations & level/comp framing (FM Handbook 2024 §1-§2)
 └── mindmaps/                      # 12 files — pre-interview cram sheets
 ```

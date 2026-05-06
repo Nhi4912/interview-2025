@@ -21,9 +21,10 @@
 
 ### Deep Dive / Nâng Cao
 
-| #   | File                                                         | Topic / Chủ Đề                                                |
-| --- | ------------------------------------------------------------ | ------------------------------------------------------------- |
-| 10  | [10-modern-react-features.md](./10-modern-react-features.md) | Concurrent features, Suspense / Tính năng đồng thời, Suspense |
+| #   | File                                                         | Topic / Chủ Đề                                                           |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| 10  | [10-modern-react-features.md](./10-modern-react-features.md) | Concurrent features, Suspense / Tính năng đồng thời, Suspense            |
+| 11  | [11-animation-libraries.md](./11-animation-libraries.md)     | Framer Motion, GSAP, Lottie, View Transitions / Thư viện animation React |
 
 ## Study Order / Thứ Tự Học
 
@@ -39,6 +40,7 @@
 5. Advanced patterns: `04-advanced-patterns.md` → `08-react-patterns-advanced.md` / Mẫu nâng cao
 6. Performance: `09-performance-optimization.md` / Tối ưu hiệu suất
 7. React 19 & modern: `02-react-19-features.md` → `10-modern-react-features.md` / React 19 & hiện đại
+8. Animation libraries: `11-animation-libraries.md` / Thư viện animation (Framer Motion, GSAP, Lottie)
 
 ## Related / Liên Quan
 

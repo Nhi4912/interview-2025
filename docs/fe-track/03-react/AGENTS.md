@@ -2,7 +2,7 @@
 
 ## OVERVIEW
 
-Primary React interview track: 11 files covering fundamentals through React 19, hooks, patterns, state management, performance, and testing.
+Primary React interview track: 12 files covering fundamentals through React 19, hooks, patterns, state management, performance, testing, and animation.
 
 ---
 
@@ -20,6 +20,7 @@ Primary React interview track: 11 files covering fundamentals through React 19, 
 | Performance (memo/useMemo/useCallback, colocation, profiling) | `09-performance-optimization.md` |
 | Testing (RTL, mocking, async)                                 | `06-testing.md`                  |
 | Fundamentals (JSX, reconciliation, Fiber, render/commit)      | `01-react-fundamentals.md`       |
+| Animation libs (Framer Motion, React Spring, GSAP, Lottie)    | `11-animation-libraries.md`      |
 
 ---
 

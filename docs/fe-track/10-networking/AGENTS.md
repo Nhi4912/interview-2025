@@ -6,19 +6,21 @@ HTTP/WebSocket/WebRTC from the browser's perspective: protocol mechanics, browse
 
 ## WHERE TO LOOK
 
-| Topic                                                        | File                        |
-| ------------------------------------------------------------ | --------------------------- |
-| HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)                          | `01-http-fundamentals.md`   |
-| TLS handshake (what the browser sees)                        | `01-http-fundamentals.md`   |
-| CORS preflight, `Access-Control-*` headers                   | `06-cors-same-origin.md`    |
-| WebSocket vs SSE (API surface, framing, reconnect)           | `04-websockets-realtime.md` |
-| WebRTC peer connection (ICE, SDP, data channels)             | `04-websockets-realtime.md` |
-| `fetch` API, `AbortController`, streaming body               | `02-rest-api-design.md`     |
-| Caching headers (`Cache-Control`, `ETag`, `Vary`)            | `05-caching-cdn.md`         |
-| Service Workers (cache strategies, offline, background sync) | `05-caching-cdn.md`         |
-| GraphQL over HTTP (batching, persisted queries)              | `03-graphql-basics.md`      |
-| CDN, edge caching, stale-while-revalidate                    | `05-caching-cdn.md`         |
-| Visual protocol/API relationships                            | `mindmap-networking.md`     |
+| Topic                                                                 | File                                     |
+| --------------------------------------------------------------------- | ---------------------------------------- |
+| HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)                                   | `01-http-fundamentals.md`                |
+| TLS handshake (what the browser sees)                                 | `01-http-fundamentals.md`                |
+| CORS preflight, `Access-Control-*` headers                            | `06-cors-same-origin.md`                 |
+| WebSocket vs SSE (API surface, framing, reconnect)                    | `04-websockets-realtime.md`              |
+| WebRTC peer connection (ICE, SDP, data channels)                      | `04-websockets-realtime.md`              |
+| `fetch` API, `AbortController`, streaming body                        | `02-rest-api-design.md`                  |
+| Caching headers (`Cache-Control`, `ETag`, `Vary`)                     | `05-caching-cdn.md`                      |
+| Service Workers (cache strategies, offline, background sync)          | `05-caching-cdn.md`                      |
+| GraphQL over HTTP (batching, persisted queries)                       | `03-graphql-basics.md`                   |
+| CDN, edge caching, stale-while-revalidate                             | `05-caching-cdn.md`                      |
+| Visual protocol/API relationships                                     | `mindmap-networking.md`                  |
+| SSE vs WebSocket vs WebTransport, NDJSON streaming, reconnect+backoff | `07-streaming-and-realtime-protocols.md` |
+| Video/Audio: HLS, LL-HLS, DASH, WebRTC, WHIP/WHEP, MSE/EME, DRM       | `08-video-audio-streaming.md`            |
 
 ## LOCAL CONVENTIONS
 

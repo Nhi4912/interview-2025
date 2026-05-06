@@ -5,12 +5,13 @@
 
 ## Files / Tài Liệu
 
-| #   | File                                                                           | Topic / Chủ Đề                                                                            |
-| --- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| 1   | [01-web-components-shadow-dom.md](./01-web-components-shadow-dom.md)           | Web Components, Shadow DOM, Custom Elements / Web Components, Shadow DOM, Custom Elements |
-| 2   | [02-realtime-collaboration-crdts.md](./02-realtime-collaboration-crdts.md)     | CRDTs, Yjs, real-time collaboration / CRDTs, Yjs, cộng tác thời gian thực                 |
-| 3   | [03-micro-frontends-scale.md](./03-micro-frontends-scale.md)                   | Micro-frontends, Module Federation / Micro-frontends, Module Federation                   |
-| 4   | [04-ai-augmented-frontend-workflow.md](./04-ai-augmented-frontend-workflow.md) | AI-augmented dev workflow (Cursor/Copilot/Claude) / Workflow dev tăng cường AI            |
+| #   | File                                                                           | Topic / Chủ Đề                                                                                  |
+| --- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| 1   | [01-web-components-shadow-dom.md](./01-web-components-shadow-dom.md)           | Web Components, Shadow DOM, Custom Elements / Web Components, Shadow DOM, Custom Elements       |
+| 2   | [02-realtime-collaboration-crdts.md](./02-realtime-collaboration-crdts.md)     | CRDTs, Yjs, real-time collaboration / CRDTs, Yjs, cộng tác thời gian thực                       |
+| 3   | [03-micro-frontends-scale.md](./03-micro-frontends-scale.md)                   | Micro-frontends, Module Federation / Micro-frontends, Module Federation                         |
+| 4   | [04-ai-augmented-frontend-workflow.md](./04-ai-augmented-frontend-workflow.md) | AI-augmented dev workflow (Cursor/Copilot/Claude) / Workflow dev tăng cường AI                  |
+| 5   | [05-module-federation-deep.md](./05-module-federation-deep.md)                 | Module Federation deep (Webpack 5, MF 2.0, Rspack, type sharing) / Module Federation chuyên sâu |
 
 ## Study Order / Thứ Tự Học
 
@@ -20,6 +21,7 @@ These are senior/staff-level topics. Best consumed AFTER completing Phases 1-5 o
 2. Real-time class of problems: `02-realtime-collaboration-crdts.md` (Figma/Notion class) / Lớp bài toán real-time
 3. Architecture at scale: `03-micro-frontends-scale.md` (multi-team frontends) / Kiến trúc nhiều team
 4. Working reality 2026: `04-ai-augmented-frontend-workflow.md` (every senior interview asks this in 2026) / Thực tế làm việc 2026
+5. Module Federation deep dive: `05-module-federation-deep.md` (Webpack 5 + MF 2.0 + Rspack runtime) / Module Federation chuyên sâu
 
 ## Related / Liên Quan
 

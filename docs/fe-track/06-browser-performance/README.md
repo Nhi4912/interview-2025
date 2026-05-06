@@ -16,13 +16,14 @@
 
 ### Deep Dive / Theory / Nâng Cao / Lý Thuyết
 
-| #   | File                                                                         | Topic / Chủ Đề                                                              |
-| --- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 5   | [05-rendering-optimization-theory.md](./05-rendering-optimization-theory.md) | Rendering pipeline, repaint/reflow / Pipeline render, repaint/reflow        |
-| 6   | [06-frontend-testing-strategy.md](./06-frontend-testing-strategy.md)         | Frontend testing strategies / Chiến lược kiểm thử frontend                  |
-| 7   | [07-bundle-analysis-deep-dive.md](./07-bundle-analysis-deep-dive.md)         | Bundle analysis, webpack tuning / Phân tích bundle, tối ưu webpack          |
-| 8   | [08-visual-regression-testing.md](./08-visual-regression-testing.md)         | Visual regression testing (Chromatic, Percy) / Kiểm thử regression hình ảnh |
-| 9   | [09-code-coverage-strategy.md](./09-code-coverage-strategy.md)               | Code coverage strategy & limits / Chiến lược và giới hạn code coverage      |
+| #   | File                                                                         | Topic / Chủ Đề                                                                    |
+| --- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 5   | [05-rendering-optimization-theory.md](./05-rendering-optimization-theory.md) | Rendering pipeline, repaint/reflow / Pipeline render, repaint/reflow              |
+| 6   | [06-frontend-testing-strategy.md](./06-frontend-testing-strategy.md)         | Frontend testing strategies / Chiến lược kiểm thử frontend                        |
+| 7   | [07-bundle-analysis-deep-dive.md](./07-bundle-analysis-deep-dive.md)         | Bundle analysis, webpack tuning / Phân tích bundle, tối ưu webpack                |
+| 8   | [08-visual-regression-testing.md](./08-visual-regression-testing.md)         | Visual regression testing (Chromatic, Percy) / Kiểm thử regression hình ảnh       |
+| 9   | [09-code-coverage-strategy.md](./09-code-coverage-strategy.md)               | Code coverage strategy & limits / Chiến lược và giới hạn code coverage            |
+| 10  | [10-data-visualization.md](./10-data-visualization.md)                       | Data viz (D3, Recharts, visx, ECharts) — SVG/Canvas/WebGL / Trực quan hóa dữ liệu |
 
 ## Study Order / Thứ Tự Học
 
@@ -40,6 +41,7 @@
 7. Testing strategy: `06-frontend-testing-strategy.md` / Chiến lược kiểm thử
 8. Visual regression testing: `08-visual-regression-testing.md` / Kiểm thử regression hình ảnh
 9. Code coverage strategy: `09-code-coverage-strategy.md` / Chiến lược code coverage
+10. Data visualization at scale: `10-data-visualization.md` / Trực quan hóa dữ liệu (D3, Recharts, visx)
 
 ## Related / Liên Quan
 

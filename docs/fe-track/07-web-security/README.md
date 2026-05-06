@@ -14,9 +14,10 @@
 
 ### Deep Dive / Nâng Cao
 
-| #   | File                                                                   | Topic / Chủ Đề                                           |
-| --- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
-| 3   | [03-web-security-comprehensive.md](./03-web-security-comprehensive.md) | Comprehensive security review / Ôn tập bảo mật toàn diện |
+| #   | File                                                                   | Topic / Chủ Đề                                                                   |
+| --- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 3   | [03-web-security-comprehensive.md](./03-web-security-comprehensive.md) | Comprehensive security review / Ôn tập bảo mật toàn diện                         |
+| 4   | [04-webcrypto-and-payments.md](./04-webcrypto-and-payments.md)         | WebCrypto API, Payment Request, Stripe, MoMo/ZaloPay/VNPay / WebCrypto & Payment |
 
 ## Study Order / Thứ Tự Học
 
@@ -28,6 +29,7 @@
 ### Phase 2 — Deep Dive / Giai Đoạn 2 — Nâng Cao
 
 3. Full security review: `03-web-security-comprehensive.md` / Ôn tập bảo mật toàn diện
+4. WebCrypto & Payments: `04-webcrypto-and-payments.md` / WebCrypto & Payment (E2EE, PCI-DSS, gateways VN)
 
 ## Related / Liên Quan
 

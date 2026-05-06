@@ -43,40 +43,60 @@
 ## 📚 Nội Dung Module
 
 ### 1. [HTTP Fundamentals](./01-http-fundamentals.md)
+
 - HTTP methods (GET, POST, PUT, DELETE)
 - Status codes
 - Headers
 - HTTPS/TLS
 
 ### 2. [REST API Design](./02-rest-api-design.md)
+
 - RESTful principles
 - Resource naming
 - CRUD operations
 - Best practices
 
 ### 3. [GraphQL Basics](./03-graphql-basics.md)
+
 - Queries và Mutations
 - Schema definition
 - GraphQL vs REST
 - Client libraries
 
 ### 4. [WebSockets & Real-time](./04-websockets-realtime.md)
+
 - WebSocket protocol
 - Server-Sent Events
 - Polling strategies
 - Real-time patterns
 
 ### 5. [Caching & CDN](./05-caching-cdn.md)
+
 - HTTP caching headers
 - Cache strategies
 - CDN concepts
 - Service Worker caching
 
 ### 6. [CORS & Same-Origin](./06-cors-same-origin.md)
+
 - Same-Origin Policy
 - CORS headers
 - Preflight requests
 - Security implications
+
+### 7. [Streaming & Realtime Protocols](./07-streaming-and-realtime-protocols.md)
+
+- SSE vs WebSocket vs WebTransport
+- fetch + ReadableStream (NDJSON)
+- Reconnection (exp backoff + jitter)
+- Scaling 1M connections (Redis/NATS pub/sub)
+
+### 8. [Video & Audio Streaming](./08-video-audio-streaming.md)
+
+- HLS, LL-HLS, DASH, WebRTC, WHIP/WHEP
+- MSE / EME (Widevine, FairPlay, PlayReady)
+- TikTok-style feed preloading
+- Autoplay policies, captions, PiP
 
 ---
 
@@ -99,6 +119,7 @@ Sau khi hoàn thành module này, bạn sẽ:
 Week 1: HTTP Fundamentals + REST
 Week 2: GraphQL + WebSockets
 Week 3: Caching + CORS
+Week 4: Streaming protocols (SSE/WS/WebTransport) + Video/Audio (HLS/DASH/WebRTC)
 ```
 
 ---

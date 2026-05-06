@@ -25,6 +25,8 @@
 | 9   | [10-monorepos-frontend.md](./10-monorepos-frontend.md)                                 | Monorepos for FE (Nx, Turbo, pnpm) / Monorepo FE (Nx, Turbo, pnpm)                     |
 | 10  | [11-ab-testing-experimentation.md](./11-ab-testing-experimentation.md)                 | A/B testing & experimentation infra / A/B test & hạ tầng thí nghiệm                    |
 | 11  | [12-semver-and-versioning.md](./12-semver-and-versioning.md)                           | SemVer, lockfiles, versioning strategies / SemVer, lockfile, chiến lược versioning     |
+| 12  | [13-package-managers-internals.md](./13-package-managers-internals.md)                 | npm/Yarn/pnpm/Bun internals, supply-chain / Nội tại package manager, supply-chain      |
+| 13  | [14-file-handling-opfs.md](./14-file-handling-opfs.md)                                 | File handling, OPFS, tus, S3 multipart / Xử lý file, OPFS, upload chunked              |
 
 ## Study Order / Thứ Tự Học
 
@@ -44,6 +46,8 @@
 9. Monorepos: `10-monorepos-frontend.md` / Monorepo
 10. A/B testing infra: `11-ab-testing-experimentation.md` / Hạ tầng A/B test
 11. SemVer & versioning: `12-semver-and-versioning.md` / SemVer & versioning
+12. Package managers internals: `13-package-managers-internals.md` / Nội tại package manager
+13. File handling & OPFS: `14-file-handling-opfs.md` / Xử lý file & OPFS
 
 ## Related / Liên Quan
 

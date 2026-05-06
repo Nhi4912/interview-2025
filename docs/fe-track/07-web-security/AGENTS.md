@@ -6,18 +6,19 @@ FE-side security: XSS variants, CSRF + SameSite, CSP headers, CORS, JWT vs sessi
 
 ## WHERE TO LOOK
 
-| Topic                          | File                               |
-| ------------------------------ | ---------------------------------- |
-| XSS (stored / reflected / DOM) | `01-common-vulnerabilities.md`     |
-| CSRF + SameSite cookies        | `01-common-vulnerabilities.md`     |
-| CSP headers + nonce/hash       | `01-common-vulnerabilities.md`     |
-| CORS misconfiguration          | `01-common-vulnerabilities.md`     |
-| Clickjacking + X-Frame-Options | `01-common-vulnerabilities.md`     |
-| Open redirect + URL validation | `01-common-vulnerabilities.md`     |
-| JWT (client handling, storage) | `02-authentication.md`             |
-| OAuth2 PKCE + token flows      | `02-authentication.md`             |
-| Session auth vs token auth     | `02-authentication.md`             |
-| Comprehensive threat model     | `03-web-security-comprehensive.md` |
+| Topic                                                                     | File                               |
+| ------------------------------------------------------------------------- | ---------------------------------- |
+| XSS (stored / reflected / DOM)                                            | `01-common-vulnerabilities.md`     |
+| CSRF + SameSite cookies                                                   | `01-common-vulnerabilities.md`     |
+| CSP headers + nonce/hash                                                  | `01-common-vulnerabilities.md`     |
+| CORS misconfiguration                                                     | `01-common-vulnerabilities.md`     |
+| Clickjacking + X-Frame-Options                                            | `01-common-vulnerabilities.md`     |
+| Open redirect + URL validation                                            | `01-common-vulnerabilities.md`     |
+| JWT (client handling, storage)                                            | `02-authentication.md`             |
+| OAuth2 PKCE + token flows                                                 | `02-authentication.md`             |
+| Session auth vs token auth                                                | `02-authentication.md`             |
+| Comprehensive threat model                                                | `03-web-security-comprehensive.md` |
+| WebCrypto API, payments (PCI-DSS, 3DS, tokenization, Payment Request API) | `04-webcrypto-and-payments.md`     |
 
 ## LOCAL CONVENTIONS
 

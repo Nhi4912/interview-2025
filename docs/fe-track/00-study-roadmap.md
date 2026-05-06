@@ -23,8 +23,8 @@
 | #   | Topic                    | File                                             | Priority |
 | --- | ------------------------ | ------------------------------------------------ | -------- |
 | 1   | Variables & Data Types   | `01-javascript/02-variables-types.md`            | Critical |
-| 2   | Scope & Hoisting         | `01-javascript/02-scope-hoisting.md`             | Critical |
-| 3   | Closures                 | `01-javascript/03-closures.md`                   | Critical |
+| 2   | Scope & Hoisting         | `01-javascript/03-scope-hoisting.md`             | Critical |
+| 3   | Closures                 | `01-javascript/04-closures.md`                   | Critical |
 | 4   | Prototypes & Inheritance | `01-javascript/06-prototypes-inheritance.md`     | Critical |
 | 5   | `this` Keyword           | `01-javascript/05-this-keyword.md`               | Critical |
 | 6   | Event Loop & Async       | `01-javascript/07-event-loop-async.md`           | Critical |
@@ -37,16 +37,19 @@
 
 **Deep dive (nếu có thời gian):**
 
-| #   | Topic                            | File                                              | Priority |
-| --- | -------------------------------- | ------------------------------------------------- | -------- |
-| 13  | Scope & Hoisting (Comprehensive) | `01-javascript/03-scope-hoisting.md`              | Medium   |
-| 14  | Closures (Comprehensive)         | `01-javascript/04-closures.md`                    | Medium   |
-| 15  | Prototypes (Deep)                | `01-javascript/10-prototypes-inheritance-deep.md` | Medium   |
-| 16  | ES6 (Deep)                       | `01-javascript/11-es6-features-deep.md`           | Medium   |
-| 17  | Metaprogramming                  | `01-javascript/18-metaprogramming-theory.md`      | Low      |
-| 18  | Concurrency Models               | `01-javascript/19-concurrency-models-theory.md`   | Low      |
-| 19  | Module Systems                   | `01-javascript/20-module-systems-theory.md`       | Low      |
-| 20  | Engine Internals (V8)            | `01-javascript/21-engine-internals-theory.md`     | Low      |
+| #   | Topic                         | File                                              | Priority |
+| --- | ----------------------------- | ------------------------------------------------- | -------- |
+| 13  | Execution Context (Theory)    | `01-javascript/16-execution-context-theory.md`    | Medium   |
+| 14  | Date/Time, Temporal API, i18n | `01-javascript/25-date-time-deep.md`              | Medium   |
+| 15  | Prototypes (Deep)             | `01-javascript/10-prototypes-inheritance-deep.md` | Medium   |
+| 16  | ES6 (Deep)                    | `01-javascript/11-es6-features-deep.md`           | Medium   |
+| 17  | Modern JS (2022–2025)         | `01-javascript/22-modern-javascript-features.md`  | Medium   |
+| 18  | Regex for Frontend            | `01-javascript/23-regex-for-frontend.md`          | Medium   |
+| 19  | Polyfills & Transpilation     | `01-javascript/24-polyfills-and-transpilation.md` | Medium   |
+| 20  | Metaprogramming               | `01-javascript/18-metaprogramming-theory.md`      | Low      |
+| 21  | Concurrency Models            | `01-javascript/19-concurrency-models-theory.md`   | Low      |
+| 22  | Module Systems                | `01-javascript/20-module-systems-theory.md`       | Low      |
+| 23  | Engine Internals (V8)         | `01-javascript/21-engine-internals-theory.md`     | Low      |
 
 ---
 
@@ -82,15 +85,19 @@
 | 8   | Hooks Comprehensive      | `03-react/07-hooks-comprehensive.md`      | Medium   |
 | 9   | Advanced Patterns (Deep) | `03-react/08-react-patterns-advanced.md`  | Medium   |
 | 10  | Modern React Features    | `03-react/10-modern-react-features.md`    | Medium   |
+| 11  | Animation Libraries      | `03-react/11-animation-libraries.md`      | Medium   |
 
 **Next.js:**
 
-| #   | Topic                          | File                                           | Priority |
-| --- | ------------------------------ | ---------------------------------------------- | -------- |
-| 1   | Next.js Fundamentals           | `04-nextjs/00-nextjs-fundamentals.md`          | High     |
-| 2   | App Router & Server Components | `04-nextjs/01-app-router-server-components.md` | High     |
-| 3   | Data Fetching                  | `04-nextjs/02-data-fetching.md`                | High     |
-| 4   | Architecture                   | `04-nextjs/03-nextjs-architecture.md`          | Medium   |
+| #   | Topic                            | File                                               | Priority |
+| --- | -------------------------------- | -------------------------------------------------- | -------- |
+| 1   | Next.js Fundamentals             | `04-nextjs/00-nextjs-fundamentals.md`              | High     |
+| 2   | App Router & Server Components   | `04-nextjs/01-app-router-server-components.md`     | High     |
+| 3   | Data Fetching                    | `04-nextjs/02-data-fetching.md`                    | High     |
+| 4   | Architecture                     | `04-nextjs/03-nextjs-architecture.md`              | Medium   |
+| 5   | Static Site Generators Landscape | `04-nextjs/05-static-site-generators-landscape.md` | Medium   |
+| 6   | SEO for Frontend                 | `04-nextjs/06-seo-for-frontend.md`                 | High     |
+| 7   | Jamstack Architecture            | `04-nextjs/07-jamstack-architecture.md`            | Medium   |
 
 ---
 
@@ -98,14 +105,17 @@
 
 > Nhiều ứng viên bỏ qua HTML/CSS — đây là sai lầm lớn. Các công ty như Microsoft và Axon hỏi sâu về CSS.
 
-| #   | Topic               | File                                    | Priority |
-| --- | ------------------- | --------------------------------------- | -------- |
-| 1   | HTML5 Fundamentals  | `05-html-css/00-html5-fundamentals.md`  | High     |
-| 2   | CSS Fundamentals    | `05-html-css/00-css-fundamentals.md`    | High     |
-| 3   | Grid & Flexbox      | `05-html-css/01-grid-flexbox.md`        | Critical |
-| 4   | CSS Architecture    | `05-html-css/02-css-architecture.md`    | Medium   |
-| 5   | Responsive Design   | `05-html-css/03-responsive-design.md`   | High     |
-| 6   | Modern CSS Features | `05-html-css/06-modern-css-features.md` | Medium   |
+| #   | Topic                  | File                                              | Priority |
+| --- | ---------------------- | ------------------------------------------------- | -------- |
+| 1   | HTML5 Fundamentals     | `05-html-css/00-html5-fundamentals.md`            | High     |
+| 2   | CSS Fundamentals       | `05-html-css/00-css-fundamentals.md`              | High     |
+| 3   | Grid & Flexbox         | `05-html-css/01-grid-flexbox.md`                  | Critical |
+| 4   | CSS Architecture       | `05-html-css/02-css-architecture.md`              | Medium   |
+| 5   | Responsive Design      | `05-html-css/03-responsive-design.md`             | High     |
+| 6   | Modern CSS Features    | `05-html-css/06-modern-css-features.md`           | Medium   |
+| 7   | CSS-in-JS Comparison   | `05-html-css/09-css-in-js-comparison.md`          | Medium   |
+| 8   | Responsive vs Adaptive | `05-html-css/10-responsive-vs-adaptive-design.md` | Medium   |
+| 9   | Web Typography & Fonts | `05-html-css/11-web-typography-and-fonts.md`      | Medium   |
 
 **Browser & Performance:**
 
@@ -116,17 +126,23 @@
 | 3   | Bundle Optimization             | `06-browser-performance/03-bundle-optimization.md`           | Medium   |
 | 4   | Web Performance (Comprehensive) | `06-browser-performance/04-web-performance-comprehensive.md` | Medium   |
 | 5   | Rendering Optimization          | `06-browser-performance/05-rendering-optimization-theory.md` | Medium   |
+| 6   | Bundle Analysis (Deep Dive)     | `06-browser-performance/07-bundle-analysis-deep-dive.md`     | Medium   |
+| 7   | Visual Regression Testing       | `06-browser-performance/08-visual-regression-testing.md`     | Medium   |
+| 8   | Code Coverage Strategy          | `06-browser-performance/09-code-coverage-strategy.md`        | Medium   |
+| 9   | Data Visualization Performance  | `06-browser-performance/10-data-visualization.md`            | Medium   |
 
 **Networking:**
 
-| #   | Topic                 | File                                      | Priority |
-| --- | --------------------- | ----------------------------------------- | -------- |
-| 1   | HTTP Fundamentals     | `10-networking/01-http-fundamentals.md`   | High     |
-| 2   | REST API Design       | `10-networking/02-rest-api-design.md`     | High     |
-| 3   | GraphQL Basics        | `10-networking/03-graphql-basics.md`      | Medium   |
-| 4   | WebSockets & Realtime | `10-networking/04-websockets-realtime.md` | Medium   |
-| 5   | Caching & CDN         | `10-networking/05-caching-cdn.md`         | High     |
-| 6   | CORS & Same-Origin    | `10-networking/06-cors-same-origin.md`    | High     |
+| #   | Topic                                                | File                                                   | Priority |
+| --- | ---------------------------------------------------- | ------------------------------------------------------ | -------- |
+| 1   | HTTP Fundamentals                                    | `10-networking/01-http-fundamentals.md`                | High     |
+| 2   | REST API Design                                      | `10-networking/02-rest-api-design.md`                  | High     |
+| 3   | GraphQL Basics                                       | `10-networking/03-graphql-basics.md`                   | Medium   |
+| 4   | WebSockets & Realtime                                | `10-networking/04-websockets-realtime.md`              | Medium   |
+| 5   | Caching & CDN                                        | `10-networking/05-caching-cdn.md`                      | High     |
+| 6   | CORS & Same-Origin                                   | `10-networking/06-cors-same-origin.md`                 | High     |
+| 7   | Streaming & Realtime Protocols (SSE/WS/WebTransport) | `10-networking/07-streaming-and-realtime-protocols.md` | High     |
+| 8   | Video & Audio Streaming (HLS/DASH/WebRTC)            | `10-networking/08-video-audio-streaming.md`            | Medium   |
 
 ---
 
@@ -142,17 +158,25 @@
 | 2   | Common Vulnerabilities (XSS, CSRF, SQLi) | `07-web-security/01-common-vulnerabilities.md`      | High     |
 | 3   | Authentication (JWT, OAuth)              | `07-web-security/02-authentication.md`              | High     |
 | 4   | Web Security Comprehensive               | `07-web-security/03-web-security-comprehensive.md`  | Medium   |
+| 5   | WebCrypto & Payments (PCI-DSS, 3DS)      | `07-web-security/04-webcrypto-and-payments.md`      | High     |
 
 **Frontend System Design:**
 
-| #   | Topic                  | File                                               | Priority |
-| --- | ---------------------- | -------------------------------------------------- | -------- |
-| 1   | Architecture Patterns  | `08-fe-system-design/01-architecture-patterns.md`  | Critical |
-| 2   | Scalability            | `08-fe-system-design/02-scalability.md`            | High     |
-| 3   | Caching                | `08-fe-system-design/03-caching.md`                | High     |
-| 4   | Microservices          | `08-fe-system-design/04-microservices.md`          | Medium   |
-| 5   | Database Design        | `08-fe-system-design/05-database-design.md`        | Medium   |
-| 6   | Microservices Patterns | `08-fe-system-design/06-microservices-patterns.md` | Medium   |
+| #   | Topic                         | File                                                           | Priority |
+| --- | ----------------------------- | -------------------------------------------------------------- | -------- |
+| 1   | Architecture Patterns         | `08-fe-system-design/01-architecture-patterns.md`              | Critical |
+| 2   | Scalability                   | `08-fe-system-design/02-scalability.md`                        | High     |
+| 3   | Caching                       | `08-fe-system-design/03-caching.md`                            | High     |
+| 4   | Microservices                 | `08-fe-system-design/04-microservices.md`                      | Medium   |
+| 5   | Database Design               | `08-fe-system-design/05-database-design.md`                    | Medium   |
+| 6   | Microservices Patterns        | `08-fe-system-design/06-microservices-patterns.md`             | Medium   |
+| 7   | Quality & Observability       | `08-fe-system-design/07-frontend-quality-and-observability.md` | High     |
+| 8   | Design Systems                | `08-fe-system-design/09-design-systems.md`                     | High     |
+| 9   | Monorepos for Frontend        | `08-fe-system-design/10-monorepos-frontend.md`                 | High     |
+| 10  | A/B Testing & Experimentation | `08-fe-system-design/11-ab-testing-experimentation.md`         | Medium   |
+| 11  | SemVer & Versioning           | `08-fe-system-design/12-semver-and-versioning.md`              | Medium   |
+| 12  | Package Managers Internals    | `08-fe-system-design/13-package-managers-internals.md`         | Medium   |
+| 13  | File Handling & OPFS          | `08-fe-system-design/14-file-handling-opfs.md`                 | Medium   |
 
 **Shared Theory (reference):**
 
@@ -171,6 +195,16 @@
 | 3   | Keyboard Navigation   | `11-accessibility/03-keyboard-navigation.md`   | Medium   |
 | 4   | Screen Readers        | `11-accessibility/04-screen-readers.md`        | Medium   |
 | 5   | Testing Accessibility | `11-accessibility/05-testing-accessibility.md` | Medium   |
+
+**Modern Platform (2026 Senior topics):**
+
+| #   | Topic                          | File                                                      | Priority |
+| --- | ------------------------------ | --------------------------------------------------------- | -------- |
+| 1   | Web Components & Shadow DOM    | `15-modern-platform/01-web-components-shadow-dom.md`      | High     |
+| 2   | Realtime Collaboration & CRDTs | `15-modern-platform/02-realtime-collaboration-crdts.md`   | High     |
+| 3   | Micro-Frontends at Scale       | `15-modern-platform/03-micro-frontends-scale.md`          | High     |
+| 4   | AI-Augmented Frontend Workflow | `15-modern-platform/04-ai-augmented-frontend-workflow.md` | Critical |
+| 5   | Module Federation Deep         | `15-modern-platform/05-module-federation-deep.md`         | High     |
 
 ---
 

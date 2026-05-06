@@ -14,6 +14,7 @@
 | CRDTs · Yjs · OT · real-time collab · local-first sync                          | `02-realtime-collaboration-crdts.md`   |
 | Micro-frontends · Module Federation · import maps · shell/remote split          | `03-micro-frontends-scale.md`          |
 | AI-augmented FE workflow · Cursor/Copilot/Claude · prompt patterns · guardrails | `04-ai-augmented-frontend-workflow.md` |
+| Module Federation deep · Webpack 5 · MF 2.0 · Rspack runtime · type sharing     | `05-module-federation-deep.md`         |
 
 ---
 

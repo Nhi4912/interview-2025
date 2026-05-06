@@ -1,6 +1,6 @@
 # 06-BROWSER-PERFORMANCE — AGENT INDEX
 
-**Generated:** 2026-05-05 | **Files:** 10
+**Generated:** 2026-05-06 | **Files:** 11
 
 ## OVERVIEW
 
@@ -10,17 +10,18 @@ Core Web Vitals (LCP/INP/CLS), browser rendering pipeline, Chrome DevTools profi
 
 ## WHERE TO LOOK
 
-| Topic                                                    | File                                  |
-| -------------------------------------------------------- | ------------------------------------- |
-| LCP, INP, CLS, FCP, TTFB definitions + targets           | `01-core-web-vitals.md`               |
-| React-specific perf (memoization, Suspense, code-split)  | `02-react-performance.md`             |
-| Bundle splitting, tree-shaking, lazy loading             | `03-bundle-optimization.md`           |
-| End-to-end perf narrative (metrics → pipeline → RUM)     | `04-web-performance-comprehensive.md` |
-| Paint/layout/composite theory, style recalc, reflow      | `05-rendering-optimization-theory.md` |
-| Testing strategy (perf budgets, Lighthouse CI)           | `06-frontend-testing-strategy.md`     |
-| Webpack/Rollup/Vite analysis, chunk strategy             | `07-bundle-analysis-deep-dive.md`     |
-| Visual regression testing (Chromatic, Percy, Playwright) | `08-visual-regression-testing.md`     |
-| Code coverage strategy, metrics, thresholds              | `09-code-coverage-strategy.md`        |
+| Topic                                                           | File                                  |
+| --------------------------------------------------------------- | ------------------------------------- |
+| LCP, INP, CLS, FCP, TTFB definitions + targets                  | `01-core-web-vitals.md`               |
+| React-specific perf (memoization, Suspense, code-split)         | `02-react-performance.md`             |
+| Bundle splitting, tree-shaking, lazy loading                    | `03-bundle-optimization.md`           |
+| End-to-end perf narrative (metrics → pipeline → RUM)            | `04-web-performance-comprehensive.md` |
+| Paint/layout/composite theory, style recalc, reflow             | `05-rendering-optimization-theory.md` |
+| Testing strategy (perf budgets, Lighthouse CI)                  | `06-frontend-testing-strategy.md`     |
+| Webpack/Rollup/Vite analysis, chunk strategy                    | `07-bundle-analysis-deep-dive.md`     |
+| Visual regression testing (Chromatic, Percy, Playwright)        | `08-visual-regression-testing.md`     |
+| Code coverage strategy, metrics, thresholds                     | `09-code-coverage-strategy.md`        |
+| Data viz perf (Canvas/SVG/WebGL, charting libs, virtualization) | `10-data-visualization.md`            |
 
 ---
 

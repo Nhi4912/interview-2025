@@ -22,24 +22,25 @@
 
 ### Deep Dive / Nâng Cao
 
-| #   | File                                                                         | Topic / Chủ Đề                                                             |
-| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| 11  | [10-advanced-concepts.md](./10-advanced-concepts.md)                         | Advanced JS concepts / Các khái niệm JS nâng cao                           |
-| 12  | [10-prototypes-inheritance-deep.md](./10-prototypes-inheritance-deep.md)     | Deep prototype & inheritance / Prototype & kế thừa chuyên sâu              |
-| 13  | [11-es6-features-deep.md](./11-es6-features-deep.md)                         | Deep ES6+ features / Tính năng ES6+ chuyên sâu                             |
-| 14  | [11-functional-programming.md](./11-functional-programming.md)               | Functional programming patterns / Lập trình hàm                            |
-| 15  | [13-javascript-basics-theory.md](./13-javascript-basics-theory.md)           | JS basics theory reference / Lý thuyết cơ bản JS                           |
-| 16  | [14-javascript-type-system-theory.md](./14-javascript-type-system-theory.md) | Type system theory / Lý thuyết hệ thống kiểu                               |
-| 17  | [15-memory-management-advanced.md](./15-memory-management-advanced.md)       | Memory management & GC / Quản lý bộ nhớ & GC                               |
-| 18  | [16-execution-context-theory.md](./16-execution-context-theory.md)           | Execution context theory / Lý thuyết ngữ cảnh thực thi                     |
-| 19  | [17-advanced-patterns-theory.md](./17-advanced-patterns-theory.md)           | Advanced design patterns / Các mẫu thiết kế nâng cao                       |
-| 20  | [18-metaprogramming-theory.md](./18-metaprogramming-theory.md)               | Proxy, Reflect, metaprogramming / Metaprogramming với Proxy & Reflect      |
-| 21  | [19-concurrency-models-theory.md](./19-concurrency-models-theory.md)         | Concurrency models, workers / Mô hình đồng thời, web workers               |
-| 22  | [20-module-systems-theory.md](./20-module-systems-theory.md)                 | ESM, CJS, module systems / Hệ thống module ESM & CJS                       |
-| 23  | [21-engine-internals-theory.md](./21-engine-internals-theory.md)             | V8 engine internals / Nội tại V8 engine                                    |
-| 24  | [22-modern-javascript-features.md](./22-modern-javascript-features.md)       | Modern JS (ES2022–2025) / JS hiện đại ES2022–2025                          |
-| 25  | [23-regex-for-frontend.md](./23-regex-for-frontend.md)                       | Regex for frontend (validation, parsing, ReDoS) / Regex cho frontend       |
-| 26  | [24-polyfills-and-transpilation.md](./24-polyfills-and-transpilation.md)     | Polyfills, transpilation, browserslist / Polyfill, transpile, browserslist |
+| #   | File                                                                         | Topic / Chủ Đề                                                                      |
+| --- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 11  | [10-advanced-concepts.md](./10-advanced-concepts.md)                         | Advanced JS concepts / Các khái niệm JS nâng cao                                    |
+| 12  | [10-prototypes-inheritance-deep.md](./10-prototypes-inheritance-deep.md)     | Deep prototype & inheritance / Prototype & kế thừa chuyên sâu                       |
+| 13  | [11-es6-features-deep.md](./11-es6-features-deep.md)                         | Deep ES6+ features / Tính năng ES6+ chuyên sâu                                      |
+| 14  | [11-functional-programming.md](./11-functional-programming.md)               | Functional programming patterns / Lập trình hàm                                     |
+| 15  | [13-javascript-basics-theory.md](./13-javascript-basics-theory.md)           | JS basics theory reference / Lý thuyết cơ bản JS                                    |
+| 16  | [14-javascript-type-system-theory.md](./14-javascript-type-system-theory.md) | Type system theory / Lý thuyết hệ thống kiểu                                        |
+| 17  | [15-memory-management-advanced.md](./15-memory-management-advanced.md)       | Memory management & GC / Quản lý bộ nhớ & GC                                        |
+| 18  | [16-execution-context-theory.md](./16-execution-context-theory.md)           | Execution context theory / Lý thuyết ngữ cảnh thực thi                              |
+| 19  | [17-advanced-patterns-theory.md](./17-advanced-patterns-theory.md)           | Advanced design patterns / Các mẫu thiết kế nâng cao                                |
+| 20  | [18-metaprogramming-theory.md](./18-metaprogramming-theory.md)               | Proxy, Reflect, metaprogramming / Metaprogramming với Proxy & Reflect               |
+| 21  | [19-concurrency-models-theory.md](./19-concurrency-models-theory.md)         | Concurrency models, workers / Mô hình đồng thời, web workers                        |
+| 22  | [20-module-systems-theory.md](./20-module-systems-theory.md)                 | ESM, CJS, module systems / Hệ thống module ESM & CJS                                |
+| 23  | [21-engine-internals-theory.md](./21-engine-internals-theory.md)             | V8 engine internals / Nội tại V8 engine                                             |
+| 24  | [22-modern-javascript-features.md](./22-modern-javascript-features.md)       | Modern JS (ES2022–2025) / JS hiện đại ES2022–2025                                   |
+| 25  | [23-regex-for-frontend.md](./23-regex-for-frontend.md)                       | Regex for frontend (validation, parsing, ReDoS) / Regex cho frontend                |
+| 26  | [24-polyfills-and-transpilation.md](./24-polyfills-and-transpilation.md)     | Polyfills, transpilation, browserslist / Polyfill, transpile, browserslist          |
+| 27  | [25-date-time-deep.md](./25-date-time-deep.md)                               | Date/Time deep (Intl, Temporal, IANA tz, Day.js vs date-fns) / Date/Time chuyên sâu |
 
 ## Study Order / Thứ Tự Học
 
@@ -58,6 +59,7 @@
 8. Modern features last: `22` / Tính năng hiện đại sau cùng
 9. Regex for frontend: `23-regex-for-frontend.md` / Regex cho frontend
 10. Polyfills & transpilation: `24-polyfills-and-transpilation.md` / Polyfill & transpile
+11. Date/Time deep: `25-date-time-deep.md` / Date/Time chuyên sâu (Intl, Temporal, IANA tz)
 
 ## Related / Liên Quan
 

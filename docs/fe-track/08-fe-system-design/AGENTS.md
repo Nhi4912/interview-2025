@@ -21,6 +21,8 @@ FE system design interview prep: design a Twitter feed, Google Docs editor, VinI
 | Monorepos for FE: Nx, Turborepo, pnpm workspaces, Changesets                   | `10-monorepos-frontend.md`                 |
 | A/B testing & experimentation platforms (LaunchDarkly, Optimizely, GrowthBook) | `11-ab-testing-experimentation.md`         |
 | SemVer, lockfiles, peer deps, deprecation, Renovate/Dependabot                 | `12-semver-and-versioning.md`              |
+| Package managers internals (npm/yarn/pnpm/bun, lockfile algos, hoisting)       | `13-package-managers-internals.md`         |
+| File handling, OPFS, File System Access API, drag-drop, large uploads          | `14-file-handling-opfs.md`                 |
 | Navigation index + study order                                                 | `README.md`                                |
 
 ---
